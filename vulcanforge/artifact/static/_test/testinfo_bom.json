@@ -1,0 +1,62 @@
+{
+    "relations": [
+
+        {
+
+            "mount_point": "issues",
+            "tool_name": "Tickets",
+            "label": "Tickets",
+            "instances": [
+                ["Ticket Label 1", "URL"],
+                ["Ticket Label 2", "URL"],
+                ["Ticket Label 3", "URL"]
+
+            ],
+            "createURL": true
+
+        },
+
+        {
+
+            "mount_point": "discussions",
+            "tool_name": "Forums",
+            "label": "Discussions",
+            "instances": [
+                ["Discussion Forum 1", "URL"],
+                ["Discussion Forum 2", "URL"],
+                ["Discussion Forum 3", "URL"]
+            ],
+            "createURL": true
+
+        },
+
+        {
+
+            "mount_point": "Wiki",
+            "tool_name": "Wiki",
+            "label": "Discussions",
+             "instances": [
+                ["Discussion Forum 1", "URL"],
+                ["Discussion Forum 2", "URL"],
+                ["Discussion Forum 3", "URL"]
+            ],
+            "createURL": true
+
+        },
+
+        {
+
+            "mount_point": "artifacts",
+            "tool_name": "File",
+            "label": "Files",
+            "instances": [
+                ["Filename.dat", "URL"]
+            ],
+            "createURL": true
+
+        }
+
+    ],
+
+    "preview":  "bom_preview.jpg"
+}

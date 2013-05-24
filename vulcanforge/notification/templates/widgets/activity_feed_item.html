@@ -1,0 +1,26 @@
+<div class="notification-list-item">
+    <div class="notification-icons">
+        {% if author_icon and notification.author_id %}
+            {{ g.avatar.display(user=notification.author(), size=48, compact=True, className="notification-icon") }}
+        {% endif %}
+    </div>
+    <div class="notification-content">
+        <div class="notification-header">
+            <a href="{{ notification.link }}">
+                <img class="notification-icon notification-project-icon"
+                     src="{{ notification.project().icon_url }}"
+                     alt="{{ notification.project().name }} icon"/>
+                {{ notification.subject }}
+            </a>
+        </div>
+        {% if show_text %}
+            <div class="notification-text">{{ g.markdown.convert(notification.text)|safe }}</div>
+        {% endif %}
+        <div class="notification-footer">
+            <em class="notification-date">{{ notification.pubdate|timesince }} ago</em>
+            {% if artifact %}
+                <a href="{{ notification.link }}">{{ comment_count }} {% trans comment_count %}comment{% pluralize %}comments{% endtrans %}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>

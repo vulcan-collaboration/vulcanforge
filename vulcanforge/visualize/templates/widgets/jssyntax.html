@@ -1,0 +1,10 @@
+{% extends 'vulcanforge.visualize:templates/iframecontent.html' %}
+
+{% do g.resource_manager.register_css('visualize/prettify.min.css', scope="page") %}
+{% do g.resource_manager.register_css('visualize/syntaxvis.css', scope="page") %}
+{% do g.resource_manager.register_js('visualize/prettify.min.js', scope="page") %}
+{% do g.resource_manager.register_js('visualize/jquery.syntaxhighlighter.js', scope="page") %}
+
+{% block content %}
+<pre id="{{prefix}}code" class="highlight embedded"></pre>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'vehicleforge.tools.tickets:templates/tracker/master.html' %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / Secret Aggregation Page{% endblock %}
+
+{% block header %}{{ c.app.config.options.mount_label }}{% endblock %}
+
+{% block content %}
+    <div class="padded">
+    {% for header, r in results.iteritems() %}
+        {% if r.count %}
+            <h2>{{ header }}</h2>
+            {{ c.search_results_widget.display(solr_error=r.result.solr_error,
+              count=r.count,
+              limit=limit,
+              query=q,
+              tickets=r.result.tickets,
+              sortable_custom_fields=r.result.sortable_custom_fields,
+              columns=r.result.columns,
+              paged=False,
+              sort=sort) }}
+        {% endif %}
+    {% endfor %}
+    </div>
+{% endblock %}

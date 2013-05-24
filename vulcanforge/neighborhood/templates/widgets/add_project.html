@@ -1,0 +1,115 @@
+<form id="project-add" action="{{action}}" method="POST"
+      xmlns="http://www.w3.org/1999/html">
+
+    <div class="padded top-spaced">
+        <fieldset class="vf-fieldset">
+            <p>
+                <label for="{{ widget.context_for(widget.fields.project_name)['id'] }}">
+                    Project Name:
+                </label>
+                {{widget.display_field(widget.fields.project_name)}}
+            </p>
+
+            <p>
+                <label for="{{ widget.context_for(widget.fields.project_unixname)['id'] }}">
+                    URL: {% if base_url %}{{base_url}}{% endif %}{{neighborhood.url()}}
+                </label>
+                {{widget.display_field(widget.fields.project_unixname)}}
+
+                <span id="name_availablity" style="display:none"></span>
+            </p>
+
+        </fieldset>
+
+        {% if not neighborhood.project_template %}
+        <fieldset class="vf-fieldset">
+            <p>
+                {{widget.display_field(widget.fields.private_project)}}
+                <label for="{{ widget.context_for(widget.fields.private_project)['id'] }}">
+                    Private Project?
+                </label>
+            </p>
+            <p>
+                Private projects will be unreadable to non-project members and
+                will not show up in search results.
+            </p>
+        </fieldset>
+        {% endif %}
+    {% if not neighborhood.project_template %}
+    <div class="inner-row">
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.theme.app_icon_url('Tickets', 48)}}"
+                     alt="Manage">
+            </div>
+            <h1>{{widget.display_field(widget.fields.Tickets)}}</h1>
+            <p>
+                Coordinate your project's collaborative work with issues, milestones, and workflows.
+            </p>
+        </div>
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.theme.app_icon_url('Wiki', 48)}}"
+                     alt="Docs">
+            </div>
+            <h1>{{widget.display_field(widget.fields.Wiki)}}</h1>
+            <p>
+                Share information about your designs and analyses, and get feedback from project members and others.
+            </p>
+        </div>
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.theme.app_icon_url('Discussion', 48)}}"
+                     alt="Forums">
+            </div>
+            <h1>{{widget.display_field(widget.fields.Discussion)}}</h1>
+            <p>
+                Collaborate with your project members, and with broader communities, using discussion forums.
+            </p>
+        </div>
+    </div>
+    <div class="inner-row">
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.theme.app_icon_url('Git', 48)}}"
+                     alt="Repositories">
+            </div>
+            <h1>Repositories</h1>
+
+            <p>
+                Keep track of changes to your design and analysis artifacts with
+                version control systems.
+            </p>
+
+            <p>
+                {{widget.display_field(widget.fields.Git)}}
+                {{widget.display_field(widget.fields.SVN)}}
+            </p>
+        </div>
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.theme.app_icon_url('Components', 48)}}"
+                     alt="Components">
+            </div>
+            <h1>{{widget.display_field(widget.fields.Components)}}</h1>
+            <p>
+                Contribute and use component designs via the VehicleForge
+                Component Exchange.
+            </p>
+        </div>
+        <div id="start" class="tool">
+              <input type="submit" value="Start">
+        </div>
+    </div>
+    {% else %}
+        <div class="inner-row">
+            <div id="start" class="tool">
+                <input type="submit" value="Start">
+            </div>
+        </div>
+    {% endif %}
+   {% if widget.antispam %}{% for fld in g.antispam.extra_fields() %}
+    {{fld}}{% endfor %}{% endif %}
+
+    </div>
+</form>

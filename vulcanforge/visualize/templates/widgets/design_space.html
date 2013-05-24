@@ -1,0 +1,25 @@
+{% extends 'vulcanforge.visualizer:templates/iframecontent.html' %}
+{% do g.resource_manager.register_css('visualize/topology_visualizer/topology_visualizer.scss', scope='forge') %}
+
+{% block content %}
+    <div id="visualizerHolder"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    window.DEBUG = true;
+    $(parent).ready(function() {
+        (function ($, $vf) {
+            $(document).ready(function () {
+                trace('Trying to initialize');
+                var designVisualizer = new $vf.DesignVisualizer({
+                    contentHolderE: $('#visualizerHolder'),
+                    serviceUrl: "{{service_url}}"
+                });
+            });
+        }(jQuery, parent.window.$vf));
+    });
+
+</script>
+{% endblock %}

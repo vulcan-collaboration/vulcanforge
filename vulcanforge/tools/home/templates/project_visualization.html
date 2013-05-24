@@ -1,0 +1,52 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    {% if design_projects %}
+        <div>
+            <div>
+                <form action="project_analysis">
+                    <label for="designproject_id">Design Projects</label>
+                    <select name="designproject_id" id="designproject_id">
+                        {% if not designproject_id %}
+                            <option value=""></option>
+                        {% endif %}
+                        {% for design_project in design_projects %}
+                            <option value="{{ design_project._id }}"{% if design_project._id == designproject_id %} selected="selected"{% endif %}>{{ design_project.path }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="go">
+                </form>
+            </div>
+            {% if designs %}
+            <div>
+                <form action="design_spaces">
+                    <div>
+                        <label for="design_id">Designs</label>
+                        <select name="design_id" id="design_id">
+                            {% if not design_id %}
+                                <option value=""></option>
+                            {% endif %}
+                            {% for design in designs %}
+                                <option value="{{ design._id }}"{% if design._id == design_id %} selected="selected"{% endif %}>{{ design.path }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="submit" value="go">
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    <div class="padded">
+        {% if not design_projects %}
+            <div class="padded">Your project has no analysis products.</div>
+        {% endif %}
+        {{ visualization|safe }}
+    </div>
+{% endblock %}

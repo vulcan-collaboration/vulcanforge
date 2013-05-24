@@ -1,0 +1,16 @@
+<form method="post" action="{{action}}"
+      enctype="multipart/form-data" {%if embedded %}class="embedded"{%endif%}>
+    <div class="edit-post">
+        {% if show_subject %}
+        <input name="subject" value="{{value and (value.subject or '(no subject)')}}"/>
+        {% endif %}
+        {{widget.display_field(widget.fields.text)}}
+        <label>Attach Files:</label>
+        {{widget.display_field(widget.fields.new_attachments)}}
+        <input type="hidden" class="original_value" value="{{value.text}}">
+    </div>
+    <div class="form-controls">
+        <input type="submit" value="{{submit_text}}"/>
+        {% if show_cancel %}<input type="button" value="Cancel" title="Cancel" class="cancel-edit-post"/>{% endif %}
+    </div>
+</form>

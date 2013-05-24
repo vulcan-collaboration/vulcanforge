@@ -1,0 +1,57 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+
+<div{{ {'id': div_id}|xmlattr }}>
+  <table class="forum-list clear content-table">
+    <thead> 
+      <tr> 
+        <th><span class="ico ico-mail" title="Subscriptions" data-icon="M"></span></th> 
+        <th class="topic">Topic</th> 
+        <th>Posts</th> 
+        <th>Views</th> 
+        <th>Last Post</th> 
+      </tr> 
+    </thead> 
+    <tbody class="forum-list"> 
+      {% for thread in value %}
+      <tr>
+        <td>
+          <input type="checkbox" name="threads-{{loop.index0}}.subscription"
+                 {% if thread.subscription %}checked="checked"{% endif %}/>
+          <input type="hidden" name="threads-{{loop.index0}}._id" value="{{thread._id}}"/>
+        </td>
+        {% if not thread.first_post %}
+        <td class="topic">
+          {% if 'flags' in thread and 'Sticky' in thread.flags %}
+            <span class="sticky has-icon {{g.icons['pin'].css}}">Sticky</span>
+          {% endif %}
+          <h3><a href="{{thread.url()}}">{{thread.subject and h.text.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
+        </td>
+        {% else %}
+        <td class="topic">
+          {% set author = thread.first_post.author() %}
+          {% if 'flags' in thread and 'Sticky' in thread.flags %}
+            <span class="sticky has-icon {{g.icons['pin'].css}}">Sticky</span>
+          {% endif %}
+          <h3><a href="{{thread.url()}}">{{thread.subject and h.text.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
+
+          <span>By <a href="{{author.url()}}">{{author.display_name}}</a></span> {{h.ago(thread.first_post.timestamp)}}
+        </td> 
+        {% endif %}
+        <td>{{thread.post_count}}</td>
+        <td>{{thread.num_views}}</td>
+        {% if not thread.last_post %}
+        <td>&nbsp;</td>
+        {% else %}
+          {% set author = thread.last_post.author() %}
+          <td>
+          <p class="avatar sm">
+            By {{lib.gravatar(author, size=16)}}<a href="{{author.url()}}">{{author.display_name}}</a><br /> {{h.ago(thread.last_post.timestamp)}}
+          </p>
+          </td> 
+        {% endif %}
+      </tr> 
+      {% endfor %}
+    </tbody> 
+  </table>
+
+</div>

@@ -1,0 +1,14 @@
+{% set hide_project_toolbar = true %}
+{% extends g.templates['master'] %}
+
+{% block title %}{{ user.display_name }} / Edit Profile{% endblock %}
+
+{% block header %}Edit {{ user.display_name }}{% endblock %}
+
+{% block content %}
+    <div class="padded top-spaced">
+        <p>Current avatar:<br/><img src="{{ user.icon_url() }}"></p>
+        <p>You may also manage your avatar with <a href="http://gravatar.com">Gravatar</a>.</p>
+        {{ c.edit_profile_form.display(action=action, value=defaults) }}
+    </div>
+{% endblock %}

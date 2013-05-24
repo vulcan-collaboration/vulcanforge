@@ -1,0 +1,13 @@
+{% extends g.templates['master'] %}
+
+{% block title %}{{ user.display_name }} / Subscriptions{% endblock %}
+
+{% block header %}Subscriptions{% endblock %}
+
+{% block content %}
+    {% if subscriptions %}
+        {{ c.form.display(action='update_subscriptions', value=dict(subscriptions=subscriptions)) }}
+    {% else %}
+        <p>No subscriptions.</p>
+    {% endif %}
+{% endblock %}

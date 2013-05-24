@@ -1,0 +1,59 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+<form id="add_forum_form_el" method="{{method}}" action="{{action}}" enctype="multipart/form-data">
+  <input type="hidden" name="add_forum.app_id" value="{{app and app.config._id}}">
+  <div id="add_forum_form" style="display:none">
+    <label class="grid-4">Name:</label>
+    <div class="grid-15"><input type="text" name="add_forum.name" value="{{value and value['name']}}"></div>
+    <label class="grid-4">Short Name:</label>
+    <div class="grid-15"><input type="text" name="add_forum.shortname" value="{{value and value['shortname']}}"></div>
+    <label class="grid-4">Ordinal (sort order):</label>
+    <div class="grid-15"><input type="text" name="add_forum.ordinal" value="{{value and value['ordinal'] or '0'}}"></div>
+    <label class="grid-4">Parent Forum:</label>
+    <div class="grid-15"><select name="add_forum.parent">
+    <option value="">None</option>
+    {% for f in app.forums %}<option value="{{f._id}}">{{h.really_unicode(f.name)}}</option>{% endfor %}
+    </select></div>
+    <label class="grid-4">Description:</label>
+    <div class="grid-15"><textarea name="add_forum.description" style="height:50px;">{{value and value['description']}}</textarea></div>
+    <label class="grid-4">Icon:</label>
+    <div class="grid-15">{{lib.file_field('add_forum.icon', '')}}</div>
+    <label class="grid-4">&nbsp;</label>
+    <div class="grid-15">
+      <input type="submit" name="create" value="Create Forum">
+      <input type="button" id="add_forum_cancel" value="Cancel">
+    </div>
+  </div>
+</form>
+<script type="text/javascript">
+    function addLoadEvent(func) {
+        var oldonload = window.onload;
+        if (typeof window.onload !== 'function') {
+            window.onload = func;
+        } else {
+            window.onload = function() {
+                if (oldonload) {
+                    oldonload();
+                }
+                func();
+            };
+        }
+    }
+  var has_form_errors = false;
+  {% for field in widget.fields %}
+    {% set ctx=widget.context_for(field) %}
+    {% if ctx.errors and field.show_errors -%}
+        has_form_errors = true;
+        addLoadEvent(function() {
+            $('#messages').notify("{{ctx.errors}}", {
+                title: 'Error',
+                status: 'error'
+            });
+        });
+    {%- endif %}
+  {% endfor %}
+  if (has_form_errors) {
+    addLoadEvent(function() {
+      $("#add_forum_form").show();
+    });
+  }
+</script>

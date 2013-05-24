@@ -1,0 +1,109 @@
+{% set hide_header = True %}
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('dashboard/dashboard.scss') %}
+{% do g.resource_manager.register_css('dashboard/messages.scss') %}
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.tmpl.js') %}
+{% do g.resource_manager.register_js('dashboard/activity_feed.js') %}
+
+{% block title %}Activity Feed{% endblock %}
+
+{% block header %}Activity Feed{% endblock %}
+
+{% block content %}
+    <div id="activity-feed-app" xmlns="http://www.w3.org/1999/html"
+         xmlns="http://www.w3.org/1999/html"
+         xmlns="http://www.w3.org/1999/html">
+        <div id="activity-feed-side">
+            <div id="filter-list"></div>
+            <div id="loading-filters"></div>
+        </div>
+        <div id="activity-feed-main">
+            <div id="notification-list"></div>
+            <div id="loading-notifications"></div>
+            <button id="load-more-btn" class="hidden">Load More</button>
+            <div id="no-notifications" class="hidden">
+                <h1>You don't have any notifications yet!</h1>
+                <p>Join a team to start seeing some action!</p>
+                <p>&hellip;<em>or just turn some of your filters back on</em></p>
+                <h2>Available Responses:</h2>
+                <ul>
+                    <li><a href="/">Show me the Teams!</a></li>
+                    <li><a href=".">Are you sure? Look again!</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script id="notification-template" type="text/x-jQuery-tmpl">
+        {% raw %}
+        <div class="notification-container topic-{{= topic}} collapsed"
+            data-project_id="{{= project_id}}"
+            data-app_config_id="{{= app_config_id}}"
+            data-_id="{{= _id}}">
+            <div class="notification-liner">
+                <div class="notification-header">
+                    <span class="notification-close basic-icon ico-play_down"></span>
+                    <span class="notification-open basic-icon ico-play"></span>
+                    <div class="notification-icons">
+                        {{if author}}
+                        <div class="avatar with-user-id" data-user-name="{{= author.username}}" {{if author.public}} data-user-url="{{= author.url}}"{{/if}}>
+                        <a {{if author.public}}href="{{= author.url}}"{{/if}} title="{{= author.display_name}} ({{= author.username}})">
+                            <img class="author-icon" src="{{= author.icon_url}}" alt="{{= author.display_name}}">
+                        </a>
+                        </div>
+                        {{/if}}
+                    </div>
+                    <span class="notification-subject">
+                        <a href="{{= project.url}}" title="{{= project.name}}">
+                            <img class="project-icon" src="{{= project.icon_url}}" alt="{{= project.name}}">
+                        </a>
+                        {{if app_config}}
+                        <a href="{{= app_config.url}}" title="{{= app_config.mount_label}}">
+                            <img class="app-icon" src="{{= app_config.icon_url}}" alt="{{= app_config.name}}">
+                        </a>
+                        {{/if}}
+                        <a href="{{= link}}">{{= subject}}</a>
+                    </span>
+                </div>
+                <div class="notification-body">{{html _rendered}}</div>
+                <div class="notification-footer">
+                    <em><time class="notification-time" datetime="{{= pubdate}}Z">{{= pubdate}}</time></em>
+                </div>
+            </div>
+        </div>
+        {% endraw %}
+    </script>
+    <script id="project-template" type="text/x-jQuery-tmpl">
+        {% raw %}
+        <div class="project-container"
+                data-project_id="{{= _id}}">
+            <a href="{{= url}}">
+                <img class="project-icon" src="{{= icon_url}}" alt="{{= name}}">
+            </a>
+            <input type="checkbox" id="project-visible-{{= _id}}"
+                    class="filter project-filter" {{if filterEnabled}}checked="checked"{{/if}}
+                    data-project_id="{{= _id}}">
+            <label for="project-visible-{{= _id}}" class="project-name">{{= name}}</label>
+            <em class="unread-count project-unread-count project-{{= _id}} hidden"></em>
+            <div class="app_config-list">
+            {{each app_configs}}
+                <div class="app_config-container"
+                        data-project_id="{{= project_id}}"
+                        data-app_config_id="{{= app_config_id}}">
+                    <a href="{{= url}}">
+                        <img class="filter-app_config-icon" src="{{= icons['24']}}" alt="{{= tool_name}}">
+                    </a>
+                    <input type="checkbox" id="app_config-visible-{{= _id}}"
+                            class="filter app_config-filter" {{if filterEnabled}}checked="checked"{{/if}}
+                            data-project_id="{{= project_id}}"
+                            data-app_config_id="{{= _id}}">
+                    <label for="app_config-visible-{{= _id}}" class="app_config-name">{{= mount_label}}</label>
+                    <em class="unread-count app_config-unread-count app_config-{{= _id}} hidden"></em>
+                </div>
+            {{/each}}
+            </div>
+        </div>
+        {% endraw %}
+    </script>
+{% endblock %}

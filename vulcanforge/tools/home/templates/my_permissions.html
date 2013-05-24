@@ -1,0 +1,46 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('home/project_home.scss',scope='tool') %}
+
+{% block title %}Project {{c.project.homepage_title}} User Permissions{% endblock %}
+
+{% block header %}Project {{c.project.homepage_title}} User Permissions{% endblock %}
+
+{% block content %}
+<div class="padded">
+    <h2>Your Permissions for {{ c.project.name }}</h2>
+    <div class="project-admin-tools">
+        {% for tool_setup in tool_setups %}
+            <div class="admin-section-setup">
+                <h3>{{ tool_setup.title }}</h3>
+                <table>
+                    <tbody>
+                    <tr>
+                        <td class="admin-setup-icon">
+                            <img src="{{ tool_setup.icon.url }}" class="{{ tool_setup.icon.class_name }}" alt="">
+                        </td>
+                        <td class="admin-setup-content">
+                            <p>{{ tool_setup.description }}</p>
+                            <h4>Actions</h4>
+                            <ul class="admin-special-links">
+                                {% for a_text, url in tool_setup.actions.iteritems() %}
+                                    <li><a href="{{ url }}">{{ a_text }}</a></li>
+                                {% endfor %}
+                            </ul>
+                            {% if tool_setup.perm_descriptions %}
+                                <h4>Permissions</h4>
+                                <ul>
+                                    {% for pd in tool_setup.perm_descriptions %}
+                                        <li>{{ pd }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

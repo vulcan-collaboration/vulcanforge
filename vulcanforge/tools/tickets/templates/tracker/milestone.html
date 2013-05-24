@@ -1,0 +1,45 @@
+{% extends 'vehicleforge.tools.tickets:templates/tracker/master.html' %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / {{ field.label }} {{ milestone.name }}{% endblock %}
+
+{% block header %}{{ field.label }} {{ milestone.name }}{% endblock %}
+
+{% block actions %}
+    {% if allow_edit and count != 0 %}
+        {{ g.icon_button_widget.display(label='Bulk Edit', icon='ico-edit',
+                href=tg.url('edit/', dict(q=q, limit=limit, sort=sort)
+                )) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="padded top-spaced">
+        <ul class="property-list">
+            <li>
+                <span class="label">Status:</span>
+                <span
+                    class="value">{{ milestone.closed and 'Closed' or 'Open' }}</span>
+            </li>
+            <li>
+                <span class="label">Due Date:</span>
+                <span class="value">{{ milestone.due_date or 'N/A' }}</span>
+            </li>
+            <li>
+                <span class="label">Progress:</span>
+                <span class="value">{{ closed }} / {{ total }}</span>
+            </li>
+        </ul>
+        {% if milestone.description %}
+            <p>{{ milestone.description }}</p>
+        {% endif %}
+        {{ c.ticket_search_results.display(solr_error=solr_error,
+    count=count,
+    limit=limit,
+    query=q,
+    tickets=tickets,
+    sortable_custom_fields=sortable_custom_fields,
+    columns=columns,
+    page=page,
+    sort=sort) }}
+    </div>
+{% endblock %}

@@ -1,0 +1,34 @@
+<ul class="project-filter-list">
+{% for project in projects %}
+    <li class="project-filter-item">
+        <label for="project-filter-{{ project._id }}" class="project-label" title="{{ project.name }}">
+            <a href="{{ project.url }}"><img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }} icon"></a>
+            <input type="checkbox" class="project-filter-checkbox"
+                   name="project-filter-{{ project._id }}"
+                   id="project-filter-{{ project._id }}"
+                   value="{{ project._id }}"
+                   {% if project_state[project._id] %}
+                   checked="checked"
+                   {% endif %} >
+            {{ project.name }}
+        </label>
+        <ul class="app_config-filter-list">
+            {% for app_config in project.app_configs %}
+                <li class="app_config-filter-item">
+                    <label for="app_config-filter-{{ app_config._id }}" class="app_config-label" title="{{ app_config.options.mount_label }}">
+                        <a href="{{ app_config.url }}"><img class="app-icon" src="{{ app_config.icon_urls['24'] }}" alt="{{ app_config.tool_name }} icon"></a>
+                        <input type="checkbox" class="app_config-filter-checkbox"
+                               name="app_config-filter-{{ app_config._id }}"
+                               id="app_config-filter-{{ app_config._id }}"
+                               value="{{ app_config._id }}"
+                               {% if app_config_state[app_config._id] %}
+                               checked="checked"
+                               {% endif %} >
+                        {{ app_config.options.mount_label }}
+                    </label>
+                </li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ul>

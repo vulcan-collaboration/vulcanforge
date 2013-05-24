@@ -1,0 +1,4 @@
+
+
+class VisualizerError(Exception):
+    pass

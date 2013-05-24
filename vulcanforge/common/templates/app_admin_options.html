@@ -1,0 +1,21 @@
+<form method="post" action="{{c.project.url()}}admin/{{app.config.options.mount_point}}/configure">
+    <div class="vf-field-list">
+  {% for o in app.config_options if o.name not in ['mount_point', 'mount_label', 'ordinal'] %}
+        <div class="vf-field">
+          <label for="{{o.name}}">{{o.name}}:</label>
+          {% if not allow_config %}
+               {{app.config.options.get(o.name, o.default)}}
+          {% else%}
+            <input id="{{o.name}}" name="{{o.name}}" value="{{app.config.options.get(o.name, o.default)}}">
+          {% endif %}
+        </div>
+  {% else %}
+    <p>No options to administer for {{app.config.options.mount_point}}.</p>
+  {% endfor %}
+    </div>
+  {% if allow_config %}
+    <div class="vf-form-controls">
+      <input type="submit" value="Save"/>
+    </div>
+  {% endif %}
+</form>

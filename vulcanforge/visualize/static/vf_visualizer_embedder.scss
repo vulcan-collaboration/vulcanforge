@@ -1,0 +1,169 @@
+@import "css/init.scss";
+
+.visualizerContainer {
+    width: 100%;
+    height: auto;
+    border: 0px solid #aaa;
+    padding:  0px;
+    margin:  0px;
+    border-bottom:  1px solid #999;
+    background-color: #fff;
+}
+
+.visualizerWrapper .visualizerToolbar {
+    border-top:  1px solid #888;
+    @include linearGradient2(top, #999, #555);
+}
+
+.post-body .visualizerWrapper .visualizerToolbar{
+    padding-bottom: 6px;
+}
+
+.visualizerWrapper .visualizerContainer {
+    height: 700px;
+}
+
+.visualizerFooter {
+    height: 20px;
+    line-height: 15px;
+    padding:  0px 5px;
+}
+
+.visualizerWrapper .visualizerFooter {
+    padding: 2px;
+    height: 15px;
+}
+
+#vfLink {
+    width: 150px;
+    height: 30px;
+    display: inline-block;
+    float:left;
+    margin-right: 15px;
+    background-image: url(vf_icon.png);
+    background-repeat: no-repeat;
+}
+
+.bomLocation {
+    font-weight: normal;
+    font-size: 11px;
+    color: #fff;
+    float: left;
+    vertical-align: top;
+}
+
+.visualizerWrapper .bomLocation {
+    color: #555;
+}
+
+.bomDownload {
+    font-weight: normal;
+    font-size: 11px;
+    float: left;
+    margin-left: 15px;
+}
+
+.bomDownload a{
+    color: #fff;
+}
+
+.visualizerToolbar .new-window-container {
+    float: right;
+    vertical-align: middle;
+    display: inline-block;
+    margin: 6px 0 0 0;
+}
+
+.visualizerToolbar .visualizerTabs {
+    float: left;
+    margin: 5px 0 0 5px;
+}
+
+div#comment div.visualizerTabs ul.ui-tabs-nav{
+    margin-left: 0;
+    padding-left: 0;
+}
+
+div.visualizerTabs ul.ui-tabs-nav li.ui-state-default{
+    display: inline-block;
+    padding: $pu/2 $pu;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    line-height: 18px;
+}
+
+div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.visualizerTabs li.ui-tabs-selected{
+    cursor: default;
+    @include linearGradient2(top, #fff, #ddd);
+}
+
+.visualizerTabs li.ui-tabs-unselected{
+    @include linearGradient2(top, #555, #393939);
+    border-bottom: none;
+    color: #fff;
+}
+
+.visualizerTabs li.ui-tabs-unselected:hover{
+    background-image: none;
+    @include linearGradient2(top, #000, #111);
+}
+
+.visualizerTabs li.ui-tabs-unselected a {
+    color: #eee;
+    text-shadow: 0 0 1px #000;
+}
+
+.visualizerTabs li.ui-tabs-selected a{
+    cursor: default;
+    border-top-left-radius: 1em;
+    border-top-right-radius: 1em;
+}
+
+.visualizerTabs li a {
+    vertical-align: bottom;
+}
+
+.visualizerTabs a.dl-link{
+    background-image: url("download_icon.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+    height: 24px;
+    width: 16px;
+    display: inline-block;
+}
+
+.vis-repo iframe.visualizerContainer{
+    min-height: 700px;
+}
+
+.new-window-button {
+    background-color: #292929;
+    padding: 1ex 1em;
+    border-bottom-left-radius: 1em;
+}
+
+.new-window-button:link,
+.new-window-button:visited {
+    color: #fff;
+}
+
+.new-window-button:hover,
+.new-window-button:active {
+    color: #f06;
+}
+
+.new-window-container.stand-alone {
+    position: relative;
+    height: 35px;
+}
+
+.new-window-container.stand-alone .new-window-button{
+    position: absolute;
+    right: 0;
+    border-radius: 1em;
+}

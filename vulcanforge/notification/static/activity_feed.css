@@ -1,0 +1,80 @@
+.notification-list
+{
+    list-style: none;
+    padding: 0;
+}
+
+.notification-list-item
+{
+    padding: 1ex 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.notification-icons,
+.notification-content
+{
+    display: table-cell;
+    vertical-align: top;
+}
+
+.notification-icons {
+    padding: 1ex;
+    width: 48px;
+}
+
+.notification-icon {
+    display: inline-block;
+    height: 3em;
+    vertical-align: middle;
+}
+
+.notification-header,
+.notification-footer {
+    padding: 1ex;
+}
+
+.notification-header .notification-icon {
+    height: 2em;
+}
+
+.notification-footer {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.notification-date
+{
+    font-weight: normal;
+    font-style: italic;
+}
+
+/*------------------------*/
+/*------------------------*/
+
+ul.semantic {
+    padding: 0;
+    list-style: none;
+}
+
+/*------------------------*/
+
+.notification-filters,
+.notification-feed {
+    display: table-cell;
+    vertical-align: top;
+}
+
+.notification-filters {
+    width: 10em;
+}
+
+.filter-project-icon,
+.filter-tool-icon {
+    height: 24px;
+    vertical-align: middle;
+}
+
+.filter-project,
+.filter-tool-item {
+    white-space: nowrap;
+}

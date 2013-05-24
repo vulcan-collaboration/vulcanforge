@@ -1,0 +1,151 @@
+{% extends 'vulcanforge.visualizer:templates/iframecontent.html' %}
+
+{% block content %}
+    <div id="thingiviewControls"></div>
+    <div id="prompt">Loading CAD artifact, please be patient...</div>
+    <div id="viewer" style="width:100%;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function(global){
+        "use strict";
+
+        var $ = global.jQuery,
+            AltResourceManager = global.AltResourceManager,
+            altRest = getParameterByName('altRest'),
+            refId = getParameterByName('refId'),
+            altManager,
+            msgSpan = null,
+            promptContainer = $('#prompt'),
+            loadingMsg = 'The CAD artifact is being processed for ' +
+                         'visualization, this may take some time',
+            thingiView,
+            data = {},
+            $controls = $('#thingiviewControls'),
+            isRotating = true;
+
+        // make controls
+        $(' <button/>').
+            text('Top').
+            bind('click', function () {
+                thingiView.setCameraView('top');
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Side').
+            bind('click', function () {
+                thingiView.setCameraView('side');
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Bottom').
+            bind('click', function () {
+                thingiView.setCameraView('bottom');
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Diagonal').
+            bind('click', function () {
+                thingiView.setCameraView('diagonal');
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Zoom +').
+            bind('click', function () {
+                thingiView.setCameraZoom(50);
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Zoom -').
+            bind('click', function () {
+                thingiView.setCameraZoom(-50);
+            }).
+            appendTo($controls);
+        $controls.append('Rotation: ');
+        $('<button/>').
+            text('on').
+            bind('click', function () {
+                if (!isRotating) {
+                    isRotating = true;
+                    thingiView.setRotation(isRotating);
+                }
+            }).
+            appendTo($controls);
+        $controls.append('| ');
+        $('<button/>').
+            text('off').
+            bind('click', function () {
+                if (isRotating) {
+                    isRotating = false;
+                    thingiView.setRotation(isRotating);
+                }
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Surface').
+            bind('click', function () {
+                thingiView.setObjectMaterial('solid');
+            }).
+            appendTo($controls);
+        $('<button/>').
+            text('Wireframe').
+            bind('click', function () {
+                thingiView.setObjectMaterial('wireframe');
+            }).
+            appendTo($controls);
+
+
+        if (refId){
+            data.index_id = refId;
+        }
+
+        $('#viewer').height($(window).height()-60);
+        thingiView = new Thingiview("viewer");
+        thingiView.initScene();
+        thingiView.setObjectColor('#C0D8F0');
+
+        altManager = new AltResourceManager(altRest, {
+            processor: "cad",
+            data: data,
+            render: function(url) {
+                $('#prompt').html('');
+                thingiView.loadOBJ(url);
+                thingiView.setObjectMaterial('solid');
+                thingiView.setBackgroundColor('#000000');
+                thingiView.setCameraZoom(0);
+            },
+            loading: function() {
+                if (msgSpan === null) {
+                    msgSpan = $('<span />', {
+                        "class": "loading-msg",
+                        "text": loadingMsg
+                    });
+                    promptContainer.html(msgSpan);
+                }
+                msgSpan.text(msgSpan.text() + ' .');
+            },
+            errorFunc: function() {
+                promptContainer.html($('<span/>', {
+                    'class': "warning_text",
+                    'text': "There was an error processing this file. It is unavailable for viewing within the FORGE"
+                }));
+            }
+        });
+
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+            var regexS = "[\\?&]" + name + "=([^&#]*)";
+            var regex = new RegExp(regexS);
+            var results = regex.exec(window.location.href);
+            if(results == null)
+                return "";
+            else
+                return decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        altManager.poll();
+
+    }(window));
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends g.templates['master'] %}
+
+{% set hide_header = false %}
+
+{% block nav_menu %}{% endblock %}
+{% block top_nav %}{% endblock %}
+{% block inner_grid %}{% endblock %}
+
+{% block title %}{{ c.neighborhood.name }} / {{ title }}{% endblock %}
+{% block header %}{{ c.neighborhood.name }}{% endblock %}
+
+{% block content %}
+{{ content }}
+{% endblock %}

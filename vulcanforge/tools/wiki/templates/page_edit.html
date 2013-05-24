@@ -1,0 +1,70 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}} / Edit{% endblock %}
+
+{% block header %}Edit <i>"{{page.title}}"</i>{% endblock %}
+
+{% block extra_css %}
+<style type="text/css">
+  textarea[name="text"]{
+    height: 600px;
+  }
+</style>
+{% endblock %}
+
+{% block actions %}
+  {{wiki_macros.page_actions(page, subscribed=subscribed, is_editing=True)}}
+{% endblock %}
+
+{% block wiki_content %}
+<form method="POST" class="can-retry" action="update" id="page_edit_form" enctype="multipart/form-data">
+    <ul class="field-list padded">
+        <li>
+            <label>Name:</label>
+            <input class="long" maxlength="40" type="text" name="title" id="title" value="{{page.title}}" placeholder="Page name" required="required" autofocus="autofocus"/>
+        </li>
+        <li>
+            <label>Labels:</label>
+            {{c.label_edit.display(id='labels', name='labels', value=page.labels)}}
+        </li>
+        {% if c.app.content_agreement %}
+        <li>
+            <label>Protected by Content Agreement:</label>
+            <input type="checkbox" name="content_agreement_protected" id="content_agreement_protected" {% if page.content_agreement_protected %} checked {% endif %}/>
+        </li>
+        {% endif %}
+        <li>
+            <label>Content:</label>
+            <div>
+                {{c.markdown_editor.display(id='text', name='text',value=page.text)}}
+            </div>
+        </li>
+        {% if not page_exists or h.has_access(page, 'edit') %}
+        <li>
+            <label>Attach Files:</label>
+            {{c.attachments_field.display(name='new_attachments')}}
+        </li>
+        {% endif %}
+    </ul>
+    <div class="form-controls">
+        <input type="submit" value="Save" title="Save">
+        <input type="reset" value="Cancel" title="Cancel">
+    </div>
+</form>
+    {% if page_exists %}
+        {{c.attachment_list.display(value=page)}}
+    {% endif %}
+{% endblock %}
+
+{% block wiki_extra_js %}
+{{ super() }}
+<script type="text/javascript">
+  $('#page_edit_form input[type=reset]').click(function(){
+    {% if page_exists %}
+      window.location.href = "{{page.url()}}";
+    {% else %}
+      window.location.href = "{{c.app.url}}";
+    {% endif %}
+  });
+</script>
+{% endblock %}

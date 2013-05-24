@@ -1,0 +1,346 @@
+.vf-filebrowser-container {
+}
+
+.vf-filebrowser-container .relatedArtifactsPanelHolder {
+    margin: 0;
+}
+
+.vf-filebrowser-root-container {
+    position: relative;
+    background: #f8f8f8;
+    border-radius: 1ex;
+    margin-bottom: 2em;
+}
+
+
+.vf-filebrowser-loader {
+    display: block;
+    height: 19px;
+    width: 220px;
+    background: url(ajax-loader.gif) no-repeat center center;
+}
+
+
+.vf-filebrowser-iconInline {
+    display: inline-block;
+    min-height: 1em;
+    padding-left: 1.5em;
+    background-image: url(file_icon2.png);
+    background-size: 1em 1em;
+    background-position: left center;
+    background-repeat: no-repeat;
+}
+
+.vf-filebrowser-iconInline-file {
+    background-image: url(file_icon2.png);
+}
+
+.vf-filebrowser-iconInline-dir {
+    background-image: url(folder_icon.png);
+}
+
+/**
+ *  footer
+ */
+
+.vf-filebrowser-footer-container {
+    min-height: 1ex;
+    background: #ccc;
+    background-image: linear-gradient(top, #ccc, #ddd);
+    background-image: -o-linear-gradient(top, #ccc, #ddd);
+    background-image: -moz-linear-gradient(top, #ccc, #ddd);
+    background-image: -webkit-linear-gradient(top, #ccc, #ddd);
+    background-image: -ms-linear-gradient(top, #ccc, #ddd);
+}
+
+/**
+*  path
+*/
+
+.vf-filebrowser-path-container {
+    padding: 1ex 1em 0 1em;
+    background: #666;
+    overflow: hidden;
+}
+
+.vf-filebrowser-pathList {
+    display: inline;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.vf-filebrowser-pathNode {
+    display: inline-block;
+    padding: 0;
+}
+
+.vf-filebrowser-pathNode-link,
+.vf-filebrowser-pathNode-link:link,
+.vf-filebrowser-pathNode-link:active,
+.vf-filebrowser-pathNode-link:visited {
+    position: relative;
+    z-index: 10;
+    display: inline-block;
+    padding: 1ex 1em;
+    margin-right: -1ex;
+    color: #444;
+    background: #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    border-top-left-radius: 1ex;
+    border-top-right-radius: 1ex;
+}
+
+.vf-filebrowser-pathNode-link-current,
+.vf-filebrowser-pathNode-link-current:link,
+.vf-filebrowser-pathNode-link-current:active,
+.vf-filebrowser-pathNode-link-current:visited {
+    color: #222;
+    background: #eee;
+}
+
+.vf-filebrowser-pathNode-link-active,
+.vf-filebrowser-pathNode-link-active:link,
+.vf-filebrowser-pathNode-link-active:active,
+.vf-filebrowser-pathNode-link-active:visited {
+    z-index: 20000; /* above tooltips */
+    color: #222;
+    background: #f8f8f8;
+}
+
+.vf-filebrowser-pathTip {
+    padding: 0;
+    font-size: 12px;
+    background: #f8f8f8;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.vf-filebrowser-pathTip.ui-tooltip-default .qtip-content {
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.vf-filebrowser-pathTip-list {
+    list-style: none;
+    padding: 1ex 0;
+    margin: 0;
+}
+
+.vf-filebrowser-pathTip-childLink,
+.vf-filebrowser-pathTip-childLink:link,
+.vf-filebrowser-pathTip-childLink:active,
+.vf-filebrowser-pathTip-childLink:visited {
+    display: block;
+    padding: 0.5ex 1em;
+}
+
+.vf-filebrowser-pathTip-childLink:hover {
+    text-shadow: 0 0 2px white;
+    background: #B5C5EB;
+}
+
+/**
+*  status
+*/
+
+.vf-filebrowser-status-container {
+    background: #404040;
+    color: white;
+    box-shadow: inset 0 0 1em #202020;
+}
+
+.vf-filebrowser-statusEntry {
+    padding: 0.5ex 1ex;
+    text-shadow: 0 1px 1px black;
+}
+.vf-filebrowser-statusEntry:first-child {
+    padding-top: 1em;
+}
+.vf-filebrowser-statusEntry:last-child {
+    padding-bottom: 1em;
+}
+
+
+/**
+*  list
+*/
+
+.vf-filebrowser-list-container {
+    position: relative;
+    z-index: 20;
+    overflow: hidden;
+    background: #e8e8e8;
+}
+
+.vf-filebrowser-list-liner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.vf-filebrowser-listPanel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: 0 0px 1em #CCC;
+}
+
+.vf-filebrowser-listControlPanel {
+    overflow: auto;
+    padding: 0 1ex;
+    background: #e0e0e0;
+    background-image: linear-gradient(top, #ddd, #ccc);
+    background-image: -o-linear-gradient(top, #ddd, #ccc);
+    background-image: -moz-linear-gradient(top, #ddd, #ccc);
+    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
+    background-image: -ms-linear-gradient(top, #ddd, #ccc);
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #c0c0c0;
+}
+
+.vf-filebrowser-listControlPanel button,
+.vf-filebrowser-listControlPanel a {
+    display: inline-block;
+    min-height: 0;
+    margin: 2px;
+    padding: 1ex 1em;
+    line-height: 1em;
+    font-size: 11px;
+    background: none;
+    border: none;
+    border-radius: 3px;
+    box-shadow: none;
+}
+
+.vf-filebrowser-listControlPanel button:hover,
+.vf-filebrowser-listControlPanel a:hover {
+    background: #808080;
+}
+
+.vf-filebrowser-list {
+    display: table;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    width: 100%;
+}
+
+.vf-filebrowser-listItem-row {
+    display: table-row;
+    background: #f0f0f0;
+}
+
+.vf-filebrowser-listItem-row:nth-child(even) {
+    background: #f8f8f8;
+}
+
+.vf-filebrowser-listItem-cell {
+    display: table-cell;
+    padding: 0.5ex 1em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.vf-filebrowser-listItem-cell-file,
+.vf-filebrowser-listItem-cell-modified,
+.vf-filebrowser-listItem-cell-author {
+    white-space: nowrap;
+}
+
+.vf-filebrowser-listItem-header-row {
+    background: #e0e0e0;
+    font-weight: bold;
+    color: #666;
+    text-shadow: 0 0 2px white;
+    background-image: linear-gradient(top, #ddd, #ccc);
+    background-image: -o-linear-gradient(top, #ddd, #ccc);
+    background-image: -moz-linear-gradient(top, #ddd, #ccc);
+    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
+    background-image: -ms-linear-gradient(top, #ddd, #ccc);
+}
+
+.vf-filebrowser-listItem.vf-filebrowser-listItem-selected {
+    background: #d9dfed;
+    background-image: linear-gradient(bottom, #B5C5EB, #D1E0FF);
+    background-image: -o-linear-gradient(bottom, #B5C5EB, #D1E0FF);
+    background-image: -moz-linear-gradient(bottom, #B5C5EB, #D1E0FF);
+    background-image: -webkit-linear-gradient(bottom, #B5C5EB, #D1E0FF);
+    background-image: -ms-linear-gradient(bottom, #B5C5EB, #D1E0FF);
+}
+
+.vf-filebrowser-listItem-link-file {
+    display: block;
+    padding: 0.5ex 0;
+}
+
+.vf-filebrowser-listItem-link-file-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    background-position: center center;
+    vertical-align: middle;
+    background-image: url(file_icon2.png);
+}
+
+.vf-filebrowser-listItem-link-file-icon-dir {
+    background-image: url(folder_icon.png)
+}
+
+.vf-filebrowser-listItem-link-file-icon-file {
+    background-image: url(file_icon2.png)
+}
+
+.vf-filebrowser-listItem-link-file-icon-file-image {
+    background-image: url(file_icon2.png)
+}
+
+.vf-filebrowser-listItem-link-file-name {
+    display: inline-block;
+    line-height: 14px;
+    vertical-align: middle
+}
+
+.vf-filebrowser-listItem-notes {
+    padding-left: 21px;
+    font-size: 0.8em;
+    color: #888;
+    font-style: italic;
+}
+
+.vf-filebrowser-pleasewait-container {
+    position: absolute;
+    z-index: 10000;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* --- */
+
+.vf-ui-droptarget::after
+{
+    content: "Drop files here";
+    position: absolute;
+    z-index: 1000000;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(255,255,255, 0.5);
+    color: #808080;
+    font-size: 2em;
+    text-align: center;
+    line-height: 2em;
+    border: 4px dashed #808080;
+}
+
+.avatar {
+    display: inline-block;
+    vertical-align: top;
+}

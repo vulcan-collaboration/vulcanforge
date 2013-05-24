@@ -1,0 +1,7 @@
+{% if not force_display %}
+<p class="padded">This resource is not known to be viewable in your browser.
+    Try to <a href="?force_display=True">display it</a> anyway or
+    <a href="{{value}}">download it</a> instead.</p>
+{% else %}
+{{widget.syntax_widget.display(value=value)}}
+{% endif %}

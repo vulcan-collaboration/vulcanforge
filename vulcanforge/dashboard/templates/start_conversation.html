@@ -1,0 +1,51 @@
+{% extends g.templates['master'] %}
+
+{% block title %}Start a conversation{% endblock %}
+{% block header %}Start a Conversation{% endblock %}
+
+{% block content %}
+    {{ c.form.display(value=form_values) }}
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        $(function () {
+            $('.recipients-field').
+                bind( "keydown", function( event ) {
+                    if ( event.keyCode === $.ui.keyCode.TAB &&
+                            $( this ).data( "autocomplete" ).menu.active ) {
+                        event.preventDefault();
+                    }
+                }).
+                autocomplete({
+                    minLength: 0,
+                    autoFocus: true,
+                    source: function (request, callback) {
+                        var items = request.term.split(/,\s*/),
+                            q = request.term;
+                        if (items.length) {
+                            q = items[items.length - 1];
+                        }
+                        $.ajax({
+                            url: '/autocomplete/user',
+                            data: {q: q},
+                            success: function (data, status, request) {
+                                callback(data.results);
+                            }
+                        });
+                    },
+                    select: function( event, ui ) {
+                        var terms = this.value.split( /,\s*/ );
+                        // remove the current input
+                        terms.pop();
+                        // add the selected item
+                        terms.push( ui.item.value );
+                        // add placeholder to get the comma-and-space at the end
+                        terms.push( "" );
+                        this.value = terms.join( ", " );
+                        return false;
+                    }
+                });
+        });
+    </script>
+{% endblock %}

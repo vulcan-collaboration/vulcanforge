@@ -1,0 +1,271 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% do g.resource_manager.register_js('js/project_invitation.js') %}
+
+{% block title %}{{c.project.name}} / Members {% endblock %}
+
+{% block header %}Team Members{% endblock %}
+
+{% block content %}
+    <div class="padded">
+
+        {% if requests %}
+        <h3 class="content-section-header">Membership Requests</h3>
+        <table id="member_requests" class="wide-table hover-rows">
+            <thead>
+                <tr>
+                    <th class="mem-left">Avatar</th>
+                    <th>Request Text</th>
+                    <th class="mem-right">Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for member_req in requests %}
+                <tr>
+                    <td class="mem-left">{{g.avatar.display(user=member_req.user, size=48)}}</td>
+                    <td>{{ member_req.text }}</td>
+                    <td class="mem-right">
+                        <input class="accept-user" data-user="{{ member_req.user.username }}" type="button" value="Accept" title="Accept User Into Project" />
+                        <input class="deny-user" data-user="{{ member_req.user.username }}" type="button" value="Deny" title="Deny User" />
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if cancellations %}
+            <h3 class="content-section-header">Membership Cancellation Requests</h3>
+            <table id="cancel_requests" class="wide-table hover-rows">
+                <thead>
+                <tr>
+                    <th class="mem-left">Avatar</th>
+                    <th>Text</th>
+                    <th class="mem-right">Manage</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for cancellation in cancellations %}
+                    <tr>
+                        <td class="mem-left">{{g.avatar.display(user=cancellation.user, size=48)}}</td>
+                        <td>{{ cancellation.text }}</td>
+                        <td class="mem-right">
+                            <input class="allow-leave" data-user="{{ cancellation.user.username }}" type="button" value="Allow Withdrawal" title="Allow User to Leave Project" />
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <h3 class="content-section-header">Invitations</h3>
+        {% if invitations %}
+            <table id="member_invites" class="wide-table hover-rows">
+                <thead>
+                <tr>
+                    <th class="mem-left">Recipient</th>
+                    <th>Invitation Text</th>
+                    <th class="mem-right">Manage</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for invite in invitations %}
+                    <tr>
+                        <td class="mem-left">
+                        {% if invite.user_id %}
+                            {{g.avatar.display(user=invite.user, size=48)}}
+                        {% else %}
+                            {{ invite.email }}
+                        {% endif %}
+                        </td>
+                        <td>{{ invite.text }}</td>
+                        <td class="mem-right">
+                            <input class="rescind-invite" data-invite="{{ invite._id|string }}" type="button" value="Rescind" title="Rescind Invitation" />
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+        <p>No pending invitations</p>
+        {% endif %}
+        <p><a href="#" class="btn" id="invite-user">Invite New</a></p>
+        <div id="invite-form-container"></div>
+
+        <h3 class="content-section-header">Current Team</h3>
+        <table id="admin_members" class="wide-table hover-rows">
+            <thead>
+                <tr>
+                    <th class="mem-left">Avatar</th>
+                    <th>Expertise</th>
+                    <th>Role(s)</th>
+                    <th class="mem-right">Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr class="member-row">
+                    <td class="mem-left">{{g.avatar.display(user=member.user, size=48)}}</td>
+                    <td>{{ member.user.expertise }}</td>
+                    <td>{{ member.roles }}</td>
+                    <td class="mem-right">
+                        {% if not member.is_self %}
+                            {% if member.status != "removal-requested" %}
+                                {% if can_make_admin and not member.is_admin %}
+                                    <input class="admin-user" data-user="{{ member.user.username }}" type="button" value="Make Admin" title="Make User an Admin" />
+                                {% endif %}
+                                <input class="remove-user" data-user="{{ member.user.username }}" type="button" value="Remove User" title="Remove User from Project" />
+                            {% else %}
+                                Removal request pending approval
+                                <input class="rescind-remove" data-user="{{ member.user.username }}" type="button" value="Rescind Removal" title="Rescind Removal Request" />
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {#
+        <h3>Purse Distribution Plan</h3>
+        {{ c.form.display(**form_params) }}
+        #}
+
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function($, $vf){
+        "use strict";
+
+        var inviteForm = null;
+
+        {% if requests %}
+        /* accept user into project */
+        $('.accept-user').click(function() {
+            var username = $(this).attr('data-user');
+            $(this).parent().html('');
+            $.post("{{ base_url }}accept_member", {
+                _session_id: $.cookie('_session_id'),
+                username: username
+            }, function(response) {
+                window.location.reload(true);
+            }, 'json');
+        });
+
+        /* deny user */
+        $('.deny-user').click(function() {
+            var username = $(this).attr('data-user'),
+                row = $(this).parents('tr').first(),
+                table = $(this).parents('table').first();
+            $(this).parent().html('');
+            $.post("{{ base_url }}deny_member", {
+                _session_id: $.cookie('_session_id'),
+                username: username
+            }, function(response) {
+                row.fadeOut('fast', function() {
+                    if ((table).find('tbody > tr').length === 1) {
+                        $(table).replaceWith('<p>No more requests</p>');
+                    }
+                });
+            }, 'json');
+        });
+        {% endif %}
+
+        {% if cancellations %}
+        /* allow leave */
+        $('.allow-leave').click(function() {
+            var username = $(this).attr('data-user');
+            $(this).parent().html('');
+            $.post("{{ base_url }}allow_leave", {
+                _session_id: $.cookie('_session_id'),
+                username: username
+            }, function(response) {
+                window.location.reload(true);
+            }, 'json');
+        });
+        {% endif %}
+
+        /* rescind invitation */
+        $('.rescind-invite').click(function() {
+            var inviteId = $(this).attr('data-invite');
+            $(this).remove();
+            $.post("{{ base_url }}rescind_invite", {
+                _session_id: $.cookie('_session_id'),
+                invite_id: inviteId
+            }, function(response) {
+                window.location.reload(true);
+            }, 'json');
+        });
+
+        /* new invitation */
+        $('#invite-user').click(function() {
+            if (inviteForm === null) {
+                inviteForm = new $vf.InvitationForm({
+                    containerE: $("#invite-form-container"),
+                    action: "{{ base_url }}invite_new",
+                    autocompleteUrl: '/autocomplete/user'
+                });
+            }
+            inviteForm.show();
+
+            return false;
+        });
+
+        /* remove user from project */
+        $('.remove-user').click(function() {
+            var go,
+                row,
+                that = $(this),
+                username = $(this).attr('data-user');
+            go = confirm("Remove " + username + " from the project?");
+            if (go === true) {
+                row = that.parents('tr.member-row').first();
+                that.remove();
+                $.post("{{ base_url }}remove_member", {
+                    _session_id: $.cookie('_session_id'),
+                    username: username
+                }, function(response) {
+                    window.location.reload(true);
+                }, 'json');
+            }
+        });
+
+        /* make user admin */
+        $('.admin-user').click(function() {
+            var go,
+                row,
+                username = $(this).attr('data-user');
+            go = confirm("Make " + username + " an admin?");
+            if (go === true) {
+                $(this).remove();
+                $.post("{{ base_url }}admin_member", {
+                    _session_id: $.cookie('_session_id'),
+                    username: username
+                }, function(response) {
+                    window.location.reload(true);
+                }, 'json');
+            }
+        });
+
+        /* rescind removal request */
+        $('.rescind-remove').click(function() {
+            var go,
+                row,
+                username = $(this).attr('data-user');
+            go = confirm("Rescind request to remove " + username + "?");
+            if (go === true) {
+                $(this).remove();
+                $.post("{{ base_url }}rescind_remove", {
+                    _session_id: $.cookie('_session_id'),
+                    username: username
+                }, function(response) {
+                    window.location.reload(true);
+                }, 'json');
+            }
+        });
+
+    }(jQuery, window.$vf));
+</script>
+{% endblock %}

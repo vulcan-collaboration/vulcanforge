@@ -1,0 +1,40 @@
+
+#messages {
+    position: fixed;
+    top: 3em;
+    right: 3em;
+    z-index: 1000000000000;
+    font-size: 12px;
+}
+
+#messages .message {
+    position: relative;
+    padding: 3ex;
+    margin: 10px;
+    font-weight: bold;
+    border-radius: 1ex;
+    box-shadow: 0 0.5ex 1ex black;
+    background: rgba(255, 224, 192, 0.8);
+    border: 2px solid rgba(192, 128, 64, 1);
+    color: rgba(64, 32, 0, 1);
+    text-shadow: none;
+}
+
+#messages .message.confirm,
+#messages .message.success {
+    background-color: rgba(192, 255, 192, 0.8);
+    border-color: rgba(64, 128, 64, 1);
+    color: rgba(0, 64, 0, 1);
+}
+
+#messages .message.error {
+    background-color: rgba(255, 192, 192, 0.8);
+    border-color: rgba(192, 64, 64, 1);
+    color: rgba(64, 0, 0, 1);
+}
+
+#messages .close-button {
+    position: absolute;
+    top: 0.5ex;
+    right: 0.5ex;
+}

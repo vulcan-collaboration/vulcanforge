@@ -1,0 +1,13 @@
+<input {{widget.j2_attrs({
+    'id':id,
+    'name': rendered_name,
+    'type':field_type,
+    'class':css_class,
+    'readonly':readonly,
+    'value': value,
+    'data-availabletags': available_tags,
+    }, attrs) }}>
+
+{#
+    'data-autocomplete-url': '/autocomplete/project_labels/{}'.format(project_id),
+    'data-autocomplete-key': 'q', #}

@@ -1,0 +1,132 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/deck.css') %}
+{% do g.resource_manager.register_js('admin/project_tools.js') %}
+
+{% block title %}{{c.project.name}} / Tools{% endblock %}
+
+{% block header %}Tools{% endblock %}
+
+{% block content %}
+  <div class="padded">
+      <fieldset class="vf-fieldset" style="overflow:auto">
+        <legend>Available Tools</legend>
+        {% for tool in installable_tools %}
+          <span class="text-centered installable_tool">
+            <a class="install_trig" data-tool="{{ tool['name'] }}">
+              <div class="tool-title">{{ tool['app'].tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
+              <img src="{{ g.theme.app_icon_url(tool['app'], 32) or 'unk.png' }}" alt="">
+            </a>
+          </span>
+        {% endfor %}
+        <!-- Removed [#318]
+        <span class="text-centered grid-4 installable_tool">
+          <a class="install_trig" data-tool="">
+            <span class="tool_title">Subproject</span><br />
+            <img src="{{ g.theme.app_icon_url('subproject', 32) }}" alt="">
+          </a>
+        </span>
+        -->
+      </fieldset>
+      <form method="post" action="update_mounts" id="install_form" style="display:none">
+        <input type="hidden" name="new.ordinal" value="{{installable_tools|length + c.project.direct_subprojects|length}}"/>
+        <input type="hidden" name="new.ep_name" class="new_ep_name">
+        <label >Label</label>
+        <div><input type="text" name="new.mount_label" class="new_mount_label"></div>
+        <label>Mount Point</label>
+        <div><input type="text" name="new.mount_point" class="new_mount_point"></div>
+        <div>&nbsp;</div>
+        <hr>
+        <div>&nbsp;</div>
+        <div>
+          <input type="submit" value="Save" name="new.install"> <a href="#" class="close btn link">Cancel</a>
+        </div>
+      </form>
+      {{c.install_modal.display(content='<h1>Install <span id="install_tool_label">Tool</span></h1>')}}
+
+    <h3 class="content-section-header">Installed tools</h3>
+    <p>
+        Sortable - define menu order by moving tools with your mouse.
+    </p>
+    <div id="sortable" class="clearfix fourcol">
+        {% for mount in mounts %}
+            {% if 'ac' in mount %}
+                {% set app = mount['ac'].load()(c.project, mount['ac']) %}
+                {% set links = app.admin_menu() %}
+                {% set label = mount['ac'].options['mount_label'] if mount['ac'].options['mount_label'] != 'Tool Name' else mount['ac'].options['mount_point'] %}
+                <div class="fleft">
+                    <ul class="deck">
+                        <li class="text-centered">
+                            <div class="tool-title">{{ label }}</div>
+                            <img src="{{ g.theme.app_icon_url(app, 48) }}" alt="">
+                        </li>
+                        {% for link in links %}
+                        <li>
+                            <a href="{{ link.url }}" class="{{ link.className }}">{{ link.label }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if app.installable %}
+                        <li>
+                          <form method="post" action="update_mounts" id="mounts_edit_2-{{loop.index0}}">
+                            <input type="hidden" class="mount_point"
+                                   name="tool-{{loop.index0}}.mount_point"
+                                   value="{{mount['ac'].options.mount_point}}"/>
+                            <input name="tool-{{loop.index0}}.delete" type="hidden" value="Delete"/>
+                            {% if mount['ac'].load().installable %}
+                              <a href="#" class="mount_delete">Delete</a>
+                            {% endif %}
+                          </form>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% if not app.installable %}
+                      <input type="hidden" class="mount_point" value="{{mount['ac'].options.mount_point}}"/>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if 'sub' in mount and not mount['sub'].deleted %}
+                <div class="fleft">
+                    <ul class="deck">
+                        <li class="text-centered">
+                            <span class="tool_name">{{ mount['sub'].name }}</span><br />
+                            <img src="{{ g.theme.app_icon_url('subproject', 48) }}" alt="">
+                        </li>
+                        <li>
+                          <form method="post" action="update_mounts" id="mounts_edit_2-{{loop.index0}}">
+                              <input type="hidden" class="shortname"
+                                     name="subproject-{{loop.index0}}.shortname"
+                                     value="{{mount['sub'].shortname}}"/>
+                              <input name="subproject-{{loop.index0}}.delete" type="hidden" value="Delete"/>
+                              <a href="#" class="mount_delete">Delete</a>
+                          </form>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+    </div>
+    <form id="mount_delete_form" style="display:none">
+      <div>Warning: This will destroy all data in this tool and is non reversable!</div>
+      <div>&nbsp;</div>
+      <hr>
+      <div>&nbsp;</div>
+      <div>
+        <input type="button" value="Delete" class="continue_delete"> <input type="button" value="Cancel" class="cancel_delete close">
+      </div>
+    </form>
+    {{c.admin_modal.display(content='<h1 id="popup_title"></h1><div id="popup_contents"></div>')}}
+    {{c.mount_delete.display(content='<h1>Confirm Delete</h1>')}}
+    <div><!--dummy-->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    var defaults = {
+        {% for tool in installable_tools %}
+        '{{tool.name}}':{'default_label':'{{tool.app.default_mount_label}}','default_mount':'{{tool.app.default_mount_point}}'}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+</script>
+{% endblock %}

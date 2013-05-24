@@ -1,0 +1,10 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% block title %}{{neighborhood.name}} / {{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    {{c.add_project.display(action=neighborhood.url() + 'register', value=form_data, neighborhood=neighborhood)}}
+{% endblock %}

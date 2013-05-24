@@ -1,0 +1,82 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+<div id="{{value.id_safe_slug}}" class="post old discussion-post {{ value.parent and 'with-parent' or ''}}">
+    <div class="post-columns">
+        <div class="post-avatar-column">
+            {% set size = value.parent and 48 or 64 %}
+            {{g.avatar.display(user=value.author(), size=size, compact=True)}}
+            <ul class="post-extras">
+                <li class="post-meta">{{lib.abbr_date(last_edit_date)}}</li>
+                {% if last_edit_name %}<li> edited by {{last_edit_name}}</li>{% endif %}
+            </ul>
+        </div>
+        <div class="post-body-column">
+            <a class="post-creator" href="{{value.author().url()}}" title="{{h.really_unicode(value.author().display_name)}}">{{h.really_unicode(value.author().display_name)}}</a>
+            <div class="display-post">
+                {% if show_subject %}
+                <div class="post-subject">{{value.subject or '(no subject)'}}</div>
+                {% endif %}
+                {{g.markdown.convert(value.text)|safe}}
+            </div>
+            {% if h.has_access(value, 'moderate') %}
+            <div class="edit_post_form hidden">
+                <div class="post edit">
+                    {{widgets.edit_post.display(
+                    value=value,
+                    submit_text='Save',
+                    action=value.absolute_url(),
+                    embedded=True
+                    )}}
+                </div>
+            </div>
+            {% endif %}
+            {{widgets.attachment_list.display(value=value, extraCSS='post-attachments')}}
+            {% if h.has_access(value.thread, 'post') %}
+            <div class="reply_post_form hidden">
+                <div class="posts-holder reply">
+                    <div class="post reply">
+                        <div class="post-avatar">
+                            {{g.avatar.display(user = c.user, size=32)}}
+                        </div>
+                        <div class="post-body">
+                            {{widgets.edit_post.display(
+                                submit_text='Post reply',
+                                action=value.absolute_url()+'reply',
+                                value=dict(
+                                    text='',
+                                    subject=value.reply_subject()
+                                ),
+                                embedded=True
+                            )}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% if c.user != c.user.anonymous() %}
+        <ul class="post-options">
+            <li>
+                {{widgets.related_artifacts.display(value=value)}}
+            </li>
+            <li>
+                {{g.button_widget.display('Reply', None, 'reply_post', 'ico-reply')}}
+            </li>
+            {% if h.has_access(value, 'moderate') %}
+            <li>
+                {{g.button_widget.display('Edit', None, 'edit_post', 'ico-edit')}}
+            </li>
+            {% endif %}
+            {% if h.has_access(value, 'moderate') %}
+            <li>
+                {{widgets.moderate_post.display(value=value, action=value.absolute_url() + 'moderate')}}
+            </li>
+            {% endif %}
+        </ul>
+        {% endif %}
+    </div>
+    {% if h.has_access(value.thread, 'moderate') and 'promote_to_thread' in widgets and not supress_promote %}
+    <div class="promote_to_thread_form push-{{3+indent}} span-{{16-indent}} last clear" style="display:none">
+        {{widgets.promote_to_thread.display(value=value, action=value.absolute_url()+'moderate')}}
+    </div>
+    {% endif %}
+</div>

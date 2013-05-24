@@ -1,0 +1,3 @@
+<{{tag}} class="artifact-link-container rendering{{' has-relations' if value.has_relations() else ''}}" {{(('data-iconURL="'+icon_url+'"') if icon_url else '')|safe}} data-refId="{{value.index_id()}}" data-artifactType="{{artifact_type}}" data-clickURL="{{url}}">
+    {{label}}{% if extra %}<extras>{{extra|safe}}</extras>{% endif %}
+</{{tag}}>

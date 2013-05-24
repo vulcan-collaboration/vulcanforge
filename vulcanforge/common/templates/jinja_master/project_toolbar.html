@@ -1,0 +1,32 @@
+{% if c.project %}
+<div id="project-toolbar">
+<ul class="links">
+    {% for s in c.project.sitemap() %}
+    {% if s.label == 'Home' %}
+    <li class="tool-link-wrapper home{% if s.url in request.url %} selected{% endif %}">
+    <a href="{{s.url}}" class="ui-no-icon tool-link" title="{{s.label}}">
+        <img src="{{ c.project.icon_url}}" alt="{{c.project.name}}">
+    </a>
+    </li>
+    {% else %}
+    <li class="tool-link-wrapper{% if s.url in request.url %} selected{% endif %}">
+        <a id="project-toolbar-button-{{ s.label|slugify }}" href="{{s.url}}" title="{{s.label}}" class="tool-link">
+            <img src="{{g.resource_manager.absurl('images/transparent.gif')}}" class="ui-icon-tool ui-icon-{{s.ui_icon or 'admin'}}">
+            <div class="tool-label">{{s.label}}</div>
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+    <li class="intellitrigger" style="display: none;">
+        <a href="#">
+            <span class="triple-circle-madness">
+                <span class="c1 circle"></span>
+                <span class="c2 circle"></span>
+                <span class="c3 circle"></span>
+            </span>
+            <span class="tool-label">More</span>
+        </a>
+    </li>
+</ul>
+</div>
+{% endif %}

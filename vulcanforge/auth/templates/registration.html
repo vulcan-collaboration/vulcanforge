@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+{% do g.resource_manager.register_css('css/core.scss') %}
+{% do g.resource_manager.register_css('notification/notify.css') %}
+
+{% do g.resource_manager.register_css('auth/password_field.scss') %}
+{% do g.resource_manager.register_css('auth/fancy_login/vf_landing_fang.css') %}
+{% do g.resource_manager.register_css('auth/registration/registration.scss') %}
+
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.cookie.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/allura-base.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/utils.js', scope='forge') %}
+
+{% do g.resource_manager.register_js('auth/fancy_login/Detector.js') %}
+{% do g.resource_manager.register_js('auth/fang/registration.js') %}
+{% do g.resource_manager.register_js('auth/registration/registration.js') %}
+{% do g.resource_manager.register_js('auth/password_field.js') %}
+
+{% do g.resource_manager.register_widgets(c) %}
+
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <title>VehicleFORGE Registration</title>
+    {% for blob in g.resource_manager.emit('css') %}
+        {{ blob }}
+    {% endfor %}
+    <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}" />
+
+    <style>.{{ g.antispam.honey_class }} { display:none } </style>
+
+    <script type="text/javascript"
+            src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+</head>
+<body>
+    <div id="header-wrapper"></div>
+    <div id="content-areas-wrapper">
+        <div id="left-toolbar"></div>
+        <div id="main-content-holder">
+            <div id="content-columns">
+                <div id="main-column" class="main-column">
+                    <div id="main-column-header">
+                        <h2>VehicleFORGE Registration</h2>
+                    </div>
+                    <div id="browserSupportErrorHolder"></div>
+                    <noscript>
+                        <div class="message error" id="noScriptErrorHolder">VehicleFORGE relies on JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
+                    </noscript>
+                    <div id="main-content">
+                        <ul class="process-list">
+                            <li class="has-icon process-step {{ step1 }}">Request activation email</li><li class="process-step-separa"></li><li class="has-icon process-step {{ step2 }}">
+                            {% if c.form.affiliate %}
+                                An administrator will validate your eligibility and send you an
+                                email with an activation link
+                            {% else %}
+                                Check your email for an activation link
+                            {% endif %}
+                        </li><li class="has-icon process-step-separa"></li><li class="process-step {{ step3 }}">Complete your registration</li>
+                        </ul>
+                        {{ c.form.display(value=form_values) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="right-toolbar"></div>
+    </div>
+    <div id="footer"></div>
+
+    {% for blob in g.resource_manager.emit('js') %}
+        {{ blob }}
+    {% endfor %}
+
+</body>
+</html>

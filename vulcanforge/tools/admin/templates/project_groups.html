@@ -1,0 +1,88 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/deck.css') %}
+
+{% block title %}{{c.project.name}} / Usergroups {% endblock %}
+
+{% block header %}Usergroups{% endblock %}
+
+{% block extra_css %}
+<style>
+button.linklike {
+border: 0;
+background: transparent;
+}
+button.linklike:hover {
+border: 0 !important;
+background: transparent !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="admin_groups_form" method="POST" action="update">
+  {% set index=0 %}
+  {% for row in roles|batch(4) %}
+  {% set i0=loop.index0  %}
+  <div class="fourcol">
+    {% for role in row %}
+    {% set i1 = i0*4 + loop.index0 %}
+    {% if role == None %}
+    <div class="fleft text-centered">
+      <a href="new" class="admin_modal" title="Add Group">
+        <h3>Add a Group</h3>
+        <p>
+          <span class="icon x48 ico-add"></span>
+        </p>
+      </a>
+    </div>
+    {% else %}
+    {{c.card.display(
+        index=i1,
+        id=role._id,
+        name=role.display_name,
+        roles=role.parent_roles(),
+        items=role.users_with_role(),
+        settings_href=role.settings_href
+    )}}
+    {% endif %}
+    {% endfor %}
+    <br style="clear:both"/>
+  </div>
+  {% endfor %}
+  <hr/>
+  <p class="clearfix">
+    <input type="submit" value="Save">
+    <a href="" class="btn link cancel">Cancel</a>
+  </p>
+</form>
+
+{{c.admin_modal.display(content='<h1 id="popup_title"></h1><div id="popup_contents"></div>')}}
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">(function() {
+var cval = $.cookie('_session_id');
+var csrf_input = $('<input name="_session_id" type="hidden" value="'+cval+'">');
+var $popup_title = $('#popup_title');
+var $popup_contents = $('#popup_contents');
+$('a.admin_modal').click(function(evt){
+  evt.preventDefault();
+  evt.stopPropagation();
+  var link = this;
+  $popup_title.html('');
+  $popup_contents.html('Loading...');
+  $.get(link.href, function (data) {
+    $popup_title.html(link.title);
+    $popup_contents.html(data);
+    $popup_contents.find('form').append(csrf_input);
+    $('.btn.link.close').click(function(){
+        $(this).trigger('close');
+        return false;
+    });
+  });
+});
+$('#sortable').sortable({items: ".fleft"});
+}());
+</script>
+{% endblock %}

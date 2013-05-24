@@ -1,0 +1,92 @@
+{% extends 'vulcanforge.tools.neighborhood_home:templates/monitor/base.html' %}
+
+{% block content %}
+    <div class="padded top-spaced">
+        <div id="artifact-stats-container">
+            <h3>Artifacts by date</h3>
+            <div id="stats-artifact-by-date" class="timeline"></div>
+            <h3>Artifacts by type</h3>
+            <div id="stats-artifact-by-type"></div>
+            <h3>Artifacts by Weekday</h3>
+            <div id="stats-artifact-by-weekday"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        $vf.afterInit(function () {
+            "use strict";
+
+            var dateStats = $('#stats-artifact-by-date')
+                    .vfStatsWidget({
+                        graphType: 'aggregate-count-by-date',
+                        dataSrc: "{{ data_src }}",
+                        dataParams: {
+                            'order': 'year,month,day'
+                        }
+                    }),
+                typeStats = $('#stats-artifact-by-type')
+                    .vfStatsWidget({
+                        graphType: 'aggregate-count-by-label',
+                        dataSrc: "{{ data_src }}",
+                        dataParams: {
+                            'bins': 'artifact',
+                            'order': 'count DESC',
+                            'label': 'artifact'
+                        },
+                        clickable: true
+                    }),
+                weekDayStats = $('#stats-artifact-by-weekday')
+                    .vfStatsWidget({
+                        graphType: 'aggregate-count-by-label',
+                        dataSrc: "{{ data_src }}",
+                        dataParams: {
+                            'bins': 'weekday',
+                            'order': 'weekday',
+                            'label': 'weekday'
+                        }
+                    });
+
+            dateStats.bind('paramsChanged.vfStats', function(event, changeSpec){
+                var newParams = {};
+                if (changeSpec["changed"]["date_start"]){
+                    newParams["date_start"] = changeSpec["params"]["date_start"];
+                }
+                if (changeSpec["changed"]["date_end"]){
+                    newParams["date_end"] = changeSpec["params"]["date_end"];
+                }
+                if (newParams){
+                    typeStats.vfStatsWidget("updateParams", newParams);
+                    typeStats.vfStatsWidget("reRender");
+                    weekDayStats.vfStatsWidget("updateParams", newParams);
+                    weekDayStats.vfStatsWidget("reRender");
+                }
+            });
+
+            typeStats.bind({
+                'labelSelected.vfStats': function (e, context) {
+                    var newParams = {
+                        artifact_type: undefined
+                    };
+                    if (context.entry !== null){
+                        if ('_id' in context['entry']){
+                            newParams['artifact_type'] = context.entry._id.artifact;
+                        } else {
+                            newParams['artifact_type'] = $.map(context.entry, function(el, i){
+                                return el._id.artifact_type;
+                            }).join(',');
+                        }
+                    }
+
+                    weekDayStats.vfStatsWidget("updateParams", newParams);
+                    weekDayStats.vfStatsWidget("reRender");
+                    dateStats.vfStatsWidget("updateParams", newParams);
+                    dateStats.vfStatsWidget("reRender");
+                }
+            });
+
+
+        });
+    </script>
+{% endblock %}

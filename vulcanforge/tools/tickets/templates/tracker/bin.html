@@ -1,0 +1,126 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/hilite.css') %}
+
+{% block title %}{{c.project.name}} / {{app.config.options.mount_label}} / Saved Search Bins{% endblock %}
+
+{% block head %}
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="feed.rss"/>
+  <link rel="alternate" type="application/atom+xml" title="Atom" href="feed.atom"/>
+{{ super() }}
+{% endblock %}
+
+{% block header %}Saved Search Bins{% endblock %}
+
+{% block content %}
+<div class="padded top-spaced">
+  <form id="tracker_bins_form" action="{{c.app.url}}bins/update_bins"
+        method="post" class="update_bins">
+    <table class="content-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Terms</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody class="bin-list">
+        {% for bin in bins %}
+          <tr class="bin-list-item {% if loop.index0 % 2 == 0 %}even{% endif %}">
+            <td>
+                <div class="view">
+                    <a href="{{bin.url()}}">{{bin.summary}}</a>
+                </div>
+                <div class="edit">
+                    <input type="text" name="bins-{{loop.index0}}.summary"
+                           class="short"
+                           value="{{bin.summary}}">
+                </div>
+            </td>
+            <td>
+                <div class="view">{{bin.terms}}</div>
+                <div class="edit">
+                    <input type="text" name="bins-{{loop.index0}}.terms"
+                           class="long"
+                           value="{{bin.terms}}">
+                </div>
+            </td>
+            <td>
+              {{ g.icon_button_widget.display(icon="ico-delete", css="del_bin") }}
+              {{ g.icon_button_widget.display(icon="ico-edit", css="edit_bin") }}
+              <input type="hidden" name="bins-{{loop.index0}}.id" value="{{bin._id | string}}">
+              <input type="hidden" name="bins-{{loop.index0}}.delete" value="False" class="delete_flag">
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td class="view" colspan="3">No saved search bins have been created yet.</td>
+          </tr>
+        {% endfor %}
+        {% set num_bins = bins.__len__() %}
+        <tr class="new_bin" style="display:none">
+          <td>
+            <input type="hidden" name="bins-{{num_bins}}.id">
+            <input type="hidden" name="bins-{{num_bins}}.delete" value="False" class="delete_flag">
+            <input type="text" name="bins-{{num_bins}}.summary" placeholder="Summary">
+          </td>
+          <td>
+            <input type="text" name="bins-{{num_bins}}.terms" placeholder="Terms">
+          </td>
+          <td>&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+      <div class="form-controls top-spaced">
+          <a href="#" class="btn add_bin">Add Bin</a>
+
+          <div class="save_controls" style="display:none">
+              <input type="submit" value="Save">
+              <a href="#" class="btn link cancel_edit">Cancel</a>
+          </div>
+      </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        $(function () {
+            $('form.update_bins').each(function () {
+                var $form = $(this),
+                    $new_row = $('tr.new_bin', $form),
+                    $add_button = $('a.add_bin', $form),
+                    $save_controls = $('div.save_controls', $form).hide();
+                $('.edit', $form).hide();
+                $add_button.click(function () {
+                    $save_controls.show();
+                    $add_button.hide();
+                    $new_row.show();
+                });
+                $('a.edit_bin', $form).click(function () {
+                    var $row = $(this).closest('.bin-list-item');
+                    $('.view', $row).hide();
+                    $('.edit', $row).show();
+                    $save_controls.show();
+                    $add_button.hide();
+                    $(this).css({opacity: 0.5});
+                });
+                $('a.del_bin', $form).click(function () {
+                    var $row = $(this).closest('tr');
+                    $('input.delete_flag', $row).val('True');
+                    $form.submit();
+                });
+                $('a.cancel_edit', $form).click(function () {
+                    $('.view', $form).show();
+                    $('.edit', $form).hide();
+                    $save_controls.hide();
+                    $add_button.show();
+                    $new_row.hide();
+                    $('input', $new_row).val('');
+                    $('a.edit_bin', $form).css({opacity: 1});
+                });
+            });
+        });
+    </script>
+    {{ super() }}
+{% endblock %}

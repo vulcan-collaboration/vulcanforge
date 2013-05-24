@@ -1,0 +1,21 @@
+.vf-repeated-attachment-field {
+    margin: 1ex 0;
+}
+.vf-repeated-attachment-field-input-container {
+    margin: 1ex 0;
+}
+.vf-repeated-attachment-field-input {
+
+}
+.vf-repeated-attachment-field-input-empty {
+    color: #aaa;
+}
+.vf-repeated-attachment-field-remove-button {
+    display: inline-block;
+    min-height: 0;
+    margin: 0 1em;
+    padding: 1ex 1em;
+    line-height: 1em;
+    font-size: 0.5rem;
+    text-transform: none;
+}

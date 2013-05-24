@@ -1,0 +1,51 @@
+html, body
+{
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #808080;
+    overflow: auto;
+}
+
+.container img {
+    display: block;
+    margin: auto;
+    box-shadow: 0 0 2em black;
+}
+
+.panel {
+    position: fixed;
+    top: 1ex;
+    right: 1ex;
+    padding: 1em;
+    background: rgba(0,0,0,0.6);
+    border-radius: 1ex;
+    font-family: Arial, sans-serif;
+    color: #ddd;
+}
+
+.panel button {
+    display: inline-block;
+    padding: 1ex;
+    background: black;
+    color: #ddd;
+    border: none;
+    border-radius: 1ex;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-shadow: none;
+}
+
+.panel button:hover {
+    background: #333;
+    color: white;
+}

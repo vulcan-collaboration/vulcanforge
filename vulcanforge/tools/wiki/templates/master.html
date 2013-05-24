@@ -1,0 +1,37 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('wiki/wiki.scss', scope='tool') %}
+{% do g.resource_manager.register_js('wiki/wiki.js', scope='tool') %}
+
+{% block edit_box %}
+  {% if show_meta %}{% block wiki_meta %}{% endblock %}{% endif %}
+{% endblock %}
+
+{% block content %}
+  {% block wiki_content %}content here{% endblock %}
+  <div id="create_wiki_page_holder" title="Create New Page" style="display:none">
+    <form>
+        <div class="vf-field">
+            <label for="name">Name</label>
+            <input type="text" name="name"/>
+        </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{c.create_page_lightbox.display(content='''
+    <h1>Add a Wiki Page</h1>
+    <form>
+        <label>Name</label>
+        <input id="newPageFormName" type="text" name="name"></div>
+        <p>
+            <input id="newPageFormSubmit" type="submit" value="Create page">
+        </p>
+    </form>
+  ''')}}
+
+  {% block wiki_extra_js %}{% endblock %}
+{% endblock %}
+
+{% block pageType %}WIKI{% endblock %}

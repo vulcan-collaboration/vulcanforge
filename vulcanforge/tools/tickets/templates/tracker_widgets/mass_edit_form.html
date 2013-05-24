@@ -1,0 +1,100 @@
+    <ul class="field-list field-list-two-column padded top-spaced">
+        {% for field in globals.custom_fields %}
+            {% if field.name == '_milestone' and globals.can_edit_field('_milestone') %}
+                <li class="field-list-item">
+                    <div class="field-list-item-label">
+                        {{ milestones }}
+                        <label for="{{field.name}}" class="cr">{{ field.label }}:</label>
+                    </div>
+                    <div class="field-list-item-field">
+                        <select name="{{field.name}}" class="">
+                            <option value="" selected="selected">no change
+                            </option>
+                            {% for m in field.milestones %}
+                                {% if not m.complete %}
+                                    <option
+                                        value="{{m.name}}">{{ m.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </li>
+            {% endif %}
+        {% endfor %}
+        {% if globals.can_edit_field('status') %}
+        <li class="field-list-item">
+            <div class="field-list-item-label">
+                <label for="status" class="cr">Status:</label>
+            </div>
+            <div class="field-list-item-field">
+                <select name="status" class="">
+                    <option value="" selected="selected">no change</option>
+                    {% for option in globals.all_status_names.split() %}
+                        <option value="{{option}}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </li>
+        {% endif %}
+        {% if globals.can_edit_field('assigned_to') %}
+        <li class="field-list-item">
+            <div class="field-list-item-label">
+                <label for="assigned_to" class="cr">Owner:</label>
+            </div>
+            <div class="field-list-item-field">
+                {{ c.user_select.display(name='assigned_to', value='', className='') }}
+            </div>
+        </li>
+        {% endif %}
+        {% for field in globals.custom_fields %}
+            {% if field.type != 'sum' and field.name != '_milestone' and globals.can_edit_field(field.name) %}
+                <li class="field-list-item">
+                    <div class="field-list-item-label">
+                        <label for="{{field.id}}"
+                               class="cr">{{ field.label }}:</label>
+                    </div>
+                    <div class="field-list-item-field">
+                        {% if field.type == 'boolean' %}
+                            <input name="{{field.name}}" type="checkbox"
+                                   class=""
+                                   value="True"/>
+                        {% elif field.type == 'select' %}
+                            <select name="{{field.name}}" class="short">
+                                <option value="" selected="selected">no change
+                                </option>
+                                {% for option in field.options.split() %}
+                                    {% if option.startswith('*') %}
+                                        <option value="{{option[1:]}}"
+                                                selected="selected">{{ option[1:] }}</option>
+                                    {% else %}
+                                        <option
+                                            value="{{option}}">{{ option }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'milestone' %}
+                            <select name="{{field.name}}"
+                                   class="">
+                                <option value="" selected="selected">no change
+                                </option>
+                                {% for m in field.milestones %}
+                                    {% if not m.complete %}
+                                        <option
+                                            value="{{m.name}}">{{ m.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input name="{{field.name}}" type="text" value=""
+                                   class=""/>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    <div class="form-controls">
+        <input id="save_mass_edit" type="submit" value="Save Changes"/>
+        <a href="{{cancel_href}}" class="btn link">Done</a>
+        <!-- tg.url(c.app.url+'search/', dict(q=query, limit=limit, sort=sort))}}" class="btn link">Cancel</a>-->
+    </div>

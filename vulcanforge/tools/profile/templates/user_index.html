@@ -1,0 +1,105 @@
+{% extends g.templates['master'] %}
+{% set hide_project_toolbar = true %}
+
+{% do g.resource_manager.register_forge_js('js/project_invitation.js') %}
+
+{% block title %}{{ user.display_name }} / Profile{% endblock %}
+
+{% block header %}{{ user.display_name }}{% endblock %}
+
+{% block head %}
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="feed.rss">
+    <link rel="alternate" type="application/atom+xml" title="Atom"
+          href="feed.atom">
+{% endblock %}
+
+{% block actions %}
+    {{g.icon_button_widget.display('RSS feed', None, None, 'ico-rss_alt', href=c.app.url+'feed.rss')}}
+{% endblock %}
+
+{% block content %}
+
+    <div class="padded">
+
+    {% if not is_self and project_opts %}
+    <p><a href="#" class="btn" id="invite-user">Invite To Your Project</a></p>
+    <div id="invite-form-container"></div>
+    {% endif %}
+
+    {% if user.preferences.email_address %}
+        <p>{{g.avatar.display(user=user, size=48, compact=True, replace_with_userid=True)}}</p>
+    {% endif %}
+
+    <h3>Recent Activity</h3>
+    {{ c.activity_feed.display(notifications=notifications) }}
+
+    <h3>Projects</h3>
+    {{ c.project_list.display(projects=projects) }}
+
+    {#
+    {% if is_self %}
+        <div class="address-list grid-18">
+            <h4>Email Addresses</h4>
+            <ul>
+                {% for email in user.email_addresses %}
+                    <li>
+                        {{ lib.email_gravatar(email, size=24) }}
+                        {% if email == user.preferences.email_address %}
+                            <span class="prime email-address">{{ email }}</span>
+                        {% else %}
+                            <span class="email-address">{{ email }}</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="openid-list grid-18">
+            <b>OpenIDs</b>
+            <ul>
+                {% for openid in user.open_ids %}
+                    <li>
+                        <span class="openid">{{ openid }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    #}
+
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    {% if not is_self and project_opts %}
+    <script type="text/javascript">
+        (function($, $vf){
+            "use strict";
+
+            var inviteForm = null;
+
+            $('#invite-user').click(function() {
+                var btn = $(this);
+                if (inviteForm === null) {
+                    inviteForm = new $vf.InvitationForm({
+                        containerE: $("#invite-form-container"),
+                        action: "{{ c.app.url }}invite_to_project",
+                        context: "user",
+                        project_opts: {{ project_opts|safe }},
+                        onShow: function() {
+                            btn.hide();
+                        },
+                        onHide: function() {
+                            btn.show();
+                        }
+                    });
+                }
+                inviteForm.show();
+                return false;
+            });
+
+        }(jQuery, window.$vf));
+    </script>
+    {% endif %}
+{% endblock %}

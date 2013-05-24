@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+{% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
+{% import g.templates['macros'] as theme_macros with context %}
+
+{# *********************** These are VF CSSs ********************************************** #}
+{% do g.resource_manager.register_css('css/hilite.css', scope='forge') %}
+{% do g.resource_manager.register_css('css/core.scss', scope='forge') %}
+{% do g.resource_manager.register_css('artifact/artifact.scss', scope='forge') %}
+{% do g.resource_manager.register_css('artifact/subscription_popup_menu.scss', scope='forge') %}
+
+{% do g.resource_manager.register_css('notification/notify.css', scope='forge') %}
+{% do g.resource_manager.register_css('assets/workspace/workspace.scss', scope='forge') %}
+{% do g.resource_manager.register_css('assets/tutorial/tutorial.scss', scope='forge') %}
+
+{% do g.resource_manager.register_css('css/progress-polyfill.css', scope='forge') %}
+{% do g.resource_manager.register_css('css/fang.css', scope='forge') %}
+
+{# *********************** These are original Allura scripts ********************************* #}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js', scope='forge') %}
+
+{% do g.resource_manager.register_js('js/allura-plugins.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/allura-base.js', scope='forge') %}
+
+{# *********************** These are VF scripts ********************************************** #}
+{% do g.resource_manager.register_js('js/lib/utils.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/raphael/raphael.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.ui.idle-logout.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.scrollTo.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.updateFromJSON.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.relativeDate.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/rotate.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.nicescroll.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.textarea.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.lightbox_me.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.redirect.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.idletimer.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/json/json2.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/progress-polyfill.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/vf.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.qtip.js', scope='forge') %}
+{% do g.resource_manager.register_js('artifact/Artifact.js', scope='forge') %}
+{% do g.resource_manager.register_js('artifact/subscription_popup_menu.js', scope='forge') %}
+{% do g.resource_manager.register_js('assets/workspace/Workspace.js', scope='forge') %}
+{% do g.resource_manager.register_js('assets/tutorial/Tutorial.js', scope='forge') %}
+{% do g.resource_manager.register_js('assets/markdown/markdown_edit.js', scope='forge') %}
+{% do g.resource_manager.register_js('auth/userid.js', scope='forge') %}
+
+
+{% do g.resource_manager.register_widgets(c) %}
+{# *********************** Initializing bodyclasses ********************************************** #}
+{% if bodyClasses is undefined %}
+{% set bodyClasses = [] %}
+{% endif %}
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <title>{% block title %}Your title goes here{% endblock %}{{ g.title_postfix }}</title>
+
+    <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}" />
+
+    {% for blob in g.resource_manager.emit('css') %}
+    {{ blob }}
+    {% endfor %}
+
+    <style>.{{ g.antispam.honey_class }} { display:none }
+
+    </style>
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="{{ bodyClasses|join(' ') }} {% if not hide_project_toolbar and c.project %}has-project-toolbar {% endif %}{% if session['userid'] %}authenticated {% endif %}{% if not hide_sidebar %} has-sidebar{% endif %}{% if has_related_artifacts %} has-related-artifacts{% endif %}"
+      data-pagetype="{% block pageType %}default{% endblock %}"
+      data-pagetitle="{% block pageTitle %}{% endblock %}"
+      data-user="{% if c.user._id %}authenticated{% else %}anonymous{% endif %}"
+      data-title-postfix="{{ g.title_postfix }}">
+<div id="header-wrapper">
+    <div id="header-logo-holder"><a href="{{ g.home_url }}" title="Go to front page"><img src="{{ g.header_logo }}" alt="" /></a></div>
+    {{theme_macros.headerNavi(c.user.username, c.user._id, c.user.display_name, g.login_url, '/auth/logout', c.user.icon_url())}}
+    {{theme_macros.forgeToolbar()}}
+    <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>
+    {% if not g.production_mode %}
+    <div id="dev-mode-banner">development mode</div>
+    {% endif %}
+</div>
+<!-- // header-wrapper -->
+<div id="content-areas-wrapper">
+    <div id="left-toolbar">
+        <div class="toolbar-upper">
+            {% if not hide_project_toolbar and c.project %}
+            {% include g.templates['project_toolbar'] %}
+            {% endif %}
+        </div>
+        <div class="toolbar-lower"></div>
+    </div>
+    <div id="main-content-holder">
+        {% block main_content_holder %}
+        <div id="content-columns"{% if hide_header %} style="padding-top:0px;"{% endif %}>
+        <div id="main-column" class="main-column">
+            {% block mainTop %}{% endblock %}
+            <!-- HERE COMES THE MAIN CONTENT -->
+            {% if not hide_header %}
+            <div id="main-column-header">
+                <section id="tool-search">
+                    {% if c.app and c.app.searchable %}
+                    <form method="GET" action="{{c.app.url + 'search/search/'}}" id="tool-search-form">
+                        <input name="tool_q" type="text"
+                               title="Search {{c.app.config.options.mount_point.title()}}"
+                               placeholder="Search {{c.app.config.options.mount_point.title()}}"
+                               id="tool-search-form-input">
+                    </form>
+                    {% endif %}
+                </section>
+                <nav class="content-actions">
+                    {% block actions %}{% endblock %}
+                </nav>
+                <h2>{% block header %}{% endblock %}</h2>
+                {% block relatedArtifacts %}{% endblock %}
+            </div>
+            {% endif %}
+            <!-- BLOCK EDIT BOX -->
+            {% block edit_box %}{% endblock %}
+            <!-- BLOCK BEFORE CONTENT -->
+            {% block before_content %}{% endblock %}
+            <!-- BLOCK CONTENT -->
+            {% block content %}{% endblock %}
+            <!-- BLOCK AFTER CONTENT -->
+            {% block after_content %}{% endblock %}
+        </div>
+        {% if not hide_sidebar %}
+        <div id="sidebar" class="sidebar">
+            <!-- SIDEBAR CONTENT -->
+            {% block sidebar_menu %}
+            {% include g.templates['sidebar_menu'] %}
+            {% endblock %}
+
+        </div>
+        {% endif %}
+    </div>
+    {% endblock %}
+</div>
+<div id="right-toolbar">
+    <div class="toolbar-upper">
+        {{ theme_macros.project_floating_details() }}
+    </div>
+    <div class="toolbar-lower">
+    </div>
+</div>
+{% if session['userid'] and c.user.get_swift_cookies %}
+<div style="position: absolute; left: -10000px;"><iframe name="invisiframe" src="{{ c.user.swift_cookie_url() | safe}}"></iframe></div>
+{% endif %}
+</div>
+<div id="footer">
+    {{theme_macros.footer(g.year())}}
+</div>
+<div id="bottom-bg-container"></div>
+<div id="messages"></div>
+{% if not g.production_mode %}
+<script language="JavaScript">
+    var DEBUG = true;
+</script>
+{% endif %}
+<div id="beautiful_sunset">
+    <a id="report_an_issue" class="ico-tag_fill has-icon"
+       href="{{ g.site_issues_url }}">Help Desk</a>
+</div>
+
+{% for blob in g.resource_manager.emit('js') %}
+{{ blob }}
+{% endfor %}
+{% set flash = tg.flash_obj.render('flash', use_js=False) %}
+{% if flash %}
+<script type="text/javascript">{{flash | safe}}</script>
+{% endif %}
+
+{% block extra_js %}{% endblock %}
+<script language="javascript" type="text/javascript">
+    $(document).ready(function () {
+        var referenceBinReferences=[], workspaceTabs=[], userURL = null, referenceBinConfig;
+        $vf.resourceURL = '{{ g.resource_manager.absurl('') }}';
+        $vf.idle_logout_enabled = {% if g.idle_logout_enabled %}true{% else %}false{% endif %};
+        $vf.idle_logout_minutes = {{ g.idle_logout_minutes }};
+        $vf.idle_logout_countdown_seconds = {{ g.idle_logout_countdown_seconds }};
+        $vf.vf_guidebook_location = {% if g.vf_guidebook_location %} '{{ g.vf_guidebook_location }}' {% else %} null {% endif %};
+
+    {% if session['userid'] %}
+        $vf.logged_in_as = "{{c.user.username}}";
+        {% for n in h.pop_user_notifications() %}
+            $('#messages').notify("{{ n.text }}");
+            {% endfor %}
+            referenceBinConfig = {{c.user.get_workspace_references()|safe}};
+        workspaceTabs = {{c.user.get_workspace_tabs()|safe}};
+    userURL = '{{c.user.url()}}';
+    {% else %}
+    $vf.logged_in_as = null;
+    {% endif %}
+    $vf.init(userURL, workspaceTabs, referenceBinConfig);
+    $('#project-toolbar > ul.links').intelliMore({
+        orientation: 'vertical',
+        triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
+        hiddenClass: 'project-toolbar-hidden',
+        neverHide: '.selected,.no-more-hide'
+    });
+    });
+</script>
+{% if not hide_header %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#main-column-header').scrollHide();
+    });
+</script>
+{% endif %}
+
+{% if g.production_mode and g.analytics %}{{g.analytics.display()}}{% endif %}
+
+</body>
+</html>

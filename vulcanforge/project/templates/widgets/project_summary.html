@@ -1,0 +1,20 @@
+<{% if display_mode == 'list' %}li{% else %}div{% endif %}
+        class="projectSummaryWidget">
+    <div class="projectSummary">
+        <div class="iconHolder">
+            <img src="{{icon_url or g.resource_manager.absurl('images/project_default.png')}}" alt="{{name}} Logo" />
+        </div>
+        <div class="title">
+            <a href="{{ url }}">{{ name }}</a>
+            <span class="params">
+                {{ status }}
+                {% if cancel_url %}
+                    <br>
+                    <a class="btn cancel-project" href="{{ cancel_url }}" title="{{ cancel_text }}">{{ cancel_text }}</a>
+                {% endif %}
+            </span>
+        </div>
+        {% if not cancel_url %}<div class="project-since">Created {{ project_since }}</div>{% endif %}
+        <div class="description">{{ h.text.truncate(short_description, 500) }}</div>
+    </div>
+</{% if display_mode == 'list' %}li{% else %}div{% endif %}>

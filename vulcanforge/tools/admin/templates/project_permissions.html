@@ -1,0 +1,33 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/deck.css') %}
+
+{% block title %}{{c.project.name}} / Permissions {% endblock %}
+
+{% block header %}Project Permissions{% endblock %}
+
+{% block content %}
+<form method="POST" action="update">
+  {% for row in permissions|dictsort|batch(4) %}
+  {% set i0=loop.index0  %}
+  <div class="fourcol">
+    {% for name, ids in row %}
+    {% set i1 = i0*4 + loop.index0 %}
+    {{c.card.display(
+        index=i1,
+        id=name,
+        name=name.replace('_', ' '),
+        items=h.get_roles_by_ids(ids),
+        icon_name='perm_' + name
+    )}}
+    {% endfor %}
+    <br style="clear:both"/>
+  </div>
+  {% endfor %}
+  <hr/>
+  <p class="clearfix">
+    <input type="submit" value="Save">
+    <a href="" class="btn link cancel">Cancel</a>
+  </p>
+</form>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% block title %}{{c.project.name}} / User Registration Requests {% endblock %}
+
+{% block header %}User Registration Requests{% endblock %}
+
+{% block content %}
+<div class="padded">
+    {% if requests %}
+        <table id="registration_requests" class="wide-table hover-rows">
+            <thead>
+                <tr>
+                    {% for field in request_fields %}
+                    <th>{{ field }}</th>
+                    {% endfor %}
+                    <th>Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                    <tr>
+                        {% for field in request_fields %}
+                        <td>{{ req[field] }}</td>
+                        {% endfor %}
+                        <td>
+                            {% if status == "tbd" %}
+                            <input class="accept-req" data-req="{{ req.id }}" type="button" value="Accept" title="Accept Registration Request" />
+                            <input class="deny-req" data-req="{{ req.id }}" type="button" value="Deny" title="Deny Registration Request" />
+                            <input class="ignore-req" data-req="{{ req.id }}" type="button" value="Ignore" title="Ignore Registration Request" />
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No Requests at this time.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function($, $vf){
+        /* accept request */
+        $('.accept-req').click(function() {
+            var req_id = $(this).attr('data-req');
+            $(this).parent().html('');
+            $.post("{{ base_url }}accept_new_user", {
+               _session_id:$.cookie('_session_id'),
+               req_id: req_id
+            }, function() {
+                window.location.reload(true);
+            }, 'json');
+        });
+
+        /* deny request */
+        $('.deny-req').click(function() {
+            var req_id = $(this).attr('data-req');
+            $(this).parent().html('');
+            $.post("{{ base_url }}deny_new_user", {
+                _session_id:$.cookie('_session_id'),
+                req_id: req_id
+            }, function() {
+                window.location.reload(true);
+            }, 'json');
+        });
+
+        /* ignore request */
+        $('.ignore-req').click(function() {
+            var req_id = $(this).attr('data-req');
+            $(this).parent().html('');
+            $.post("{{ base_url }}deny_new_user", {
+                _session_id: $.cookie('_session_id'),
+                req_id: req_id,
+                send_mail: "no"
+            }, function() {
+                window.location.reload(true);
+            }, 'json');
+        });
+
+    }(jQuery, window.$vf))
+</script>
+{% endblock %}

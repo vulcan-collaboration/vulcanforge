@@ -1,0 +1,77 @@
+<div class="ticket_search_results_holder">
+  {% if solr_error %}<p>{{solr_error}}</p>{% endif %}
+  {% if paged %}
+    {{widget.fields['page_size'].display(page=page, count=count, limit=limit)}}
+  {% endif %}
+  {% if count %}
+    <table class="ticket-list">
+      <thead>
+        <tr>
+          {% for col in columns if col['active'] %}
+            <th data-sort="{{col['sort_name']}}" class="{% if col['sort_name'] in sort %}activeSortMethod {{ sort }}{% endif %}">
+              {% if col['name'] == 'ticket_num' %}
+                #
+              {% else %}
+                {{col['label']}}
+              {% endif %}
+            </th>
+          {% endfor %}
+          <th style="width:15px">
+            <a href="#" id="col_menu" title="Select Columns"
+               class="icon ico-settings">
+                <span class="hidden">select columns</span></a>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+          <tr class="{{loop.index0%2 and 'even' or ''}} ticketRow" title="Click to view ticket">
+            {% for col in columns if col['active'] %}
+              {% if col['name'] == 'ticket_num' %}
+                <td>{{ c.artifact_link.display(t, label=t[col['name']]) }}</td>
+              {% elif col['name'] == 'summary' %}
+                <td>{{t[col['name']]}}</td>
+              {% elif col['name'] == 'status' %}
+                <td class="{{t.open_or_closed}}">{{t.status}}</td>
+              {% elif col['name'] == 'assigned_to' %}
+                <td>{% if t.assigned_to_id %}{{t.assigned_to.display_name}}{% endif %}</td>
+              {% else %}
+                <td>{{t.custom_fields.get(col['name'])}}</td>
+              {% endif %}
+            {% endfor %}
+            <td>&nbsp;</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <form action="." id="col_list_form" style="display:none">
+      <input type="hidden" name="limit" value="{{limit}}">
+      <input type="hidden" name="page" value="{{page}}">
+      <input type="hidden" name="sort" value="{{sort}}">
+      <input type="hidden" name="query" value="{{query}}">
+      <ul>
+      {% for col in columns %}
+        <li class="clear">
+          <input type="hidden" name="columns-{{loop.index0}}.name" value="{{col['name']}}">
+          <input type="hidden" name="columns-{{loop.index0}}.sort_name" value="{{col['sort_name']}}">
+          <input type="hidden" name="columns-{{loop.index0}}.label" value="{{col['label']}}">
+          <input type="checkbox" name="columns-{{loop.index0}}.active"{% if col['active'] %} checked="checked"{% endif %}> {{col['label']}}
+        </li>
+      {% endfor %}
+      </ul>
+      <div class="clear">&nbsp;</div>
+      <input type="submit" value="Save">
+    </form>
+    {{widget.fields['lightbox'].display()}}
+  {% endif %}
+  {% if paged %}
+    {{widget.fields['page_list'].display(limit=limit, page=page, count=count)}}
+  {% endif %}
+  <script type="text/javascript">
+    var q="{{query and h.urlquoteplus(query) or ''}}",
+        count={{count}},
+        limit={{limit}},
+        page={{page}},
+        sort="{{sort}}";
+  </script>
+</div>

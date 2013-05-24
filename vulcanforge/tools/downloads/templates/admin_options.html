@@ -1,0 +1,19 @@
+<form action="{{c.project.url()}}admin/{{app.config.options.mount_point}}/set_options" method="post">
+    <div class="vf-field-list">
+        <div class="vf-field">
+            <label for="content_agreement">Content agreement message:</label>
+            {% if allow_config %}
+            <textarea style="width: 685px; height:140px;" name="content_agreement" id="content_agreement">{% if app.content_agreement %}{{app.content_agreement}}{% endif %}</textarea>
+            {% else %}
+            {% if app.content_agreement %}{{app.content_agreement}}{% endif %}
+            {% endif %}
+            If content agreement message is set, user has to accept to access the individual files offered for download.
+        </div>
+    </div>
+    {% if allow_config %}
+        <div class="vf-form-controls">
+            <input type="submit" value="Save"/>
+            <input type="button" class="close" value="Cancel"/>
+        </div>
+    {% endif %}
+</form>

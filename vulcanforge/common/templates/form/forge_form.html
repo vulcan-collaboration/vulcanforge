@@ -1,0 +1,68 @@
+{% macro field_item(field) %}
+    {% set ctx=widget.context_for(field) %}
+    <li class="field-list-item {% if field.wide %}field-list-item-wide{% endif %}">
+        {% if field.fields %}
+            {{ field.display(**ctx) }}
+        {% else %}
+        {% if field.show_label and field.label %}
+        <div class="field-list-item-label">
+            <label for="{{ctx.id}}">{{ field.label }}:</label>
+        </div>
+        {% endif %}
+        <div class="field-list-item-field">
+            {% if ctx.errors and field.show_errors -%}
+                <div>
+                    <span {{ widget.j2_attrs({'class':error_class}) }}>{{ ctx.errors }}</span>
+                </div>
+            {%- endif %}
+            {{ field.display(**ctx) }}
+        </div>
+    </li>
+    {% endif %}
+{% endmacro %}
+
+<div class="forge-form-container">
+    <form class="forge-form"
+          method="{{method}}"
+          {% if enctype %}enctype="{{enctype}}"{% endif %}
+          {% if form_id %}id="{{form_id}}"{% endif %}
+          {% if form_name %}name="{{form_name}}"{% endif %}
+          {% if autocomplete %}autocomplete="{{autocomplete}}"{% endif %}
+          action="{{action}}">
+
+        {% if errors and not errors.iteritems and show_errors %}
+            <div>
+                <span {{ widget.j2_attrs({'class':error_class}) }}>{{ errors }}</span>
+            </div>
+        {% endif %}
+
+        <ul class="field-list padded">
+        {% for field in widget.fields %}
+            {% if field.field_type != 'hidden' %}
+                {{ field_item(field) }}
+            {% endif %}
+        {% endfor %}
+        </ul>
+
+        {% for field in widget.fields %}
+            {% set ctx=widget.context_for(field) %}
+            {% if field.field_type == 'hidden' %}
+                    {{ field.display(**ctx) }}
+            {% endif %}
+        {% endfor %}
+
+        {% if buttons or links %}
+            <div {% if form_control_box %}class="form-controls"{% endif %}>
+                {% for b in buttons %}
+                    {{ b.display() }}
+                {% endfor %}
+                {% for link in links %}
+                    <a href="{{ link.href }}">{{ link.label }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if widget.antispam %}{% for fld in g.antispam.extra_fields() %}
+            {{ fld }}{% endfor %}{% endif %}
+    </form>
+</div>

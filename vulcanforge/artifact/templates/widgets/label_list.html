@@ -1,0 +1,12 @@
+<div class="labelList-container">
+    <ul class="labelList">
+        {% for label in artifact.labels %}
+            {% if label != '' %}
+                <li>
+                    <a href="{{c.app.url}}search/search/?tool_q=labels_t:{{label}}">{{ label }}
+                        ({{ artifact.artifacts_labeled_with(label).count() }})</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>

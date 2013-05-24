@@ -1,0 +1,15 @@
+{% extends g.templates['master'] %}
+
+{% block title %}Email Address Change Reverted{% endblock %}
+
+{% block header %}Email Address Change Reverted{% endblock %}
+
+{% block content %}
+    <div class="padded">
+        <p>Your primary email address has been reverted.</p>
+        <p>The former email address is still registered with your account
+            (although it is not directly used by VehicleFORGE).</p>
+        <p>If you wish to remove it entirely, go to
+            <a href="/auth/prefs">your VehicleFORGE preferences page</a></p>
+    </div>
+{% endblock %}

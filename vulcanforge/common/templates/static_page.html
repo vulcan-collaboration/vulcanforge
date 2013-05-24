@@ -1,0 +1,17 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+
+{% do g.resource_manager.register_js('visualize/visualizer.js') %}
+{% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
+
+{% block title %}Vehicle Forge {{page.title}}{% endblock %}
+
+{% block header %}{{page.title}}{% endblock %}
+
+{% block content %}
+    <div class="static-page">
+        {{page.html_text|safe}}
+    </div>
+{% endblock %}

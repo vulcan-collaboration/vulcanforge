@@ -1,0 +1,10 @@
+Hello {{user.display_name}},
+
+Welcome{% if forge_name %} to {{ forge_name }}{% endif %}!
+
+We are delighted to have you as part of our community.
+
+{% if forge_name %}
+We look forward to your contributions,
+The {{ forge_name }} Team
+{% endif %}

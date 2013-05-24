@@ -1,0 +1,105 @@
+{%- macro headerNavi(username, userid, name, login_url, logout_url, icon_url) %}
+    <div id="header-navi">
+        <ul class="links">
+            <li id="global-search">
+                <form id="keyword-search-form" action="/search/" method="get">
+                    <input id="global-search-field" {% if not c.search_query %} class="empty" {% endif %} name="q" type="text" value="{{c.search_query}}" title="Click to enter search keyword"/>
+                </form>
+            </li>
+            {% if userid %}
+                <li>{{ g.avatar.display(user=c.user, size=24, compact=True) }}</li>
+                <li>
+                    <a href="/dashboard" class="toolbar-item toolbar-icon ico-activity" title="Activity Feed">
+                        <span class="hidden">Activity Feed</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/dashboard/messages" class="toolbar-item toolbar-icon ico-inbox" title="Conversations">
+                        <span class="hidden">Conversations</span>
+                        <span id="header-unread-count" class="toolbar-item-counter" title="unread messages">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ logout_url }}" class="toolbar-item toolbar-icon ico-logout" title="Log out">
+                        <span class="hidden">Log Out</span>
+                    </a>
+                </li>
+            {% else %}
+                <li><a href="{{ g.user_register_url }}" title="Register">Register</a></li>
+                <li><a href="{{ login_url }}" title="Log in">Log In</a></li>
+            {% endif %}
+        </ul>
+    </div>
+{%- endmacro %}
+
+{%- macro forgeToolbar() %}
+<ul id="forge-toolbar">
+    <li><a href="/exchange/search" id="discover-components" title="Components"><span>Components</span></a></li>
+    {% if g.is_fang %}
+        <li><a href="{{ g.browse_home }}browse/" id="discover-projects" title="Teams"><span>Teams</span></a></li>
+    {% else %}
+        <li><a href="{{ g.browse_home }}browse/" id="discover-projects" title="Projects"><span>Projects</span></a></li>
+    {% endif %}
+    <li><a href="{{ g.browse_home }}designers/" id="discover-designers" title="Designers"><span>Designers</span></a></li>
+</ul>
+{%- endmacro %}
+
+{%- macro footer(year) %}
+    <ul class="links">
+        <li><a href="/nf/Terms/" title="Terms">Terms</a></li>
+        <li><a href="/nf/Contact/" title="Contact">Contact</a></li>
+        <li><a href="/nf/About/" title="About">About</a></li>
+        <li><a href="/nf/Technology/" title="Technology">Technology</a></li>
+        <li><a href="/nf/VF-Team/" title="VF-Team">VF-Team</a></li>
+    </ul>
+    <div id="copyRight" class="links">
+        &copy; {{ year }}. Sponsored by <a href="http://www.darpa.mil/" title="DARPA" target="_blank">DARPA</a>.
+        Developed at <a href="http://www.isis.vanderbilt.edu/" title="ISIS" target="_blank">ISIS</a>.
+    </div>
+{%- endmacro %}
+
+{%- macro custom_js() %}
+
+{%- endmacro %}
+
+{%- macro extra_header() %}
+
+{%- endmacro %}
+
+{%- macro project_floating_details() %}
+{% if c.project %}
+
+    {# TODO: Turn this back on as part of ticket [#195] #}
+    {% set showWatch = False %}
+
+    {% if showWatch %}
+        {% if c.user.dashboard %}
+            {% set watched = c.user.dashboard.is_watching_project(c.project._id) %}
+        {% else %}
+            {% set watched = False %}
+        {% endif %}
+    {% endif %}
+
+    <div id="project-floating-details" {% if watched %}class="watched"{% endif %} data-project-id="{{ c.project._id }}">
+
+        <h1><span class="verticalText">{{ c.project.get_display_name() }}</span></h1>
+
+        {% if showWatch %}
+            <div class="actions">
+                <div class="action watch">
+                    <button class="icon-button borderless-button" title="{% if watched %}unwatch{% else %}watch{% endif %}">
+                        <span class="label">{% if watched %}unwatch{% else %}watch{% endif %}</span>
+                    </button>
+                    <span class="counter">{{ watcher_count }}</span>
+                </div>
+            </div>
+            <script type="text/javascript">
+                $(function(){
+                });
+            </script>
+        {% endif %}
+
+    </div>
+
+{% endif %}
+{%- endmacro %}

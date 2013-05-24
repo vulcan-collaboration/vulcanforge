@@ -1,0 +1,28 @@
+{% for notification in notifications %}
+    <div class="notification-container">
+        <div class="notification-liner">
+            <div class="notification-header">
+                <div class="notification-icons">
+                    {% if notification.author_id %}
+                        {{ g.avatar(notification.author) }}
+                    {% endif %}
+                </div>
+                <span class="notification-subject">
+                    <a href="{{ notification.project.url }}" title="{{ notification.project.name }}">
+                        <img class="project-icon" src="{{ notification.project.icon_url }}" alt="{{ notification.project.name }}">
+                    </a>
+                    {% if notification.app_config_id %}
+                    <a href="{{ notification.app_config.url }}" title="{{ notification.app_config.options.mount_label }}">
+                        <img class="app-icon" src="{{ notification.app_config.icon_url }}" alt="{{ notification.app_config.tool_name }}">
+                    </a>
+                    {% endif %}
+                    <a href="{{ notification.link }}">{{ notification.subject }}</a>
+                </span>
+            </div>
+            <div class="notification-body">{{ notification._rendered }}</div>
+            <div class="notification-footer">
+                <em>{{ notification.pubdate }}</em>
+            </div>
+        </div>
+    </div>
+{% endfor %}

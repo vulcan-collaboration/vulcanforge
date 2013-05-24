@@ -1,0 +1,10 @@
+<div class="notification-list-container">
+    <ul class="notification-list">
+        {% for n in notifications %}
+            <li>{{ activity_feed_item.display(notification=n,
+                author_icon=author_icon,
+                project_icon=project_icon,
+                show_text=show_text) }}</li>
+        {% endfor %}
+    </ul>
+</div>

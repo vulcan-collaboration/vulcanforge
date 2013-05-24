@@ -1,0 +1,153 @@
+{% extends 'vulcanforge:tools/forum/templates/master.html' %}
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js') %}
+{% do g.resource_manager.register_js('js/vf.js') %}
+
+{% block title %}{{c.project.name}} / {{app.config.options.mount_label}} / Admin Forums{% endblock %}
+
+{% block header %}{{app.config.options.mount_label}} Admin Forums{% endblock %}
+
+{% block content %}
+<form method="POST" action="update_forums" enctype="multipart/form-data">
+  <div class="grid-19">
+	<input type="submit" value="Save"/>
+  </div>
+  <table id="forums">
+    <thead>
+      <tr>
+        <th>Icon</th>
+        <th>Forum</th>
+        <th>Ordinal</th>
+        <th>Topics</th>
+        <th>Posts</th>
+        <th>Last Post</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for forum in app.forums %}
+      <tr class="forum_row{{loop.index0%2 and ' even' or ''}}{{forum.deleted and ' deleted' or ''}}">
+        <td>
+          <div class="editable viewing">
+            <span class="viewer">
+              {% if forum.icon %}
+                <img src="{{forum.url()}}/icon" alt="Forum icon"/>
+              {% else %}
+                <img src="{{g.resource_manager.absurl('images/project_default.png')}}" alt="Forum icon"/>
+              {% endif %}
+            </span>
+            <span class="editor icon_uploader">
+				{{lib.file_field('forum-%s.icon' % loop.index0, '')}}
+				<a href="#" class="cancel_btn"></a>
+			</span>
+          </div>
+        </td>
+        <td>
+          <div class="editable viewing">
+            <span class="viewer">
+				<a href="{{forum.url()}}">{{h.really_unicode(forum.name)}}</a>
+			</span>
+            <span class="editor">
+              {{lib.text_field('forum-%s.name' % loop.index0, 'Forum Title', h.really_unicode(forum.name))}}
+			  <a href="#" class="cancel_btn"></a>
+            </span>
+          </div>
+          <div class="editable viewing">			
+            <span class="viewer">{{h.really_unicode(forum.shortname)}}</span>
+            <span class="editor">
+              {{lib.text_field('forum-%s.shortname' % loop.index0, 'Forum Short Name', h.really_unicode(forum.shortname))}}
+			  <a href="#" class="cancel_btn"></a>
+            </span>
+          </div>
+          <div class="editable viewing">
+            <div class="viewer">
+				{{g.markdown.convert(forum.description)|safe}}
+			</div>
+            <span class="editor multiline">
+              <label for="{{'forum-%s.description' % loop.index0}}">Description</label><br/>
+              <textarea id="{{'forum-%s.description' % loop.index0}}" name="{{'forum-%s.description' % loop.index0}}" rows="3" cols="30">{{h.really_unicode(forum.description)}}</textarea><br/>
+			  <a href="#" class="cancel_btn"></a>
+            </span>
+          </div>
+          {% if forum.subforums %}
+            <b>Subforums:</b>
+            {% for subforum in forum.subforums %}
+              <span>
+                {% if loop.index1 != 0 %}, {% endif %}
+                <a href="{{subforum.url()}}">{{subforum.name}}</a>
+              </span>
+            {% endfor %}
+          {% endif %}
+        </td>
+        <td>
+          <div class="editable viewing">
+            <div class="viewer">{{ forum.ordinal }}</div>
+            <span class="editor multiline">
+              {{lib.text_field('forum-%s.ordinal' % loop.index0, None, h.really_unicode(forum.ordinal))}}
+                <a href="#" class="cancel_btn"></a>
+            </span>
+          </div>
+        </td>
+        <td>{{forum.num_topics}}</td>
+        <td>{{forum.num_posts}}</td>
+        <td>{{lib.post_summary(forum.last_post)}}</td>
+        <td class="forum_action_cont">
+            <a href="#" class="forum_edit_row btn">
+                Edit
+            </a>
+            <a href="#" class="forum_cancel_edit btn">
+                Cancel
+            </a>
+			<input name="{{'forum-%s.id' % loop.index0}}" type="hidden" value="{{forum._id}}"/>
+          {% if forum.deleted %}
+            <input class="undelete_btn btn" type="submit" name="{{'forum-%s.undelete' % loop.index0}}" value="Undelete"/><br/>
+          {% else %}
+            <input class="delete_btn btn" type="submit" name="{{'forum-%s.delete' % loop.index0}}" value="Delete"/><br/>
+          {% endif %}		  
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="grid-19">
+	<input type="submit" value="Save"/>
+	<input type="button" id="add_forum" value="Add another forum">
+  </div>
+</form>
+{{c.add_forum.display(method='POST',action='add_forum',app=app, value=add_forum)}}
+{% endblock %}
+
+{% block extra_js %}
+  <script type="text/javascript">
+    $(function() {
+      $("#add_forum").click(function(){
+        $("#add_forum_form").show();
+		  $(document).scrollTop($('#add_forum_form').offset().top);
+        $(this).hide();
+        return false;
+      });
+      $("#add_forum_cancel").click(function(){
+        $("#add_forum_form").hide();
+        $("#add_forum").show();
+        return false;
+      });
+		$('.forum_edit_row').click(function(){
+			$(this).parents('tr.forum_row').first().find('.edit_btn').click();
+			$(this).hide();
+			$(this).siblings('.forum_cancel_edit').css('display','block');
+			return false;
+		});
+		$('.forum_cancel_edit').click(function(){
+			$(this).parents('tr.forum_row').first().find('.cancel_btn').click();
+			$(this).hide();
+			$(this).siblings('.forum_edit_row').css('display','block');
+			return false;
+		});
+		$('.viewing .viewer').click(function(){
+			parent = $(this).parents('tr.forum_row').first();
+			parent.find('.forum_edit_row').hide();
+			parent.find('.forum_cancel_edit').css('display','block');
+		});		
+    });
+  </script>
+{% endblock %}

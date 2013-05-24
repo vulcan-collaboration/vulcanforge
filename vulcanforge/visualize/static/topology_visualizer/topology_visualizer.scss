@@ -1,0 +1,451 @@
+@import "css/init.scss";
+
+$topology-images: sprite-map("visualize/topology_visualizer/images/*");
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    padding:  0;
+    margin:  0;
+    background-color: #fff;
+    height: 100%;
+    width: 100%;
+}
+
+.node {
+    display: inline-block;
+    font-size: 11px;
+    opacity: 1;
+    margin: 20px 10px;
+    width: 150px;
+    font-family: Helvetica, Arial;
+    vertical-align: middle;
+
+    text-align: center;
+    position: relative;
+}
+
+.core.clickable {
+    cursor: pointer;
+}
+
+.node.clickable:hover {
+    opacity: 1;
+}
+
+.node .category {
+    -moz-transition-duration: 0.2s, 0.1s;
+    -moz-transition-property: color, background-color;
+    -o-transition-duration: 0.2s, 0.1s;
+    -o-transition-property: color, background-color;
+    -webkit-transition-duration: 0.2s, 0.1s;
+    -webkit-transition-property: color, background-color;
+    transition-duration: 0.2s, 0.1s;
+    transition-property: color, background-color;
+    
+    color: #333;
+    font-size: 9px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    padding: 2px 5px 3px 5px;
+    line-height: 11px;
+    width: auto;
+}
+
+.node .core {
+    -moz-transition-duration: 0.1s, 0.1s;
+    -moz-transition-property: color, background-color;
+    -o-transition-duration: 0.1s, 0.1s;
+    -o-transition-property: color, background-color;
+    -webkit-transition-duration: 0.1s, 0.1s;
+    -webkit-transition-property: color, background-color;
+    transition-duration: 0.1s, 0.1s;
+    transition-property: color, background-color;
+
+    /* border-top: 0 solid transparent; */
+    text-align: center;
+    vertical-align: bottom;
+    opacity: .8;
+    min-height: 12px;
+    position: relative;
+}
+
+.node.LocalComponent .core,
+.node.Component .core,
+.node.ComponentCategory .core,
+.node.Compound .core {
+    background-color: #000;
+    color: #fff;
+    border: 0 solid #333;
+    overflow: hidden;
+}
+
+.node.LocalComponent .core .name,
+.node.Component .core .name {
+  transform: rotate(90deg);
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari and Chrome */
+  -o-transform: rotate(90deg); /* Opera */
+  -moz-transform: rotate(90deg); /* Firefox */
+
+  left: -57px;
+  position: absolute;
+  text-align: left;
+  top: 82px;
+  width: 140px;
+}
+
+
+.node.ComponentCategory .core {
+  border-radius: 30px 0 0 30px;
+}
+
+.node.Component {
+  width: 25px;
+  height: 155px;
+}
+
+.core .marker {
+  position: absolute;
+  right:0;
+  top: 0;
+  width: 10px;
+  height: 100%;
+}
+
+.node.LocalComponent .core,
+.node.Component .core, {
+  border-radius: 0 0 27px 27px;
+  height: 100%;
+  overflow: hidden;
+  padding: 4px 14px 3px 6px;
+}
+
+.node.Component .core .marker {
+  background: sprite($topology-images, search_result_type_markers_components) no-repeat;
+  background-color: #fc9c36;
+  bottom: 0;
+  height: 16px;
+  top: -1px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.node.LocalComponent .core .marker{
+}
+
+.node.Compound .core,
+.node.ComponentCategory .core{
+    padding:  8px;
+}
+
+.node.DesignContainer {
+  width: 180px;
+}
+
+.node.DesignContainer .core {
+    padding:  8px;
+}
+
+.node.Alternative .core{
+    background-color: #fff;
+    color: #000;
+    font-weight: bold;
+    border: 0 solid #333;
+    padding:  30px 2px 2px 2px;
+}
+
+.node.Alternative .core .marker{
+  background: sprite($topology-images, alternative_node_port_top) no-repeat;
+  width: 49px;
+  height: 26px;
+  left: 50%;
+  margin-left: -24px;
+}
+
+.node.Alternative .core.clickable:hover  {
+  color: #fff;
+}
+
+.node.Alternative .core.clickable:hover .marker {
+    background: sprite($topology-images, alternative_node_port_top_over) no-repeat;
+}
+
+.node.Optional .core .marker{
+  background: sprite($topology-images, optional_node_port_top) no-repeat;
+  width: 49px;
+  height: 26px;
+  left: 50%;
+  margin-left: -24px;
+}
+
+.node.Optional .core.clickable:hover {
+  color: #fff;
+}
+
+.node.Optional .core.clickable:hover .marker{
+  background: sprite($topology-images, optional_node_port_top_over) no-repeat;
+}
+
+
+.node.Optional .core{
+    background-color: #fff;
+    color: #000;
+    font-weight: bold;
+    border: 0 solid #333;
+    padding:  30px 2px 2px 2px;
+}
+
+.node .core .name {
+    display: inline-block;
+    vertical-align: middle;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topologyGraphLevel {
+    text-align: center;
+}
+
+.node.current .category {
+    color: #000;
+}
+
+.node.current .core {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
+    font-weight: bold;
+}
+
+.node.current {
+    opacity: 1;
+    //cursor: default;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.category:hover,
+.node.current .category:hover {
+    color: #39f;
+    cursor: pointer;
+}
+
+.core.clickable:hover {
+    background-color: #3a66c1;
+}
+
+.level.current {
+}
+
+.paperHolder {
+    position: absolute;
+    top: 0;
+    z-index: 90;
+}
+
+.nodeContainer {
+    position: relative;
+    text-align: center;
+    display: inline-block;
+    vertical-align: top;
+    margin-top: 20px;
+}
+
+
+.port {
+    width: 0;
+    height: 0;
+    position: relative;
+    display: inline-block;
+}
+
+.port.bottom.on {
+  background: sprite($topology-images, node_port_bottom) no-repeat;
+}
+
+.port.on {
+  width: 7px;
+  height: 11px;
+}
+
+.port.bottom.on.collapsible,
+.port.bottom.on.expandable{
+    width: 11px;
+    height: 21px;
+    background: none;
+}
+
+.port.top.on {
+    height: 13px;
+}
+
+.port.top.on.collapsible,
+.port.top.on.expandable{
+    height: 21px;
+    width: 11px;
+    background: none;
+}
+
+.port.top {
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    vertical-align: bottom;
+}
+
+.port.bottom {
+    background-position: bottom center;
+    background-repeat: no-repeat;
+}
+
+.port.top.on {
+    background: sprite($topology-images, node_port_top) no-repeat;
+    /*vertical-align: bottom;*/
+}
+
+.port.top.on.more {
+    background: sprite($topology-images, node_port_top_more) no-repeat;
+}
+
+
+.port.bottom.on.more {
+    background: sprite($topology-images, node_port_bottom_more) no-repeat;
+    height: 9px;
+}
+
+.nodeCollector {
+    position: relative;
+    z-index: 100;
+    text-align: center;
+    box-sizing: border-box;
+    -webkit-box-sizing:border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    padding-bottom: 15px;
+    cursor: grab;
+    cursor:-moz-grab;
+    cursor:-webkit-grab;
+    height: 100%;
+
+}
+
+.being-grabbed {
+    cursor:grabbing;
+    cursor:-moz-grabbing;
+    cursor:-webkit-grabbing;
+}
+
+
+.divider {
+    font-family: Helvetica, Arial;
+    font-size: 9px;
+    text-transform: uppercase;
+    color: #999;
+    background-color: #fff;
+    border-color: #999;
+    padding: 5px;
+}
+
+.divider.heaven {
+    margin-bottom: 0;
+    border-bottom: 1px dotted;
+    margin-top: 40px;
+}
+
+.divider.base {
+    margin-top: 0;
+    border-top: 1px dotted;
+    margin-bottom: 40px;
+}
+
+.abovePaper {
+    position: relative;
+    z-index: 100;
+}
+
+.node {
+    white-space: normal;
+    box-sizing: border-box;
+    -webkit-box-sizing:border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+}
+
+.subTreeHolder {
+    white-space: nowrap;
+}
+
+.subTreeHolder.LOWER {
+    margin-top: 10px;
+}
+
+.subTreeHolder.UPPER {
+    margin-bottom: 10px;
+}
+
+.collapseButton, .expandButton {
+    width: 11px;
+    height: 21px;
+    background-repeat: no-repeat;
+    background-position: center center;
+    position: absolute;
+    cursor: pointer;
+}
+
+.collapseButton {
+    background: sprite($topology-images, collapse_button) no-repeat;
+}
+
+.collapseButton:hover {
+    background: sprite($topology-images, collapse_button_over) no-repeat;
+}
+
+.expandButton {
+    background: sprite($topology-images, expand_button) no-repeat;
+}
+
+.expandButton:hover {
+    background: sprite($topology-images, expand_button_over) no-repeat;
+}
+
+.zoomSlider {
+    height: 100px;
+    width: 4px;
+    border: 1px solid #ddd;
+    background-color: #f5f5f5;
+    width: 6px !important;
+    margin-top: 15px;
+}
+
+.zoomSlider .ui-slider-handle {
+  margin-left: -2px !important;
+}
+
+.zoomSliderContainer {
+    opacity: .5;
+    position: absolute;
+    z-index: 150;
+    top: 30px;
+    left: 10px;
+    width: 10px;
+    padding: 4px 1px 26px 5px;
+    height: 100px;
+    background: sprite($topology-images, zoom_icon) no-repeat;
+    background-color: #fff;
+}
+
+.zoomSliderContainer:hover {
+    opacity: .9;
+}
+
+.ui-slider .ui-slider-handle {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+}

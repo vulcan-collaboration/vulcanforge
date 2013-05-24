@@ -1,0 +1,217 @@
+@import "css/init.scss";
+
+.status {
+    text-align: center;
+    position: relative;
+}
+
+.status.pending {
+    color: $quiet-color;
+}
+
+.status.warning {
+    color: $warning-color;
+}
+
+.status.error,
+.status.failed {
+    color: $error-color;
+}
+
+.status.error {
+  text-transform: uppercase;
+  font-size: .9em;
+}
+
+.status.completed {
+    color: $ok-color;
+}
+
+div.design-submission-tip {
+    max-width: 320px;
+}
+
+div.design-submission-tip .qtip-content {
+    text-align: center;
+}
+
+table.list-table {
+    td.analysis-started,
+    td.analysis-finished,
+    td.cost,
+    td.lead-time {
+        text-align: center
+    }
+
+    border-collapse: separate;
+    border-spacing: 1px;
+}
+
+a.details-icon {
+    font-size: 11px;
+    height: auto;
+    border: none;
+    padding-left: 0;
+}
+
+.timestamp {
+    text-align: center;
+}
+
+.numeric {
+    text-align: center;
+}
+
+table.submission-list {
+    font-size: 11px;
+    margin-top: 1ex;
+}
+
+table.submission-list tr td {
+    border-bottom: 1ex solid #fff;
+    border-top: 1ex solid #fff;
+}
+
+td.design-location,
+td.project-and-design {
+    max-width: 100px;
+    min-width: 100px;
+}
+
+td.design-location > .artifact-link-container > .artifact-link-container,
+td.project-and-design > .artifact-link-container > .artifact-link-container {
+  max-width: 100%;
+}
+
+td.design-location > .artifact-link-container > .artifact-link ,
+td.project-and-design > .artifact-link-container > .artifact-link {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+td.project-and-design .artifact-label {
+    width: auto;
+    display: inline;
+    margin-right: 1ex;
+}
+
+td.project-and-design .infoButton {
+    position: static;
+}
+
+td.status,
+td.numeric.cost,
+td.numeric.time {
+    width: 60px;
+}
+
+td.timestamp {
+    width: 100px;
+}
+
+td.numeric.score {
+    width: 20px;
+}
+
+td.numeric.total-score {
+    font-weight: bold;
+}
+
+.details-expand-button,
+.details-collapse-button  {
+  display: block;
+  font-size: 9px;
+  line-height: 1.5em;
+  min-height: 1.5em;
+  padding: 0 .8ex;
+  border-radius: 0;
+  margin: .4em 0;
+}
+
+td.details-cell {
+  padding-bottom: 15px;
+}
+
+.details-liner {
+    min-height: 100px;
+}
+
+.details-connector {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  margin-left: -2.5px;
+  margin-top: -3px;
+}
+
+.project-and-design label {
+    font-size: inherit;
+}
+
+.pa-icon {
+    background-image: url(images/pa_icon.png);
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 1ex;
+}
+
+.design-icon {
+    background-image: url(images/design_icon.png);
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 1ex;
+}
+
+.project-and-design {
+    .artifact-link-container,  {
+        white-space: nowrap;
+        min-height: 16px;
+        line-height: 16px;
+        padding: 0.5ex 1ex;
+    }
+
+    .artifact-link {
+        vertical-align: top;
+    }
+
+}
+
+td.valid {
+    text-align: center;
+    width: 30px;
+}
+
+td.actions {
+    text-align: center;
+    width: 50px;
+}
+
+.vf-table tbody tr.chosenOne,
+#chosen-submission .vf-table tbody tr {
+    background-color: rgba(0,255,0,0.15);
+}
+
+td.final-design {
+    width: 70px;
+    text-align: center;
+}
+
+/* details, details */
+.manufacturability-details-container, .manufacturability-pending-container,
+.submission-details-container {
+    margin: 1em;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    box-shadow: inset 0 0 20px rgba(0,0,0,.1);
+    padding: 1em;
+    font-size: 12px;
+}
+
+.manufacturability-details-container > div,
+.submission-details-container > div {
+    margin-right: 25px;
+}

@@ -1,0 +1,15 @@
+<form method="POST" action="{{ action }}" id="{{ form_id }}"
+      enctype="multipart/form-data">
+    <table>
+        <tbody>
+            {% for field in widget.fields %}
+            <tr>
+                <td>{% if field.show_label %}{{ widget.display_label(field) }}{% endif %}</td>
+                <td>{{ widget.display_field(field) }}</td>
+                <td>{% if field.note %}{{ field.note }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <input type="submit" value="{{ widget.submit_text }}" />
+</form>

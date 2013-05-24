@@ -1,0 +1,75 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
+
+{% do g.resource_manager.register_app_js('wiki/browse.js') %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Browse Pages{% endblock %}
+
+{% block header %}Browse Pages{% endblock %}
+
+{% block wiki_content %}
+<div class="padded">
+    <div class="wiki-header-content">
+        {% if can_delete %}
+        <div class="show-deleted-controls">
+            {{g.button_widget.display(label='Show Deleted pages', elementId='show-deleted-button', action='window.toggleDeleted(true);')}}
+            {{g.button_widget.display(label='Hide Deleted', elementId='hide-deleted-button', action='window.toggleDeleted(false);')}}
+        </div>
+        {% endif %}
+        <div>{{c.page_size.display(limit=limit,count=count,page=page)}}</div>
+        <div>View:
+            <a id="sort_recent" href="?sort=recent">Recently Updated</a> |
+            <a id="sort_alpha" href="?sort=alpha">Alphabetical</a>&nbsp;
+        </div>
+    </div>
+    <table class="wide-table wiki-page-list hover-rows" id="forge_wiki_browse_pages">
+      <thead>
+        <tr>
+          <th class="title-column">Title</th>
+          <th>Last Changed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for page in pages %}
+          <tr class="{{'deleted ' if page.deleted else ''}}{{loop.cycle('', 'even')}}">
+            <td class="title-column"><a href="{{page.url|safe}}">{{page['title']}}</a>
+                <div class="avatar-list">
+                    {% for author in page.artifact.authors() %}
+                        {{g.avatar.display(user=author, size=16, compact=True)}}
+                    {% endfor %}
+                </div>
+            </td>
+            {% if 'updated' in page %}
+              <td>{{abbr_date(page['updated'])}}
+                  <div class="avatar-list">
+                      by {{g.avatar.display(user=page['last_changer'], size=16, compact=True)}}
+                  </div>
+              </td>
+            {% else %}
+              <td></td>
+            {% endif %}
+              <td class="item-actions">
+                  {{wiki_macros.page_actions(page=page.artifact, subscribed=page.subscribed)}}
+              </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>
+    {{c.page_list.display(limit=limit, page=page, count=count)}}
+    </p>
+</div>
+{% endblock %}
+
+{% block wiki_extra_js %}
+<script type="text/javascript">
+    $(function() {
+        window.initBrowsePage(
+                {{'true' if can_delete else 'false'}},
+                {{'true' if show_deleted else 'false'}}
+        );
+    });
+</script>
+{% endblock %}

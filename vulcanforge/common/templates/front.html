@@ -1,0 +1,82 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('css/front.scss') %}
+{% do g.resource_manager.register_js_snippet("""
+        $(document).ready(function () {
+        window.fader1 = function () {
+        $('#bannerImg0').fadeIn(1000).delay(15000).fadeOut(1000,
+        function (e) {
+        window.fader2();
+        });
+        };
+
+        window.fader2 = function () {
+        $('#bannerImg0').fadeOut(1000).delay(15000).fadeIn(1000,
+        function (e) {
+        window.fader1();
+        });
+        };
+
+        window.fader4 = function () {
+        $('#bannerImg1').fadeIn(1000).delay(15000).fadeOut(1000,
+        function (e) {
+        window.fader3();
+        });
+        };
+
+        window.fader3 = function () {
+        $('#bannerImg1').fadeOut(1000).delay(15000).fadeIn(1000,
+        function (e) {
+        window.fader4();
+        });
+        };
+
+        window.fader1();
+        window.fader3();
+        });
+""") %}
+
+{% set bodyClasses = ['projects', 'front'] %}
+
+{% set hide_sidebar = True %}
+{% set hide_header = True %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block main_content_holder %}
+    <div class="front_content_container">
+        <div id="mainTop">
+            <div id="bannerHolder">
+                <img id="bannerImg0"
+                     src="{{ g.resource_manager.absurl('images/front_banner.png')}}"/>
+                <img id="bannerImg1"
+                     src="{{ g.resource_manager.absurl('images/front_banner_v3.jpg')}}"
+                     style="display:none"/>
+            </div>
+
+            <ul class="frontStats">
+                {% for label, count in counts.items() %}
+                <li><span class="number">{{ count }}</span> label </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div id="c2" class="box four-fifth">
+            <div class="inner">
+                <!-- <h4>Featured Components</h4>-->
+                <h4>Featured Projects</h4>
+
+                {{ c.project_list.display(projects=projects) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

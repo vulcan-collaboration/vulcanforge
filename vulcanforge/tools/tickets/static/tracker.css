@@ -1,0 +1,38 @@
+.ticket_title{
+    margin: 0;
+}
+.ticket_feed{
+    float: right;
+}
+th[data-sort], .nav-button{ cursor: pointer; }
+th[data-sort]:hover, .nav-button:hover{ text-decoration: underline; }
+.nav-button.disabled{ color: gray; }
+.nav-button.disabled:hover{ text-decoration: none; }
+.open{ color: green; }
+.closed{ color: red; }
+
+.ticket-list {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+}
+
+.ticket-list td, .ticket-list th{
+    border-right: 1px solid white;
+}
+
+.ticket-list tr {
+    cursor: pointer;
+}
+
+.ticket-list tr:hover {
+    background-color: #fed9d1;
+}
+
+th[data-sort="ticket_num"] {
+    text-align: center;
+}
+
+.ticket-title-info {
+    font-size: 0.7em;
+}

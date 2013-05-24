@@ -1,0 +1,49 @@
+{% extends g.templates['master'] %}
+{% do g.resource_manager.register_css('neighborhood/marketplace.scss') %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="padded top-spaced">
+        <form method="get" action="search">
+            <input type="search" class="large_search_input"
+                   name="q" value=""
+                   placeholder="Search the Marketplace"/>
+            <select name="search_type" id="search_type">
+                <option value="User"{% if search_type == 'User' %} selected{% endif %}>Competitors</option>
+                <option value="Project"{% if search_type == 'Project' %} selected{% endif %}>Teams</option>
+            </select>
+            <input type="submit" value="search">
+        </form>
+    </div>
+    <div class="padded">
+        <div id="marketplace">
+            <div class="marketplace_ads">
+                {% for ad in results %}
+                    <div class="marketplace_{% if ad.type_s == 'UserAdvertisement' %}user_ad{% else %}project_ad{% endif %} marketplace_ad">
+                            <div class="marketplace_ad_info marketplace_ad_cell">
+                                {% if ad.type_s == 'UserAdvertisement' %}
+                                    {{ g.avatar.display(user=ad.user, compact=True) }}
+                                {% else %}
+                                    <a href="{{ ad.project.url() }}">
+                                        <img src="{{ ad.project.icon_url }}"/>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="marketplace_ad_text marketplace_ad_cell">
+                                <h4 class="marketplace_ad_title">
+                                    <a href="{{ ad.url() }}">{{ ad.get_title() }}</a>
+                                </h4>
+                                <p>{{ ad.text_content }}</p>
+                            </div>
+                    </div>
+                {% else %}
+                    <p>No results found for "<em>{{ q }}</em>".</p>
+                {% endfor %}
+            </div>
+        </div>
+        {{ c.page_list.display(page=page, limit=limit, count=count) }}
+    </div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/hilite.css') %}
+
+{% block head %}
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="feed.rss"/>
+    <link rel="alternate" type="application/atom+xml" title="Atom"
+          href="feed.atom"/>
+    {{ super() }}
+{% endblock %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }}{% endblock %}
+
+{% block header %}ForgeTracker for {{ c.project.shortname }}{% endblock %}
+
+{% block actions %}
+{{ g.icon_button_widget.display('Bulk Edit', 'edit_tickets', 'active', 'ico-edit', href=tg.url(c.app.url+'edit/', dict(q=q, limit=limit, sort=sort))) }}
+{% endblock %}
+
+{% block edit_box %}
+{% endblock %}
+
+{% block content %}
+    <form action="{{c.mass_edit_form.action}}" method="post"
+          id="tracker_mass_edit_form">
+        <input type="hidden" name="redirect"
+               value="{{tg.url(c.app.url+'search/search/',
+                               dict(tool_q=q, limit=limit, sort=sort))}}"/>
+        <div class="padded top-spaced">
+            {{ c.mass_edit.display(count=count,
+                limit=limit,
+                query=q,
+                tickets=tickets,
+                sort=sort,
+                page=page,
+                columns=columns) }}
+        </div>
+        <div class="top-spaced">
+        {{ c.mass_edit_form.display(
+          globals=globals,
+          query=q,
+          sort=sort,
+          limit=limit,
+          cancel_href=cancel_href) }}
+        </div>
+    </form>
+{% endblock %}

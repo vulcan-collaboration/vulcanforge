@@ -1,0 +1,20 @@
+{% for field in widget.fields %}
+    {% if not widget.simple or not widget.not_simple %}
+        {% set ctx=widget.context_for(field) %}
+        <li class="field-list-item {% if field.wide %}field-list-item-wide{% endif %}">
+            {% if field.show_label and field.label %}
+            <div class="field-list-item-label">
+                <label for="{{ctx.id}}">{{ field.label }}:</label>
+            </div>
+            {% endif %}
+            <div class="field-list-item-field">
+                {% if ctx.errors and field.show_errors -%}
+                    <div>
+                        <span {{ widget.j2_attrs({'class': error_class}) }}>{{ ctx.errors }}</span>
+                    </div>
+                {%- endif %}
+                {{ field.display(**ctx) }}
+            </div>
+        </li>
+    {% endif %}
+{% endfor %}

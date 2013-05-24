@@ -1,0 +1,66 @@
+{% extends g.templates['master'] %}
+
+{% block title %}Browse {{ user_title }}{% endblock %}
+
+{% block header %}VehicleFORGE {{ user_title }}{% endblock %}
+
+{% block actions %}
+<div id="user-search">
+    <form method="GET" action="{{ cur_url }}" id="tool-search-form">
+        <input name="q" type="text"
+               title="Search {{ user_title }}"
+               placeholder="Search {{ user_title }}"
+               id="tool-search-form-input">
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="padded">
+    <p>Showing {{ visible }} of {{ count }} {{ user_title }}</p>
+</div>
+<div class="pagerContainer"></div>
+<div class="padded user-list-container">
+    {% if users %}
+        {% for user in users %}
+        <div class="user-list-item">
+            {{ c.avatar.display(user) }}
+        </div>
+        {% endfor %}
+    {% else %}
+        No Such {{ user_title }} Found
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+window.$vf = window.$vf || {};
+
+(function($, $vf){
+    "use strict";
+    var limit = {{ limit }};
+
+    function onGotoPage(n) {
+        var start = limit * n,
+            new_location = "{{ cur_url }}?limit=" + limit + "&start=" + start;
+        window.location.href = new_location;
+    }
+
+    $vf.afterInit(function(){
+        var pager = new $vf.Pager();
+        pager.containerE = $('.pagerContainer');
+        pager.onGotoPage = onGotoPage;
+        pager.onGotoPage_ctx = window;
+        pager.configure({
+            currentPage: {{ cur_page }},
+            itemCount: {{ count }},
+            itemPerPage: limit,
+            onGotoPage: onGotoPage
+        });
+        pager.render();
+    });
+
+}(jQuery, window.$vf))
+</script>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'vulcanforge.tools.neighborhood_home:templates/master.html' %}
+
+{% block content %}
+    <div class="padded">
+        {{ g.markdown.convert(c.project.description) }}
+    </div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="project-list-container">
+    {% if text %}
+        {{ text|safe }}
+    {% endif %}
+
+    {{ c.page_size.display(name="top_count", limit=limit, count=count) }}
+    {{ c.page_list.display(name="top_list", limit=limit, count=count, page=page) }}
+
+    {{ c.project_list.display(projects=projects) }}
+
+    {{ c.page_list.display(name="bottom_list", limit=limit, count=count, page=page) }}
+    </div>
+{% endblock %}

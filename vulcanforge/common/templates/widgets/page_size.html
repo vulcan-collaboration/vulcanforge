@@ -1,0 +1,19 @@
+<form method="get" class="page_size_widget">
+  {% for k,v in widget.url_params.iteritems() %}
+    <input type="hidden" name="{{k}}" value="{{v}}"/>
+  {% endfor %}
+  {% if limit %}
+  <p><strong>Showing
+  {% if limit %}
+    <select class="results_per_page" name="limit">
+      {% for per_page in [25, 50, 100, 250] %}
+          <option {% if per_page == limit|int %}selected="selected"{% endif %}
+             value="{{per_page}}">{{per_page}}</option>
+      {% endfor %}
+    </select>
+  {% else %}
+    {{count}}
+  {% endif %}
+  result{% if limit|int != 1 %}s{% endif %} of {{count}} </strong></p>
+  {% endif %}
+</form>

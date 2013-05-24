@@ -1,0 +1,11 @@
+{% if c.project %}
+  {% for s in c.project.sitemap() %}
+    <a href="{{s.url}}" class="ui-icon-{{s.ui_icon or 'admin'}}">
+      {{s.label}}
+      {% if s.url in request.url %}
+        <span class="diamond"></span>
+      {% endif %}
+    </a>
+	{% endfor %}
+	<div style="clear:both"></div>
+{% endif %}

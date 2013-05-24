@@ -1,0 +1,22 @@
+<div class="{{class_str}}" data-user-name="{{username}}" {% if href %}data-user-url="{{href}}"{% endif %}{% if replace_with_userid %} data-replace-with-userid="True"{% endif %}>
+    {% if show_icon %}
+        {% if icon_url %}
+        <a class="user-name" {% if href %} href="{{href}}" {% else %}style="cursor: default;"{% endif %} title="{{display_name}}">
+            <img src="{{icon_url}}"
+                 alt="{{display_name}}"
+                 class="x{{size}} ico-user">
+        </a>
+        {% else %}
+        <div class="icon ico-user x{{size}}"></div>
+        {% endif %}
+    {% else %}
+        {% if compact %}
+        <a class="user-name" {% if href %} href="{{href}}" {% endif %}title="{{display_name}}">{{display_name}}</a>
+        {% endif %}
+    {% endif %}
+    {% if not compact %}
+    <ul class="extras">
+        <li><a class="user-name" {% if href %} href="{{href}}" {% endif %}title="{{display_name}}">{{display_name}}</a></li>
+    </ul>
+    {% endif %}
+</div>

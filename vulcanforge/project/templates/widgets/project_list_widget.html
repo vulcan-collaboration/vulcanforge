@@ -1,0 +1,11 @@
+<div class="projectListWidget">
+    {% if not projects %}
+        <p>No projects found.</p>
+    {% else %}
+        <{% if display_mode == 'list' %}ul{% else %}div{% endif %} class="projectList">
+            {% for project in projects %}
+                {{ project_summary.display(project=project, display_mode=display_mode) }}
+            {% endfor %}
+        </{% if display_mode == 'list' %}ul{% else %}div{% endif %}>
+    {% endif %}
+</div>

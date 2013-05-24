@@ -1,0 +1,62 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('dashboard/dashboard.scss') %}
+{% do g.resource_manager.register_css('dashboard/messages.scss') %}
+
+{% block title %}Conversations{% endblock %}
+{% block header %}Conversations{% endblock %}
+
+{% block content %}
+    {% if not conversation_statuses|length %}
+        <div class="padded">
+            <p>You have no messages yet. Would you like to <a href="/dashboard/messages/start_conversation">start a conversation</a>?</p>
+        </div>
+    {% else %}
+        <div class="messages-container">
+        {% for status in conversation_statuses %}
+            {% set msg = status.conversation.get_latest_message() %}
+            {% if msg %}
+                <div class="message-container {% if status.unread %}unread{% endif %}{% if status.conversation.is_announcement %} announcement-container{% endif %}">
+                    {% set author = msg.author_info %}
+                    <div class="message-header">
+                        <div class="avatar-holder">
+                            <a href="{{ author.url }}" title="{{ author.name }}"><img class="message-author-icon" src="{{ author.icon_url }}" alt="{{ author.name }}"></a>
+                        </div>
+                        <a class="message-subject" href="{{ msg.get_url() }}">{{ status.conversation.subject }}</a>
+                        <div class="message-info">{{ "Message" if not msg.role else "Announcement" }} from {{ author.name }} sent {{ h.ago(status.updated_at) }} </div>
+                    </div>
+                    <div class="message-body">
+                        {{ msg.get_summary_text() }}
+                    </div>
+                    <div class="message-actions">
+                        {% if status.conversation.allow_comments %}
+                            <em>{{ status.conversation.get_message_count() }} messages</em>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+        <div class="padded">
+            {{ c.page_list.display(name="bottom_list", limit=limit, count=count, page=page) }}
+            {{ c.page_size.display(name="bottom_count", limit=limit, count=count) }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        $(function () {
+            $('.message-container').
+                bind('click', function (e) {
+                    window.location.href = $(this).
+                        find('.message-subject').
+                        attr('href');
+                });
+            $('.message-container a').
+                bind('click', function (e) {
+                    e.stopPropagation();
+                });
+        });
+    </script>
+{% endblock %}

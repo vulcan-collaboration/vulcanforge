@@ -1,0 +1,115 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% set has_related_artifacts = True %}
+{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+
+{% do g.resource_manmager.register_css('css/hilite.css') %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / #{{ ticket.ticket_num }} {{ ticket.summary }}{% endblock %}
+
+{% block head_extra %}
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="feed.rss"/>
+    <link rel="alternate" type="application/atom+xml" title="Atom"
+          href="feed.atom"/>
+{% endblock %}
+
+{% block header %}
+    #{{ ticket.ticket_num }}
+    <span class="ticket-title-info">
+        <span class="ticket-status {{ ticket.open_or_closed }}">
+            ({{ ticket.status }})
+        </span>
+        {% if '_milestone' in ticket.custom_fields %}
+            <span class="ticket-milestone">
+                <span class="label">Milestone:</span>
+                <span class="value">
+                    <a href="{{c.app.url}}milestone/{{ticket.custom_fields['_milestone']}}"
+                            >{{ ticket.custom_fields['_milestone'] }}</a>
+                </span>
+            </span>
+        {% endif %}
+        <span class="ticket-assigned-to">
+            <span class="label">Assigned to:</span>
+            <span class="value">
+                {% if ticket.assigned_to_id %}
+                    <a href="{{ticket.assigned_to.url()}}">
+                        {{ ticket.assigned_to.display_name }}
+                    </a>
+                {% else %}
+                    {{ ticket.assigned_to_name }}
+                {% endif %}
+            </span>
+        </span>
+    </span>
+{% endblock %}
+
+{% block actions %}
+    {% if c.user and c.user != c.user.anonymous() %}
+        {{ g.icon_button_widget.display('Edit', None, 'edit_ticket', 'ico-edit', href=ticket.url()+'edit') }}
+        {{ g.subscription_popup_menu.display(artifact=ticket, feed_url=ticket.url()+'feed.rss') }}
+    {% endif %}
+{% endblock %}
+
+{% block relatedArtifacts %}
+    {{ c.related_artifacts_widget.display(value=ticket) }}
+{% endblock %}
+
+{% block content %}
+    <div id="ticket_content">
+        <h1 class="ticket-summary">{{ ticket.summary }}</h1>
+
+        {{ g.markdown.convert(ticket.description)|safe }}
+
+        {{ c.label_list.display(artifact=ticket) }}
+
+        <ul class="property-list">
+            <li>
+                <span class="label">Reported by:</span>
+                <span class="value">
+                    <a href="{{ticket.reported_by.url()}}">
+                        {{ ticket.reported_by.display_name }}
+                    </a>
+                </span>
+            </li>
+            <li>
+                <span class="label">Assigned to:</span>
+                <span class="value">
+                    {% if ticket.assigned_to_id %}
+                        <a href="{{ticket.assigned_to.url()}}">
+                            {{ ticket.assigned_to.display_name }}
+                        </a>
+                    {% else %}
+                        {{ ticket.assigned_to_name }}
+                    {% endif %}
+                </span>
+            </li>
+            <li>
+                <span class="label">Created:</span>
+                <span class="value">{{ abbr_date(ticket.created_date) }}</span>
+            </li>
+            <li>
+                <span class="label">Updated:</span>
+                <span class="value">{{ abbr_date(ticket.mod_date) }}</span>
+            </li>
+            <li>
+                <span class="label">Visibility:</span>
+                <span class="value">{{ 'Private' if ticket.private else 'Public' }}</span>
+            </li>
+            {% for field in c.app.globals.custom_fields %}
+                {% if field.name != '_milestone' %}
+                    <li>
+                        <span class="label">{{ field.label }}:</span>
+                        <span class="value">{{ ticket.custom_fields[field.name] or '--' }}</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block after_content %}
+    {{ c.attachment_list.display(value=ticket, extraCSS='ticket-attachments') }}
+        {% set thread=ticket.discussion_thread %}
+        {{ c.thread.display(value=thread,new_post_text="New Comment", title="Discussion", page=page,limit=limit,count=count) }}
+{% endblock %}

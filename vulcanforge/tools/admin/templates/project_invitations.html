@@ -1,0 +1,23 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% block title %}{{c.project.name}} / Neighborhood Invitation(s){% endblock %}
+
+{% block header %}Neighborhood Invitation(s) for {{c.project.shortname}}{% endblock %}
+
+{% block content %}
+          {% if c.project.deleted %}
+            <div class="notice">This project has been deleted and is not visible to non-admin users</div>
+          {% endif %}
+          <form method="POST" action="join_neighborhood">
+            <select name="nid">
+              {% if c.project.neighborhood.name != 'Projects' %}
+              <option value="">
+                Leave {{c.project.neighborhood.name}}</option>
+              {% endif %}
+              {% for n in h.get_neighborhoods_by_ids(c.project.neighborhood_invitations) %}
+                <option value="{{n._id}}">{{n.name}}</option>
+              {% endfor %}
+            </select>
+            <input type="submit" value="Join Neighborhood"/>
+          </form>
+{% endblock %}

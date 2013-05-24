@@ -1,0 +1,8 @@
+<fieldset class="vf-fieldset terms-agree" id="terms-container-{{id}}">
+    <legend>{{ header }}</legend>
+    <div class="terms terms-agreement-div">{{ g.markdown.convert(terms_str) }}</div>
+    {% if widget.download_file %}
+    <p><a href="{{ widget.download_file }}" target="_blank">Download {{ header }} here</a></p>
+    {% endif %}
+    <p>{{ widget.display_checkbox() }}</p>
+</fieldset>

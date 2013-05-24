@@ -1,0 +1,39 @@
+#main-content {
+    background-image: url("mobility_drivetrain_challenge_visual.jpg");
+    background-position: right top;
+    background-repeat: no-repeat;
+}
+
+#competitor-register-form .field-list-item-wide div.field-list-item-label {
+    width: 300px;
+}
+
+#competitor-register-form .field-list-item-wide > div .fielderror {
+    left: 350px;
+}
+
+#competitor-register-form .field-list-item-label label {
+    display: inline-block;
+}
+
+#competitor-register-form textarea,
+#competitor-register-form select,
+#competitor-register-form input[type="text"],
+#competitor-register-form input[type="email"],
+#competitor-register-form input[type="tel"],
+#competitor-register-form input[type="url"] {
+    width: 350px;
+}
+
+#competitor-register-form .terms-agree label {
+    width: 600px;
+}
+
+#competitor-register-form .terms-agree iframe,
+#competitor-register-form .terms-agree textarea {
+    width: 650px;
+}
+
+#competitor-register-form .terms-agree iframe {
+    height: 300px;
+}

@@ -1,0 +1,41 @@
+{% extends g.templates['master'] %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="padded">
+        {% if design_info.designs %}
+        <fieldset class="vf-fieldset">
+            <label for="design_id">Select a Design to navigate to:</label>
+            <select name="design_id" id="design_id">
+                <option value="">--</option>
+                {% for design_project in design_info.design_projects %}
+                <optgroup label="{{ design_project.title }}">
+                    {% for design in design_project.designs %}
+                    <option value="{{ design.id }}" data-url="{{ design.file_url }}">{{ design.title }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </fieldset>
+        {% else %}
+        <div class="padded">Your project has no designs.</div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+$(function($){
+    $("#design_id").change(function(){
+        var url, opt = $(this).find(":selected");
+        url = opt.attr("data-url");
+        if (url){
+            top.location.href = url;
+        }
+    });
+}(jQuery))
+</script>
+{% endblock %}

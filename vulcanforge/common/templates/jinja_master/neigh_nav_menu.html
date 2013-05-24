@@ -1,0 +1,13 @@
+{% if not neighborhood %}
+  <div id="nav_menu_missing"></div>
+{% else %}
+
+  <a href="{{neighborhood.url()}}">
+    {% if neighborhood.icon %}
+      <img src="{{neighborhood.icon_url()}}" class="project_icon" alt="{{neighborhood.name}} Logo"/>
+    {% else %}
+      <img src="{{g.resource_manager.absurl('images/project_default.png')}}" class="project_icon" alt="Default Neighborhood Icon"/>
+    {% endif %}
+	<h1 class="project_title">{{neighborhood.name}}</h1>
+	</a>
+{% endif %}

@@ -1,0 +1,39 @@
+<a class="subscription-popup-button icon ico-subscribe" title="Subscription Settings" href="#"></a>
+<div class="subscription-popup-content">
+    <div class="header popup-section">
+        <a class="icon ico-settings" href="/auth/prefs/subscriptions"
+           title="Global Subscription Settings">
+            <span class="hidden">settings</span>
+        </a>
+        {% if feed_url %}
+            <a class="icon ico-rss" href="{{ feed_url }}" title="RSS Feed">
+                <span class="hidden">rss feed</span>
+            </a>
+        {% endif %}
+        {% if mailbox %}
+            <p>Subscribed to this page</p>
+        {% else %}
+            <p>Not subscribed to this page</p>
+        {% endif %}
+    </div>
+    <div class="popup-section">
+        {% if artifact %}
+            {% if mailbox and not mailbox.get_is_tool_subscription() %}
+                <p><a href="/auth/prefs/unsubscribe_artifact?artifact_index_id={{ h.urlquote(artifact.index_id()) }}&return_to={{ h.urlquote(c.url) }}">unsubscribe from this page</a></p>
+            {% elif not mailbox %}
+                <p><a href="/auth/prefs/subscribe_artifact?artifact_index_id={{ h.urlquote(artifact.index_id()) }}&return_to={{ h.urlquote(c.url) }}">subscribe to this page</a></p>
+            {% endif %}
+        {% endif %}
+        {% if app_config %}
+            {% if mailbox and mailbox.get_is_tool_subscription() %}
+                <p><a href="/auth/prefs/unsubscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.load().icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> unsubscribe from {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
+            {% else %}
+                <p><a href="/auth/prefs/subscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.load().icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> subscribe to {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
+            {% endif %}
+        {% endif %}
+        {% if project %}
+            <p><a href="/auth/prefs/subscribe_project?project_id={{ project._id }}&return_to={{ h.urlquote(c.url) }}"><img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }}"> subscribe to whole project</a></p>
+            <p><a href="/auth/prefs/unsubscribe_project?project_id={{ project._id }}&return_to={{ h.urlquote(c.url) }}"><img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }}"> unsubscribe from whole project</a></p>
+        {% endif %}
+    </div>
+</div>

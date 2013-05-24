@@ -1,0 +1,37 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% if allow_config %}
+  {% do g.resource_manager.register_js('tickets/custom-fields.js') %}
+{% endif %}
+
+{% block title %}{{c.project.name}} / {{app.config.options.mount_label}} /  Admin Fields{% endblock %}
+
+{% block header %}{{app.config.options.mount_label}} Admin Fields{% endblock %}
+
+{% block content %}
+  {{c.form.display(value=globals, action='set_custom_fields')}}
+{% endblock %}
+
+{% block head_extra %}
+  <style type="text/css">
+    .sortable-field-list.ui-sortable {
+        background: #eee;
+        padding: 1px;
+        box-shadow: inset 0 1px 3px #888;
+        border-radius: 4px;
+        margin: 1ex 0;
+    }
+    .sortable-field {
+        background-color: #fff;
+        border: none;
+        border-radius: 2px;
+        margin: 1ex;
+        padding: 1ex;
+        box-shadow: 0 1px 3px #888;
+        overflow: auto;
+    }
+    .sortable-field:hover {
+        border: none;
+    }
+  </style>
+{% endblock %}

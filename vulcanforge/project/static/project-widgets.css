@@ -1,0 +1,54 @@
+/*
+ * Project List
+ */
+
+.projectList {
+    padding: 0;
+}
+
+ul.projectList {
+    list-style: none;
+}
+
+.projectList > li {
+    border-bottom: 1px solid #ddd;
+}
+
+/*
+ * Project Summary
+ */
+
+.projectSummary {
+    overflow: auto;
+    padding: .5em;
+    position: relative;
+}
+
+.projectSummary .title {
+    color: #33c;
+    font-weight: bold;
+    margin-bottom: .5em;
+}
+
+.projectSummary:hover {
+    background: #f3f6fc;
+}
+
+.projectSummary:hover .description {
+    color: #000;
+}
+
+.projectSummary .iconHolder {
+    float: left;
+    margin: 0 8px 0 0;
+}
+
+.projectSummary .params {
+    float: right;
+    font-weight: normal;
+    text-align: right;
+}
+
+.projectSummary .params .cancel-project {
+    margin-top: .5em;
+}

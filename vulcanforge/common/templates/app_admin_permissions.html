@@ -1,0 +1,36 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('css/deck.css') %}
+          
+{% block title %}{{c.project.name}} / {{app.config.options.mount_label}} / Permissions{% endblock %}
+
+{% block header %}{{app.config.options.mount_point}} Permissions{% endblock %}
+  
+{% block content %}
+  {% if not (app.permissions and allow_config) %}
+    You are not allowed to edit permissions for {{app.config.options.mount_point}}.
+  {% else %}
+    <form method="POST" action="update">
+      {% for row in permissions|dictsort|batch(4) %}
+      {% set i0 = loop.index0  %}
+      <div class="fourcol">
+        {% for name, ids in row %}
+        {% set i1 = i0 * 4 + loop.index0 %}
+        {{c.card.display(
+            index=i1,
+            id=name,
+            name=name,
+            items=h.make_roles(ids)
+        )}}
+        {% endfor %}
+        <br style="clear:both" />
+      </div>
+      {% endfor %}
+      <hr/>
+      <p class="clearfix">
+        <input type="submit" value="Save">
+        <a href="{{c.app.url}}" class="btn link cancel">Cancel</a>
+      </p>
+    </form>
+  {%endif%}
+{% endblock %}

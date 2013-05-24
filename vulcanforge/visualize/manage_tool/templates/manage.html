@@ -1,0 +1,68 @@
+{% extends g.templates['master'] %}
+
+{% set hide_sidebar = True %}
+
+{% do g.resource_manager.register_css('visualize/visualizer_admin.css') %}
+
+{% block title %}Forge Visualizers{% endblock %}
+
+{% block header %}Visualizers{% endblock %}
+
+{% if is_admin %}
+{% do g.resource_manager.register_js('visualize/visualizer_admin.js') %}
+{% endif %}
+
+{% block content %}
+{% if is_admin %}
+<form method="POST" action="update" enctype="multipart/form-data">
+{% endif %}
+    <table id="visualizers">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Bundle</th>
+                <th>Active</th>
+                <th>Short Name</th>
+                <th># Files</th>
+                <th>File Types</th>
+                <th>Author</th>
+                <th>Modified</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visualizer in visualizers %}
+            <tr class="visualizer_row{{loop.index0%2 and ' even' or ''}} {{visualizer.active and 'active' or 'inactive'}}">
+                <td class="btn_container"></td>
+                <td class="visualizer_name">
+                    <span class="original">{{visualizer.name}}</span>
+                </td>
+                <td class="visualizer_active">
+                    <span class="original">{{visualizer.active}}</span>
+                </td>
+                <td>{{visualizer.shortname}}</td>
+                <td>{{visualizer.bundle_content|length}}</td>
+                <td>
+                    Extensions: {{visualizer.extensions|join(', ')}}<br/>
+                    Mimetypes: {{visualizer.mime_types|join(', ')}}</td>
+                <td>{{visualizer.creator.username}}</td>
+                <td>{{visualizer.modified_date.date().isoformat()}}</td>
+                <td>
+                    <span class="visualizer_id" style="display:none">{{visualizer._id}}</span>
+                    {{visualizer.created_date.date().isoformat()}}
+                </td>
+                <td class="delete_btn_container"></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% if is_admin %}
+<input type="hidden" id="visualizer" name="visualizer" />
+<div class="grid-19">
+    <input type="button" id="add_visualizer" value="Add visualizer" style="display:{{c.form_errors and 'none' or 'inline'}}">
+</div>
+</form>
+{{c.upload_form.display()}}
+{% endif %}
+{% endblock %}

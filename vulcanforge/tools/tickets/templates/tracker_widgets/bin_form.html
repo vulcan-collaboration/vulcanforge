@@ -1,0 +1,18 @@
+<form method="post" action="{{action}}">
+  {% for field in hidden_fields -%}
+    {% set ctx=widget.context_for(field) -%}
+    {{field.display(**ctx)}}
+  {%- endfor %}
+  <div class="grid-7">
+    <label class="simple">Bin Name: </label>
+    <input type="text" name="summary" value="{{value.summary}}"/>
+  </div>
+  <div class="grid-7">
+    <label class="simple">Search Terms: </label>
+    <input type="text" name="terms" value="{{value.terms}}"/>
+  </div>
+  <div class="grid-5" style="text-align: right">
+    <input type="submit" value="Save"/>
+    <input type="button" value="Cancel" id="cancel_new_bin"/>
+  </div>
+</form>

@@ -1,0 +1,70 @@
+@import "css/init.scss";
+
+.process-list {
+    text-align: center;
+    margin: 0 0 4*$pu 0;
+    padding: 4*$pu 0;
+    list-style-type: none;
+
+    @include process-list-skin;
+}
+
+.process-list > li {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.process-list .process-step {
+    margin: 0;
+    padding: $pu 2*$pu;
+
+    @include process-step-skin;
+    max-width: 260px;
+}
+
+.process-list .process-step.complete:before {
+    content:"\2713";
+}
+
+.process-list .process-step.error:before {
+    content:"\2717";
+}
+
+.process-list .process-step.current {
+    border-radius: 2em;
+
+   @include current-process-step-skin;
+}
+
+
+.process-list .process-step-separa {
+    height: 2px;
+    width: 70px;
+    margin: 0 2px;
+
+    @include process-step-separa-skin;
+}
+
+.process-list > li.title {
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-left: $pu;
+    float: left;
+}
+
+#username_status {
+    padding: 3px $pu;
+    margin-top: 1px;
+    margin-left: 6px;
+    min-width: 10em;
+}
+
+#username_status.available {
+    background-color: $ok-color;
+    color: #fff;
+}
+
+#username_status.unavailable {
+    background-color: $error-color;
+    color: #fff;
+}

@@ -1,0 +1,70 @@
+{% extends 'vulcanforge:tools/admin/templates/master.html' %}
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.maxlength-min.js') %}
+
+{% block title %}{{c.project.name}} / Metadata{% endblock %}
+
+{% block header %}Project Admin{% endblock %}
+
+{% block content %}
+  {% if c.project.deleted %}
+    <div class="notice">This project has been deleted and is not visible to non-admin users</div>
+  {% endif %}
+  {{c.metadata_admin.display(value=c.project,show_export_control=show_export_control)}}
+{% endblock %}
+
+{% block extra_js %}
+  <script type="text/javascript">
+    /*global confirm: true*/
+    $(document).ready(function () {
+      var $metadata_form = $('#metadata_form');
+      var $removal_original = $('input[name=removal]:checked');
+      var $removal_delete_cb = $('#removal_delete_cb');
+      var currently_deleted = $removal_delete_cb.is(':checked');
+      var $support_page_url_cb = $('#support_page_url_cb');
+      var $removal_moved_cb = $('#removal_moved_cb');
+      var $support_page_url = $('input[name=support_page_url]');
+      var $moved_to_url = $('input[name=moved_to_url]');
+      var update_url = function(check_cb, url_input){
+        if(check_cb.is(':checked')){
+          url_input.attr('disabled', false);
+        }
+        else{
+          url_input.attr('disabled', true);
+          url_input.val('');
+        }
+      };
+
+      // manage url input state for support page and removal
+      update_url($support_page_url_cb, $support_page_url);
+      update_url($removal_moved_cb, $moved_to_url);
+      $('textarea[name=short_description]').maxlength({maxCharacters: 250});
+      $('input[name=support_page]').change(function(){
+        update_url($support_page_url_cb, $support_page_url);
+      });
+      $('input[name=removal]').change(function(){
+        update_url($removal_moved_cb, $moved_to_url);
+        // confirmation for delete
+        if($(this).val()==='deleted' && !currently_deleted){
+          if(confirm('Are you sure you want to delete this project?')){
+            $metadata_form.append('<input type="hidden" name="delete" value="true">');
+            $('#metadata_form').submit();
+          }
+          else{
+            $removal_original.attr('checked', true);
+          }
+        }
+        else if($(this).val()!=='deleted' && currently_deleted){
+          if(confirm('Are you sure you want to undelete this project?')){
+            $metadata_form.append('<input type="hidden" name="undelete" value="true">');
+            $('#metadata_form').submit();
+          }
+          else{
+            $removal_original.attr('checked', true);
+          }
+        }
+      });
+    });
+  </script>
+{{ super() }}
+{% endblock %}

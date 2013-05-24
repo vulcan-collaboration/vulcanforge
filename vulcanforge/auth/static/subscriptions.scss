@@ -1,0 +1,97 @@
+@import "css/init.scss";
+
+.popup_contents button, input[type="color"], input[type="date"],
+input[type="datetime"], input[type="datetime-local"], input[type="email"],
+input[type="file"], input[type="month"], input[type="number"],
+input[type="password"], input[type="range"], input[type="search"],
+input[type="tel"], input[type="text"], input[type="time"], input[type="url"],
+input[type="week"], select, textarea, label {
+    width: auto;
+    vertical-align: baseline;
+    line-height: inherit;
+    margin: 0;
+}
+/* ################################################### */
+/* ################################################### */
+.hidden {display: none;}
+/* ################################################### */
+/* ################################################### */
+.project-container {
+    padding: 1em 0;
+}
+.project-header {
+    cursor: pointer;
+    overflow: auto;
+}
+.project-content {
+    position: relative;
+}
+.project-subscription-table {
+    margin: 1em 0 2em 0;
+}
+.project-subscription-table .email-column {
+    background: rgba(0,0,0,0.03);
+}
+.expand-arrow-svg {
+    display: inline-block;
+}
+.expand-arrow {
+    fill: #ddd;
+}
+.expand-arrow-open {
+    display: none;
+}
+.project-container.open .expand-arrow-closed {
+    display: none;
+}
+.project-container.open .expand-arrow-open {
+    display: block;
+}
+em {
+    color: #aaa;
+}
+.radio-cell {
+    text-align: center;
+}
+.email-column {
+    width: 5em;
+}
+.settings-column {
+    width: 40%;
+}
+.project-icon,
+.app_config-icon {
+    display: inline-block;
+    float: left;
+    margin: 0 1ex;
+    height: 2em;
+}
+h1 {
+    margin: 0;
+    line-height: 2em;
+}
+td hr {
+    margin: 0.25ex 0;
+    border: none;
+    border-top: 1px solid #ddd;
+}
+input:disabled, select:disabled, textarea:disabled {
+    opacity: 0.5; !important
+}
+
+
+.uncheck-all,
+.check-all
+{
+    line-height: 1em;
+    min-height: auto;
+    font-size: 9px;
+    padding: 1ex 1em;
+}
+
+.projectActions
+{
+    position: absolute;
+    top: 1ex;
+    right: 1ex;
+}

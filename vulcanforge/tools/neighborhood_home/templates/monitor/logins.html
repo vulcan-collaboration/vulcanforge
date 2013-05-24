@@ -1,0 +1,55 @@
+{% extends 'vulcanforge.tools.neighborhood_home:templates/monitor/base.html' %}
+
+{% block content %}
+<div class="padded top-spaced">
+    <div id="artifact-stats-container">
+        <h3>Logins by date</h3>
+        <div id="stats-login-by-date" class="timeline"></div>
+        <h3>Logins by weekday</h3>
+        <div id="stats-login-by-weekday"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $vf.afterInit(function () {
+        "use strict";
+
+        var dateStats = $('#stats-login-by-date')
+                .vfStatsWidget({
+                    graphType: 'aggregate-count-by-date',
+                    dataSrc: "{{ data_src }}",
+                    dataParams: {
+                        'order': 'year,month,day'
+                    }
+                }),
+            weekDayStats = $('#stats-login-by-weekday')
+                .vfStatsWidget({
+                    graphType: 'aggregate-count-by-label',
+                    dataSrc: "{{ data_src }}",
+                    dataParams: {
+                        'bins': 'weekday',
+                        'order': 'weekday',
+                        'label': 'weekday'
+                    }
+                });
+
+
+        dateStats.bind('paramsChanged.vfStats', function(event, changeSpec){
+            var newParams = {};
+            if (changeSpec["changed"]["date_start"]){
+                newParams["date_start"] = changeSpec["params"]["date_start"];
+            }
+            if (changeSpec["changed"]["date_end"]){
+                newParams["date_end"] = changeSpec["params"]["date_end"];
+            }
+            if (newParams){
+                weekDayStats.vfStatsWidget("updateParams", newParams);
+                weekDayStats.vfStatsWidget("reRender");
+            }
+        });
+
+    });
+</script>
+{% endblock %}

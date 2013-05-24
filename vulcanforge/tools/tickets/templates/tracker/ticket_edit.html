@@ -1,0 +1,53 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+
+{% do g.resource_manager.register_css('css/hilite.css') %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / #{{ ticket.ticket_num }} {{ ticket.summary }}{% endblock %}
+
+{% block head_extra %}
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="feed.rss"/>
+    <link rel="alternate" type="application/atom+xml" title="Atom"
+          href="feed.atom"/>
+{% endblock %}
+
+{% block header %}Edit Ticket #{{ ticket.ticket_num }}{% endblock %}
+
+{% block actions %}
+{% endblock %}
+
+{% block before_content %}
+    {{ c.related_artifacts_widget.display(value=ticket) }}
+{% endblock %}
+
+{% block content %}
+
+    <div class="padded">
+        <ul class="property-list">
+            <li>
+                <span class="label">Reported by:</span>
+                <span class="value">
+                    <a href="{{ticket.reported_by.url()}}">
+                        {{ ticket.reported_by.display_name }}
+                    </a>
+                </span>
+            </li>
+            <li>
+                <span class="label">Created:</span>
+                <span class="value">{{ abbr_date(ticket.created_date) }}</span>
+            </li>
+            <li>
+                <span class="label">Updated:</span>
+                <span class="value">{{ abbr_date(ticket.mod_date) }}</span>
+            </li>
+        </ul>
+    </div>
+    {{ c.ticket_update_form.display(action='update_ticket',
+      value=ticket, ticket=ticket) }}
+{% endblock %}
+
+{% block after_content %}
+    {{ c.attachment_list.display(value=ticket) }}
+{% endblock %}

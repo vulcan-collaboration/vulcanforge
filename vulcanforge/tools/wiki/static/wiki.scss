@@ -1,0 +1,112 @@
+@import "css/init.scss";
+
+.wiki-header-content {
+    padding: 0 $pu;
+}
+
+.label-page-link {
+    border-right: 1px solid $link-color;
+    padding-right: $pu*2;
+    margin-right: $pu;
+}
+
+.label-page-link:last-child {
+    border-right-style: none;
+}
+
+.title-column {
+    width: 400px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.show-deleted-controls {
+    float: right;
+}
+
+.wiki-page-list td {
+    padding-top: $pu;
+    line-height: 24px;
+}
+
+.wiki-page-list tr.deleted {
+    @include deleted-list-element-skin;
+}
+
+.wiki-page-list .item-actions {
+    opacity: .7;
+}
+
+.wiki-page-list tr:hover .item-actions {
+    opacity: 1;
+}
+
+#history-list {
+    min-width: 500px;
+}
+
+#history-list .version-number {
+    text-align: center;
+    width: 40px;
+}
+
+#history-list .version-date {
+    width: 200px;
+}
+
+.compare-button-holder {
+    text-align: center;
+}
+
+.compare-selector {
+    text-align: center;
+    border: 1px solid $border-color;
+    border-collapse: collapse;
+    margin: 0;
+    width: 60px;
+}
+
+.version-actions {
+    white-space: nowrap;
+    display: inline-block;
+    margin-left: 4*$pu;
+
+}
+
+#compare-selected-button {
+    margin-right: 0;
+}
+
+.selected-number-holder {
+    background-color: $border-color;
+    text-align: center;
+}
+
+.diff_add {
+    text-decoration: underline; background-color: #0f0;
+}
+
+.diff_sub {
+    text-decoration: line-through; background-color: #f00;
+}
+
+ins {
+    text-decoration: none; background-color: lightgreen;
+}
+
+del {
+    text-decoration: none; background-color: pink;
+}
+
+.diff-container {
+    font-family: "Courier New", Courier;
+}
+
+body[data-pagetype="WIKI"] .markdown_content {
+    padding: 1.4em 2.8em;
+    font-size: 1em;
+}
+
+a.notfound {
+    color: red;
+}

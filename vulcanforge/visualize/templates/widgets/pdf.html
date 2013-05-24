@@ -1,0 +1,41 @@
+{% extends 'vulcanforge.visualizer:templates/iframecontent.html' %}
+
+{% block more_head %}
+<style type="text/css">
+    a.pdf-pager, a.pdf-pager:visited {
+        font-size: 28px;
+        color: #555;
+    }
+    a.pdf-pager:hover {
+        color: #999;
+    }
+    .pdf-container {
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="pdf-container">
+        <div style="padding: 5px">
+            <a class="pdf-pager prev-pdf has-icon ico-arrow_left" href="#" title="Previous Page" style="visibility: hidden;">
+                <span class="hidden">Previous</span>
+            </a>
+            <a class="pdf-pager next-pdf has-icon ico-arrow_right" href="#" title="Next Page">
+                <span class="hidden">Next</span>
+            </a>
+        </div>
+        <canvas id="pdf-canvas">
+            If you're seeing this your web browser doesn't support the
+            &lt;canvas>&gt; element. Why?!?
+        </canvas>
+        <div style="padding: 5px">
+            <a class="pdf-pager prev-pdf has-icon ico-arrow_left" href="#" title="Previous Page" style="visibility: hidden;">
+                <span class="hidden">Previous</span>
+            </a>
+            <a class="pdf-pager next-pdf has-icon ico-arrow_right" href="#" title="Next Page">
+                <span class="hidden">Next</span>
+            </a>
+        </div>
+    </div>
+{% endblock %}

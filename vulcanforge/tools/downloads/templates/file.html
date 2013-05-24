@@ -1,0 +1,25 @@
+{% extends g.templates['master'] %}
+{% set has_related_artifacts = True %}
+
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+{% do g.resource_manager.register_js('visualize/visualizer.js') %}
+{% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
+
+{% block title %}
+{{c.project.name}} / {{c.app.config.options.mount_label}}
+{% endblock %}
+
+{% block header %}
+{{lib.path_links(fd_file.item_key.split('/')[:-1])}}{{fd_file.item_key.split('/')[-1]}}
+{% endblock %}
+
+{% block relatedArtifacts %}
+{{c.related_artifacts_widget.display(value=fd_file)}}
+{% endblock %}
+
+{% block content %}
+
+{{c.url_file_widget.display(value=fd_file, force=force_display)}}
+
+{% endblock %}
+

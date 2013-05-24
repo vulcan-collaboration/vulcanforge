@@ -1,0 +1,17 @@
+{% extends g.templates['master'] %}
+
+{% block title %}
+{{c.project.name}} / {{c.app.config.options.mount_label}} / {{post.thread.subject or '(no subject)'}}
+{% endblock %}
+
+{% block header %}
+{{post.thread.subject or '(no subject)'}}
+{% endblock %}
+
+{% block content %}
+<div id="comment" class="comment">
+  <ul>
+    <li>{{c.post.display(value=post)}}</li>
+  </ul>
+</div>
+{% endblock %}

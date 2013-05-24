@@ -1,0 +1,10 @@
+<a href="{{value.url()}}">{{value.name}}</a>({{value.shortname}})<br/>
+{% if value.subforums %}
+  <b>Subforums:</b>
+  {% for subforum in value.subforums %}
+    <span>
+      {% if loop.index0 != 0 %}, {% endif %}
+      <a href="{{subforum.url()}}">{{subforum.name}}</a>
+    </span>
+  {% endfor %}
+{% endif %}

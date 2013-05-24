@@ -1,0 +1,15 @@
+{% if value %}
+  {% if style == 'icon' %}
+    {{g.icon_button_widget.display('Unsubscribe from this '+thing, None, 'artifact_unsubscribe', 'ico-unsubscribe', href=action+'?unsubscribe=True')}}
+  {% else %}
+    <span>You are currently subscribed to this {{thing}}.</span>
+    {{fields['unsubscribe'].display()}}
+  {% endif %}
+{% else %}
+  {% if style == 'icon' %}
+    {{g.icon_button_widget.display('Subscribe to this '+thing, None, 'artifact_subscribe', 'ico-subscribe', href=action+'?subscribe=True')}}
+  {% else %}
+    <span>You are currently not subscribed to this {{thing}}.</span>
+    {{fields['subscribe'].display()}}
+  {% endif %}
+{% endif %}

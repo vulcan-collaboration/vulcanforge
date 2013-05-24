@@ -1,0 +1,135 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_app_css('project_home.scss', scope='tool') %}
+
+{% block title %}Project {{c.project.homepage_title}}{% endblock %}
+
+{% block page_title %}{{c.project.homepage_title}}{% endblock %}
+
+{% block header %}Project {{c.project.homepage_title}}<div class="project-since">Created {{project_since}}</div>{% endblock %}
+
+{% block content %}
+    <div class="padded bottom-spaced">
+        <div class="membership-status">
+                {% if membership_status == "none"%}
+                    {% if c.project.allow_membership_request %}
+                    <form id="membership-change" action="{{ c.app.url }}request_membership" method="POST">
+                        <div class="hidden">
+                            <textarea rows="8" cols="60" name="text">Please add me to your project!</textarea>
+                            <br>
+                            <input type="submit" value="Send" />
+                            <input type="reset" value="Cancel" />
+                        </div>
+                        <input type="button" id="request-membership" class="member-button large-button primary-button" value="Request Membership" title="Request Membership to this Project"/>
+                    </form>
+                    {% endif %}
+                {% elif membership_status == "no-register" %}
+                    <fieldset class="fieldset info">
+                        <legend class="ico-help icon">Membership in {{ c.project.name }}</legend>
+                        <p>Per competition guidelines, membership is limited to
+                            one team per competitor. To join this team, you must
+                            resign from all other teams in this competition.
+                        </p>
+                    </fieldset>
+                {% elif membership_status == "invited" %}
+                    <a href="{{ c.app.url }}accept_membership"
+                        id="accept-invitation"
+                        class="post-link member-button large-button primary-button"
+                        title="Accept Membership to this Project">
+                        Accept Membership
+                    </a>
+                {% elif membership_status == "member" and not is_admin %}
+                    <a id="renounce-membership" href="{{ c.app.url }}renounce_membership" class="btn" title="Renounce Membership to this Project">Renounce Membership</a>
+                {% elif membership_status == "member-requested-leave" %}
+                    <fieldset class="fieldset info">
+                        <legend class="ico-help icon">Membership Cancellation Request</legend>
+                        <p>Your request to leave this project has been sent to
+                            the project administrators and is currently under
+                            evaluation.
+                            <a id="cancel-leave-request" href="{{ c.app.url }}cancel_leave_request" class="btn post-link">Cancel Request</a>
+                        </p>
+                    </fieldset>
+                {% elif membership_status == "requested" %}
+                    <fieldset class="fieldset info">
+                        <legend class="ico-help icon">Membership Request</legend>
+                        <p>Your request for membership to this project is
+                            currently under evaluation by the project
+                            administrators.
+                            <a id="cancel-request" href="{{ c.app.url }}cancel_request" class="btn post-link">Cancel Request</a>
+                        </p>
+                    </fieldset>
+                {% elif membership_status == "removal-requested" %}
+                    <fieldset class="fieldset info">
+                        <legend class="ico-help icon">Membership Removal Request</legend>
+                        <p>The administrator of this team has requested
+                            that you withdraw your membership from the team.
+                            <a id="accept-remove-request" class="btn remove-request" href="{{ c.app.url }}accept_removal">Accept Withdrawal</a>
+                            <a id="deny-remove-request" class="btn remove-request" href="{{ c.app.url }}deny_removal">Deny Withdrawal</a>
+                        </p>
+                    </fieldset>
+                {% endif %}
+        </div>
+        <div>
+            {{ project_description }}
+        </div>
+        {% if c.project.display_membership_info %}
+        <h2>Project Members</h2>
+            {% for role, users in members_by_role.iteritems() %}
+                <h4>{{ role }}</h4>
+                <div class="avatar-list">
+                {% for u in users %}
+                    {{g.avatar.display(user=u, size=32, compact=False, framed=True)}}
+                {% endfor %}
+                </div>
+            {% endfor %}
+        {% endif %}
+        </div>
+        {#
+        {% if membership_status == "member" and c.project.member_agreement %}
+            <h2>Purse Distribution Plan</h2>
+            <p><a href="{{ c.project.member_agreement_url }}">Download the Purse Distribution Plan</a></p>
+        {% endif %}
+        #}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $('#renounce-membership').click(function(){
+        var go = confirm("Are you certain you wish to leave this project?");
+        if (go === true) {
+            $.post($(this).attr('href'), {
+                '_session_id': $.cookie('_session_id')
+            }, function(response) {
+                window.location.reload(true);
+            }, 'json');
+        }
+        return false;
+    });
+    $('.remove-request').click(function(){
+        var go = confirm($(this).text() + " Request?");
+        if (go === true) {
+            $.post($(this).attr('href'), {
+                '_session_id': $.cookie('_session_id')
+            }, function(response) {
+                if (response.location){
+                    window.location = response.location;
+                }
+            }, 'json');
+        }
+        return false;
+    });
+    $('#request-membership').click(function() {
+        var that = $(this);
+        $(this).prevAll('.hidden').slideDown(function() {
+            var hiddenDiv = $(this);
+            $(this).find('input[type="reset"]').one('click', function() {
+                hiddenDiv.slideUp(function() {
+                    that.show();
+                });
+            });
+        });
+        $(this).hide();
+    });
+</script>
+{% endblock %}

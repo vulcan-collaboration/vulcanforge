@@ -1,0 +1,99 @@
+#nav_menu { display: none; }
+#suggest_project_name{
+    font-size: .8em;
+    margin: 0;
+}
+div.content {
+    font-family: Helvetica;
+}
+div.content div.row > div.column {
+    width: 100%
+}
+div.welcome { margin: 2em 0; overflow: auto; }
+div.welcome input {
+    width: 95%;
+    line-height: 20px;
+    font-size: 18px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+}
+div.welcome .error {
+    width: 75%;
+}
+#start {
+    min-height: 150px;
+    min-width: 200px;
+    background: url("../images/gears.png") no-repeat left bottom;
+    text-align: right;
+}
+#start input{
+    display: inline-block;
+    position: relative;
+    height: auto;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: none;
+    color: white !important;
+    margin: 2em 0;
+    padding: 0.5em 1.5em 0.45em 1.5em;
+    text-decoration: none;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+	background: rgb(0,0,0);
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, to(rgb(0,0,0)), from(rgb(90,90,90)));
+    background-image: -moz-linear-gradient(100% 100% 90deg, rgb(0,0,0), rgb(90,90,90) 100%);
+    border: 1px solid black;
+}
+div.inner-row {
+    display: block;
+    position: relative;
+    padding: 1em 4em;
+}
+div.inner-row::after {
+    clear: left;
+    content: '';
+}
+div.inner-row + div.inner-row {
+    padding-top: 4.8em;
+    margin-top: 1em;
+}
+div.tool {
+    display: inline-block;
+    position: relative;
+    width: 33%;
+    vertical-align: top;
+}
+div.tool h1, div.welcome {
+    font-size:16px;
+    font-weight: 300;
+	line-height: 1.3em;
+}
+
+div.tool p {
+    margin-left: 50px;
+    margin-right: 2em;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+div.tool .big_icon {
+    float: left;
+}
+
+div.tool label {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    color: inherit;
+    font: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+form input[type=checkbox][name=Git],
+form input[type=checkbox][name=Hg],
+form input[type=checkbox][name=SVN] {
+    float: none;
+}

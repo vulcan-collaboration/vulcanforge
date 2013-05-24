@@ -1,0 +1,101 @@
+{% extends 'vulcanforge:tools/forum/templates/master.html' %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Forums{% endblock %}
+
+{% block header %}{{c.app.config.options.mount_label}}{% endblock %}
+
+{% block actions %}
+    {% if c.user and c.user != c.user.anonymous() %}
+        {{ g.subscription_popup_menu.display(feed_url=c.url+'feed') }}
+    {% endif %}
+{% endblock %}
+
+{% if h.has_access(c.app, 'configure') and (not hide_forum) %}
+  {% block edit_box %}
+    <div id="add_forum_form"{% if hide_forum %} style="display:none"{% endif %} class="editbox">
+      {{c.add_forum.display(method='POST', action=c.project.url() + c.app.config.options.mount_point + '/add_forum_short', app=c.app, value=add_forum)}}
+    </div>
+  {% endblock %}
+{% endif %}
+
+{% block content %}
+    <div class="padded top-spaced">
+  {% if announcements %}
+    <h3>Announcements</h3>
+    {{c.announcements_table.display(value=announcements)}}
+  {% endif %}
+  {% set visible=0 %}
+        <table class="vf-table">
+            <colgroup>
+                <col class="icons">
+                <col class="names">
+                <col class="latest_posts">
+                <col class="topics">
+                <col class="posts">
+            </colgroup>
+            <thead>
+            <tr>
+                <th colspan="2">Discussion Forum</th>
+                <th>Latest Post</th>
+                <th># Topics</th>
+                <th># Posts</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for forum in forums %}
+            {% if not forum.deleted or h.has_access(c.app, 'configure') %}
+            <tr class="discussion_forum">
+                <td>
+                    <a href="{{forum.url()}}">
+                        <img src="{{forum.icon_url()}}" alt="Forum icon"/>
+                    </a>
+                </td>
+                <td>
+
+                    <a href="{{forum.url()}}">
+                        <strong class="forum_name">{{forum.name}}:</strong>
+                    </a>
+                    <br>{{forum.description}}<br>&nbsp;<br>
+                    {% if forum.deleted %}
+                    <div class="notice">This forum has been deleted and is not
+                        visible to non-admin users
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    {{lib.post_summary(forum.last_post)}}
+                </td>
+                <td>{{forum.num_topics}}</td>
+                <td>{{forum.num_posts}}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+  {% if h.has_access(c.app, 'configure') %}
+    <script type="text/javascript">
+      $(function() {
+        $("#add_forum").click(function(){
+          $("div.editbox").show();
+          return false;
+        });
+        $("#add_forum_cancel").click(function(){
+          $("div.editbox").hide();
+          return false;
+        });
+      });
+    </script>
+  {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style type="text/css">
+  .forum_name{
+    font-size: 1.2em;
+  }
+</style>
+{% endblock %}

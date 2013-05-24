@@ -1,0 +1,26 @@
+{% macro page_actions(page=None, subscribed, is_editing=False) -%}
+    {% if page and not page.is_fake %}
+        {% if not page['deleted'] %}
+            {% if c.user and c.user != c.user.anonymous() %}
+                {% if is_editing %}
+                    {{g.icon_button_widget.display('View Page', None, None, 'ico-preview', href='.')}}
+                {% elif h.has_access(page, 'edit') %}
+                    {% if page.is_current() %}
+                        {{g.icon_button_widget.display('Edit', None, None, 'ico-edit', href=page.original_url()+'edit')}}
+                    {% else %}
+                        {{ g.icon_button_widget.display('Revert to version ' ~ page.version, 'revert_' ~ page.version, 'post-link', 'ico-undo', href="./revert?version=" ~ page.version) }}
+                    {% endif %}
+                {% endif %}
+                {% if h.has_access(page, 'delete') and page.is_current() %}
+                    {{g.icon_button_widget.display('Delete (can be undone)', None, 'post-link', 'ico-delete', href=page.original_url()+'delete')}}
+                {% endif %}
+            {% endif %}
+            {{g.icon_button_widget.display('History', None, None, 'ico-history', href=page.original_url()+'history')}}
+        {% elif h.has_access(page, 'delete') %}
+            {{g.icon_button_widget.display('Undelete', None, 'post-link', 'ico-undelete', href=page.original_url()+'undelete')}}
+        {% endif %}
+        {% if c.user and c.user != c.user.anonymous() and page.is_current() %}
+            {{ g.subscription_popup_menu.display(artifact=page, feed_url=page.original_url()+'feed') }}
+        {% endif %}
+    {% endif %}
+{%- endmacro %}

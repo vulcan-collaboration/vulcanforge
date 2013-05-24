@@ -1,0 +1,50 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+<div class="discussion-holder">
+    {% if title %}
+    <h2 class="discussion-title">{{title}}</h2>
+    {% endif %}
+{% if limit and count>limit  %}
+{{widgets.page_list.display(limit=limit, page=page, count=count)}}
+{% endif %}
+<div id="old-posts-holder" class="posts-holder old">
+    {% set posts = value.find_posts(page=page, limit=limit) %}
+    {% if posts %}
+        <ul class="post-thread-list">
+        {% for t in value.create_post_threads(posts) %}
+            {{widgets.post_thread.display(value=t['post'], children=t['children'],
+            indent=0, show_subject=show_subject,
+            supress_promote=True, page=page, limit=limit)}}
+        {% endfor %}
+        </ul>
+    {% else %}
+        <div class="no-posts">No posts.</div>
+    {% endif %}
+    {% if h.has_access(value, 'moderate') %}
+    <div id="allow_moderate"></div>
+    {% endif %}
+</div>
+
+{% if limit and count>limit %}
+<div>
+    {{widgets.page_list.display(limit=limit, page=page, count=count)}}
+</div>
+{% endif %}
+
+{% if h.has_access(value, 'post') %}
+<div id="new-post-holder" class="posts-holder new">
+    <div class="new-post-connector">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="0,20, 15,0, 30,20"/>
+        </svg>
+    </div>
+    <div class="post new">
+        <div class="post-avatar">
+            {{g.avatar.display(user=c.user, size=64)}}
+        </div>
+        <div class="post-body">
+            {{widgets.edit_post.display(submit_text='Post comment', action=value.url() + 'post', show_cancel=False)}}
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>

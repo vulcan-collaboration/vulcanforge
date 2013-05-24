@@ -1,0 +1,18 @@
+<form method="POST" action="{{c.project.url()}}admin/{{app.config.options.mount_point}}/set_home">
+    <div class="vf-field-list">
+        <div class="vf-field">
+            <label for="new_home">Wiki Home Page:</label>
+            {% if allow_config %}
+                <input type="text" name="new_home" id="new_home" value="{{home}}"/>
+            {% else %}
+                <span>{{home}}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if allow_config %}
+        <div class="vf-form-controls">
+            <input type="submit" value="Save"/>
+            <input type="button" class="close" value="Cancel"/>
+        </div>
+    {% endif %}
+</form>

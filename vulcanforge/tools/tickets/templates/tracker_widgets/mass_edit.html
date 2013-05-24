@@ -1,0 +1,44 @@
+<div>
+  {% if tickets.__len__() %}
+    <table class="ticket-list">
+      <thead>
+        <tr>
+          <th style="width:20px">
+            <input type="checkbox" id="select_all">
+          </th>
+          {% for col in columns if col['active'] %}
+            <th data-sort="{{col['sort_name']}}" class="{% if col['sort_name'] in sort %}activeSortMethod {{ sort }}{% endif %}">
+              {% if col['name'] == 'ticket_num' %}
+                #
+              {% else %}
+                {{col['label']}}
+              {% endif %}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr class="{{loop.index0%2 and 'even' or ''}} ticketRow" title="Click to view ticket">
+          <td><input type="checkbox" name="selected" class="ticket" value="{{t._id}}"/></td>
+            {% for col in columns if col['active'] %}
+              {% if col['name'] == 'ticket_num' %}
+                <td><a href="{{ t.url() }}" target="_blank" class="ticketLink">{{t[col['name']]}}</a></td>
+              {% elif col['name'] == 'summary' %}
+                <td>{{t[col['name']]}}</td>
+              {% elif col['name'] == 'status' %}
+                <td class="{{t.open_or_closed}}">{{t.status}}</td>
+              {% elif col['name'] == 'assigned_to' %}
+                <td>{% if t.assigned_to_id %}{{t.assigned_to.display_name}}{% endif %}</td>
+              {% else %}
+                <td>{{t.custom_fields.get(col['name'])}}</td>
+              {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    No tickets found.
+  {% endif %}
+</div>

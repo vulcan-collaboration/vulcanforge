@@ -1,0 +1,63 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{title}}{% endblock %}
+
+{% block header %}Change history of <i>"{{title}}"</i>{% endblock %}
+
+{% block actions %}
+{{wiki_macros.page_actions(artifact, subscribed=subscribed)}}
+{% endblock %}
+
+
+{% block wiki_content %}
+<div class="padded">
+    {{c.page_size.display(limit=limit,count=count,page=page)}}
+    <form method="get" action="diff" id="diff-form">
+        <input type="hidden" name="v1" {% if v1 %} value="{{v1}}" {% endif %}>
+        <input type="hidden" name="v2" {% if v2 %} value="{{v2}}" {% endif %}>
+    </form>
+    <form id="non-send-form">
+        <table id="history-list" class="hover-rows">
+            <thead>
+            <tr class="no-hover">
+                <td></td>
+                <td></td>
+                <td colspan="2" class="compare-button-holder">
+                    {{g.button_widget.display(label='Compare selected', elementId='compare-selected-button', class='hidden', icon='ico-compare', action='$("#diff-form").submit();')}}
+                </tr>
+            <tr>
+                <th class="version-number">Version</th>
+                <th class="version-date">Date</th>
+                <th id="version1-number" class="selected-number-holder">{{v1 or '--'}}</th>
+                <th id="version2-number" class="selected-number-holder">{{v2 or '--'}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% set i = 0 %}
+            {% for p in pages %}
+            <tr>
+                <td class="version-number">{{p.version}}</td>
+                <td>{{abbr_date(p.mod_date)}}
+                    <div class="avatar-list">by {{g.avatar.display(user=p.author_user, size=16, compact=True)}}</div>
+                    <div class="version-actions">
+                        {% if i != 0 and h.has_access(p, 'edit') %}
+                        {{ g.icon_button_widget.display('Revert to version ' ~ p.version, 'revert_' ~ p.version,
+                        'post-link', 'ico-undo', href="./revert?version=" ~ p.version) }}
+                        {% endif %}
+                        {{ g.icon_button_widget.display('View Revision', 'view_version_' ~ p.version, None, 'ico-play',
+                        href="./?version=" ~ p.version) }}
+                    </div>
+                </td>
+                <td class="compare-selector"><input name="v1rb" type="radio" value="{{p.version}}" class="compare-selector-button" {% if v1 and p.version == v1 %} checked {% endif %}/></td>
+                <td class="compare-selector"><input name="v2rb" type="radio" value="{{p.version}}" class="compare-selector-button" {% if v2 and p.version == v2 %} checked {% endif %}/></td>
+            </tr>
+            {% set i = i+1 %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>
+    {{c.page_list.display(limit=limit, page=page, count=count)}}
+</div>
+{% endblock %}

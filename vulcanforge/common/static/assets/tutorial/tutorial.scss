@@ -1,0 +1,141 @@
+.tutorial-button-container {
+    position: fixed;
+    margin: 0 auto 0 -2em;
+    top: 0;
+    left: 50%;
+    z-index: 250;
+}
+
+.tutorial-button {
+    padding: 1ex;
+    background: #3D6CCB;
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5), 0 0.5ex 1em black;
+    border-radius: 0 0 1ex 1ex;
+    color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.tutorial-button-icon,
+.tutorial-button-label,
+.tutorial-button::before {
+    display: inline-block;
+    margin: 0 0.5ex;
+    vertical-align: middle;
+}
+
+.tutorial-button::before {
+    content: "";
+    display: inline-block;
+    width: 1ex;
+    height: 1em;
+    border-radius: 2px;
+}
+
+.tutorial-off .tutorial-button::before {
+    background-color: #444;
+    box-shadow: inset 0 -2px 2px #222, inset 0 2px 2px #666, 0 -1px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.tutorial-on .tutorial-button::before {
+    background-color: #0ff;
+    box-shadow: inset 0 2px 4px #0ff, inset 0 -2px 4px #088, 0 -1px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.4);
+}
+
+
+.tutorial {
+    margin: 12px 4px 8px 4px;
+    border-radius: 10px;
+    border: 1px solid #39f;
+    background-color: #fafafa;
+    padding: 8px 12px;
+    font-size: 13px;
+    position: relative;
+    background-image: url(info_icon.png);
+    background-repeat: no-repeat;
+    background-position: 8px 8px;
+}
+
+.tutorial .close {
+    position: absolute;
+    right: 10px;
+    top: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.tutorial .title {
+    font-weight: bold;
+    margin-top: 4px;
+    margin-left: 8px;
+    margin-bottom: 8px;
+    padding-left: 18px;
+    /* text-decoration: underline; */
+    font-size: 14px;
+}
+
+.tutorial .description {
+    text-align: justify;
+}
+
+.uC {
+    background-image: url(uc_bg.gif);
+    background-repeat: repeat-x;
+    height: 13px;
+    text-align: center;
+    margin: 7px 0px 0px 0px;
+    border: 1px solid #000;
+    line-height: 13px;
+    vertical-align: middle;
+}
+
+.uC .inner {
+    background-color: #000;
+    padding: 1px 10px;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 9px;
+}
+
+.tutorialHilite {
+    z-index: 10000;
+    background-color: #f7b958;
+    background-color: rgba(200, 200, 200, .35);
+    box-shadow: 0 0 8px #6ef;
+    /* border: 1px dotted #3366CC; */
+}
+
+.qtip-content {
+    text-align: justify;
+}
+
+.vf-tutorial-tip {
+    box-shadow: 0 2px 16px rgba(0,0,0,0.7);
+}
+
+.vf-tutorial-tip .qtip-titlebar {
+    padding: 1ex 1em;
+    background: #0095da;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-shadow: 0 0 3px #024;
+    border-bottom: 1px solid #07c;
+}
+
+.vf-tutorial-tip .qtip-content {
+    padding: 1em;
+    background: #f8f8f8;
+}
+
+.tutorial-description.pure {
+    min-height: 35px;
+    margin-top: 42px;
+}

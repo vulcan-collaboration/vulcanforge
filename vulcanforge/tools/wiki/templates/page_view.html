@@ -1,0 +1,64 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+{% set has_related_artifacts = True %}
+{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
+{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+{% do g.resource_manager.register_css('css/hilite.css') %}
+
+{% do g.resource_manager.register_js('visualize/visualizer.js') %}
+{% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}}{% endblock %}
+
+{% block header %}{{page.title}}
+    {% if page['deleted'] %}<span> [deleted {% if page['deleted_time'] %}{{abbr_date(page['deleted_time'])}}{% endif %}]</span>{% endif %}
+    {% if not page.is_current() and version%} <span>[version {{version}}]</span>{% endif %}
+    {% if show_meta %}
+        <div class="avatar-list">
+            <label class="simple">by: </label>
+            {% for author in page.authors() %}
+                {{g.avatar.display(user=author, size=16, compact=True)}}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+<link rel="alternate" type="application/rss+xml" title="Page RSS" href="feed.rss"/>
+<link rel="alternate" type="application/atom+xml" title="Page Atom" href="feed.atom"/>
+<link rel="alternate" type="application/rss+xml" title="Wiki RSS" href="../feed.rss"/>
+<link rel="alternate" type="application/atom+xml" title="Wiki Atom" href="../feed.atom"/>
+{% endblock %}
+{% block body_attrs %} class="wiki-{{(page.title).replace(' ','_')}}"{% endblock %}
+
+{% block actions %}
+    {{wiki_macros.page_actions(page, subscribed=subscribed)}}
+{% endblock %}
+
+{% block wiki_content %}
+{{page.html_text}}
+{% if page.attachments %}
+    {{c.attachment_list.display(value=page)}}
+{% endif %}
+{% if page.labels %}
+    {{ c.label_list.display(artifact=page) }}
+{% endif %}
+{% endblock %}
+
+{% block relatedArtifacts %}
+    {{c.related_artifacts_widget.display(value= version and page.original() or page)}}
+{% endblock %}
+
+{% block edit_box %}
+{{super()}}
+{% endblock %}
+
+{% block wiki_meta %}{% endblock %}
+
+{% block after_content %}
+  {% if page.discussion_thread and c.app.show_discussion %}
+    {% set thread = page.discussion_thread %}
+    <div>{{c.thread.display(value=thread)}}</div>
+  {% endif %}
+{% endblock %}

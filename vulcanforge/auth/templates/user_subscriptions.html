@@ -1,0 +1,191 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('auth/subscriptions.scss') %}
+{% do g.resource_manager.register_js('auth/subscriptions.js') %}
+
+{% block title %}{{ c.user.username }} / Subscriptions{% endblock %}
+
+{% block header %}My Subscriptions{% endblock %}
+
+{% macro select_options(options, selected=None) %}
+    {% for value, label in options %}
+        <option {% if selected == value %}selected="selected"{% endif %}
+                value="{{ value }}" xmlns="http://www.w3.org/1999/html"
+                xmlns="http://www.w3.org/1999/html">{{ label }}</option>
+    {% endfor %}
+{% endmacro %}
+
+{% block content %}
+    <div class="top-spaced">
+    <form action="update_subscriptions" method="post">
+        <fieldset class="fieldset fieldset-panel">
+            <div>
+                <input type="checkbox" name="general.unsubscribe_all">
+                <label for="general.unsubscribe_all">Unsubscribe from all notifications.</label>
+            </div>
+            <div>
+                <input type="checkbox" name="general.autosubscribe" {% if autosubscribe %}checked="checked"{% endif %}>
+                <label for="general.autosubscribe">Automatically subscribe when creating or modifying artifacts.</label>
+            </div>
+            <div>
+                <input type="checkbox" name="general.message_emails" {% if message_emails %}checked="checked"{% endif %}>
+                <label for="general.message_emails">Receive emails when receiving messages.</label>
+            </div>
+        </fieldset>
+        <div class="padded">
+            <h3>Notification settings per project and tool</h3>
+            <fieldset class="fieldset info">
+                <legend class="ico-help icon">Email notification types</legend>
+                <ul>
+                    <li>
+                        <b>Direct</b> One notification email will be sent per event as events occur.
+                    </li>
+                    <li>
+                        <b>Digest</b> Notifications will be collected into one email per specified interval.
+                        {{ g.button_widget.display(action="window.location.href='/auth/prefs/send_digest';", label="Send digest emails now") }}
+                    </li>
+                    <li>
+                        <b>None</b> No email notifications will be sent.
+                    </li>
+                </ul>
+            </fieldset>
+
+            <div class="projects">
+                {% for project_data in project_data_items %}
+                    <div class="project-container {% if project_data.subscribed %}open{% endif %}">
+                        {% set project = project_data.project %}
+                        <input type="hidden" name="project_ids" value="{{ project._id }}">
+                        <h1 class="project-header" id="project-{{ project._id }}-header">
+                            <svg class="expand-arrow-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                                <polygon class="expand-arrow expand-arrow-open" points="0,4, 16,4, 8,14"></polygon>
+                                <polygon class="expand-arrow expand-arrow-closed" points="4,0, 14,8, 4,16"></polygon>
+                            </svg>
+                            <img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }}">
+                            {{ project.name }}
+                        </h1>
+                        <div class="project-content">
+                            <table class="vf-table project-subscription-table" id="project-{{ project._id }}-table">
+                                <colgroup>
+                                    <col class="label-column">
+                                    <col class="subscribed-column">
+                                    <col class="email-column email-type-direct-column">
+                                    <col class="email-column email-type-digest-column">
+                                    <col class="settings-column">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <td rowspan="2"></td>
+                                        <td rowspan="2" class="subscribe-header"></td>
+                                        <th colspan="2" class="email-header">email</th>
+                                        <td rowspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="email-header email-direct-header">direct</th>
+                                        <th class="email-header email-digest-header">digest</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app_config_data in project_data.app_config_data_items %}
+                                        {% set app_config = app_config_data.app_config %}
+                                        <tr class="app_config-row app_config-{{ app_config._id }}">
+                                            <td class="label-cell">
+                                                <input type="hidden" name="app_config_ids" value="{{ app_config._id }}">
+                                                <a href="{{ app_config.url() }}">
+                                                    <img class="app_config-icon" src="{{ app_config.load().icon_url(32) }}" alt="{{ app_config.options.mount_label }}">
+                                                    {{ app_config.options.mount_label }}<br>
+                                                    <em>({{ app_config.tool_name }})</em>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <em>subscribe to</em><br>
+                                                {% if app_config_data.app_mailbox %}
+                                                    <input type="hidden" name="mailbox_ids" value="{{ app_config_data.app_mailbox._id }}">
+                                                    <input type="checkbox" name="mailboxes.{{ app_config_data.app_mailbox._id }}.subscribe" checked="checked">
+                                                    <label for="mailboxes.{{ app_config_data.app_mailbox._id }}.subscribe">All Artifacts</label><br>
+                                                {% else %}
+                                                    <input type="checkbox" name="app_configs.{{ app_config._id }}.subscribe">
+                                                    <label for="app_configs.{{ app_config._id }}.subscribe">All Artifacts</label><br>
+                                                {% endif %}
+                                                {% if app_config_data.artifact_mailboxes %}
+                                                    <hr>
+                                                    {% for mailbox in app_config_data.artifact_mailboxes %}
+                                                        <input type="hidden" name="mailbox_ids" value="{{ mailbox._id }}">
+                                                        <input type="checkbox" name="mailboxes.{{ mailbox._id }}.subscribe" checked="checked">
+                                                        <label for="mailboxes.{{ mailbox._id }}.subscribe">{{ mailbox.artifact_title }}</label>
+                                                        <br>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </td>
+                                            <td class="radio-cell">
+                                                <input type="radio" class="mailbox_type" name="app_configs.{{ app_config._id }}.type" value="direct" {% if app_config_data.type == 'direct' %} checked="checked"{% endif %}>
+                                            </td>
+                                            <td class="radio-cell">
+                                                <input type="radio" class="mailbox_type" name="app_configs.{{ app_config._id }}.type" value="digest" {% if app_config_data.type == 'digest' %} checked="checked"{% endif %}>
+                                            </td>
+                                            <td>
+                                                <div class="digest-settings">
+                                                    <label for="app_configs{{ app_config._id }}.frequency.n">frequency</label>
+                                                    <input type="text" name="app_configs.{{ app_config._id }}.frequency.n" value="{{ app_config_data.frequency.n }}">
+                                                    <select name="app_configs.{{ app_config._id }}.frequency.unit">
+                                                        <option value="hour" {% if app_config_data.frequency.unit == 'hour' %} selected="selected"{% endif %}>Hour(s)</option>
+                                                        <option value="day" {% if app_config_data.frequency.unit == 'day' %} selected="selected"{% endif %}>Day(s)</option>
+                                                        <option value="week" {% if app_config_data.frequency.unit == 'week' %} selected="selected"{% endif %}>Week(s)</option>
+                                                        <option value="month" {% if app_config_data.frequency.unit == 'month' %} selected="selected"{% endif %}>Month(s)</option>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-controls">
+            <input type="submit" value="Save Changes">
+        </div>
+
+    </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        $(function () {
+            $('.project-container').each(function () {
+                var $this = $(this),
+                    $container = $('.subscribe-header', $this),
+                    $checkboxes = $('input[type="checkbox"]', $this);
+                $('<button></button>').
+                    addClass('check-all').
+                    text('check all').
+                    appendTo($container).
+                    click(function (e) {
+                        $checkboxes.each(function () {
+                            $(this).
+                                prop('checked', true).
+                                trigger('change');
+                        });
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                $('<button></button>').
+                    addClass('uncheck-all').
+                    text('uncheck all').
+                    appendTo($container).
+                    click(function (e) {
+                        $checkboxes.each(function () {
+                            $(this).
+                                prop('checked', false).
+                                trigger('change');
+                        });
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+            });
+        });
+    </script>
+{% endblock %}

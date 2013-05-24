@@ -1,0 +1,38 @@
+<form method="{{method}}"
+       {% if enctype %}enctype="{{enctype}}"{% endif %}
+        {% if form_id %}id="{{form_id}}"{% endif %}
+      action="{{action}}">
+  <table>
+      <tbody>
+      {% for field in widget.fields %}
+          {% set ctx=widget.context_for(field) %}
+          <tr>
+          {% if field.field_type != 'hidden' %}
+                <td>
+                    {% if field.show_label and field.label %}
+                        <label for="{{ctx.id}}" class="grid-13">{{field.label}}:</label>
+                    {% endif %}
+                </td>
+                <td>
+                    {{field.display(**ctx)}}
+                </td>
+                <td>
+                    {% if ctx.errors and field.show_errors -%}
+                        <span {{widget.j2_attrs({'class':error_class})}}>{{ctx.errors}}<br>
+                    {%- endif %}
+                </td>
+          {% else %}
+              {{field.display(**ctx)}}
+          {% endif %}
+          </tr>
+      {% endfor %}
+      </tbody>
+  </table>
+  <hr>
+  <div>
+    {% for b in buttons %}
+      {{b.display()}}
+    {% endfor %}
+    <input type="button" class="close" value="Cancel"/>
+  </div>
+</form>

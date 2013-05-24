@@ -1,0 +1,127 @@
+{% extends 'vehicleforge.tools.tickets:templates/tracker/master.html' %}
+
+{% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / Search{% endblock %}
+
+{% block head %}
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="feed.rss"/>
+    <link rel="alternate" type="application/atom+xml" title="Atom"
+          href="feed.atom"/>
+    {{ super() }}
+{% endblock %}
+
+{% block header %}
+    {% if bin %}
+        Saved Search Bin: {{ bin.summary }}
+    {% else %}
+        Search {{ c.app.config.options.mount_point }}: <code>{{ q }}</code>
+    {% endif %}
+{% endblock %}
+
+{% block actions %}
+    {% if allow_edit and count != 0 %}
+        {{ g.icon_button_widget.display(label='Bulk Edit', icon='ico-edit',
+                href=tg.url(
+                        c.app.url+'edit/',
+                        dict(q=q, limit=limit, sort=sort)
+                )) }}
+    {% endif %}
+
+    {{ g.icon_button_widget.display('RSS feed', None, None, 'ico-rss_alt',
+            href=tg.url(
+                    c.app.url+'search_feed/',
+                    dict(q=q, limit=limit, sort=sort)
+            )) }}
+{% endblock %}
+
+{% block edit_box %}
+    {% if q and h.has_access(c.app, 'save_searches') %}
+        <div class="editbox">
+            <div class="padded">
+                <div data-toggle-group-inverted="ticket-search">
+                    <input type="checkbox" name="save_bin" id="save_bin"
+                           data-toggle-group-control="ticket-search"/>
+                    {% if bin %}
+                        <label for='save_bin'>Update this search</label>
+                    {% else %}
+                        <label for='save_bin'>Save this search</label>
+                    {% endif %}
+                </div>
+                <form class="ticket-search-bin" method="POST"
+                      action="{{ '{}bins/save_bin'.format(c.app.url) }}">
+                    <div data-toggle-group="ticket-search">
+                        <input type="hidden" name="terms"/>
+                        {% if bin %}
+                            <input type="hidden" name="_id"
+                                   value="{{ bin._id }}"/>
+                        {% endif %}
+                        <input type="text" name="summary"
+                               placeholder="Summary"
+                               value="{{ bin.summary or '' }}"/>
+                        <input type="submit" value="Save Search Bin"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="padded top-spaced">
+
+        <form class="ticket-search-form search-form" method="GET" action=".">
+            <input class="search-query" type="text" name="tool_q" value="{{q}}"
+                   id="bin_terms">
+            <input class="search-submit" type="submit" value="Search"/>
+        </form>
+
+        {{ c.ticket_search_results.display(solr_error=solr_error,
+            count=count,
+            limit=limit,
+            query=q,
+            tickets=tickets,
+            sortable_custom_fields=sortable_custom_fields,
+            columns=columns,
+            page=page,
+            sort=sort) }}
+
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {% if q and h.has_access(c.app, 'save_searches') %}
+        <script type="text/javascript">
+            $(function () {
+                $('.ticket-search-bin').bind('submit', function () {
+                    $('.ticket-search-bin input[name="terms"]').
+                        val($('.ticket-search-form input[name="tool_q"]').val());
+                });
+
+                $('[data-toggle-group-control]').each(function () {
+                    var that = this,
+                        groupName = $(this).attr('data-toggle-group-control'),
+                        changeHandler = function (e, speed) {
+                            var checked = $(that).is(':checked'),
+                                value = checked ? 'show' : 'hide',
+                                inverse = !checked ? 'show' : 'hide';
+                            speed = typeof speed === 'undefined' ?
+                                'normal' : speed;
+                            $('[data-toggle-group="' + groupName + '"]').
+                                animate({
+                                    height: value,
+                                    opacity: value
+                                }, speed);
+                            $('[data-toggle-group-inverted="' +
+                                groupName + '"]').
+                                animate({
+                                    height: inverse,
+                                    opacity: inverse
+                                }, speed);
+                        };
+                    $(this).bind('change', changeHandler).
+                        trigger('change', [0]);
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock %}

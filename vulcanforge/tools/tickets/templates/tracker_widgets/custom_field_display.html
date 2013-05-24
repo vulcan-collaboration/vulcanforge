@@ -1,0 +1,7 @@
+<div class="custom-field {{ 'ui-helper-hidden' if hidden else None }}">
+    {% for f in widget.fields %}
+        <div>{{ f.label }}</div>
+        <div>{{ f.value }}</div>
+    {% endfor %}
+    <div class="clear clearfix"></div>
+</div>

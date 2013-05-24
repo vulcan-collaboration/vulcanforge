@@ -1,0 +1,18 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.pie.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.time.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.selection.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.resize.js') %}
+
+{% do g.resource_manager.register_css('css/vf_stats.css') %}
+{% do g.resource_manager.register_js('js/vf_stats.js') %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block header %}
+    {{ title }}
+{% endblock %}

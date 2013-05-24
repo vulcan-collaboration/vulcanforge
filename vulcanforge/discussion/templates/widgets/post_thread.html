@@ -1,0 +1,16 @@
+<!-- post_thread -->
+<li class="post-thread">
+{{widget.parent_widget.widgets.post.display(
+    value=value, show_subject=show_subject, indent=indent,
+    supress_promote=supress_promote, page=page, limit=limit)}}
+    <!-- post_thread replies -->
+    <ul class="post-thread-replies">
+      {%- if children %}
+      {%- for child in children if child.post.status == 'ok' %}
+      {{widget.display(value=child.post, children=child.children, indent=indent+1)}}
+      {%- endfor %}
+      {%- endif %}
+    </ul>
+    <!-- post_thread /replies -->
+</li>
+<!-- /post_thread -->

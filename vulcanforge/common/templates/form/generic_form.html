@@ -1,0 +1,18 @@
+{% extends g.templates['master'] %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block header %}{{ page_header }}{% endblock %}
+
+{% block content %}
+    {% if pre_content %}
+        <div class="padded top-spaced">
+            {{ pre_content }}
+        </div>
+    {% endif %}
+    {{ c.form.display(**form_display_params) }}
+    {% if post_content %}
+        <div class="padded top-spaced">
+            {{ post_content }}
+        </div>
+    {% endif %}
+{% endblock %}

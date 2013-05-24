@@ -1,0 +1,30 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Search{% endblock %}
+
+{% block header %}<span id="searching_header">Searching...</span>{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $vf.afterInit(function() {
+            var search = new $vf.Search({
+                searchSL: new $vf.ServiceLocation("{{search_uri}}", "GET"),
+                q: "{{q|replace('"', '\\"')|safe}}",
+                query_param: "tool_q",
+                page: {{page}},
+                pageSize: {{limit}},
+                results_container: $('#wiki-search-results'),
+                results_header: $('#searching_header'),
+                displayProject: false
+            });
+
+            search.load_results();
+        }, []);
+    });
+</script>	
+{% endblock %}
+{% block wiki_content %}
+    <div id="wiki-search-results" class="search-results-container padded"></div>
+{% endblock %}

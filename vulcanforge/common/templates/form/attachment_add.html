@@ -1,0 +1,14 @@
+{%if standalone %}
+<form method="post" action="{{action}}" enctype="multipart/form-data">{%endif%}
+    <div class="attachment-form-fields">
+        <div class="file-inputs">
+            <input class="real-file" type="file" name="{{name}}" id="{{id or name}}"/>
+        </div>
+    </div>
+    {%if standalone %}
+    <div>
+        <input type="submit" value="Attach file"/>
+    </div>
+    {%endif%}
+    {%if standalone %}
+</form>{%endif%}

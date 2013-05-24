@@ -1,0 +1,32 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% block title %}OpenId Claim Form{% endblock %}
+
+{% block header %}OpenId Claim Form{% endblock %}
+
+{% block content %}
+<form action="claim_verify_oid" method="post" class="loginfields">
+    <div id="loginform_oid">
+        <div class="field-list-item-label">
+            <label for="provider">Provider:</label>
+        </div>
+        <div class="field-list-item-field">
+            <select id="provider" name="provider">
+                {%- for label, url in oid_providers %}
+                <option value="{{url}}">{{label}}</option>
+                {%- endfor %}
+            </select>
+        </div>
+        <div class="field-list-item-label">
+            <label for="username">Username:</label>
+        </div>
+        <div class="field-list-item-field">
+            <input type="text" id="username" name="username" class="text"/>
+        </div>
+    </div>
+    <div class="form-controls">
+        <input type="submit" id="submit" value="Claim">
+    </div>
+</form>
+{% endblock %}

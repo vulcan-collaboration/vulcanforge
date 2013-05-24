@@ -1,0 +1,53 @@
+@import "css/init.scss";
+
+.subscription-popup-content {
+    display: none;
+}
+
+.subscription-popup-menu {
+    max-width: 400px;
+}
+
+.subscription-popup-menu p {
+    margin: 1ex;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.subscription-popup-menu em {
+    color: #666;
+}
+
+.subscription-popup-menu a,
+.subscription-popup-menu a:link {
+    color: #aaa;
+}
+.subscription-popup-menu a:hover {
+    color: #fff;
+}
+
+.subscription-popup-menu .qtip-content {
+    padding: 0;
+}
+
+.subscription-popup-menu .popup-section {
+    position: relative;
+    padding: 1ex;
+    font-size: 13px;
+    box-shadow: inset 0 1px 0 #383838, inset 0 -1px 0 #282828;
+}
+
+.subscription-popup-menu .popup-section.header .icon {
+    float: right;
+}
+.subscription-popup-menu .popup-section.header::after {
+    content: '';
+    clear: right;
+}
+
+.subscription-popup-menu .project-icon,
+.subscription-popup-menu .app-icon {
+    height: 1em;
+    display: inline-block;
+    text-align: middle;
+}

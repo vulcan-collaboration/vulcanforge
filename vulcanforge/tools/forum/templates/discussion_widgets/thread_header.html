@@ -1,0 +1,47 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+
+
+<ul class="property-list">
+    <li>
+        <span class="label">Forum:</span>
+        <span class="value">
+            <a href="{{value.discussion.url()}}">
+                {{ value.discussion.name }}
+            </a>
+        </span>
+    </li>
+    {% if value.first_post %}
+        <li>
+            <span class="label">Creator:</span>
+            <span class="value">
+                <a href="{{value.first_post.author().url()}}">
+                    {{ value.first_post.author().display_name }}
+                </a>
+            </span>
+        </li>
+        <li>
+            <span class="label">Created:</span>
+            <span class="value">
+                {{ lib.abbr_date(value.first_post.timestamp) }}
+            </span>
+        </li>
+    {% endif %}
+    <li>
+        <span class="label">Updated:</span>
+        <span class="value">{{ lib.abbr_date(value.mod_date) }}</span>
+    </li>
+</ul>
+
+{% if show_moderate and h.has_access(value, 'moderate') %}
+    <div id="mod_thread_form" style="display: none;">
+        <h2>Moderate Thread</h2>
+        {{ widgets.moderate_thread.display(value=value, action=value.url() + 'moderate') }}
+        <div style="clear: both;">&nbsp;</div>
+    </div>
+{% endif %}
+
+{% if h.has_access(value, 'post') %}
+    <div id="tag_thread_holder" style="display:none" class="grid-18">
+        widgets.tag_post.display(value=value,submit_text='Save', action=value.url() + 'tag')
+    </div>
+{% endif %}

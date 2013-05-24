@@ -1,0 +1,44 @@
+<form action="{{c.project.url()}}admin/{{app.config.options.mount_point}}/set_options" method="post">
+    <div class="vf-field-list">
+        <div class="vf-field">
+          <label for="show_discussion">Show discussion:</label>
+          {% if allow_config %}
+            <input type="checkbox" name="show_discussion" id="show_discussion"{% if app.show_discussion %} checked="checked"{% endif %}/>
+          {% else %}
+            <span>{{app.show_discussion}}</span>
+          {% endif %}
+        </div>
+        <div class="vf-field">
+          <label for="show_left_bar">Show sidebar:</label>
+          {% if allow_config %}
+            <input type="checkbox" name="show_left_bar" id="show_left_bar"{% if app.show_left_bar %} checked="checked"{% endif %}/>
+          {% else %}
+            <span>{{app.show_left_bar}}</span>
+          {% endif %}
+            (to people without edit rights)
+        </div>
+        <div class="vf-field">
+            <label for="show_right_bar">Show author:</label>
+            {% if allow_config %}
+            <input type="checkbox" name="show_right_bar" id="show_right_bar"{% if app.show_right_bar %} checked="checked"{% endif %}/>
+            {% else %}
+            <span>{{app.show_right_bar}}</span>
+            {% endif %}
+        </div>
+        <div class="vf-field">
+            <label for="content_agreement">Content agreement message:</label>
+            {% if allow_config %}
+            <textarea style="width: 685px; height:140px;" name="content_agreement" id="content_agreement">{% if app.content_agreement %}{{app.content_agreement}}{% endif %}</textarea>
+            {% else %}
+            {% if app.content_agreement %}{{app.content_agreement}}{% endif %}
+            {% endif %}
+            If content agreement message is set, you may mark certain pages to be viewable only after a user has agreed to the content agreement.
+        </div>
+    </div>
+    {% if allow_config %}
+        <div class="vf-form-controls">
+            <input type="submit" value="Save"/>
+            <input type="button" class="close" value="Cancel"/>
+        </div>
+    {% endif %}
+</form>

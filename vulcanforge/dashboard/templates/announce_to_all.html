@@ -1,0 +1,12 @@
+{% extends 'vulcanforge.dashboard:templates/make_announcement.html' %}
+
+{% block title %}Make an Announcement to All Users{% endblock %}
+{% block header %}Make an Announcement to All Users{% endblock %}
+
+{% block content %}
+    <div class="warning-container">
+        <h3>Warning</h3>
+        <p>This will make an announcement to every user and should not be used lightly.</p>
+    </div>
+    {{ c.form.display(value=form_values) }}
+{% endblock %}

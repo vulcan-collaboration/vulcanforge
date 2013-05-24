@@ -1,0 +1,12 @@
+{% if attachments %}
+<div class="attachment-list-wrapper padded {{extraCSS}}">
+    <label class="attachment-label">Attachments:</label>
+    <ul class="attachment-list">
+        {% for att in attachments %}
+        <li class="attachment-wrapper">{{widgets.attachment.display(value=att, delete_url=has_del_permission and
+            widget.get_delete_url(att))}}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}

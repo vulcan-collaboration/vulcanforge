@@ -1,0 +1,74 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% if bodyClasses is undefined %}
+    {% set bodyClasses = [] %}
+{% endif %}
+{% set bodyClasses = ['Login'] %}
+{% block title %}Login Form{% endblock %}
+
+{% block header %}Login{% endblock %}
+
+{% block content %}
+    <div id="loginWrapper">
+
+        <div id="loginContent" class="padded">
+            <div id="loginform">
+
+                <p>Please use your credentials to login below{% if can_register %} or <a href="register">register here</a> for a new account{% endif %}.</p>
+
+                <h2><span>Password Login</span></h2>
+                {{ c.form.display(action='./do_login', value=dict(return_to=return_to),
+        form_control_box=False) }}
+
+                <p>Forgot your password or username?<br/><a href="{{ g.url('/auth/password_reset/') }}">Click here to reset your password</a> and to retrieve your username.</p>
+
+            </div>
+
+            {% if g.openid_enabled %}
+            <div id="loginform_oid">
+
+                <div class="forge-form-container">
+                    <form class="loginfields forge-form"
+                          action="/auth/login_verify_oid" method="post">
+
+                        <h2><span>OpenID Login</span></h2>
+
+                        <ul class="field-list padded">
+                            <li class="field-list-item field-list-item-wide">
+                                <div class="field-list-item-label">
+                                    <label for="provider">Provider:</label>
+                                </div>
+                                <div class="field-list-item-field">
+                                    <select id="provider" name="provider">
+                                        {%- for label, url in oid_providers %}
+                                            <option value="{{url}}">{{ label }}</option>
+                                        {%- endfor %}
+                                    </select>
+                                </div>
+                            </li>
+                            <li class="field-list-item field-list-item-wide">
+                                <div class="field-list-item-label">
+                                    <label for="username_oid">Username:</label>
+                                </div>
+                                <div class="field-list-item-field">
+                                    <input type="text" id="username_oid"
+                                                    name="username"/>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <input name="return_to" type="hidden"
+                               value="{{return_to}}">
+
+                        <div>
+                            <input class="submit" type="submit" value="Login"
+                                   tabindex="5">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

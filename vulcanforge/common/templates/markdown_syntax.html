@@ -1,0 +1,11 @@
+{% extends g.templates['master'] %}
+
+{% block title %}Markdown Syntax Reference{% endblock %}
+
+{% block header %}Markdown Syntax{% endblock %}
+
+{% block content %}
+<div class="padded">
+    {{lib.markdown_syntax()}}
+</div>
+{% endblock %}

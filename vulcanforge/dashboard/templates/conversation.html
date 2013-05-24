@@ -1,0 +1,43 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('dashboard/dashboard.scss') %}
+{% do g.resource_manager.register_css('dashboard/messages.scss') %}
+
+{% block title %}{{ conversation.subject }}{% endblock %}
+{% block header %}{{ conversation.subject }}{% endblock %}
+
+{% block content %}
+    <div class="conversation-container">
+        {% for msg in conversation.get_messages() %}
+            {% set author = msg.author_info %}
+            <div id="message-{{ msg._id|string }}" class="message-container {% if msg.role %} announcement-container{% endif %}">
+                <div class="message-header">
+                    <div class="avatar-holder">
+                        {{ g.avatar.display(user=msg.user, size=48, compact=True) }}
+                        {% if msg.role %}
+                            <a href="{{ author.url }}" title="{{ author.name }}"><img class="message-author-icon" src="{{ author.icon_url }}" alt="{{ author.name }}"></a>
+                        {% endif %}
+                    </div>
+                    <div class="message-header">
+                        <span class="message-subject">{{ author.name }}</span>
+                        <div class="message-info">{{ "Message" if not msg.role else "Announcement" }} sent {{ h.ago(msg.pubdate) }}</div>
+                    </div>
+                </div>
+                <div class="message-body">
+                    {{ g.markdown.convert(msg.text) }}
+                </div>
+            </div>
+        {% endfor %}
+        {% if conversation.allow_comments %}
+            {{ c.form.display() }}
+        {% endif %}
+        {% if not conversation.is_announcement %}
+            <h3>Members</h3>
+            <div class="avatar-list">
+                {% for user in conversation.get_users() %}
+                    {{ g.avatar.display(user=user, size=24, framed=True) }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

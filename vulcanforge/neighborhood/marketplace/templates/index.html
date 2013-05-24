@@ -1,0 +1,10 @@
+{% extends g.templates['master'] %}
+{% do g.resource_manager.register_css('neighborhood/marketplace.scss') %}
+
+{% block title %}Marketplace{% endblock %}
+
+{% block header %}Marketplace{% endblock %}
+
+{% block content %}
+    {% include 'vulcanforge.neighborhood.marketplace:templates/index_content.html' %}
+{% endblock %}

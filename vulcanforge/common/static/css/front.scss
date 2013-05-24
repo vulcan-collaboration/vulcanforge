@@ -1,0 +1,140 @@
+@import "css/init.scss";
+
+.front_content_container {
+  width: 960px;
+  margin: 0 auto;
+}
+
+.frontStats {
+    list-style-type: disc;
+    list-style-position: inside;
+    padding-left: 0;
+    margin: 0 0 2px 0;
+    background-color: rgba(0,0,0,.4);
+    text-align: center;
+    font-size: 12px;
+    text-transform: lowercase;
+}
+
+.frontStats li {
+    display: inline-block;
+    margin: 0;
+    color: #ddd;
+    padding: 4px 20px;
+    letter-spacing: 1px;
+}
+
+.frontStats .number {
+    color: #fff;
+    font-weight: bold;
+}
+
+
+#bannerHolder {
+    height: 150px;
+}
+
+#bannerHolder img {
+    position: absolute;
+}
+
+
+body.front .main-column {
+    width: 960px;
+    border-right: 1px solid $border-color;
+}
+
+.box {
+    float: left;
+    padding: 0px;
+    margin: $pu;
+    border: none;
+    background: #e0e0e0;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 #fff,
+              inset 0 -1px 0 #ccc,
+              0 4px 12px -4px black;
+}
+
+#c1 {
+  margin-top: 0;
+    width: 192 - $pu;
+  margin-bottom: 3em;
+}
+
+#c2 {
+  margin-top: 0;
+    width: 758 - $pu;
+  margin-bottom: 3em;
+}
+
+
+.box .inner {
+    padding: 0px 15px;
+}
+
+.box ul.partial {
+    list-style: none;
+    padding-left: 0px;
+    margin-top: 0px;
+}
+
+.partial li{
+    padding-left: 8px;
+}
+
+.partial li:last-child {
+    margin-top: 4px;
+    padding: 0px;
+}
+
+.box h4 {
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    color: #555;
+}
+
+
+
+
+
+
+
+.component-list {
+    padding-left: 0px;
+    list-style: none;
+}
+
+.component-list li {
+    cursor: pointer;
+    padding: 8px 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.component-list li:hover {
+    background-color: #f3f6fc;
+}
+
+.component-list .title{
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #36c;
+}
+
+.component-list li:hover .description{
+    color: #000;
+}
+
+.componentIconHolder {
+    float: left;
+    margin: 0px 8px 8px 0px;
+}
+
+.component-list .params {
+    float: right;
+    font-weight: normal;
+}
+
+.mainTop {
+    margin-bottom: 4px;
+}

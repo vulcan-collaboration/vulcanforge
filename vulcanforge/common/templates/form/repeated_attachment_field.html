@@ -1,0 +1,9 @@
+<div class="{{ widget.css_class }}">
+    {% for i in range(repetitions) %}
+        {% set ctx=widget.context_for(i) %}
+        {% if ctx.errors and widget.field.show_errors -%}
+            <p {{ widget.j2_attrs({'class':error_class}) }}>{{ ctx.errors }}<p>
+        {%- endif %}
+        {{ widget.field.display(**ctx) }}
+    {% endfor %}
+</div>

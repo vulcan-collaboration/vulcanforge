@@ -1,0 +1,20 @@
+{% extends 'vulcanforge:tools/wiki/templates/master.html' %}
+{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{p1.title}}{% endblock %}
+
+{% block header %}Changes of <i>"{{p1.title}}"</i>{% endblock %}
+
+{% block actions %}
+{{wiki_macros.page_actions(page, subscribed=subscribed)}}
+{% endblock %}
+
+{% block wiki_content %}
+<div class="padded">
+    <h3>Comparing <a href=".?version={{p1.version}}">Version {{p1.version}}</a>
+        with <a href=".?version={{p2.version}}">Version {{p2.version}}</a></h3>
+
+    <div class="diff-container">
+        {{h.html.literal(edits)}}
+    </div>
+</div>
+{% endblock %}

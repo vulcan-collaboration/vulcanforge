@@ -1,0 +1,66 @@
+{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+
+{% do g.resource_manager.register_css('css/hilite.css') %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Basic Statistics{% endblock %}
+
+{% block header %}Basic Statistics{% endblock %}
+
+{% block content %}
+
+<div class="padded top-spaced">
+
+    <h3>Totals</h3>
+    <ul class="property-list">
+        <li>
+            <span class="label">Total Tickets:</span>
+            <span class="value">{{ total }}</span>
+        </li>
+        <li>
+            <span class="label">Open Tickets:</span>
+            <span class="value">{{ open }}</span>
+        </li>
+        <li>
+            <span class="label">Closed Tickets:</span>
+            <span class="value">{{ closed }}</span>
+        </li>
+        <li>
+            <span class="label">Ticket Comments:</span>
+            <span class="value">{{ comments }}</span>
+        </li>
+    </ul>
+
+    <h3>New Tickets</h3>
+    <ul class="property-list">
+        <li>
+            <span class="label">Past 7 Days:</span>
+            <span class="value">{{ week_tickets }}</span>
+        </li>
+        <li>
+            <span class="label">Past 14 Days:</span>
+            <span class="value">{{ fortnight_tickets }}</span>
+        </li>
+        <li>
+            <span class="label">Past 30 Days:</span>
+            <span class="value">{{ month_tickets }}</span>
+        </li>
+    </ul>
+
+    <h3>New Comments</h3>
+    <ul class="property-list">
+        <li>
+            <span class="label">Past 7 Days:</span>
+            <span class="value">{{ week_tickets }}</span>
+        </li>
+        <li>
+            <span class="label">Past 14 Days:</span>
+            <span class="value">{{ fortnight_tickets }}</span>
+        </li>
+        <li>
+            <span class="label">Past 30 Days:</span>
+            <span class="value">{{ month_tickets }}</span>
+        </li>
+    </ul>
+
+</div>
+{% endblock %}

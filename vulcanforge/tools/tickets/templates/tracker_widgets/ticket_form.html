@@ -1,0 +1,104 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+<form id="ticket_form" method="POST" action="{{action}}" enctype="multipart/form-data">
+  {{widget.display_field_by_name('ticket_num')|safe}}
+  {{widget.display_field_by_name('super_id')|safe}}
+  <div>
+      {{widget.display_field_by_name('summary')|safe}}
+  </div>
+    {% if widget.fields['_milestone'] %}
+      <div class="grid-6">
+        <label class="cr">Milestone:</label>
+        {{widget.display_field_by_name('_milestone')|safe}}
+      </div>
+    {% endif %}
+    {% if widget.fields['status'] %}
+    <div class="grid-6">
+      <label class="cr">Status:</label>
+      {{widget.display_field_by_name('status')|safe}}
+    </div>
+    {% endif %}
+    {% if widget.fields['assigned_to'] %}
+    <div class="grid-6">
+      <label class="cr">Owner:</label>
+      {{widget.display_field_by_name('assigned_to')|safe}}
+    </div>
+    {% endif %}
+  {% set min_c_fields = widget.fields['_milestone'] and 1 or 0 %}
+  {% if c.app.globals.custom_fields and c.app.globals.custom_fields.__len__() > min_c_fields %}
+    {{widget.display_field_by_name('custom_fields', ignore_errors=True)}}
+  {% endif %}
+  <div>
+    <label class="cr">Labels:</label>
+    {{widget.display_field_by_name('labels')|safe}}
+  </div>
+  <div class="grid-6">
+    {{widget.display_field_by_name('private')}}
+  </div>  
+  <div style="clear:both">&nbsp;</div>
+  <div class="grid-6">
+    <label class="simple">Updated:</label>
+    {% if ticket %}
+      {{lib.abbr_date(ticket.mod_date)}}
+    {% else %}
+      Now
+    {% endif %}
+  </div>
+  <div class="grid-6">
+    <label class="simple">Created:</label>
+    {% if ticket %}
+      {{lib.abbr_date(ticket.created_date)}}
+    {% else %}
+      Now
+    {% endif %}
+  </div>
+  <div class="grid-6">
+    <label class="simple">Creator:</label>
+    {% if ticket %}
+      <a href="{{ticket.reported_by.url()}}">{{ticket.reported_by.display_name}}</a>
+    {% else %}
+      <a href="{{c.user.url()}}">{{c.user.display_name}}</a>
+    {% endif %}
+  </div>
+  <div style="clear:both">&nbsp;</div>
+  <div class="grid-18">
+    {{widget.display_field_by_name('description')|safe}}
+  </div>
+  <div style="clear:both">&nbsp;</div>
+  <div class="grid-18">
+    {% if ticket %}
+      <div class="clearfix">
+      {% for att in ticket.attachments %}
+          <div class="attachment_thumb">
+            {% if att.is_image() and not att.is_embedded() %}
+              <a href="{{att.url()}}" class="file_type">
+                <img src="{{att.url()}}/thumb" alt="Thumbnail">
+              </a>
+            {% else %}
+              <a href="{{att.url()}}" class="file_type">
+                <span>{{att.filename.split('.')[-1] or 'file'}}</span>
+              </a>
+            {% endif %}
+            <a href="{{att.url()}}">{{att.filename}}</a>
+            <a href="{{att.url()}}" class="btn delete_attachment"><b data-icon="{{g.icons['delete'].char}}" class="ico {{g.icons['delete'].css}}"></b></a>
+          </div>
+      {% endfor %}
+      </div>
+    {% endif %}
+    {{widget.display_field_by_name('attachment')|safe}}
+  </div>
+  <div class="reply discussion-post" style="position:relative;{% if not show_comment %} display:none{% endif %}">
+    <div>
+      <p class="avatar">
+      {{lib.gravatar(c.user, size=48)}}<br>
+      <small><a href="{{c.user.url()}}">{{c.user.display_name}}</a></small>
+      </p>
+    </div>
+    <div>
+      {{widget.display_field_by_name('comment')|safe}}
+    </div>
+  </div>
+  <div>
+    {{widget.display_field_by_name('submit')|safe}}
+    {{g.button_widget.display('Cancel', None, 'cancel_form', 'cancel', "location.href=\'%s\';" %c.app.url)}}
+  </div>
+</form>

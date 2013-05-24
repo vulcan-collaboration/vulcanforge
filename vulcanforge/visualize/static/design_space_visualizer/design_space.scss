@@ -1,0 +1,180 @@
+body {
+    /*height: auto;*/
+    font-family: Helvetica, Arial;
+}
+
+#visualizerHolder {
+    padding:  0px;
+    height: 100%;
+}
+
+#topologyHolder {
+    width: 100%;
+    height: 99%;
+    padding-top: 3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.graphContainer{
+    height: 100%;
+    padding-top: 15px;
+    box-sizing: border-box;
+    -webkit-box-sizing:border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+h2.title {
+    margin: 0px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    border-bottom:  1px solid #aaa;
+    padding: 15px 10px 8px;
+}
+
+.bomLocation {
+    float: right;
+    font-weight: normal;
+    font-size: 12px;
+    vertical-align: text-bottom;
+}
+
+h3 {
+    color: #555;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-top: 15px;
+    margin: 10px 10px;
+    border-bottom: 1px solid #555;
+    clear: both;
+}
+
+.labelContainer {
+    border-color: white;
+    border-style: solid;
+    border-width: 0px;
+    margin-bottom: 1px;
+    padding: 5px;
+    text-align: center;
+    background-color: #E5E5E5;
+    text-shadow: 0 1px 0 white;
+    font-size: 11px;
+    font-weight: bold;
+    height: 28px;
+    line-height: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    color: #555;
+}
+
+.valueContainer {
+    border-top: 1px solid white;
+    padding-top: 2px;
+    height: 14px;
+    line-height: 14px;
+    font-size: 11px;
+    text-align: center;
+    color: #444;
+    line-height: 16px;
+}
+
+.metadataList {
+    margin: 10px 10px;
+    padding: 0px;
+    text-align: center;
+}
+
+.metadataList li {
+    width: 122px;
+    height: 61px;
+    display: inline-block;
+    margin-bottom: 10px;
+    background-color: whiteSmoke;
+    border-right: 1px solid white;
+    text-align: center;
+}
+
+.artifactList {
+    list-style-type: none;
+    padding: 2px;
+    line-height: 21px;
+    text-align:  center;
+    margin-top: 6px;
+}
+
+.artifactList li {
+    padding: 0;
+    display: inline-block;
+}
+
+.artifactList li a:link, .artifactList li a:visited {
+    color: #336;
+    border: 1px dotted #336;
+    background-color: #EFEFEF;
+    border-image: initial;
+    text-decoration: none;
+}
+.artifactList li a:hover, .artifactList li a:active {
+    color: #36C;
+    border: 1px dotted #36C;
+    background-color: #fff;
+    border-image: initial;
+}
+.artifactList li a {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-family: Verdana;
+    margin-right: 3px;
+}
+
+.artifactList li a {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-family: Verdana;
+    margin-right: 3px;
+}
+
+div.infoButton{
+    display: block;
+    margin-right: 0;
+    position: absolute;
+    right: 0;
+    top: 1px;
+}
+
+.nodeCollector {
+    overflow-y: visible;
+    box-sizing: border-box;
+    -webkit-box-sizing:border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+}
+
+#design-selection {
+    margin-left: 10px;
+}
+
+.topologyTitle {
+    position: absolute;
+    padding:  4px 8px;
+    z-index: 120;
+    margin:  0;
+    top: 0;
+    left: 0;
+    font-family: Helvetica, Arial;
+    font-size: 12px;
+    color: #555;
+    text-transform: uppercase;
+    background-color: #fff;
+    opacity: .4;
+    font-weight: bold;
+}
+
+.topologyTitle:hover {
+    opacity: 1;
+}

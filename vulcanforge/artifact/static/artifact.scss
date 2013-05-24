@@ -1,0 +1,769 @@
+@import "css/init.scss";
+
+.bbs {
+  box-sizing: border-box;
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+}
+
+.artifact-link {
+    line-height: 14px;
+    vertical-align: baseline;
+    display: inline-block;
+    white-space: nowrap;
+    position: relative;
+    @extend .bbs;
+}
+
+.artifact-icon {
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.artifact-link>.artifact-icon {
+    position: absolute;
+    left: 0;
+}
+
+.artifact-label {
+    vertical-align: middle;
+    display: inline-block;
+    width: 100%;
+    @extend .bbs;
+}
+
+.mount-point-icon {
+    width: 11px;
+    height: 11px;
+}
+
+.has-info-button {
+    padding-right: 15px;
+}
+
+.has-artifact-icon  {
+    padding-left: 19px;
+}
+
+.clickable .artifact-label{
+    color: #336;
+  /*  cursor: pointer;*/
+}
+
+.clickable .artifact-label:hover {
+    color: #36c;
+}
+
+$artifact-icons: sprite-map("artifact/images/*.png");
+
+.artifact-icon.tree {
+    background: sprite($artifact-icons, folder_icon) no-repeat;
+}
+
+.artifact-icon.FILE_TEXT {
+    background: sprite($artifact-icons, file_text_icon) no-repeat;
+}
+
+.artifact-icon.FILE_DESIGN_SPACE {
+    background-image: url(../design_submission/images/design_icon.png);
+}
+
+
+
+.artifact-icon.FILE_IMAGE,
+.artifact-icon.blob,
+.artifact-icon.component-file{
+    background: sprite($artifact-icons, file_icon2) no-repeat;
+}
+
+.infoButton {
+    display: inline-block;
+    vertical-align: middle;
+    width: 10px;
+    height: 10px;
+    background: sprite($artifact-icons, info_icon_off_norel) no-repeat;
+    cursor: pointer;
+    position: absolute;
+    right: 2px;
+    top: 3px;
+}
+
+.infoButton.giant {
+    background: sprite($artifact-icons, info_icon_giant_off2) no-repeat;
+    width: 15px;
+    height: 15px;
+}
+
+.infoButton.giant:hover {
+    background: sprite($artifact-icons, info_icon_giant_on2) no-repeat;
+    width: 15px;
+    height: 15px;
+}
+
+.artifact-link-container {
+    position: relative;
+}
+
+.artifact-link-container.has-relations .infoButton{
+    background: sprite($artifact-icons, info_icon_off) no-repeat;
+    vertical-align: middle;
+}
+
+.infoButton:hover,
+.has-relations .infoButton:hover{
+    width: 10px;
+    height: 10px;
+    background: sprite($artifact-icons, info_icon_on) no-repeat;
+}
+
+.artifact-extras {
+    display: inline-block;
+    font-size: .8em;
+    vertical-align: middle;
+}
+
+.artifact-pleaseWait {
+    text-align: center;
+    background-image: url(images/PleaseWait.gif);
+    width: 66px;
+    height: 66px;
+    background-repeat: no-repeat;
+    margin: auto;
+}
+
+.referencesGraphHolder {
+    position: relative;
+    padding: 25px 25px 30px 30px;
+}
+
+/* Tooltip style */
+.qtip.ui-tooltip-artifact, .qtip.ui-tooltip-artifact {
+    -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+    max-width: 600px !important;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.ui-tooltip-artifact .ui-tooltip-titlebar{
+    background-color: #336;
+    color: white;
+    border: 0 dashed transparent;
+    font-weight: normal;
+    text-transform: uppercase;
+    padding: 2px 35px 0px 4px;
+}
+
+.ui-tooltip-artifact .ui-tooltip-titlebar .ui-state-default{
+    margin-top: -8px;
+    margin-right: -3px;
+}
+
+.ui-tooltip-artifact div.qtip-content{
+    background-color: #fff;
+    color: #111;
+    border: 1px solid #303566;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 0;
+}
+
+.ui-tooltip-artifact .ui-tooltip-icon{
+    border-color: #2758d4;
+    height: 14px;
+}
+
+.ui-tooltip-artifact .ui-tooltip-icon .ui-icon {
+    border-radius: 0px;
+}
+
+.ui-tooltip-artifact .ui-tooltip-titlebar .ui-state-hover{
+    border-color: #696952;
+    color: #696952;
+}
+
+.preview-image {
+  max-width: 100%;
+  min-width: 100px;
+}
+
+.preview-image.clickable {
+    cursor: pointer;
+    opacity: .7;
+
+    -webkit-transition-property: opacity;
+    -webkit-transition-duration: .4s, 0s;
+    -webkit-transition-timing-function: linear, ease-out;
+
+    -moz-transition-property: opacity;
+    -moz-transition-duration: .4s, 0s;
+    -moz-transition-timing-function: linear, ease-out;
+
+    -o-transition-property: opacity;
+    -o-transition-duration: .4s, 0s;
+    -o-transition-timing-function: linear, ease-out;
+
+    transition-property: opacity;
+    transition-duration: .4s, 0s;
+    transition-timing-function: linear, ease-out;
+}
+
+.preview-image.clickable:hover {
+    opacity: 1;
+}
+
+.preview {
+    text-align: center;
+    background-color: #111;
+    margin-bottom: 10px;
+}
+
+.preview h4 {
+    margin: 0px;
+    padding: 1px 4px;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 9px;
+    font-weight: normal;
+}
+
+.relations {
+    position: relative;
+    min-height: 20px;
+    min-width: 100px;
+}
+
+.relations.noCreateLinkButton {
+  min-height: 0;
+}
+
+.relations-list {
+    margin: 0;
+    padding: 2px 18px 2px 4px;
+    font-size: 12px;
+    text-align: center;
+    position: relative;
+    white-space: nowrap;
+    line-height: 18px;
+}
+
+#main-column-header .relations-list {
+    padding-top: 4px;
+    padding-bottom: 0;
+}
+
+.embedded .relations-list {
+    border-top: 1px solid $column-header-footer-border-color;
+}
+
+.embedded .artifact-link {
+    text-align: left;
+}
+
+.relations-list.noCreateLinkButton {
+    padding-right: 4px;
+}
+
+.relations-list > li {
+    display: inline-block;
+    padding: 0 8px;
+    border-right: 1px dotted #336;
+    vertical-align: top;
+}
+
+.relations-list > li:last-child {
+    border-right: 0px;
+}
+
+.shortlink-button {
+    background: sprite($artifact-icons, shortlink_icon_off) no-repeat;
+    width: 9px;
+    height: 9px;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    cursor: pointer;
+}
+
+.shortlink-button:hover {
+    background: sprite($artifact-icons, shortlink_icon_on) no-repeat;
+}
+
+.shortlink-display {
+    font-size: 9px;
+    padding : 0px 2px;
+    margin: 0px 0px 0px 5px;
+    border-radius: 0px;
+    width: auto;
+    box-shadow: none;
+    border: 0px solid #555;
+    display: inline;
+    background-color: #555;
+    color: #f5f5f5;
+}
+
+.shortlink-display:focus {
+    background-color: #ccc;
+    color: #000;
+}
+
+.shortlink-display-holder {
+    padding: 0px 1px 1px;
+    background-color: #000;
+    color: #fff;
+    text-align: right;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+.instances-list {
+    padding: 0px;
+    margin-top: 2px;
+    z-index: $instances-list-z-index;
+}
+
+.instances-list li {
+    display: block;
+    cursor: pointer;
+    font-size: 11px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #336;
+    line-height: 15px;
+}
+
+.instances-list li:hover {
+    display: block;
+    color: #36c;
+}
+
+.relation-create-button {
+    padding: 0;
+    margin: 0px 0px 2px 2px;
+
+    height: 9px;
+    width: 9px;
+    font-size: 0px;
+    cursor: pointer;
+    vertical-align: middle;
+    display: inline-block;
+
+    background: sprite($artifact-icons, create_reference_off) no-repeat;
+
+    transition: opacity .4s;
+    -moz-transition: opacity .4s; /* Firefox 4 */
+    -webkit-transition: opacity .4s; /* Safari and Chrome */
+    -o-transition: opacity .4s;
+
+    opacity: .5;
+}
+
+:hover > .relation-create-button {
+    opacity: 1;
+    background: sprite($artifact-icons, create_reference_mid) no-repeat;
+    height: 9px;
+    width: 9px;
+}
+
+.relation-create-button:hover {
+    background: sprite($artifact-icons, create_reference_on) no-repeat;
+    height: 9px;
+    width: 9px;
+}
+
+.show-more {
+    text-align: right;
+    color: #336;
+    padding: 0px 4px 2px;
+    font-weight: bold;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.show-more:hover {
+    color: #f93;
+}
+
+.mount-point-label {
+    text-align: center;
+    line-height: 16px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    color: #333;
+    font-weight: bold;
+    font-size: 10px;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mount-point-label .artifact-icon {
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.artifact-icon.Tickets,
+.artifact-icon.post,
+.artifact-icon.ticket{
+    background: sprite($artifact-icons, tickets_icon) no-repeat;
+    width: 11px;
+    height: 11px;
+}
+
+.artifact-icon.post,
+.artifact-icon.thread{
+    background: sprite($artifact-icons, post_icon) no-repeat;
+    width: 11px;
+    height: 11px;
+}
+
+.artifact-icon.repository-abstraction{
+    background: sprite($artifact-icons, repository-abstraction) no-repeat;
+}
+
+.artifact-icon.Discussion {
+    background: sprite($artifact-icons, forums_icon) no-repeat;
+}
+
+.artifact-icon.Wiki,
+.artifact-icon.wiki,
+.artifact-icon.wikipage{
+    background: sprite($artifact-icons, wiki_icon) no-repeat;
+}
+
+.artifact-icon.Git {
+    background: sprite($artifact-icons, git_icon_small) no-repeat;
+    width: 12px;
+    height: 13px;
+}
+
+.artifact-icon.Svn {
+    background: sprite($artifact-icons, svn_icon_small) no-repeat;
+    width: 12px;
+    height: 13px;
+}
+
+.artifact-icon.property-type,
+.artifact-icon.quantity-kind,
+.artifact-icon.unit-of-measure,
+.artifact-icon.Ontology,
+.artifact-icon.exchange-component,
+.artifact-icon.taxonomy-term,
+.artifact-icon.property-type,
+.artifact-icon.port-type,
+.artifact-icon.Components {
+    background: sprite($artifact-icons, component_icon) no-repeat;
+    width: 11px;
+    height: 11px;
+}
+
+.artifact-icon.File{
+    background: sprite($artifact-icons, file_icon_small) no-repeat;
+}
+
+.references-loading{
+    text-align: center;
+}
+
+.artifactLinkList {
+    width: 0;
+    padding: 0px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    top: 1px;
+    left: 1px;
+
+    transition: width .4s;
+    -moz-transition: width .4s; /* Firefox 4 */
+    -webkit-transition: width .4s; /* Safari and Chrome */
+    -o-transition: width .4s;
+
+    position: relative;
+}
+
+
+.artifactLinkListElement {
+    width: 184px;
+
+    background-color: rgba( 255, 255, 255, 0.9 );
+
+
+    background: #ffffff; /* Old browsers */
+    @include linearGradient4(top, #fff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0 ); /* IE6-9 */
+
+    opacity: .9;
+    margin-bottom: 1px;
+    padding: 0px 4px 2px;
+    height: 20px;
+
+    line-height: 18px;
+    vertical-align: middle;
+
+    transition: opacity .3s;
+    -moz-transition: opacity .3s; /* Firefox 4 */
+    -webkit-transition: opacity .3s; /* Safari and Chrome */
+    -o-transition: opacity .3s;
+    position: relative;
+
+    white-space: nowrap;
+}
+
+.artifactLinkListElement:hover {
+    background-color: #fff;
+    opacity: 1;
+}
+
+.artifactLinkListElement .artifact-label {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.artifactLinkListElement .artifact-icon {
+    margin-right: 3px;
+}
+
+.artifactLinkListElement.ui-draggable-dragging {
+    border: 1px solid #777;
+    -moz-box-shadow: 3px 3px 0px #999;
+    -webkit-box-shadow: 3px 3px 0px #999;
+    box-shadow: 3px 3px 0px #999;
+}
+
+.will-eat-artifactlink {
+    border: 1px solid #f93;
+    -moz-box-shadow: inset 0 0 5px #f93;
+    -webkit-box-shadow: inset 0 0 5px #f93;
+    box-shadow: inset 0 0 5px #f93;
+}
+
+.ready-for-artifactlink {
+    -moz-box-shadow: inset 0 0 10px #f93;
+    -webkit-box-shadow: inset 0 0 10px #f93;
+    box-shadow: inset 0 0 10px #f93;
+}
+
+.linkRemoveButton {
+    margin-top: 4px;
+    vertical-align: middle;
+    cursor: pointer;
+    font-size: 9px;
+    font-family: Verdana;
+    line-height: 14px;
+    color: #bbb;
+    position:absolute;
+    right: 6px;
+    z-index: 1000;
+    display: inline-block;
+}
+
+.linkRemoveButton:hover {
+    color: #f00;
+}
+
+.ui-draggable-dragging .linkRemoveButton {
+    display: none;
+}
+
+.copyLinkButton {
+    background: sprite($artifact-icons, create-link-icon) no-repeat;
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    cursor: pointer;
+}
+
+.copyLinkButton:hover {
+    background: sprite($artifact-icons, create-link-icon_over) no-repeat;
+}
+
+.relations.embedded .artifactLinkList{
+    width: auto;
+    padding: 1px 1px 0px 1px;
+    left: 0px;
+    top: 0px;
+}
+
+.relations.embedded li.column {
+    padding: 0px 6px;
+}
+
+.relations.embedded li.column .instances-list{
+    position: absolute;
+    margin-top: -1px;
+    margin-left: -7px;
+    display: none;
+    border-: 1px solid #bbb;
+    padding: 0px;
+
+    background: rgb(69,72,77); /* Old browsers */
+    @include linearGradient2(top,  rgba(69,72,77,1) 0%, rgba(22,25,37,1) 100%);
+
+    -moz-box-shadow: 0 0 3px #333;
+    -webkit-box-shadow: 0 0 3px #333;
+    box-shadow: 0 0 3px #333;
+}
+
+.relations.embedded li.column:hover .mount-point-label{
+    color: #f93;
+}
+
+.relations.embedded li.column:hover .instances-list{
+    display: block;
+}
+
+
+.relations.embedded .mount-point-label {
+    cursor: pointer;
+    background-color: #eee;
+}
+
+.relations.embedded .artifactLinkListElement {
+    width: 115px;
+    text-align: left;
+}
+
+.relatedArtifactsPanelHolder {
+    background-color: #efefef;
+    padding: 0 10px 0 0;
+    position: relative;
+    height: $related-artifacts-height;
+    text-align: center;
+    position: relative;
+    border: 1px solid #ccc;
+    border-left: none;
+    border-right: none;
+
+    @extend .bbs;
+}
+
+.relatedArtifactsPanelHolder .preview {
+  display: none;
+}
+
+.relatedArtifactsPanelHolder h4 {
+    margin: 0 0 5px;
+    font-size: 8px;
+    line-height: 8px;
+    text-transform: uppercase;
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    color: #777;
+}
+
+.relatedArtifactsPanelHolder progress {
+    position: relative;
+    height: 10px;
+    line-height: $related-artifacts-height;
+}
+
+#main-column-header .relatedArtifactsPanelHolder {
+    border: none;
+}
+
+#main-column-header .relatedArtifactsPanelHolder progress {
+    top: -8px;
+}
+
+.noReferences {
+    width: 139px;
+    color: #eee;
+}
+
+.markdown_content .artifact-link-container {
+    display: inline-block;
+    margin-left: 0px;
+    margin: 0 1px;
+    padding: 0px 5px 0px 3px;
+    border: 0px;
+    line-height: 14px;
+    vertical-align: baseline;
+    white-space: nowrap;
+    font-size: 11px;
+
+    background: #eeeeee; /* Old browsers */
+
+    border: 1px solid #b5b6ca;
+    border-radius: 9px;
+
+    transition: background .2s;
+    -moz-transition: background .2s; /* Firefox 4 */
+    -webkit-transition: background .2s; /* Safari and Chrome */
+    -o-transition: background .2s;
+
+}
+
+.markdown_content .artifact-link-container:hover {
+    background: #ffffff; /* Old browsers */
+    @include linearGradient4(top, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0 ); /* IE6-9 */
+
+    border: 1px solid #9696b3;
+}
+
+
+.markdown_content .artifact-link {
+    height: 14px;
+    padding-left: 14px;
+}
+
+.markdown_content .artifact-link * {
+    vertical-align: top;
+    height: 14px;
+}
+
+.markdown_content .artifact-link-container .infoButton {
+    margin-right: 0px;
+    vertical-align: top;
+ }
+
+.markdown_content .artifact-label {
+    font-size: 11px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.markdown_content .artifact-icon {
+    width: 12px;
+    height: 11px;
+    margin-top: 2px;
+    margin-right: 3px;
+}
+
+.artifact-link-container.rendering {
+    opacity: .8;
+    font-size: 11px;
+    background-color: #ddd;
+    padding: 0px 4px;
+    border: 1px solid #777;
+}
+
+.markdown_content .rendering {
+    padding: 2px 14px;
+    margin: 0px 6px 0px 0px;
+}
+
+.markdown_content .infoButton {
+    width: 10px;
+    height: 10px;
+    margin-top: -1px;
+}
+
+.artifactLinkListElement.ui-draggable-dragging * {
+    cursor: inherit;
+}

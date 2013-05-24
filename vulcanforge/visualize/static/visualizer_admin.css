@@ -1,0 +1,7 @@
+table#visualizers{
+    width: 960px;
+}
+#visualizers .ui-sortable .ui-sortable-helper{
+    border: 1px solid #555;
+    border-radius: 6px;
+}

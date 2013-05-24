@@ -1,0 +1,39 @@
+{%- macro header(username, userid, name, login_url, logout_url) %}
+<header id="site-header">
+    <div class="wrapper">
+        <a class="logo" href="/">
+            <h1>VehicleForge</h1>
+        </a>
+        <nav>
+          {% if userid %}
+            <a href="/auth/prefs/">Account</a>
+            <a href="/u/{{username}}/">{{name}}</a>
+            <a href="{{logout_url}}">Log Out</a>
+          {% else %}
+            <a href="/auth/register">Register</a>
+            <a href="{{login_url}}">Log In</a>
+          {% endif %}
+        </nav>
+    </div>
+</header>
+{%- endmacro %}
+
+{%- macro footer(year) %}
+<footer id="site-footer">
+  <nav>
+	  This project is powered by <a href="http://vehicleforge.net/">VehicleForge</a>.
+	</nav>
+</footer>
+{%- endmacro %}
+
+{%- macro custom_js(path_to_static) %}
+
+{%- endmacro %}
+
+{%- macro custom_ga_js(user) %}
+
+{%- endmacro %}
+
+{%- macro extra_header(path_to_static) %}
+
+{%- endmacro %}

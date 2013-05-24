@@ -1,0 +1,12 @@
+{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+<form method="{{method}}" action="{{action}}" enctype="multipart/form-data">
+    <div id="add_visualizer_form" style="display:{{c.form_errors and 'inline' or 'none'}}">
+        <label class="grid-4">Upload a Zip File:</label>
+        <div class="grid-15">{{lib.file_field('archive', '')}}</div>
+        <label class="grid-4">&nbsp;</label>
+        <div class="grid-15">
+            <input type="submit" name="create" value="Save Visualizer">
+            <input type="button" id="add_visualizer_cancel" value="Cancel">
+        </div>
+    </div>
+</form>

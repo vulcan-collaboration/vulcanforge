@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+{% import g.theme.theme_macros as theme_macros with context %}
+
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js') %}
+{% do g.resource_manager.register_js('js/lib/json/json2.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.qtip.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js') %}
+{% do g.resource_manager.register_js('js/allura-plugins.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.idletimer.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js') %}
+{% do g.resource_manager.register_js('js/allura-base.js') %}
+
+{% do g.resource_manager.register_js('js/lib/utils.js') %}
+{% do g.resource_manager.register_js('js/vf.js') %}
+
+{% do g.resource_manager.register_js('visualize/visualizer.js') %}
+{% do g.resource_manager.register_js('artifact/Artifact.js') %}
+        
+{% do g.resource_manager.register_js('assets/workspace/Workspace.js') %}
+
+{% do g.resource_manager.register_css('css/core.scss') %}
+{% do g.resource_manager.register_css('css/hilite.css') %}
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+{% do g.resource_manager.register_css('artifact/artifact.scss') %}
+{% do g.resource_manager.register_css('notification/notify.css') %}
+{% do g.resource_manager.register_css('assets/workspace/workspace.scss') %}
+
+<html>
+<head>
+    <title>{{visualizer.name}}</title>
+
+    {% for blob in g.resource_manager.emit('css') %}
+    {{ blob }}
+    {% endfor %}
+
+</head>
+<body class="fullscreen-vis {% if session['userid'] %}authenticated {% endif %}" data-pagetype="visualizerFullScreen">
+    <div class="visualization vis-{{context}}">
+        <div class="visualizerToolbar" id="visualizerToolbar">
+            <a href="{{logo_url}}" id="vfLink" title="Vehicle Forge"></a>
+            <div id="messages"></div>
+            <div class="visualizerTabs">
+                <ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-corner-all">
+                    {% for v in visualizer_options %}
+                    <li class="ui-state-default selectable ui-corner-top {{'ui-tabs-selected ui-state-active' if v==visualizer else 'ui-tabs-unselected'}}">
+                        <a href="/visualize/{{v._id}}/src/?{{base_query}}" title="View with {{v.name}}">{{v.name}}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="ui-state-default ui-corner-top ui-tabs-unselected">
+                        <a class="dl-link" href="{{resource_url}}?format=raw" title="Download {{filename}}..."></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="clear:both"></div>
+        </div>
+        <iframe src="/visualize/{{visualizer._id}}/src/?{{query_str}}" class="visualizerContainer" id="visualizerContainer"></iframe>
+        <div id="right-toolbar">
+            <div class="toolbar-upper">
+                {{ theme_macros.project_floating_details() }}
+            </div>
+            <div class="toolbar-lower">
+            </div>
+        </div>
+        <div class="visualizerFooter" id="visualizerFooter">
+            <div class="bomLocation">Source: {{filename}}</div>
+        </div>
+    </div>
+{% for blob in g.resource_manager.emit('js') %}
+{{ blob }}
+{% endfor %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        var visualizerContainerE = $('#visualizerContainer');
+        var lessHeight = $('#visualizerToolbar').outerHeight()+$('#visualizerFooter').outerHeight()+2;
+
+        visualizerContainerE.height($(window).height() - lessHeight);
+        visualizerContainerE.width($(window).width() - 20);
+
+        $(window).resize(function() {
+            visualizerContainerE.height($(window).height() - lessHeight);
+            visualizerContainerE.width($(window).width() - 20);
+        });
+
+        $('.visualizerTabs li.selectable a').click(function(){
+            var li = $(this).parent();
+            li.siblings('li.ui-tabs-selected').removeClass('ui-tabs-selected ui-state-active').addClass('ui-tabs-unselected');
+            li.addClass('ui-tabs-selected ui-state-active').removeClass('ui-tabs-unselected');
+            visualizerContainerE.attr('src', $(this).attr('href'));
+            return false;
+        });
+
+        {% for n in h.pop_user_notifications() %}
+            $('#messages').notify("{{ n.text }}");
+        {% endfor %}
+
+        var referenceBinReferences = {{c.user.get_workspace_references()|safe}};
+
+    $vf.init({% if session['userid'] %}'{{c.user.url()}}'{% else %} null {% endif %}, {{c.user.get_workspace_tabs()|safe}}, referenceBinReferences);
+
+    });
+
+</script>
+</body>
+</html>

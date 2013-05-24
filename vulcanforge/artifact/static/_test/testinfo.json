@@ -1,0 +1,65 @@
+{
+        "relations": [
+
+            {
+
+                "mount_point": "issues",
+                "tool_name": "Tickets",
+                "label": "Tickets",
+                "count": 12,
+                "instances": [
+                    ["Label1", "URL"],
+                    ["Label2", "URL"],
+                    ["Label3", "URL"],
+                    ["Label4", "URL"],
+                    ["Label5", "URL"],
+                    ["Label6", "URL"]
+                ],
+                "createURL": true
+
+            },
+
+            {
+
+                "mount_point": "discussions",
+                "label": "Discussion",
+                "tool_name": "Forums",
+                "instances": [
+                    ["Label1", "URL"],
+                    ["Label2", "URL"],
+                    ["Label3", "URL"],
+                    ["Label4", "URL"],
+                    ["Label5", "URL"]
+                ],
+                "createURL": true
+
+            },
+
+            {
+
+                "mount_point": "wiki_pages",
+                "tool_name": "Wiki",
+                "label": "Wiki Pages",
+                "instances": [
+                    ["Label1", "URL"],
+                    ["Label2", "URL"],
+                    ["Label3", "URL"]
+                ]
+
+            },
+
+            {
+
+                "mount_point": "artifacts",
+                "tool_name": "Files",
+                "label": "Artifacts",
+                "instances": [
+                    ["Label1", "URL"],
+                    ["Label2", "URL"]
+                ],
+                "createURL": true
+
+            }
+
+        ]
+}

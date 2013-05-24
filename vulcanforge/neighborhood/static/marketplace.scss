@@ -1,0 +1,87 @@
+#marketplace
+{
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#marketplace_users,
+#marketplace_projects
+{
+    display: table-cell;
+    width: 50%;
+}
+
+#marketplace_projects_liner
+{
+    padding-left: 1ex;
+}
+#marketplace_users_liner
+{
+    padding-right: 1ex;
+}
+
+.marketplace_ads
+{
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+.marketplace_ad
+{
+    display: table-row;
+    width: 100%;
+}
+
+.marketplace_ad_info,
+.marketplace_ad_text
+{
+    display: table-cell;
+    padding: 1ex;
+    border-bottom: 1px solid #eee;
+    height: 7em;
+}
+
+.marketplace_ad_info
+{
+    padding-top: 2ex;
+    width: 48px;
+    text-align: center;
+    vertical-align: top;
+}
+
+.marketplace_ad_text
+{
+    padding-right: 2em;
+    vertical-align: top;
+}
+
+.marketplace_ad_title,
+.marketplace_ad_text p
+{
+    margin: 1ex 0;
+}
+
+.marketplace-header
+{
+    overflow: auto;
+    text-align: right;
+}
+
+.marketplace-header-label
+{
+    float: left;
+    margin: 0.7ex 0;
+    text-align: left;
+}
+
+input.marketplace-search-input
+{
+    display: inline-block;
+    vertical-align: baseline;
+    text-align: left;
+    width: auto;
+}
