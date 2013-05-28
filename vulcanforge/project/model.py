@@ -845,7 +845,8 @@ class Project(SOLRIndexed):
             AM = None
         if role is None:
             role = self.default_role
-        user.project_role(self).roles.append(role._id)
+        pr = self.project_role(user)
+        pr.roles.append(role._id)
         if AM is not None:
             q = {'user_id': user._id, 'project_id': self._id}
             AM.MembershipRequest.query.remove(q)
@@ -859,14 +860,6 @@ class Project(SOLRIndexed):
 
         user.add_workspace_tab_for_project(self)
 
-        if (
-            self.neighborhood.kind == "competition" and
-            self.neighborhood.monoconcilium and
-            self.neighborhood.enable_marketplace
-        ):
-            url = "{url}home/market/browse_projects".format(
-                url=self.neighborhood.url())
-            user.delete_workspace_tab_to_url(url)
         return ev
 
     def user_leave_project(self, user, clean_roles=True, notify=False,

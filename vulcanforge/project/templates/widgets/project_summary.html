@@ -15,6 +15,6 @@
             </span>
         </div>
         {% if not cancel_url %}<div class="project-since">Created {{ project_since }}</div>{% endif %}
-        <div class="description">{{ h.text.truncate(short_description, 500) }}</div>
+        <div class="description">{{ h.truncate(short_description, 500) }}</div>
     </div>
 </{% if display_mode == 'list' %}li{% else %}div{% endif %}>

@@ -71,13 +71,13 @@ class ArtifactSessionExtension(SessionExtension):
             if new_ref_ids:
                 self.index_new(new_ref_ids)
 
-            # zarkov events
+            # store events
             for obj in self.objects_added:
-                g.zarkov_event('create', extra=obj.index_id())
+                g.store_event('create', extra=obj.index_id())
             for obj in self.objects_modified:
-                g.zarkov_event('modify', extra=obj.index_id())
+                g.store_event('modify', extra=obj.index_id())
             for obj in self.objects_deleted:
-                g.zarkov_event('delete', extra=obj.index_id())
+                g.store_event('delete', extra=obj.index_id())
 
             # Update Artifact label counts
             for app_config in app_configs:

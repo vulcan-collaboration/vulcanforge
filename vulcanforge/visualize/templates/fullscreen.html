@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% import g.theme.theme_macros as theme_macros with context %}
+{% import g.templates['macros'] as theme_macros with context %}
 
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js') %}

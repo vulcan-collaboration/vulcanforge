@@ -17,7 +17,7 @@
                 {% endif %}
                 {{g.markdown.convert(value.text)|safe}}
             </div>
-            {% if h.has_access(value, 'moderate') %}
+            {% if g.security.has_access(value, 'moderate') %}
             <div class="edit_post_form hidden">
                 <div class="post edit">
                     {{widgets.edit_post.display(
@@ -30,7 +30,7 @@
             </div>
             {% endif %}
             {{widgets.attachment_list.display(value=value, extraCSS='post-attachments')}}
-            {% if h.has_access(value.thread, 'post') %}
+            {% if g.security.has_access(value.thread, 'post') %}
             <div class="reply_post_form hidden">
                 <div class="posts-holder reply">
                     <div class="post reply">
@@ -61,12 +61,12 @@
             <li>
                 {{g.button_widget.display('Reply', None, 'reply_post', 'ico-reply')}}
             </li>
-            {% if h.has_access(value, 'moderate') %}
+            {% if g.security.has_access(value, 'moderate') %}
             <li>
                 {{g.button_widget.display('Edit', None, 'edit_post', 'ico-edit')}}
             </li>
             {% endif %}
-            {% if h.has_access(value, 'moderate') %}
+            {% if g.security.has_access(value, 'moderate') %}
             <li>
                 {{widgets.moderate_post.display(value=value, action=value.absolute_url() + 'moderate')}}
             </li>
@@ -74,7 +74,7 @@
         </ul>
         {% endif %}
     </div>
-    {% if h.has_access(value.thread, 'moderate') and 'promote_to_thread' in widgets and not supress_promote %}
+    {% if g.security.has_access(value.thread, 'moderate') and 'promote_to_thread' in widgets and not supress_promote %}
     <div class="promote_to_thread_form push-{{3+indent}} span-{{16-indent}} last clear" style="display:none">
         {{widgets.promote_to_thread.display(value=value, action=value.absolute_url()+'moderate')}}
     </div>

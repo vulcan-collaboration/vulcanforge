@@ -676,3 +676,15 @@ class SyntaxDiff(DiffWidget):
 
     def resources(self):
         yield JSLink('css/hilite.css')
+
+
+class DiffVisualizer(DispatchWidget):
+    widgets = dict(
+        syntax=SyntaxDiff(),
+        default=DirectDiff()
+    )
+
+    def display(self, a=None, visualizers=None, visualizer=None, **kw):
+        return super(DiffVisualizer, self).display(
+            value=a, a=a, visualizer=visualizer, visualizers=visualizers, **kw
+        )

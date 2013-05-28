@@ -306,7 +306,8 @@ class ForumAdminController(DefaultAdminController):
     @expose()
     @require_post()
     def update_forums(self, forum=None, **kw):
-        if forum is None: forum = []
+        if forum is None:
+            forum = []
         for f in forum:
             forum = DM.Forum.query.get(_id=ObjectId(str(f['id'])))
             if f.get('delete'):
@@ -314,7 +315,7 @@ class ForumAdminController(DefaultAdminController):
             elif f.get('undelete'):
                 forum.deleted=False
             else:
-                if '.' in f['shortname'] or '/' in f['shortname'] or ' ' in f['shortname']:
+                if any(s in f['shortname'] for s in ('.', '/', ' ')):
                     flash('Shortname cannot contain space . or /', 'error')
                     redirect('.')
                 forum.name = f['name']
@@ -324,7 +325,7 @@ class ForumAdminController(DefaultAdminController):
                 if 'icon' in f and f['icon'] is not None and f['icon'] != '':
                     util.save_forum_icon(forum, f['icon'])
         flash('Forums updated')
-        redirect(request.referrer)
+        redirect(request.referrer or 'forums')
 
     @vardec
     @expose()

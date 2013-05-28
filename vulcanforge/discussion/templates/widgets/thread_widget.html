@@ -19,7 +19,7 @@
     {% else %}
         <div class="no-posts">No posts.</div>
     {% endif %}
-    {% if h.has_access(value, 'moderate') %}
+    {% if g.security.has_access(value, 'moderate') %}
     <div id="allow_moderate"></div>
     {% endif %}
 </div>
@@ -30,7 +30,7 @@
 </div>
 {% endif %}
 
-{% if h.has_access(value, 'post') %}
+{% if g.security.has_access(value, 'post') %}
 <div id="new-post-holder" class="posts-holder new">
     <div class="new-post-connector">
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg">

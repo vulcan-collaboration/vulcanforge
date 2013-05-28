@@ -1,7 +1,9 @@
 import re
 
 from formencode.validators import String
+from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.common.validators import CommaSeparatedEach
+from vulcanforge.events.model import Event
 from vulcanforge.stats import StatsQuerySchema, BaseStatsAggregator
 
 
@@ -11,7 +13,7 @@ class ArtifactQuerySchema(StatsQuerySchema):
 
 
 class ArtifactAggregator(BaseStatsAggregator):
-    """Artifacts in Zarkov"""
+    """Artifact Events"""
 
     project_field = 'context.project'
     user_field = 'context.user'
@@ -31,8 +33,7 @@ class ArtifactAggregator(BaseStatsAggregator):
         self.action = action
         self.neighborhood = neighborhood
 
-        from zarkov.model import event as zevent
-        self.collection = zevent.m.collection
+        db, self.collection = pymongo_db_collection(Event)
 
     def make_query(self):
         super(ArtifactAggregator, self).make_query()

@@ -67,7 +67,7 @@ class ResourceManager(ew.ResourceManager):
         Registers a directory with a url_path.
         """
         for up, dirs in cls.paths:
-            if up == url_path:
+            if up == url_path and not directory in dirs:
                 dirs.insert(0, directory)
                 return
         cls.paths.append((url_path, [directory]))

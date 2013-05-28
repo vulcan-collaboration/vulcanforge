@@ -115,6 +115,7 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].tool_manager = tool_manager
 
     def setup_resource_manager(self):
+        # load resource manager
         manager_path = config.get('resource_manager')
         if manager_path:
             cls = import_object(manager_path)
@@ -123,6 +124,7 @@ class ForgeConfig(AppConfig):
             resource_manager = resources.ResourceManager(config)
         config['pylons.app_globals'].resource_manager = resource_manager
 
+        # setup static paths
         app_static = "{}:static".format(self.package.__name__)
         for static_entry in [app_static] + self.static_dirs:
             module, dir_path = static_entry.split(':')
@@ -130,9 +132,11 @@ class ForgeConfig(AppConfig):
             if os.path.exists(os_folder):
                 resource_manager.register_directory('', os_folder)
 
+        # tool static paths
         tool_manager = config['pylons.app_globals'].tool_manager
         self._register_resources_for_tools(tool_manager)
 
+        # setup namespaced static dir paths
         for namespace, static_dirs in self.namespaced_static_dirs.items():
             for static_entry in static_dirs:
                 module, dir_path = static_entry.split(':')
@@ -142,12 +146,9 @@ class ForgeConfig(AppConfig):
 
     def _register_resources_for_tools(self, tool_manager):
         resource_manager = config['pylons.app_globals'].resource_manager
-        tool_root_regex = re.compile(r'(^.+)\.[^:]+:[^:]+$')
         for tool_name, tool in tool_manager.tools.items():
-            tool_root = tool_root_regex.match(tool['app_path']).group(1)
-            os_folder = pkg_resources.resource_filename(tool_root, 'static')
-            if os.path.exists(os_folder):
-                resource_manager.register_directory(tool_name, os_folder)
+            for static_dir in tool['app'].static_directories():
+                resource_manager.register_directory(tool_name, static_dir)
 
     def setup_context_manager(self):
         manager_path = config.get('context_manager')
@@ -168,7 +169,6 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].security = security_manager
 
     def setup_auth(self):
-        # super(ForgeConfig, self).setup_auth()
         provider_path = config.get('auth_provider')
         if provider_path:
             cls = import_object(provider_path)

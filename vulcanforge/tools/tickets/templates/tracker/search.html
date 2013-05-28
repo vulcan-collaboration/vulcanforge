@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block edit_box %}
-    {% if q and h.has_access(c.app, 'save_searches') %}
+    {% if q and g.security.has_access(c.app, 'save_searches') %}
         <div class="editbox">
             <div class="padded">
                 <div data-toggle-group-inverted="ticket-search">
@@ -89,7 +89,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    {% if q and h.has_access(c.app, 'save_searches') %}
+    {% if q and g.security.has_access(c.app, 'save_searches') %}
         <script type="text/javascript">
             $(function () {
                 $('.ticket-search-bin').bind('submit', function () {

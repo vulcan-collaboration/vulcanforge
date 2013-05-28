@@ -244,7 +244,7 @@ class ProjectAdminController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=g.theme.app_icon_url(app.tool_label, 48),
+                            url=app.icon_url(48),
                             class_name=''
                         ),
                         actions=dict(
@@ -299,7 +299,7 @@ class ProjectAdminController(BaseController):
                 redirect('overview')
         if c.project.deleted and kwargs.get('undelete', False):
             c.project.undelete_project()
-            flash("Project %s undeleted" % self.shortname)
+            flash("Project %s undeleted" % c.project.shortname)
 
         def _apply(field_name, attr_name=None):
             if attr_name is None:
@@ -360,7 +360,7 @@ class ProjectAdminController(BaseController):
         flash("Changes saved", "success")
         return redirect('overview')
 
-    @without_trailing_slash
+    #@without_trailing_slash
     @expose(TEMPLATE_DIR + 'members.html')
     def members(self):
         c.form = self.Forms.member_agreement_form

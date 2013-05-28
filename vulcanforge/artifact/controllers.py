@@ -405,7 +405,7 @@ class AttachmentController(BaseController):
                         self.thumbnail.delete()
                 except exc.HTTPNotFound:
                     pass
-            redirect(request.referer)
+            redirect(request.referer or self.artifact.url())
         if 'embed_vis' in kw:
             visualizer = None
             if visualizer_id:

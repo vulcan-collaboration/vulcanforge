@@ -1,4 +1,4 @@
-{% extends 'vulcanforge:tools/forum/templates/master.html' %}
+{% extends 'vulcanforge:tools/forum/templates/discussionforums/master.html' %}
 
 {% set has_related_artifacts = True %}
 
@@ -10,7 +10,7 @@
 {% block header %}{{ 'subject' in thread and thread.subject or '(no subject)' }}{% endblock %}
 
 {% block actions %}
-    {% if show_moderate and h.has_access(thread, 'moderate') %}
+    {% if show_moderate and g.security.has_access(thread, 'moderate') %}
         {{ g.icon_button_widget.display(label='Moderate',
             elementId="mod_thread_link",
             icon='ico-moderate',

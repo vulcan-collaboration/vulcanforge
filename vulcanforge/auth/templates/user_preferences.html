@@ -10,13 +10,13 @@
 {% block content %}
 
 <div class="padded">
-    {% if g.theme.password_change_form %}
+    {% if password_change_form %}
         <fieldset class="vf-fieldset">
             <legend>Change Password</legend>
-            {{ g.theme.password_change_form.display(requirements_hidden=True) }}
+            {{ password_change_form.display(requirements_hidden=True) }}
         </fieldset>
     {% endif %}
-    {% if g.theme.upload_key_form %}
+    {% if upload_key_form %}
         <div class="forge-form-container">
             <form id="ssh_key_form" class="forge-form" method="post" action="/auth/prefs/upload_sshkey">
                 <fieldset class="vf-fieldset">

@@ -63,7 +63,7 @@ from .model import Page, WikiAttachment, Globals
 from .widgets.wiki import CreatePageWidget
 
 LOG = logging.getLogger(__name__)
-TEMPLATE_DIR = 'jinja:vulcanforge.tools.wiki:templates/wiki/'
+TEMPLATE_DIR = 'jinja:vulcanforge.tools.wiki:templates/'
 HOME_TEMPLATE = """
 Welcome to your wiki!
 

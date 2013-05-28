@@ -1,7 +1,9 @@
 import logging
 from cStringIO import StringIO
+import os
 
 from ming.odm import session
+import pkg_resources
 from pylons import app_globals as g, tmpl_context as c
 
 from vulcanforge.auth.schema import ACE
@@ -45,6 +47,7 @@ class Application(object):
     status = 'production'
     root = None  # root controller
     api_root = None  # root rest controller
+    static_dir = 'static'
     permissions = []
     sitemap = []
     searchable = False
@@ -85,6 +88,18 @@ class Application(object):
         self.url = self.config.url()
 
     @classmethod
+    def static_directories(cls):
+        folders = []
+        for cls_ in filter(lambda _c: issubclass(_c, Application), cls.mro()):
+            folder = cls_.static_dir
+            if not folder.startswith('/'):  # relative path
+                parent_module = '.'.join(cls_.__module__.rsplit('.', 1)[:-1])
+                folder = pkg_resources.resource_filename(parent_module, folder)
+            if os.path.exists(folder):
+                folders.append(folder)
+        return folders
+
+    @classmethod
     def can_create(cls, artifact):
         return True
 
@@ -112,7 +127,7 @@ class Application(object):
         """
         resource = cls.icons.get(size)
         if resource:
-            return g.theme_href(resource)
+            return g.resource_manager.absurl('theme/{}'.format(resource))
         return ''
 
     def has_access(self, user, topic):

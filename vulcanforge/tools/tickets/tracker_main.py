@@ -198,7 +198,7 @@ class ForgeTrackerApp(Application):
             ))
         milestone_counts = c.app.globals.milestone_counts
         for fld in c.app.globals.milestone_fields:
-            milestones.append(SitemapEntry(h.text.truncate(fld.label, 72)))
+            milestones.append(SitemapEntry(h.truncate(fld.label, 72)))
             sub_milestones = []
             for m in getattr(fld, "milestones", []):
                 if m.complete:

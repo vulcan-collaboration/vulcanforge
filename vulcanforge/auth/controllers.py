@@ -49,6 +49,7 @@ from vulcanforge.auth.forms import (
     PasswordResetEmailForm,
     PasswordResetForm
 )
+from vulcanforge.common.widgets.forms import PasswordChangeForm, UploadKeyForm
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.model import Mailbox
 from vulcanforge.notification.tasks import sendmail
@@ -449,6 +450,10 @@ class PreferencesController(BaseController):
 
     class Forms(BaseController.Forms):
         oauth_revocation_form = OAuthRevocationForm(action='revoke_oauth')
+        password_change = PasswordChangeForm(
+            action='/auth/prefs/change_password')
+        upload_key = UploadKeyForm(
+            action='/auth/prefs/upload_sshkey')
 
     def _before(self, *args, **kwargs):
         c.custom_sidebar_menu = [
@@ -474,7 +479,9 @@ class PreferencesController(BaseController):
         api_token = ApiToken.query.get(user_id=c.user._id)
         return dict(
             api_token=api_token,
-            authorized_applications=OAuthAccessToken.for_user(c.user)
+            authorized_applications=OAuthAccessToken.for_user(c.user),
+            password_change_form=self.Forms.password_change,
+            upload_key_form=self.Forms.upload_key
         )
 
     @without_trailing_slash
@@ -872,10 +879,9 @@ class PreferencesController(BaseController):
 
     @expose()
     @require_post()
-    @validate(NullValidator(), error_handler=index)
-    def change_password(self, **kw):
+    @validate_form('password_change', error_handler=index)
+    def change_password(self, oldpw=None, password=None, **kw):
         g.security.require_authenticated()
-        kw = g.theme.password_change_form.to_python(kw, None)
         min_hours = int(tg.config.get('auth.pw.min_lifetime.hours', 24))
         if c.user.password_set_at is None:
             c.user.password_set_at = datetime.utcnow() - \
@@ -886,7 +892,7 @@ class PreferencesController(BaseController):
                   "hours".format(min_hours), 'error')
             redirect('.')
         try:
-            g.auth_provider.set_password(c.user, kw['oldpw'], kw['password'])
+            g.auth_provider.set_password(c.user, oldpw, password)
         except wexc.HTTPUnauthorized:
             flash('Incorrect password', 'error')
             redirect('.')

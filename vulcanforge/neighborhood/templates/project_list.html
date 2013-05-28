@@ -9,14 +9,14 @@
 
 {% block actions %}
     {#
-            {% if h.has_access(neighborhood, 'admin') %}
+            {% if g.security.has_access(neighborhood, 'admin') %}
                 <a href="{{neighborhood.url()}}_admin/"
                    class="ico ico-admin"
                    title="Admin">
                     <span>Admin</span>
                 </a>
             {% endif %}
-            {% if h.has_access(neighborhood, 'admin') %}
+            {% if g.security.has_access(neighborhood, 'admin') %}
                 <a href="{{neighborhood.url()}}_moderate/"
                    class="ico ico-pencil"
                    title="Moderate">

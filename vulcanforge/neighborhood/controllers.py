@@ -183,7 +183,7 @@ class NeighborhoodController(BaseTGController):
         return super(NeighborhoodController, self)._dispatch(state, remainder)
 
     def _check_security(self):
-        g.require_access(self.neighborhood, 'read')
+        g.security.require_access(self.neighborhood, 'read')
 
     @expose()
     def _lookup(self, pname=None, *remainder):

@@ -53,7 +53,8 @@ class ProjectHomeApp(Application):
 
     def main_menu(self):
         """Apps should provide their entries to be added to the main nav
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of :class:`<vulcanforge.common.types.SitemapEntry>`
+
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
 
@@ -74,6 +75,8 @@ class ProjectHomeApp(Application):
                     c.app.url + "my_permissions"
                 )
             )
+
+        return menu_info
 
     def admin_menu(self):
         return []
@@ -158,7 +161,7 @@ class ProjectHomeController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=g.theme.app_icon_url(app.tool_label, 48),
+                            url=app.icon_url(48),
                             class_name=''
                         ),
                         actions=tool_actions,
@@ -191,10 +194,6 @@ class ProjectHomeController(BaseController):
             c.project.user_join_project(c.user, notify=True)
         except RegistrationError:
             return dict(error="You do not have permission")
-        MembershipInvitation.query.remove({
-            'user_id': c.user._id,
-            'project_id': c.project._id
-        })
         return dict(location=c.app.url)
 
     @require_post()

@@ -81,7 +81,7 @@ class ToolManager(object):
         tools = []
         for name, spec in self.tools.items():
             if spec["installable"] and \
-            spec["app"].status in project.allowed_tool_status:
+                    spec["app"].status in project.allowed_tool_status:
                 tools.append({
                     "name": name,
                     "app": spec["app"]

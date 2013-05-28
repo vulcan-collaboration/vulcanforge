@@ -4,13 +4,13 @@
             <a href="{{neighborhood.url()}}" class="ui-icon-home">
                 Home
             </a>
-            {% if h.has_access(neighborhood, 'admin') %}
+            {% if g.security.has_access(neighborhood, 'admin') %}
                 <a href="{{neighborhood.url()}}_admin/"
                    class="ui-icon-tool-admin">
                     Admin
                 </a>
             {% endif %}
-            {% if h.has_access(neighborhood, 'admin') %}
+            {% if g.security.has_access(neighborhood, 'admin') %}
                 <a href="{{neighborhood.url()}}_moderate/" class="ui-no-icon">
                     Moderate
                 </a>

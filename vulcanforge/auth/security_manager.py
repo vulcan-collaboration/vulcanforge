@@ -31,7 +31,10 @@ class SecurityManager(object):
 
     def __init__(self):
         self.RoleCache = RoleCache
-        self.credentials = Credentials(self.RoleCache)
+
+    @property
+    def credentials(self):
+        return Credentials.get()
 
     def _get_project_from_obj(self, obj):
         if isinstance(obj, Neighborhood):
@@ -155,7 +158,6 @@ class SecurityManager(object):
             )
         else:
             return False
-
 
     def has_access(self, obj, permission, user=None, project=None, roles=None):
         """
@@ -288,9 +290,13 @@ class SecurityManager(object):
 class Credentials(object):
     """Role graph logic & caching"""
 
-    def __init__(self, RoleCache):
-        self.RoleCache = RoleCache
+    def __init__(self):
         self.clear()
+
+    @classmethod
+    def get(cls):
+        import vulcanforge.auth
+        return vulcanforge.auth.credentials
 
     def clear(self):
         """clear cache"""
@@ -321,7 +327,7 @@ class Credentials(object):
         for role in q:
             roles_by_project[role.project_id].append(role)
         for pid, roles in roles_by_project.iteritems():
-            self.users[user_id, pid] = self.RoleCache(self, roles)
+            self.users[user_id, pid] = g.security.RoleCache(self, roles)
 
     def load_project_roles(self, *project_ids):
         """Load the credentials with all user roles for a set of projects"""
@@ -335,7 +341,7 @@ class Credentials(object):
         for role in q:
             roles_by_project[role.project_id].append(role)
         for pid, roles in roles_by_project.iteritems():
-            self.projects[pid] = self.RoleCache(self, roles)
+            self.projects[pid] = g.security.RoleCache(self, roles)
 
     def project_roles(self, project_id):
         """
@@ -360,7 +366,7 @@ class Credentials(object):
                     q = []
                 else:
                     q = ProjectRole.query.find(dict(user_id=user_id))
-                roles = self.RoleCache(self, q)
+                roles = g.security.RoleCache(self, q)
             else:
                 self.load_user_roles(user_id, project_id)
                 roles = self.users.get((user_id, project_id))
@@ -375,13 +381,14 @@ class Credentials(object):
         """ returns in sorted order """
         roles = self.project_roles(project_id)
         return sorted(
-            self.RoleCache(self, roles.find(name=name)).users_that_reach,
+            g.security.RoleCache(self, roles.find(name=name)).users_that_reach,
             key=lambda u: u.username
         )
 
     def userids_with_named_role(self, project_id, name):
         roles = self.project_roles(project_id)
-        return self.RoleCache(self, roles.find(name=name)).userids_that_reach
+        return g.security.RoleCache(
+            self, roles.find(name=name)).userids_that_reach
 
 
 class RoleCache(object):

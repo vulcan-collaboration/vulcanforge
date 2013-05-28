@@ -21,6 +21,7 @@ from .custom_middleware import (
 )
 from .ming_config import ming_replicant_configure
 from .template import patches
+from vulcanforge.auth.middleware import AuthMiddleware
 
 pylons.c = pylons.tmpl_context
 pylons.g = pylons.app_globals
@@ -61,8 +62,11 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
         # Clear cookies when the CSRF field isn't posted
     if not app_conf.get('disable_csrf_protection'):
         csrf_blacklist_regex = app_conf.get('csrf_blacklist_regex') or None
-        app = CSRFMiddleware(app, '_session_id',
-            blacklist_regex=csrf_blacklist_regex)
+        app = CSRFMiddleware(
+            app, '_session_id', blacklist_regex=csrf_blacklist_regex)
+
+    # credentials request-global credentials cache
+    app = AuthMiddleware(app)
 
     # Setup resource manager, widget context SOP
     app = WidgetMiddleware(app)

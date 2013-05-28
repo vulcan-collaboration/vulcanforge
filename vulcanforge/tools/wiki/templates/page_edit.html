@@ -39,7 +39,7 @@
                 {{c.markdown_editor.display(id='text', name='text',value=page.text)}}
             </div>
         </li>
-        {% if not page_exists or h.has_access(page, 'edit') %}
+        {% if not page_exists or g.security.has_access(page, 'edit') %}
         <li>
             <label>Attach Files:</label>
             {{c.attachments_field.display(name='new_attachments')}}

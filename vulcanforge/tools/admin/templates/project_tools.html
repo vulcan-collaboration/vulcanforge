@@ -15,18 +15,10 @@
           <span class="text-centered installable_tool">
             <a class="install_trig" data-tool="{{ tool['name'] }}">
               <div class="tool-title">{{ tool['app'].tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
-              <img src="{{ g.theme.app_icon_url(tool['app'], 32) or 'unk.png' }}" alt="">
+              <img src="{{ tool['app'].icon_url(32) or 'unk.png' }}" alt="">
             </a>
           </span>
         {% endfor %}
-        <!-- Removed [#318]
-        <span class="text-centered grid-4 installable_tool">
-          <a class="install_trig" data-tool="">
-            <span class="tool_title">Subproject</span><br />
-            <img src="{{ g.theme.app_icon_url('subproject', 32) }}" alt="">
-          </a>
-        </span>
-        -->
       </fieldset>
       <form method="post" action="update_mounts" id="install_form" style="display:none">
         <input type="hidden" name="new.ordinal" value="{{installable_tools|length + c.project.direct_subprojects|length}}"/>
@@ -58,7 +50,7 @@
                     <ul class="deck">
                         <li class="text-centered">
                             <div class="tool-title">{{ label }}</div>
-                            <img src="{{ g.theme.app_icon_url(app, 48) }}" alt="">
+                            <img src="{{ app.icon_url(48) }}" alt="">
                         </li>
                         {% for link in links %}
                         <li>
@@ -82,25 +74,6 @@
                     {% if not app.installable %}
                       <input type="hidden" class="mount_point" value="{{mount['ac'].options.mount_point}}"/>
                     {% endif %}
-                </div>
-            {% endif %}
-            {% if 'sub' in mount and not mount['sub'].deleted %}
-                <div class="fleft">
-                    <ul class="deck">
-                        <li class="text-centered">
-                            <span class="tool_name">{{ mount['sub'].name }}</span><br />
-                            <img src="{{ g.theme.app_icon_url('subproject', 48) }}" alt="">
-                        </li>
-                        <li>
-                          <form method="post" action="update_mounts" id="mounts_edit_2-{{loop.index0}}">
-                              <input type="hidden" class="shortname"
-                                     name="subproject-{{loop.index0}}.shortname"
-                                     value="{{mount['sub'].shortname}}"/>
-                              <input name="subproject-{{loop.index0}}.delete" type="hidden" value="Delete"/>
-                              <a href="#" class="mount_delete">Delete</a>
-                          </form>
-                        </li>
-                    </ul>
                 </div>
             {% endif %}
         {% endfor %}

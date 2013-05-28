@@ -20,7 +20,7 @@ from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.auth.model import User
 from vulcanforge.artifact.model import Feed
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.validators import ProjectShortnameValidator
+from vulcanforge.project.validators import ProjectShortnameValidator, MOUNTPOINT_VALIDATOR
 from .widgets import ProjectListWidget
 from .model import ProjectCategory
 
@@ -29,8 +29,6 @@ TEMPLATE_DIR = 'jinja:vulcanforge:project/templates/'
 
 
 class ProjectController(BaseController):
-
-    shortname_validator = ProjectShortnameValidator()
 
     def __init__(self):
         setattr(self, 'feed.rss', self.feed)
@@ -48,7 +46,7 @@ class ProjectController(BaseController):
     def _lookup(self, name, *remainder):
         name = unquote(name)
         try:
-            self.shortname_validator.validate_name(name)
+            MOUNTPOINT_VALIDATOR.validate_name(name)
         except Invalid:
             raise exc.HTTPNotFound, name
         app = c.project.app_instance(name)

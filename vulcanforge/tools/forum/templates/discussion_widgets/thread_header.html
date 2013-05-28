@@ -32,7 +32,7 @@
     </li>
 </ul>
 
-{% if show_moderate and h.has_access(value, 'moderate') %}
+{% if show_moderate and g.security.has_access(value, 'moderate') %}
     <div id="mod_thread_form" style="display: none;">
         <h2>Moderate Thread</h2>
         {{ widgets.moderate_thread.display(value=value, action=value.url() + 'moderate') }}
@@ -40,7 +40,7 @@
     </div>
 {% endif %}
 
-{% if h.has_access(value, 'post') %}
+{% if g.security.has_access(value, 'post') %}
     <div id="tag_thread_holder" style="display:none" class="grid-18">
         widgets.tag_post.display(value=value,submit_text='Save', action=value.url() + 'tag')
     </div>

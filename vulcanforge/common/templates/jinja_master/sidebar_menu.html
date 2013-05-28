@@ -6,18 +6,18 @@
             <ul class="sidebarmenu">
             {% do ul_active.append(True) %}
         {% endif %}
-    <li id="sidebarmenu-item-{{ h.slugify(s.label) }}" {% if request.path_info.rstrip('/') == s.url.rstrip('/') %}class="active"{% endif %}>
-        <a href="{{s.url}}" {% if s.ui_icon or s.className %}class="{% if s.className %}{{ s.className }}{% endif %} {% if s.ui_icon %}has-icon {{s.ui_icon.css}}{% endif %}"{% endif %}>
-            <span {% if s.small != None %}class="has_small"{% endif %}>{{ h.really_unicode(s.label) }}</span>
-            {% if s.small != None %}
-                <small>{{ s.small }}</small>
-            {% endif %}
-        </a>
-    </li>
+        <li id="sidebarmenu-item-{{ h.slugify(s.label) }}" {% if request.path_info.rstrip('/') == s.url.rstrip('/') %}class="active"{% endif %}>
+            <a href="{{s.url}}" {% if s.ui_icon or s.className %}class="{% if s.className %}{{ s.className }}{% endif %} {% if s.ui_icon %}has-icon {{s.ui_icon.css}}{% endif %}"{% endif %}>
+                <span {% if s.small != None %}class="has_small"{% endif %}>{{ h.really_unicode(s.label) }}</span>
+                {% if s.small != None %}
+                    <small>{{ s.small }}</small>
+                {% endif %}
+            </a>
+        </li>
     {% else %}
-    {% if ul_active[-1] %}
-        </ul>
-    {% do ul_active.append(False) %}
+        {% if ul_active[-1] %}
+            </ul>
+        {% do ul_active.append(False) %}
     {% endif %}
         {% if s.label %}
             <h3 class="{{s.className or ''}}">

@@ -20,9 +20,7 @@ from pylons import tmpl_context as c, request
 from tg import config, session
 from pypeline.markup import markup as pypeline_markup
 from boto.s3.key import Key
-import ew as ew_core
 from ming.utils import LazyProperty
-from zarkov import client as zclient
 
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
@@ -35,9 +33,9 @@ from vulcanforge.auth.widgets import Avatar
 from vulcanforge.config.amqp import AMQPConnection, MockAMQ
 from vulcanforge.config.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
+from vulcanforge.events.model import Event
 from vulcanforge.project.model import Project
 from vulcanforge.resources import Icon
-from vulcanforge.resources.widgets import CSSLink, JSLink, JSScript
 
 
 __all__ = ['Globals']
@@ -97,6 +95,20 @@ class ForgeGlobals(object):
         else:
             self.analytics = False
 
+        MASTER_DIR = 'vulcanforge.common:templates/jinja_master/'
+        self.templates = {
+            'master': config.get(
+                'templates.master', MASTER_DIR + 'master.html'),
+            'macros': config.get(
+                'templates.macros', MASTER_DIR + 'master_macros.html'),
+            'nav': config.get('templates.nav', MASTER_DIR + 'nav_menu.html'),
+            'project_toolbar': config.get(
+                'templates.project_toolbar',
+                MASTER_DIR + 'project_toolbar.html'),
+            'sidebar_menu': config.get(
+                'templates.sidebar_menu', MASTER_DIR + 'sidebar_menu.html')
+        }
+
         self.favicon_path = config.get('favicon_path', 'favicon.ico')
         self.icons = dict(
             edit=Icon('', 'ico-admin'),
@@ -143,9 +155,6 @@ class ForgeGlobals(object):
         self.icon_button_widget = IconButtonWidget()
         self.avatar = Avatar()
         self.subscription_popup_menu = SubscriptionPopupMenu()
-
-        # Zarkov logger
-        self._zarkov = None
 
         # Registration blocker
         self.registration_allowed = config.get(
@@ -196,23 +205,30 @@ class ForgeGlobals(object):
                                                 'noreply@vehicleforge.org')
 
         # Templates
+        tmpl_master = 'vulcanforge.common:templates/jinja_master/'
         self.templates = {
-            'master': config.get('templates.master',
-                'vulcanforge.common:templates/jinja_master/master.html'),
-            'macros': config.get('templates.macros',
-                'vulcanforge.common:templates/jinja_master/master_macros.html'),
-            'nav': config.get('templates.nav',
-                'vulcanforge.common:templates/jinja_master/nav_menu.html'),
-            'project_toolbar': config.get('templates.project_toolbar',
-                'vulcanforge.common:templates/jinja_master/project_toolbar.html'),
-            'sidebar_menu': config.get('templates.sidebar_menu',
-                'vulcanforge.common:templates/jinja_master/sidebar_menu.html')
+            'master': config.get(
+                'templates.master', tmpl_master + 'master.html'),
+            'macros': config.get(
+                'templates.macros', tmpl_master + 'master_macros.html'),
+            'nav': config.get('templates.nav', tmpl_master + 'nav_menu.html'),
+            'project_toolbar': config.get(
+                'templates.project_toolbar',
+                tmpl_master + 'project_toolbar.html'),
+            'sidebar_menu': config.get(
+                'templates.sidebar_menu', tmpl_master + 'sidebar_menu.html')
         }
 
     @property
     def header_logo(self):
         return self.resource_manager.absurl(
             config.get('header_logo', 'images/vf_logo_header_short.png'))
+
+    def tool_icon_url(self, tool_entry_point, size):
+        tool_entry_point = tool_entry_point.lower()
+        resource = self.tool_manager.tools[tool_entry_point].icons[size]
+        resource = 'theme/{}'.format(resource)
+        return self.resource_manager.absurl(resource)
 
     def get_site_admin_project(self):
         return Project.query.get(shortname=self.site_admin_project)
@@ -348,42 +364,15 @@ class ForgeGlobals(object):
             'event "%s" posted with args:%s kwargs:%s', topic, args, kwargs)
         vulcanforge.events.tasks.event.post(topic, *args, **kwargs)
 
-    def zarkov_event(self, event_type, user=None, neighborhood=None,
+    def store_event(self, event_type, user=None, neighborhood=None,
                      project=None, app=None, extra=None):
-        context = dict(
-            user=None,
-            neighborhood=None, project=None, tool=None,
-            mount_point=None,
-            is_project_member=False)
-        user = user or getattr(c, 'user', None)
-        project = project or getattr(c, 'project', None)
-        app = app or getattr(c, 'app', None)
-        if user:
-            context['user'] = user.username
-        if project:
-            context.update(
-                project=project.shortname,
-                neighborhood=project.neighborhood.name)
-            if user:
-                cred = self.security.credentials
-                if cred is not None:
-                    for pr in cred.user_roles(
-                            user._id, project._id).reaching_roles:
-                        if pr.name and pr.name[0] != '*':
-                            context['is_project_member'] = True
-        if app:
-            context.update(
-                tool=app.config.tool_name,
-                mount_point=app.config.options.mount_point)
-        try:
-            if self._zarkov is None:
-                self._zarkov = zclient.ZarkovClient(
-                    config.get('zarkov.host', 'tcp://127.0.0.1:6543'))
-            self._zarkov.event(event_type, context, extra)
-        except Exception, ex:
-            self._zarkov = None
-            LOG.error('Error sending zarkov event(%r): %r', ex, dict(
-                    type=event_type, context=context, extra=extra))
+        return Event.make_event(
+            user=user,
+            neighborhood=neighborhood,
+            project=project,
+            app=app,
+            type=event_type,
+            extra=extra)
 
     @property
     def antispam(self):
@@ -448,13 +437,13 @@ class ForgeGlobals(object):
     def forge_markdown(self, **kwargs):
         """return a markdown.Markdown object on which you can call convert"""
         return markdown.Markdown(
-                extensions=[
-                    #'toc',
-                    'codehilite',
-                    ForgeExtension(**kwargs),
-                    'tables',
-                ],
-                output_format='html4')
+            extensions=[
+                #'toc',
+                'codehilite',
+                ForgeExtension(**kwargs),
+                'tables',
+            ],
+            output_format='html4')
 
     @property
     def markdown(self):

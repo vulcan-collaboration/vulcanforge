@@ -1,6 +1,6 @@
 {% extends g.templates['master'] %}
 
-{% do g.resource_manager.register_app_css('project_home.scss', scope='tool') %}
+{% do g.resource_manager.register_css('home/project_home.scss', scope='tool') %}
 
 {% block title %}Project {{c.project.homepage_title}}{% endblock %}
 

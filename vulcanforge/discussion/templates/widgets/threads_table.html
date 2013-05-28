@@ -24,7 +24,7 @@
           {% if 'flags' in thread and 'Sticky' in thread.flags %}
             <span class="sticky has-icon {{g.icons['pin'].css}}">Sticky</span>
           {% endif %}
-          <h3><a href="{{thread.url()}}">{{thread.subject and h.text.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
+          <h3><a href="{{thread.url()}}">{{thread.subject and h.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
         </td>
         {% else %}
         <td class="topic">
@@ -32,7 +32,7 @@
           {% if 'flags' in thread and 'Sticky' in thread.flags %}
             <span class="sticky has-icon {{g.icons['pin'].css}}">Sticky</span>
           {% endif %}
-          <h3><a href="{{thread.url()}}">{{thread.subject and h.text.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
+          <h3><a href="{{thread.url()}}">{{thread.subject and h.truncate(thread.subject, 72) or '(no subject)'}}</a></h3>
 
           <span>By <a href="{{author.url()}}">{{author.display_name}}</a></span> {{h.ago(thread.first_post.timestamp)}}
         </td> 

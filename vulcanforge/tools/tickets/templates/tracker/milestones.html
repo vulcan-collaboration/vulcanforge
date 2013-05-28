@@ -30,7 +30,7 @@
                     <strong><a
                         href="{{c.app.url}}milestone/{{m.name}}/">{{ m.name }}</a></strong>
                 </td>
-                <td class="view">{{ h.text.truncate(m.description,60) }}</td>
+                <td class="view">{{ h.truncate(m.description,60) }}</td>
                 <td class="view {{m.complete and 'closed' or 'open'}}">{{ m.complete and 'Closed' or 'Open' }}</td>
                 <td class="view">{{ m.due_date_str or 'N/A'}}</td>
                 <td class="edit">

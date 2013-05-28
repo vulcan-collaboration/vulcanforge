@@ -1,4 +1,6 @@
+from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.stats import BaseStatsAggregator
+from vulcanforge.events.model import Event
 
 
 class LoginAggregator(BaseStatsAggregator):
@@ -7,9 +9,7 @@ class LoginAggregator(BaseStatsAggregator):
 
     def __init__(self, **kwargs):
         super(LoginAggregator, self).__init__(**kwargs)
-
-        from zarkov.model import event as zevent
-        self.collection = zevent.m.collection
+        db, self.collection = pymongo_db_collection(Event)
 
     def make_query(self):
         super(LoginAggregator, self).make_query()

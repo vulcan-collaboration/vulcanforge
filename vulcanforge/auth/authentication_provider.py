@@ -95,7 +95,7 @@ class BaseAuthenticationProvider(object):
                 self.swift_login(user)
             self.session['userid'] = user._id
             self.session.save()
-            g.zarkov_event('login', user=user)
+            g.store_event('login', user=user)
             return user
         except exc.HTTPUnauthorized:
             self.logout()
