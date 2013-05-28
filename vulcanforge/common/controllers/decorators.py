@@ -56,7 +56,10 @@ def controller_decorator(wrapper, controller):
 
 
 class ControllerPropertyValidator(object):
+    """Grabs the attribute given by str attribute from the controller_cls.Forms
+     object for validation
 
+     """
     def __init__(self, attribute):
         self.attribute = attribute
 
@@ -68,7 +71,7 @@ class ControllerPropertyValidator(object):
 class validate_form(validate):
     """
     Similar to validate, but if form is a string it attempts to access
-    that attribute in the parent controller in order to facilitate form
+    that attribute in the controller class in order to facilitate form
     pluggability
 
     """

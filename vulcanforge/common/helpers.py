@@ -9,13 +9,11 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import chardet
-from webhelpers import date
+from webhelpers import date, html
 from webhelpers.text import truncate
 from pylons import tmpl_context as c, response, request
 import tg
 import genshi.template
-
-
 
 
 def monkeypatch(*objs):

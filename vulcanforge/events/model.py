@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from ming import schema as S
 from ming.odm.declarative import MappedClass
 from ming.odm.property import FieldProperty
 from pylons import tmpl_context as c
@@ -13,7 +14,7 @@ class Event(MappedClass):
         name = 'event'
         session = main_orm_session
 
-    _id = FieldProperty(int)
+    _id = FieldProperty(S.ObjectId)
     timestamp = FieldProperty(datetime, if_missing=datetime.utcnow)
     type = FieldProperty(str)
     context = FieldProperty({str: None})
@@ -31,7 +32,7 @@ class Event(MappedClass):
             app = getattr(c, 'app', None)
 
         if project and user:
-            is_project_member = project.user_in_project(user=user)
+            is_project_member = bool(project.user_in_project(user=user))
         else:
             is_project_member = False
 
@@ -42,7 +43,7 @@ class Event(MappedClass):
             'user': user.username if user else None,
             'neighborhood': neighborhood.name if neighborhood else None,
             'project': project.shortname if project else None,
-            'tool': app.tool_name if app else None,
+            'tool': app.tool_label if app else None,
             'mount_point': app.config.options.mount_point if app else None,
             'is_project_member': is_project_member
         }

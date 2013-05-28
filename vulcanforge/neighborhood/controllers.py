@@ -28,7 +28,7 @@ from vulcanforge.auth.model import User
 from vulcanforge.auth.tasks import remove_workspacetabs
 from vulcanforge.neighborhood.marketplace.controllers import (
     NeighborhoodMarketplaceController)
-from vulcanforge.project.validators import ProjectShortnameValidator
+from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.project.model import Project
 from vulcanforge.project.controllers import (
     ProjectController,
@@ -159,7 +159,7 @@ class NeighborhoodAdminController(BaseController):
 class NeighborhoodController(BaseTGController):
     """Manages a neighborhood of projects."""
 
-    project_shortname_validator = ProjectShortnameValidator()
+    mountpoint_validator = MOUNTPOINT_VALIDATOR
 
     class Forms(BaseTGController.Forms):
         add_project = NeighborhoodAddProjectForm()
@@ -192,7 +192,7 @@ class NeighborhoodController(BaseTGController):
         else:
             pname = unquote(pname)
             try:
-                pname = self.project_shortname_validator.validate_name(pname)
+                pname = self.mountpoint_validator.validate_name(pname)
             except Invalid:
                 raise exc.HTTPNotFound, pname
         project = Project.query.get(

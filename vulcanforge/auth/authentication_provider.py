@@ -173,7 +173,7 @@ class LocalAuthenticationProvider(BaseAuthenticationProvider):
         return deleted
 
     def _login(self):
-        user = self.by_username(request.params['username'])
+        user = self.user_cls.by_username(request.params['username'])
         if not self.validate_password(user, request.params['password']):
             raise exc.HTTPUnauthorized()
         return user

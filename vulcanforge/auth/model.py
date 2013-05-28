@@ -1163,7 +1163,7 @@ class UserRegistrationToken(BaseMappedClass):
     approved_already = FieldProperty(bool, if_missing=False)
 
     # adds user to project on registration
-    project_id = ForeignIdProperty(ObjectId, if_missing=None)
+    project_id = FieldProperty(S.ObjectId, if_missing=None)
 
     email_subject = "VehicleFORGE User Registration"
 

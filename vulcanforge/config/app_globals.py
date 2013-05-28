@@ -52,6 +52,8 @@ class ForgeGlobals(object):
 
     """
     __shared_state = {}
+    tool_manager = None
+    resource_manager = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -226,7 +228,7 @@ class ForgeGlobals(object):
 
     def tool_icon_url(self, tool_entry_point, size):
         tool_entry_point = tool_entry_point.lower()
-        resource = self.tool_manager.tools[tool_entry_point].icons[size]
+        resource = self.tool_manager.tools[tool_entry_point]['app'].icons[size]
         resource = 'theme/{}'.format(resource)
         return self.resource_manager.absurl(resource)
 

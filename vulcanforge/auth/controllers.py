@@ -330,14 +330,14 @@ class AuthController(BaseController):
             neighborhood = Neighborhood.by_prefix(
                 config['default_nbhd_membership'])
             project = neighborhood.neighborhood_project
-        user = User.register({
-                                 'username': username,
-                                 'display_name': token.name,
-                                 'password': password,
-                                 'user_fields': token.user_fields
-                             },
-                             neighborhood=neighborhood
-        )
+        user = User.register(
+            {
+                'username': username,
+                'display_name': token.name,
+                'password': password,
+                'user_fields': token.user_fields
+            },
+            neighborhood=neighborhood)
         ThreadLocalODMSession.flush_all()
         user.claim_address(token.email, confirmed=True, is_primary=True)
         if project:

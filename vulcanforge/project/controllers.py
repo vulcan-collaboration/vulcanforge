@@ -30,6 +30,8 @@ TEMPLATE_DIR = 'jinja:vulcanforge:project/templates/'
 
 class ProjectController(BaseController):
 
+    mountpoint_validator = MOUNTPOINT_VALIDATOR
+
     def __init__(self):
         setattr(self, 'feed.rss', self.feed)
         setattr(self, 'feed.atom', self.feed)
@@ -46,7 +48,7 @@ class ProjectController(BaseController):
     def _lookup(self, name, *remainder):
         name = unquote(name)
         try:
-            MOUNTPOINT_VALIDATOR.validate_name(name)
+            self.mountpoint_validator.validate_name(name)
         except Invalid:
             raise exc.HTTPNotFound, name
         app = c.project.app_instance(name)
