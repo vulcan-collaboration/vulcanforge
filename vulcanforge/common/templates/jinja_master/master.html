@@ -165,7 +165,7 @@
 {% endif %}
 <div id="beautiful_sunset">
     <a id="report_an_issue" class="ico-tag_fill has-icon"
-       href="{{ g.site_issues_url }}">Help Desk</a>
+       href="{{ g.site_issues_url }}">{{ g.site_issues_label }}</a>
 </div>
 
 {% for blob in g.resource_manager.emit('js') %}

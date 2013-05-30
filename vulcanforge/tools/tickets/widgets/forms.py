@@ -16,7 +16,6 @@ import ew.jinja2_ew as ew
 from vulcanforge.common.widgets import form_fields
 from vulcanforge.common.widgets.forms import ForgeForm
 from vulcanforge.project.widgets import ProjectUserSelect
-from vulcanforge.tools.tickets.widgets.ticket_form import TicketCustomField
 from vulcanforge.tools.tickets.widgets.validators import ProjectUser
 
 TEMPLATE_FOLDER = 'jinja:vulcanforge.tools.tickets:templates/tracker_widgets/'
@@ -27,10 +26,76 @@ class TicketCustomFields(ew.CompoundField):
 
     @property
     def fields(self):
-        return ew_core.NameList(
-            [TicketCustomField.make(cf) for cf in c.app.globals.custom_fields
-             if c.app.globals.can_edit_field(cf.name)]
-        )
+        return ew_core.NameList([TicketCustomField.make(cf)
+                                 for cf in c.app.globals.custom_fields
+                                 if c.app.globals.can_edit_field(cf.name)
+                                 and cf.type != 'markdown'])
+
+class TicketMarkdownFields(ew.CompoundField):
+    template = 'jinja:forgetracker:templates/tracker_widgets/' \
+               'ticket_custom_fields.html'
+    @property
+    def fields(self):
+        return ew_core.NameList([TicketCustomField.make(cf)
+                                 for cf in c.app.globals.custom_fields
+                                 if c.app.globals.can_edit_field(cf.name)
+                                 and cf.type == 'markdown'])
+
+
+class TicketCustomField(object):
+
+    @staticmethod
+    def _select(field):
+        options = []
+        for opt in field.options.split():
+            selected = False
+            if opt.startswith('*'):
+                opt = opt[1:]
+                selected = True
+            options.append(ew.Option(label=opt,
+                                     html_value=opt,
+                                     py_value=opt,
+                                     selected=selected))
+        return ew.SingleSelectField(label=field.label,
+                                    name=str(field.name),
+                                    options=options)
+
+    @staticmethod
+    def _milestone(field):
+        options = []
+        for m in field.milestones:
+            if not m.complete:
+                options.append(ew.Option(
+                        label=m.name,
+                        py_value=m.name))
+        ssf = ew.SingleSelectField(
+            label=field.label, name=str(field.name),
+            options=options)
+        return ssf
+
+    @staticmethod
+    def _boolean(field):
+        return ew.Checkbox(label=field.label,
+                           name=str(field.name),
+                           suppress_label=True)
+
+    @staticmethod
+    def _number(field):
+        return ew.NumberField(label=field.label, name=str(field.name))
+
+    @staticmethod
+    def _markdown(field):
+        return form_fields.MarkdownEdit(label=field.label, name=str(field.name), wide=True)
+
+    @staticmethod
+    def _default(field):
+        return ew.TextField(label=field.label, name=str(field.name))
+
+    @classmethod
+    def make(cls, field):
+        field_type = field.get('type')
+        factory = getattr(cls, '_{}'.format(field_type), cls._default)
+        return factory(field)
 
 
 class TrackerTicketForm(ForgeForm):
@@ -69,9 +134,9 @@ class TrackerTicketForm(ForgeForm):
             ),
             ProjectUserSelect(
                 name='assigned_to',
-                label='Assigned To',
+                label=c.app.globals.assigned_to_label,
                 validator=ProjectUser(),
-            ),
+            ) if c.app.globals.show_assigned_to else None,
             ew.SingleSelectField(
                 name="status",
                 label='Status',
@@ -94,9 +159,13 @@ class TrackerTicketForm(ForgeForm):
             ),
             form_fields.MarkdownEdit(
                 name="description",
-                label='Description',
+                label=c.app.globals.description_label,
                 attrs={'class': 'ticket-description'},
                 wide=True,
+            ) if c.app.globals.show_description else None,
+            TicketMarkdownFields(
+                label="",
+                name="markdown_custom_fields",
             ),
             form_fields.RepeatedAttachmentField(
                 name="new_attachments",
@@ -116,6 +185,6 @@ class TrackerTicketForm(ForgeForm):
             #       comment_attachments RepeatedAttachmentField
 
         def filter_check(item):
-            return c.app.globals.can_edit_field(item.name)
+            return item is not None and c.app.globals.can_edit_field(item.name)
 
         return ew_core.NameList(filter(filter_check, raw_fields))

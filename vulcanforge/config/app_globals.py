@@ -72,6 +72,7 @@ class ForgeGlobals(object):
                                             "/auth/register/")
         self.site_issues_url = config.get("site_issues_url",
                                           "/projects/forgeadmin/issues/")
+        self.site_issues_label = config.get("site_issues_label", "Help Desk")
         self.site_faq_url = config.get("site_faq_url",
                                        "/projects/forgeadmin/help/Home")
         self.home_url = config.get("home_url", "/")

@@ -235,17 +235,6 @@ class ForgeTrackerApp(Application):
                 'Create Ticket',
                 self.config.url() + 'new/',
                 ui_icon=Icon('', 'ico-plus')))
-        if g.security.has_access(self, 'configure'):
-            links.append(SitemapEntry(
-                'Edit Milestones',
-                self.config.url() + 'milestones',
-                ui_icon=Icon('', 'ico-list')
-            ))
-            links.append(SitemapEntry(
-                'Edit Searches',
-                self.config.url() + 'bins/',
-                ui_icon=Icon('', 'ico-edit')
-            ))
         links.append(SitemapEntry(
             'View Stats',
             self.config.url() + 'stats/',
@@ -263,6 +252,18 @@ class ForgeTrackerApp(Application):
                 ui_icon='ico-moderate',
                 small=pending_mod_count))
         if ticket:
+            if ticket.next_ticket:
+                links.append(SitemapEntry(
+                    'Next',
+                    ticket.next_ticket.url(),
+                    ui_icon=Icon('', 'ico-next')
+                ))
+            if ticket.prev_ticket:
+                links.append(SitemapEntry(
+                    'Previous',
+                    ticket.prev_ticket.url(),
+                    ui_icon=Icon('', 'ico-previous')
+                ))
             if ticket.super_id:
                 links.append(SitemapEntry('Supertask'))
                 super = TM.Ticket.query.get(
@@ -284,6 +285,28 @@ class ForgeTrackerApp(Application):
             # 'Create New Subtask',
             # '{0}new/?super_id={1}'.format(self.config.url(), ticket._id),
             # className='nav_child'))
+
+        if g.security.has_access(self, 'configure'):
+            admin_url = c.project.url() + 'admin/' + \
+                        self.config.options.mount_point + '/'
+            links.extend([
+                SitemapEntry('Configure'),
+                SitemapEntry(
+                    'Edit Fields',
+                    admin_url + 'fields',
+                    ui_icon=Icon('', 'ico-edit')
+                ),
+                SitemapEntry(
+                    'Edit Milestones',
+                    self.config.url() + 'milestones',
+                    ui_icon=Icon('', 'ico-edit')
+                ),
+                SitemapEntry(
+                    'Edit Searches',
+                    self.config.url() + 'bins/',
+                    ui_icon=Icon('', 'ico-edit')
+                )
+            ])
 
         links += milestones
 
@@ -413,16 +436,22 @@ class BaseTrackerController(BaseController):
                 custom_values[k] = v
 
         for ticket in tickets:
+            changed = False
             for k, v in values.iteritems():
                 if not c.app.globals.can_edit_field(k):
                     continue
-                setattr(ticket, k, v)
+                if getattr(ticket, k) != v:
+                    setattr(ticket, k, v)
+                    changed = True
             for k, v in custom_values.iteritems():
                 if not c.app.globals.can_edit_field(k):
                     continue
-                ticket.custom_fields[k] = v
+                if ticket.custom_fields.get(k) != v:
+                    ticket.custom_fields[k] = v
+                    changed = True
+            if changed:
+                ticket.commit()
 
-        ThreadLocalODMSession.flush_all()
         redirect(request.referer or c.app.url)
 
 
@@ -635,13 +664,13 @@ class RootController(BaseTrackerController):
         return feed.writeString('utf-8')
 
     @expose()
-    def _lookup(self, ticket_num, *remainder):
-        if ticket_num.isdigit():
-            return TicketController(ticket_num), remainder
+    def _lookup(self, arg, *remainder):
+        if arg.isdigit():
+            return TicketController(arg), remainder
         elif remainder:
             milestone = request.url.split('milestone/')[1].split('/')[0]
             return MilestoneController(
-                self, ticket_num, milestone), remainder[1:]
+                self, arg, urllib.unquote(milestone)), remainder[1:]
         else:
             raise exc.HTTPNotFound
 
@@ -1112,17 +1141,21 @@ class TicketController(BaseTrackerController):
             )
         changes['attachments'] = ', '.join(attachment_changelog_items)
         any_sums = False
+        post_custom_fields = post_data.get('custom_fields', {})
+        post_markdown_custom_fields = post_data.get('markdown_custom_fields', {})
         for cf in c.app.globals.custom_fields or []:
             if not c.app.globals.can_edit_field(cf.name):
                 continue
-            if cf.name in post_data.get('custom_fields', []):
-                value = post_data['custom_fields'][cf.name]
+            if cf.name in post_custom_fields:
+                value = post_custom_fields[cf.name]
                 if cf.type == 'sum':
                     any_sums = True
                     try:
                         value = float(value)
                     except (TypeError, ValueError):
                         value = 0
+            elif cf.name in post_markdown_custom_fields:
+                value = post_markdown_custom_fields[cf.name]
             elif cf.name == '_milestone' and cf.name in post_data:
                 value = post_data[cf.name]
             # unchecked boolean won't be passed in, so make it False here
@@ -1210,17 +1243,22 @@ class TrackerAdminController(DefaultAdminController):
         return dict(app=self.app, globals=self.app.globals)
 
     @expose()
-    def update_tickets(self, **post_data):
-        pass
-
-    @expose()
     @validate_form("field_admin", error_handler=fields)
     @require_post()
     @vardec
     def set_custom_fields(self, **post_data):
-        self.app.globals.open_status_names = post_data['open_status_names']
-        self.app.globals.closed_status_names = post_data['closed_status_names']
-        self.app.globals.protected_field_names = post_data['protected_field_names']
+        for k in [
+            'open_status_names',
+            'closed_status_names',
+            'protected_field_names',
+            'show_assigned_to',
+            'assigned_to_label',
+            'show_description',
+            'description_label'
+        ]:
+            value = post_data.get(k)
+            if value is not None:
+                setattr(self.app.globals, k, value)
         custom_fields = post_data.get('custom_fields', [])
         for field in custom_fields:
             field['name'] = '_' + '_'.join(
@@ -1452,7 +1490,7 @@ class MilestoneController(BaseTrackerController):
         self.root = root
         self.field = fld
         self.milestone = m
-        self.query = 'milestone_s:{}'.format(m.name)
+        self.query = 'milestone_s:"{}"'.format(m.name)
         self.mongo_query = {'custom_fields.{}'.format(fld.name): m.name}
 
     def _before(self, *args, **kwargs):
