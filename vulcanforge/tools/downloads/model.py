@@ -23,7 +23,7 @@ class ForgeDownloadsAbstractItem(Artifact):
     filesize = FieldProperty(int, if_missing=None)
 
     def index(self):
-        return False
+        return None
 
     def url(self):
         return self.app_config.url() + 'content' + self.item_key
