@@ -1146,7 +1146,7 @@ class TicketController(BaseTrackerController):
                 post = latest_post
                 LOG.info('Folding ticket updates into %s', post)
         tpl_fn = pkg_resources.resource_filename(
-            'vehicleforge.tools.tickets', 'data/ticket_changed_tmpl')
+            'vulcanforge.tools.tickets', 'data/ticket_changed_tmpl')
         change_text = h.render_genshi_plaintext(
             tpl_fn,
             changelist=changes.get_changed())

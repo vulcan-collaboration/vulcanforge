@@ -1,9 +1,9 @@
-{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+{% extends 'vulcanforge:tools/tickets/templates/tracker/master.html' %}
 
 {% set has_related_artifacts = True %}
 {% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
 
-{% do g.resource_manmager.register_css('css/hilite.css') %}
+{% do g.resource_manager.register_css('css/hilite.css') %}
 
 {% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }} / #{{ ticket.ticket_num }} {{ ticket.summary }}{% endblock %}
 

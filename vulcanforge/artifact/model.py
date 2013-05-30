@@ -1049,7 +1049,7 @@ def find_shortlink_refs(text, **kw):
     # TODO: include markdown extensions in vulcanforge then uncomment following
     #fcp = FencedCodeProcessor()
     #converted = fcp.run(text.split('\n'))
-    converted = text
+    converted = text.split('\n')
     for line in converted:
         if not line.startswith('    '):
             ref_ids.extend(
