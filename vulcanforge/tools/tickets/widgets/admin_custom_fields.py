@@ -91,7 +91,7 @@ class CustomFieldAdmin(ew.CompoundField):
         CustomFieldAdminDetail()]
 
 
-class TrackerFieldAdmin(f.ForgeForm):
+class TrackerFieldAdmin(forms.ForgeForm):
     submit_text = None
     fields = ew_core.NameList([
         ew.FieldSet(

@@ -55,9 +55,9 @@ from vulcanforge.project.widgets import ProjectUserSelect
 from vulcanforge.resources import Icon
 from . import model as TM
 from . import version
+from vulcanforge.tools.tickets.widgets.forms import TicketCustomField
 from .widgets import (
     TrackerTicketForm,
-    TicketCustomField,
     BinForm,
     TicketSearchResults,
     MassEdit,
