@@ -53,6 +53,10 @@ class Globals(MappedClass):
     open_status_names = FieldProperty(str)
     closed_status_names = FieldProperty(str)
     protected_field_names = FieldProperty(str, if_missing='')
+    show_assigned_to = FieldProperty(schema.Bool, if_missing=True)
+    assigned_to_label = FieldProperty(schema.String, if_missing='Assigned To')
+    show_description = FieldProperty(schema.Bool, if_missing=True)
+    description_label = FieldProperty(schema.String, if_missing='Description')
     milestone_names = FieldProperty(str, if_missing='')
     custom_fields = FieldProperty([{str: None}])
     simple_form = FieldProperty(schema.Deprecated)  # bool, if_missing=False)
@@ -163,11 +167,14 @@ class Globals(MappedClass):
         refresh_search_counts.post()
 
     def sortable_custom_fields_shown_in_search(self):
-        return [dict(sortable_name='%s_s' % field['name'],
-                     name=field['name'],
-                     label=field['label'])
-                for field in self.custom_fields
-                if field.get('show_in_search')]
+        for field in self.custom_fields:
+            if field['type'] == 'markdown' or not field.get('show_in_search'):
+                continue
+            if field['type'] == 'milestone':
+                sortable_name = "{0}_dt,{0}_s".format(field['name'])
+            else:
+                sortable_name = "{0}_s".format(field['name'])
+            yield dict(field, sortable_name=sortable_name)
 
     def can_edit_field(self, field_name):
         if field_name in self.protected_field_names:
@@ -306,6 +313,7 @@ class Ticket(VersionedArtifact):
             reported_by_name_s=self.reported_by_name,
             assigned_to_s=self.assigned_to_username,
             assigned_to_name_s=self.assigned_to_name,
+            last_updated_dt=self.last_updated,
             text_objects=[
                 self.ticket_num,
                 self.summary,
@@ -511,6 +519,14 @@ class Ticket(VersionedArtifact):
 
     def url(self):
         return self.app_config.url() + str(self.ticket_num) + '/'
+
+    @LazyProperty
+    def next_ticket(self):
+        return self.__class__.query.get(ticket_num=self.ticket_num + 1)
+
+    @LazyProperty
+    def prev_ticket(self):
+        return self.__class__.query.get(ticket_num=self.ticket_num - 1)
 
     def shorthand_id(self):
         return '#' + str(self.ticket_num)
@@ -730,12 +746,13 @@ class Ticket(VersionedArtifact):
                      label='Ticket Number', active=True),
                 dict(name='summary', sort_name='summary',
                      label='Summary', active=True),
-                dict(name='_milestone', sort_name='_milestone_dt,_milestone_s',
-                     label='Milestone', active=True),
                 dict(name='status', sort_name='status',
                      label='Status', active=True),
                 dict(name='assigned_to', sort_name='assigned_to_name_s',
-                     label='Owner', active=True)]
+                     label=c.app.globals.assigned_to_label, active=True),
+                dict(name='last_updated', sort_name='last_updated',
+                     label='Last Updated', active=True)
+            ]
             for field in sortable_custom_fields:
                 columns.append(
                     dict(name=field['name'], sort_name=field['name'],
@@ -817,12 +834,12 @@ class Ticket(VersionedArtifact):
                     label='Ticket Number', active=True),
                 dict(name='summary', sort_name='snippet_s',
                     label='Summary', active=True),
-                dict(name='_milestone', sort_name='_milestone_dt,_milestone_s',
-                    label='Milestone', active=True),
                 dict(name='status', sort_name='status_s',
                     label='Status', active=True),
                 dict(name='assigned_to', sort_name='assigned_to_name_s',
-                    label='Owner', active=True)
+                    label=c.app.globals.assigned_to_label, active=True),
+                dict(name='last_updated', sort_name='last_updated_dt',
+                     label='Last Updated', active=True)
             ]
             for field in sortable_custom_fields:
                 columns.append(dict(name=field['name'],

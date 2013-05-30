@@ -54,6 +54,7 @@ class CustomFieldAdminDetail(form_fields.StateField):
             name='type',
             options=[
                 ew.Option(py_value='string', label='Text'),
+                ew.Option(py_value='markdown', label='Markdown'),
                 ew.Option(py_value='number', label='Number'),
                 ew.Option(py_value='boolean', label='Boolean'),
                 ew.Option(py_value='select', label='Select'),
@@ -90,22 +91,55 @@ class CustomFieldAdmin(ew.CompoundField):
         CustomFieldAdminDetail()]
 
 
-class TrackerFieldAdmin(forms.ForgeForm):
+class TrackerFieldAdmin(f.ForgeForm):
     submit_text = None
-
-    class fields(ew_core.NameList):
-        open_status_names = ew.TextField(
-            label='Open Statuses',
-            wide=True)
-        closed_status_names = ew.TextField(
-            label='Closed Statuses',
-            wide=True)
-        protected_field_names = ew.TextField(
-            label='Protected Fields',
-            wide=True)
-        custom_fields = form_fields.SortableRepeatedField(
+    fields = ew_core.NameList([
+        ew.FieldSet(
+            label="Status",
+            fields=ew_core.NameList([
+                ew.TextField(
+                    name='open_status_names',
+                    label='Open Statuses',
+                    wide=True),
+                ew.TextField(
+                    name='closed_status_names',
+                    label='Closed Statuses',
+                    wide=True),
+            ]),
+            wide=True
+        ),
+        ew.FieldSet(
+            label="Default Fields",
+            fields=ew_core.NameList([
+                ew.TextField(
+                    name='protected_field_names',
+                    label='Protected Fields',
+                    wide=True),
+                ew.Checkbox(
+                    name='show_assigned_to',
+                    label='Show Assigned to Field',
+                    wide=True),
+                ew.TextField(
+                    name='assigned_to_label',
+                    label='Custom label for Assigned to Field',
+                    wide=True),
+                ew.Checkbox(
+                    name='show_description',
+                    label='Show Description Field',
+                    wide=True),
+                ew.TextField(
+                    name='description_label',
+                    label='Custom Label for Description Field',
+                    wide=True),
+            ]),
+            wide=True
+        ),
+        form_fields.SortableRepeatedField(
+            name='custom_fields',
             field=CustomFieldAdmin(),
-            wide=True)
+            wide=True,
+            show_label=False)
+    ])
 
     class buttons(ew_core.NameList):
         save = ew.SubmitButton(label='Save')

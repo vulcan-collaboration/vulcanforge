@@ -39,7 +39,7 @@
         {% if globals.can_edit_field('assigned_to') %}
         <li class="field-list-item">
             <div class="field-list-item-label">
-                <label for="assigned_to" class="cr">Owner:</label>
+                <label for="assigned_to" class="cr">{{ c.app.globals.assigned_to_label }}:</label>
             </div>
             <div class="field-list-item-field">
                 {{ c.user_select.display(name='assigned_to', value='', className='') }}
@@ -47,7 +47,7 @@
         </li>
         {% endif %}
         {% for field in globals.custom_fields %}
-            {% if field.type != 'sum' and field.name != '_milestone' and globals.can_edit_field(field.name) %}
+            {% if field.type != 'sum' and field.name != '_milestone' and field.type != 'markdown' and globals.can_edit_field(field.name) %}
                 <li class="field-list-item">
                     <div class="field-list-item-label">
                         <label for="{{field.id}}"
