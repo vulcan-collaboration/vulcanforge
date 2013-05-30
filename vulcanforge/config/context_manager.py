@@ -13,8 +13,8 @@ from vulcanforge.project.exceptions import NoSuchProjectError
 
 class ContextManager(object):
 
-    def set(self, project_shortname=None, mount_point=None,
-                    app_config_id=None, neighborhood=None):
+    def set(self, project_shortname=None, mount_point=None, app_config_id=None,
+            neighborhood=None):
         if not isinstance(neighborhood, Neighborhood):
             if neighborhood is not None:
                 n = Neighborhood.query.get(name=neighborhood)
@@ -66,8 +66,8 @@ class ContextManager(object):
         c.project = p
 
     @contextmanager
-    def push(self, project_id=None, mount_point=None,
-                     app_config_id=None, neighborhood=None):
+    def push(self, project_id=None, mount_point=None, app_config_id=None,
+             neighborhood=None):
         project = getattr(c, 'project', ())
         app = getattr(c, 'app', ())
         self.set(project_id, mount_point, app_config_id,

@@ -44,14 +44,16 @@ class NewForgeController(BaseController):
         """Redirect to external sites."""
         redirect(path)
 
+
+class ForgeStaticController(BaseController):
+
     @expose()
     def _lookup(self, page_title, *remainder):
         page_title = really_unicode(unquote(page_title))
         # try to find a matching page
         g.context_manager.set(g.site_admin_project, mount_point=u'static')
         page = Page.query.get(
-            app_config_id=c.app.config._id, title=page_title
-        )
+            app_config_id=c.app.config._id, title=page_title)
         controller = ForgeStaticPage(page)
         return controller, remainder
 

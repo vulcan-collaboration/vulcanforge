@@ -17,7 +17,7 @@ from vulcanforge.common.controllers.rest import (
     SwiftAuthRestController,
     WebServiceRestController
 )
-from vulcanforge.common.controllers.static import NewForgeController
+from vulcanforge.common.controllers.static import NewForgeController, ForgeStaticController
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import alpha_cmp_factory
 from vulcanforge.common.util.debug import profile_setup_request
@@ -63,6 +63,7 @@ class ForgeRootController(WsgiDispatchController):
     dashboard = DashboardRootController()
     designers = UserDiscoverController()
     nf = NewForgeController()
+    forge_global = ForgeStaticController()
     rest = RestController()
     search = SearchController()
     static_auth = SwiftAuthRestController()

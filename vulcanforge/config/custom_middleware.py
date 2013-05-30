@@ -279,11 +279,15 @@ class WidgetMiddleware(ew.WidgetMiddleware):
     scss_processing_lock = threading.Lock()
 
     def __init__(self, app, **kwargs):
-        super(WidgetMiddleware, self).__init__(app, **kwargs)
         mgr = config['pylons.app_globals'].resource_manager
+        kwargs['script_name'] = mgr.script_name
+        super(WidgetMiddleware, self).__init__(app, **kwargs)
         self.script_name_slim_res = mgr.script_name + '_slim/'
 
     def __call__(self, environ, start_response):
+        if not environ['PATH_INFO'].startswith(self.script_name):
+            return self.app(environ, start_response)
+
         registry = environ['paste.registry']
         mgr = config['pylons.app_globals'].resource_manager
         registry.register(
@@ -291,10 +295,7 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             WidgetContext(
                 scheme=environ['wsgi.url_scheme'],
                 resource_manager=mgr))
-
-        if not environ['PATH_INFO'].startswith(self.script_name):
-            result = self.app(environ, start_response)
-        elif environ['PATH_INFO'] == self.script_name_slim_js:
+        if environ['PATH_INFO'] == self.script_name_slim_js:
             result = self.serve_slim_js(
                 mgr, urlparse.parse_qs(
                     environ['QUERY_STRING']).get('href', [''])[0],

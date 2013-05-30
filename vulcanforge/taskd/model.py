@@ -264,7 +264,9 @@ class MonQTask(MappedClass):
     def set_context(self):
         from vulcanforge.auth.model import User
         try:
-            g.context_manager.set(app_config_id=self.context.app_config_id)
+            g.context_manager.set(
+                self.context.project_id,
+                app_config_id=self.context.app_config_id)
         except NoSuchProjectError:
             c.project = None
             c.app = None

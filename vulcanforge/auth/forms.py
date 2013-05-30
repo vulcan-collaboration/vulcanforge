@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
-from ming.schema import Invalid
+
 from paste.deploy.converters import asbool
 import tg
 from tg import config
 import ew as ew_core
 from ew.core import validator
 import ew.jinja2_ew as ew
+from formencode import Invalid
 from formencode.validators import UnicodeString, Empty
 
 from vulcanforge.common.validators import EmailValidator

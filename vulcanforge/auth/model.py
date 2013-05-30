@@ -1227,6 +1227,7 @@ class EmailChangeToken(BaseMappedClass):
     @property
     def email_fp(self):
         path = os.path.join(
+            os.path.dirname(__file__),
             'templates',
             'mail',
             'email_change_reversion.txt'
