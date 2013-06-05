@@ -6,6 +6,14 @@
 
 {% block content %}
 <div class="padded">
+    <div>
+        <label for="status-select">Status:</label>
+        <select id="status-select">
+           <option value="tbd" {% if status == "tbd" %}selected="selected"{% endif %}>Pending</option>
+           <option value="accepted"{% if status == "accepted" %}selected="selected"{% endif %}>Accepted</option>
+           <option value="denied"{% if status == "denied" %}selected="selected"{% endif %}>Denied</option>
+        </select>
+    </div>
     {% if requests %}
         <table id="registration_requests" class="wide-table hover-rows">
             <thead>
@@ -77,6 +85,14 @@
             }, function() {
                 window.location.reload(true);
             }, 'json');
+        });
+
+        /* change status */
+        $('#status-select').change(function(){
+            var status = $(this).value();
+            if (status !== "{{ status }}"){
+                window.location = "{{ base_url }}registration?status=" + status;
+            }
         });
 
     }(jQuery, window.$vf))

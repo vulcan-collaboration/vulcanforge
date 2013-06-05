@@ -160,9 +160,8 @@ def diff_gen(a, b, opcode_gen):
             yield prefix, line
 
 
-def unified_diff(
-        a, b, fromfile='', tofile='', fromfiledate='',
-        tofiledate='', n=3, lineterm='\n'):
+def unified_diff(a, b, fromfile='', tofile='', fromfiledate='', tofiledate='',
+                 n=3, lineterm='\n'):
     started = False
     for group in SequenceMatcher(None, a, b).get_grouped_opcodes(n):
         if not started:
