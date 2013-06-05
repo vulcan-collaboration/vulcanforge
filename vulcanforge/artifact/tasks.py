@@ -77,21 +77,25 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True):
 
 
 @task
-def del_artifacts(ref_ids):
+def del_artifacts(deleted_specs):
     from vulcanforge.artifact.model import ArtifactReference, Shortlink
-    update_docs, exceptions = [], []
-    for ref_id in ref_ids:
+    update_docs, exceptions, ref_ids = [], [], []
+    for delete_spec in deleted_specs:
+        ref_ids.append(delete_spec['ref_id'])
         try:
-            g.solr.delete(id=ref_id)
-            ref = ArtifactReference.query.get(_id=ref_id)
+            g.solr.delete(id=delete_spec['ref_id'])
+            ref = ArtifactReference.query.get(_id=delete_spec['ref_id'])
             if ref is None:
-                LOG.info('no reference found for %s' % str(ref_id))
+                LOG.info('no reference found for %s', delete_spec['ref_id'])
                 continue
-            artifact = ref.artifact.index_parent()
-            if artifact:
-                update_docs.append(solarize(artifact))
+            if delete_spec.get('index_parent_ref_id') and \
+            delete_spec['index_parent_ref_id'] != delete_spec['ref_id']:
+                parent_ref = ArtifactReference.query.get(
+                    _id=delete_spec['index_parent_ref_id'])
+                if parent_ref and parent_ref.artifact:
+                    update_docs.append(solarize(parent_ref.artifact))
         except Exception:
-            LOG.error('Error indexing artifact %s', ref_id)
+            LOG.error('Error indexing artifact %s', delete_spec['ref_id'])
             exceptions.append(sys.exc_info())
     if update_docs:
         g.solr.add(update_docs)

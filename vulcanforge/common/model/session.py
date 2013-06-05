@@ -35,10 +35,13 @@ class ArtifactSessionExtension(SessionExtension):
             elif st.status == st.deleted:
                 self.objects_deleted = [obj]
 
-    def index_deleted(self, deleted_ref_ids):
-        """Deleted"""
+    def index_deleted(self, deleted_specs):
+        """deleted_specs should be a list of dictionaries with keys
+        ref_id, index_parent_ref_id
+
+        """
         from vulcanforge.artifact.tasks import del_artifacts
-        del_artifacts.post(deleted_ref_ids)
+        del_artifacts.post(deleted_specs)
 
     def index_new(self, new_ref_ids):
         """Added or modified"""
@@ -66,8 +69,18 @@ class ArtifactSessionExtension(SessionExtension):
 
             # Post delete and add indexing operations
             if self.objects_deleted:
-                self.index_deleted(
-                    [obj.index_id() for obj in self.objects_deleted])
+                delete_specs = []
+                for obj in self.objects_deleted:
+                    ref_id = obj.index_id()
+                    parent_ref_id = None
+                    index_parent = obj.index_parent()
+                    if index_parent:
+                        parent_ref_id = index_parent.index_id()
+                    delete_specs.append({
+                        "ref_id": ref_id,
+                        "index_parent_ref_id": parent_ref_id
+                    })
+                self.index_deleted(delete_specs)
             if new_ref_ids:
                 self.index_new(new_ref_ids)
 

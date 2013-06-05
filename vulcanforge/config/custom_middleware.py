@@ -285,9 +285,6 @@ class WidgetMiddleware(ew.WidgetMiddleware):
         self.script_name_slim_res = mgr.script_name + '_slim/'
 
     def __call__(self, environ, start_response):
-        if not environ['PATH_INFO'].startswith(self.script_name):
-            return self.app(environ, start_response)
-
         registry = environ['paste.registry']
         mgr = config['pylons.app_globals'].resource_manager
         registry.register(
@@ -295,6 +292,10 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             WidgetContext(
                 scheme=environ['wsgi.url_scheme'],
                 resource_manager=mgr))
+
+        if not environ['PATH_INFO'].startswith(self.script_name):
+            return self.app(environ, start_response)
+
         if environ['PATH_INFO'] == self.script_name_slim_js:
             result = self.serve_slim_js(
                 mgr, urlparse.parse_qs(

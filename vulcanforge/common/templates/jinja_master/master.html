@@ -66,10 +66,6 @@
     {{ blob }}
     {% endfor %}
 
-    <style>.{{ g.antispam.honey_class }} { display:none }
-
-    </style>
-
     {% block head_extra %}{% endblock %}
 </head>
 <body class="{{ bodyClasses|join(' ') }} {% if not hide_project_toolbar and c.project %}has-project-toolbar {% endif %}{% if session['userid'] %}authenticated {% endif %}{% if not hide_sidebar %} has-sidebar{% endif %}{% if has_related_artifacts %} has-related-artifacts{% endif %}"

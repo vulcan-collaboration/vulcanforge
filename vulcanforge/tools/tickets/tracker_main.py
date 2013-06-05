@@ -15,7 +15,7 @@ from formencode import validators
 from formencode.variabledecode import variable_decode
 from bson import ObjectId
 from webhelpers import feedgenerator as FG
-from ming.odm.odmsession import ThreadLocalODMSession, session
+from ming.odm.odmsession import session
 from ming.utils import LazyProperty
 import ew.jinja2_ew as ew
 
@@ -155,11 +155,13 @@ class ForgeTrackerApp(Application):
                 ticket_num=int(topic))
         except Exception:
             LOG.exception('Error getting ticket %s', topic)
-        self.handle_artifact_message(ticket, message)
+        else:
+            self.handle_artifact_message(ticket, message)
 
     def main_menu(self):
         """Apps should provide their entries to be added to the main nav
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of :class:`SitemapEntries
+        <vulcanforge.common.types.SitemapEntry>`
 
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
@@ -173,7 +175,7 @@ class ForgeTrackerApp(Application):
 
     def admin_menu(self):
         admin_url = c.project.url() + 'admin/' + \
-                    self.config.options.mount_point + '/'
+            self.config.options.mount_point + '/'
         links = [SitemapEntry('Field Management', admin_url + 'fields')]
         if self.permissions and g.security.has_access(self, 'configure'):
             links.append(SitemapEntry(
@@ -334,37 +336,41 @@ class ForgeTrackerApp(Application):
     def install(self, project, acl=None):
         """Set up any default permissions and roles here"""
         super(ForgeTrackerApp, self).install(project, acl=acl)
-        custom_fields = [dict(
-            name='_milestone',
-            label='Milestone',
-            type='milestone',
-            milestones=[
-                dict(name='1.0', complete=False, due_date=None),
-                dict(name='2.0', complete=False, due_date=None)
+        custom_fields = [{
+            'name': '_milestone',
+            'label': 'Milestone',
+            'type': 'milestone',
+            'show_in_search': True,
+            'milestones': [
+                {'name': '1.0', 'complete': False, 'due_date': None},
+                {'name': '2.0', 'complete': False, 'due_date': None}
             ]
-        )]
+        }]
 
-        self.globals = TM.Globals(
-            app_config_id=c.app.config._id,
-            last_ticket_num=0,
-            open_status_names='open unread accepted pending',
-            closed_status_names='closed wont-fix',
-            custom_fields=custom_fields
-        )
+        gl_kwargs = {
+            'app_config_id': c.app.config._id,
+            'last_ticket_num': 0,
+            'open_status_names': 'open unread accepted pending',
+            'closed_status_names': 'closed wont-fix',
+            'custom_fields': custom_fields
+        }
+        self.globals = TM.Globals(**gl_kwargs)
+        session(self.globals).flush()
         c.app.globals.invalidate_bin_counts()
-        bin = TM.Bin(
+
+        open_bin = TM.Bin(
             summary='Open Tickets',
             terms=self.globals.not_closed_query
         )
-        bin.app_config_id = self.config._id
-        bin.custom_fields = dict()
-        bin = TM.Bin(
+        open_bin.app_config_id = self.config._id
+        open_bin.custom_fields = dict()
+        closed_bin = TM.Bin(
             summary='Changes',
             terms=self.globals.not_closed_query,
             sort='mod_date_dt desc'
         )
-        bin.app_config_id = self.config._id
-        bin.custom_fields = dict()
+        closed_bin.app_config_id = self.config._id
+        closed_bin.custom_fields = dict()
         session(TM.Globals).flush()
 
     def uninstall(self, project):
@@ -669,8 +675,9 @@ class RootController(BaseTrackerController):
             return TicketController(arg), remainder
         elif remainder:
             milestone = request.url.split('milestone/')[1].split('/')[0]
-            return MilestoneController(
-                self, arg, urllib.unquote(milestone)), remainder[1:]
+            controller = MilestoneController(
+                self, arg, urllib.unquote(milestone))
+            return controller, remainder[1:]
         else:
             raise exc.HTTPNotFound
 
@@ -684,9 +691,9 @@ class RootController(BaseTrackerController):
             'super_id': super_id,
             'defaults': {
                 'super_id': super_id,
-                'description': description,
-                },
+                'description': description
             }
+        }
 
     @expose(TEMPLATE_DIR + 'new_ticket.html')
     def new_with_reference(self, artifact_ref=None, **kw):
@@ -711,11 +718,10 @@ class RootController(BaseTrackerController):
 
     @without_trailing_slash
     @expose()
-    @validate(dict(
-            since=V.DateTimeConverter(if_empty=None, if_invalid=None),
-            until=V.DateTimeConverter(if_empty=None, if_invalid=None),
-            offset=validators.Int(if_empty=None),
-            limit=validators.Int(if_empty=None)))
+    @validate({'since': V.DateTimeConverter(if_empty=None, if_invalid=None),
+               'until': V.DateTimeConverter(if_empty=None, if_invalid=None),
+               'offset': validators.Int(if_empty=None),
+               'limit': validators.Int(if_empty=None)})
     def feed(self, since=None, until=None, offset=None, limit=None):
         if request.environ['PATH_INFO'].endswith('.atom'):
             feed_type = 'atom'
@@ -775,24 +781,20 @@ class RootController(BaseTrackerController):
         result['cancel_href'] = url(
             c.app.url + 'search/search/',
             dict(q=q, limit=limit, sort=sort))
-        c.user_select = ffw.ProjectUserSelect()
+        c.user_select = ProjectUserSelect()
         c.mass_edit = self.Widgets.mass_edit
         c.mass_edit_form = self.Forms.mass_edit_form
         return result
 
     def tickets_since(self, when=None):
-        count = 0
+        query = {'app_config_id': c.app.config._id}
         if when:
-            count = TM.Ticket.query.find(dict(app_config_id=c.app.config._id,
-                created_date={'$gte': when})).count()
-        else:
-            count = TM.Ticket.query.find(dict(
-                app_config_id=c.app.config._id)).count()
+            query['created_date'] = {'$gte': when}
+        count = TM.Ticket.query.find(query).count()
         return count
 
     def ticket_comments_since(self, when=None):
-        q = dict(
-            discussion_id=c.app.config.discussion_id)
+        q = {'discussion_id': c.app.config.discussion_id}
         if when is not None:
             q['timestamp'] = {'$gte': when}
         return Post.query.find(q).count()
@@ -1024,9 +1026,8 @@ class TicketController(BaseTrackerController):
 
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'ticket.html')
-    @validate(dict(
-            page=validators.Int(if_empty=0),
-            limit=validators.Int(if_empty=10)))
+    @validate({'page': validators.Int(if_empty=0),
+               'limit': validators.Int(if_empty=10)})
     def index(self, page=0, limit=10, **kw):
         if self.ticket is None:
             raise exc.HTTPNotFound(
@@ -1109,7 +1110,7 @@ class TicketController(BaseTrackerController):
             setattr(self.ticket, k, post_data.pop(k, ''))
             changes[k] = getattr(self.ticket, k)
         if 'assigned_to' in post_data \
-        and c.app.globals.can_edit_field('assigned_to'):
+                and c.app.globals.can_edit_field('assigned_to'):
             who = post_data['assigned_to']
             changes['assigned_to'] = self.ticket.assigned_to
             if who:
@@ -1142,7 +1143,8 @@ class TicketController(BaseTrackerController):
         changes['attachments'] = ', '.join(attachment_changelog_items)
         any_sums = False
         post_custom_fields = post_data.get('custom_fields', {})
-        post_markdown_custom_fields = post_data.get('markdown_custom_fields', {})
+        post_markdown_custom_fields = post_data.get(
+            'markdown_custom_fields', {})
         for cf in c.app.globals.custom_fields or []:
             if not c.app.globals.can_edit_field(cf.name):
                 continue
@@ -1333,7 +1335,8 @@ class RootRestController(BaseController):
 
         B{Example request}
 
-        GET I{rest/neighborhood/project/tool/new?summary='Something'&description='Some text'}
+        GET I{rest/neighborhood/project/tool/new?
+            summary='Something'&description='Some text'}
 
         @return: {
         "summary": str,
@@ -1344,6 +1347,7 @@ class RootRestController(BaseController):
         ...
         }
         @rtype: JSON document
+
         """
         g.security.require_access(c.app, 'write')
         if ticket_form is None:
@@ -1449,7 +1453,8 @@ class TicketRestController(BaseController):
 
         B{Example request}
 
-        GET I{rest/neighborhood/project/tool/ticket_number/save?summary='Something'&description='Some text'}
+        GET I{rest/neighborhood/project/tool/ticket_number/save?
+            summary='Something'&description='Some text'}
 
         @return: {
         "summary": str,

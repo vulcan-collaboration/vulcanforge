@@ -10,6 +10,7 @@ from ming.odm.odmsession import ThreadLocalODMSession, session
 
 # Local imports
 from vulcanforge.auth.model import User
+from vulcanforge.common.model.session import artifact_orm_session
 from vulcanforge.tools.tickets import model as TM
 
 LOG = logging.getLogger(__name__)
@@ -168,8 +169,7 @@ class ImportSupport(object):
         ticket = TM.Ticket(
             app_config_id=c.app.config._id,
             custom_fields=dict(),
-            ticket_num=ticket_num,
-            import_id=c.api_token.api_key)
+            ticket_num=ticket_num)
         ticket.update(remapped)
         return ticket
 
@@ -177,7 +177,6 @@ class ImportSupport(object):
         ts = self.parse_date(comment_dict['date'])
         comment = thread.post(text=comment_dict['comment'], timestamp=ts)
         comment.author_id = self.get_user_id(comment_dict['submitter'])
-        comment.import_id = c.api_token.api_key
 
     def make_attachment(self, org_ticket_id, ticket_id, att_dict):
         import urllib2
@@ -281,7 +280,7 @@ option user_map to avoid losing username information. Unknown users: %s''' % unk
             unknown_users = self.find_unknown_users(users)
             self.make_user_placeholders(unknown_users)
         
-        session(TM.Ticket)._get().skip_mod_date = True
+        artifact_orm_session._get().skip_mod_date = True
         for a in artifacts:
             comments = a.pop('comments', [])
             attachments = a.pop('attachments', [])

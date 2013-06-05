@@ -1,6 +1,7 @@
 import logging
 
 from pylons import tmpl_context as c, app_globals as g
+from vulcanforge.artifact.model import ArtifactReference
 from vulcanforge.artifact.tasks import add_artifacts
 
 from vulcanforge.taskd import task
@@ -13,7 +14,7 @@ def add_tickets(ref_ids, **kw):
     add_artifacts(ref_ids, **kw)
     ac_ids = set()
     for ref_id in ref_ids:
-        aref = M.ArtifactReference.query.get(_id=ref_id)
+        aref = ArtifactReference.query.get(_id=ref_id)
         if aref:
             ac_ids.add(aref.artifact_reference['app_config_id'])
         else:

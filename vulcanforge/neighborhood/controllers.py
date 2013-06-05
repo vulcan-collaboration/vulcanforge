@@ -260,6 +260,7 @@ class NeighborhoodController(BaseTGController):
     @vardec
     @expose()
     @AntiSpam.validate('Spambot protection engaged')
+    @validate_form('add_project', error_handler=add_project)
     @require_post()
     def register(self, **form_data):
         """Register a project on this neighborhood"""
@@ -268,25 +269,14 @@ class NeighborhoodController(BaseTGController):
             flash("You are already a member of a team", "error")
             redirect(self.neighborhood.url())
 
-        # Validate the form. We cannot use the nifty tg decorator because the
-        # form can be different depending on the neighborhood.
-        form = self.Forms.add_project
-        try:
-            form_result = form.to_python(form_data)
-        except Invalid, inv:
-            c.form_errors = inv.unpack_errors()
-            c.form_result = inv.value
-            override_template(self.register, TEMPLATE_DIR + 'add_project.html')
-            return self.add_project(**form_data)
-
         # expand the values
         project_name = h.really_unicode(
-            form_result.pop('project_name', '')).encode('utf-8')
+            form_data.pop('project_name', '')).encode('utf-8')
         project_description = h.really_unicode(
-            form_result.pop('project_description', '')).encode('utf-8')
+            form_data.pop('project_description', '')).encode('utf-8')
         project_unixname = h.really_unicode(
-            form_result.pop('project_unixname', '')).encode('utf-8').lower()
-        private_project = form_result.pop('private_project', None)
+            form_data.pop('project_unixname', '')).encode('utf-8').lower()
+        private_project = form_data.pop('private_project', None)
         neighborhood = self.neighborhood
 
         apps = []
@@ -297,12 +287,12 @@ class NeighborhoodController(BaseTGController):
         }
         for repo in ('Git', 'SVN', 'Hg'):
             tool_info[repo] = 'Repository'
-        for i, tool in enumerate(form_result):
+        for i, tool in enumerate(form_data):
             if tool in tool_info:
                 label, mp = tool_info[tool], tool_info[tool].lower()
             else:
                 label, mp = tool, tool.lower()
-            if form_result[tool]:
+            if form_data[tool]:
                 apps.append((tool.lower(), mp, label))
         if apps:
             apps = [
@@ -377,15 +367,10 @@ class NeighborhoodProjectBrowseController(ProjectBrowseController):
         )
         title = self._build_title()
         c.custom_sidebar_menu = self._build_nav()
-        return dict(projects=projects,
-            title=title,
-            text=None,
-            neighborhood=self.neighborhood,
-            sort=sort,
-            limit=limit,
-            page=page,
-            count=count,
-            hide_sidebar=self.hide_sidebar)
+        return {'projects': projects, 'title': title, 'text': None,
+                'neighborhood': self.neighborhood, 'sort': sort,
+                'limit': limit, 'page': page, 'count': count,
+                'hide_sidebar': self.hide_sidebar}
 
 
 class NeighborhoodModerateController(object):

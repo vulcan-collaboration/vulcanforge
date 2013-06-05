@@ -253,8 +253,8 @@ class ProjectBrowseController(BaseController):
             parent_category=self.category)
         return controller, remainder
 
-    @expose(TEMPLATE_DIR + 'project_list.html')
     @without_trailing_slash
+    @expose(TEMPLATE_DIR + 'project_list.html')
     def index(self, sort='alpha', limit=25, page=0, **kw):
         c.project_list = self.Widgets.project_list
         c.page_size = self.Widgets.page_size
@@ -263,5 +263,5 @@ class ProjectBrowseController(BaseController):
         projects, count = self._find_projects(sort, limit, start)
         title = self._build_title()
         c.custom_sidebar_menu = self._build_nav()
-        return dict(projects=projects, title=title, text=None,
-            limit=limit, count=count, page=page)
+        return {'projects': projects, 'title': title, 'text': None,
+                'limit': limit, 'count': count, 'page': page}

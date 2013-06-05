@@ -45,9 +45,9 @@
         </ul>
 
         {% for field in widget.fields %}
-            {% set ctx=widget.context_for(field) %}
             {% if field.field_type == 'hidden' %}
-                    {{ field.display(**ctx) }}
+                {% set ctx=widget.context_for(field) %}
+                {{ field.display(**ctx) }}
             {% endif %}
         {% endfor %}
 
@@ -62,7 +62,10 @@
             </div>
         {% endif %}
 
-        {% if widget.antispam %}{% for fld in g.antispam.extra_fields() %}
-            {{ fld }}{% endfor %}{% endif %}
+        {% if widget.antispam %}
+            {% for fld in g.antispam.extra_fields() %}
+                {{ fld }}
+            {% endfor %}
+        {% endif %}
     </form>
 </div>

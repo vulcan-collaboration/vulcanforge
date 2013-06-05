@@ -9,7 +9,7 @@
 {% block header %}{{app.config.options.mount_label}} Admin Fields{% endblock %}
 
 {% block content %}
-  {{c.form.display(value=globals, action='set_custom_fields')}}
+  {{c.form.display(value=globals, action='set_custom_fields', form_id='tracker-custom-fields-form')}}
 {% endblock %}
 
 {% block head_extra %}

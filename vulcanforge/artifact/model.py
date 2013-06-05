@@ -286,8 +286,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     acl = FieldProperty(ACL)
     labels = FieldProperty([str])
     app_config = RelationProperty('AppConfig')
-    # Not null if artifact originated from external import, then API ticket id
-    import_id = FieldProperty(str, if_missing=None)
     preview_url = FieldProperty(str, if_missing=None)
     alt_resources = FieldProperty({str: None})
     _alt_loading = FieldProperty(bool, if_missing=False)

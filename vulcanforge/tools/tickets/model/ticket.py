@@ -168,9 +168,10 @@ class Globals(MappedClass):
 
     def sortable_custom_fields_shown_in_search(self):
         for field in self.custom_fields:
-            if field['type'] == 'markdown' or not field.get('show_in_search'):
+            ftype = field.get('type')
+            if ftype == 'markdown' or not field.get('show_in_search'):
                 continue
-            if field['type'] == 'milestone':
+            if ftype == 'milestone':
                 sortable_name = "{0}_dt,{0}_s".format(field['name'])
             else:
                 sortable_name = "{0}_s".format(field['name'])

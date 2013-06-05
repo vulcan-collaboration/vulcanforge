@@ -81,6 +81,7 @@ class BaseContentWidget(Widget):
     This is generally contained within an iframe, which this widget does not
     render
     """
+
     def sanitize_value(self, value):
         return urllib.quote(value.replace('"', '\\"'), safe=':/?=&%')
 
@@ -193,49 +194,49 @@ class StepToolsCADContent(BaseContentWidget):
         yield JSLink('js/lib/jquery/jquery.cookie.js')
 
         yield JSLink('visualize/cad/sti_utils.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/GeomView.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/SceneGraph.js',
-            scope='page')
+                     scope='page')
 
         yield JSLink('visualize/cad/Assembly.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/BoundingBox.js',
-            scope='page')
+                     scope='page')
 
         yield JSLink('visualize/cad/Executable.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/GLTransform.js',
-            scope='page')
+                     scope='page')
 
         yield JSLink('visualize/cad/Operation.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Placement.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Project.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Selective.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Shape.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/ShapeBuilder.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Shell.js',
-            scope='page')
+                     scope='page')
 
         yield JSLink('visualize/cad/Toolpath.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/ViewVolume.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Workingstep.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/Workplan.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/webgl-utils.js',
-            scope='page')
+                     scope='page')
         yield JSLink('visualize/cad/gl-matrix.js',
-            scope='page')
+                     scope='page')
 
 
 class DesignContent(BaseContentWidget):
@@ -243,6 +244,7 @@ class DesignContent(BaseContentWidget):
 
     def resources(self):
         return []
+
 
 class PDFContent(BaseContentWidget):
     template = TEMPLATE_DIR + 'pdf.html'
@@ -341,6 +343,7 @@ class S3Content(BaseContentWidget):
     to be visualized
 
     """
+
     def display(self, value=None, visualizer=None, **kwargs):
         # assemble path
         try:
@@ -366,6 +369,7 @@ class S3Content(BaseContentWidget):
         for header, val in headers.iteritems():
             response.headers[header] = val
         return r.read()
+
 
 class DesignSpace(BaseContentWidget):
     template = TEMPLATE_DIR + 'design_space.html'
@@ -398,9 +402,10 @@ class DesignSpace(BaseContentWidget):
 
     def display(self, value=None, visualizer=None, **kw):
         base_url, query = urllib.splitquery(request.url)
-        params=dict(urlparse.parse_qsl(urllib.unquote(query)))
+        params = dict(urlparse.parse_qsl(urllib.unquote(query)))
         if 'service_url' not in params and value:
-            service_url = '{}/home/design_api'.format('/'.join(value.split('/',3)[0:3]))
+            service_url = '{}/home/design_api'.format(
+                '/'.join(value.split('/', 3)[0:3]))
         else:
             service_url = params['service_url']
         return super(DesignSpace, self).display(service_url=service_url, **kw)
@@ -485,7 +490,7 @@ class IFrame(Widget):
         Widget.defaults,
         no_iframe_msg=(
             'Please install iframes in your browser to view this content'),
-        mew_window_button = False
+        mew_window_button=False
     )
 
     def get_query_params(self, extra_params=None):
@@ -493,7 +498,8 @@ class IFrame(Widget):
             return urllib.urlencode(extra_params)
         return ''
 
-    def display(self, value=None, visualizer=None, extra_params=None, new_window_button=False, fs_url=None, **kw):
+    def display(self, value=None, visualizer=None, extra_params=None,
+                new_window_button=False, fs_url=None, **kw):
         encoded_params = self.get_query_params(extra_params=extra_params)
         src = get_iframe_url(value, visualizer, encoded_params)
         if new_window_button:
@@ -535,7 +541,8 @@ class TabbedIFrame(IFrame):
         active_url = get_iframe_url(value, visualizer, encoded_params)
         iframe_urls = url_iframe_json(value, visualizers, encoded_params)
 
-        return Widget.display(self,
+        return Widget.display(
+            self,
             value=value.replace('"', '\\"'),
             active_url=active_url.replace('"', '\\"'),
             iframe_urls=iframe_urls,
@@ -548,6 +555,7 @@ class TabbedIFrame(IFrame):
 
 class ArtifactIFrame(TabbedIFrame):
     """Renders tabbed iframe given an artifact"""
+
     def display(self, value=None, visualizer=None, visualizers=None,
                 extra_params=None, hide_tabs=False, **kw):
         if extra_params is None:
@@ -567,13 +575,14 @@ class ArtifactIFrame(TabbedIFrame):
         iframe_urls = url_iframe_json(escaped_url, visualizers, encoded)
 
         return Widget.display(self,
-            value=value.raw_url(),
-            active_url=active_url,
-            iframe_urls=iframe_urls,
-            filename=value.link_text_short(),
-            id_prefix=''.join(random.sample(string.ascii_uppercase, 8)),
-            hide_tabs='true' if hide_tabs else 'false',
-            **kw
+                              value=value.raw_url(),
+                              active_url=active_url,
+                              iframe_urls=iframe_urls,
+                              filename=value.link_text_short(),
+                              id_prefix=''.join(
+                                  random.sample(string.ascii_uppercase, 8)),
+                              hide_tabs='true' if hide_tabs else 'false',
+                              **kw
         )
 
 

@@ -32,8 +32,7 @@ class TicketCustomFields(ew.CompoundField):
                                  and cf.type != 'markdown'])
 
 class TicketMarkdownFields(ew.CompoundField):
-    template = 'jinja:forgetracker:templates/tracker_widgets/' \
-               'ticket_custom_fields.html'
+    template = TEMPLATE_FOLDER + 'ticket_custom_fields.html'
     @property
     def fields(self):
         return ew_core.NameList([TicketCustomField.make(cf)
