@@ -64,7 +64,8 @@ class ForgeConfig(AppConfig):
         'discussion': ['vulcanforge:discussion/static'],
         'neighborhood': ['vulcanforge:neighborhood/static'],
         'notification': ['vulcanforge:notification/static'],
-        'project': ['vulcanforge:project/static']
+        'project': ['vulcanforge:project/static'],
+        'visualize': ['vulcanforge:visualize/static']
     }
 
     def __init__(self, root_controller='root'):
