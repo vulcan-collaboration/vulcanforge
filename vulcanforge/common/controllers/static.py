@@ -6,7 +6,6 @@ from tg import expose, redirect
 from tg.decorators import with_trailing_slash, without_trailing_slash
 
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.common.controllers.decorators import add_cache_headers
 from vulcanforge.common.helpers import really_unicode
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project
@@ -62,7 +61,6 @@ class ForgeStaticPage(BaseController):
     def __init__(self, page):
         self.page = page
 
-    @add_cache_headers(12 * 60 * 60)  # cache por un medio dia
     @expose(TEMPLATE_DIR + 'static_page.html')
     def index(self, **kw):
         if not self.page:
