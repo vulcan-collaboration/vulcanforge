@@ -155,7 +155,7 @@ class ResourceManager(ew.ResourceManager):
 
     def _locate_real_file(self, res_path):
         for url_path, dirs in self.paths:
-            if res_path.startswith(url_path):
+            if url_path == '' or res_path.startswith(url_path):
                 for directory in dirs:
                     fs_path = os.path.join(
                         directory,

@@ -125,8 +125,7 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].resource_manager = resource_manager
 
         # setup static paths
-        app_static = "{}:static".format(self.package.__name__)
-        for static_entry in [app_static] + self.static_dirs:
+        for static_entry in self.static_dirs:
             module, dir_path = static_entry.split(':')
             os_folder = pkg_resources.resource_filename(module, dir_path)
             if os.path.exists(os_folder):
