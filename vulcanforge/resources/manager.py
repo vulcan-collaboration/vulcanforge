@@ -154,12 +154,15 @@ class ResourceManager(ew.ResourceManager):
         self.register(JSScript(text, **kw))
 
     def _locate_real_file(self, res_path):
+        res_prefix, res_remainder = res_path.split('/', 1)
         for url_path, dirs in self.paths:
-            if url_path == '' or res_path.startswith(url_path):
+            if url_path == '' or res_prefix == url_path:
                 for directory in dirs:
-                    fs_path = os.path.join(
-                        directory,
-                        res_path[len(url_path) + 1:])
+                    if url_path == '':
+                        fs_path = os.path.join(directory, res_path)
+                    else:
+                        fs_path = os.path.join(directory, res_remainder)
+
                     if not os.path.isfile(fs_path):
                         # not found skip this directory
                         continue
