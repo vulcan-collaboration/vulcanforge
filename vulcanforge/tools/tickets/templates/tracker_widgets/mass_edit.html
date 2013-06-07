@@ -23,7 +23,7 @@
           <td><input type="checkbox" name="selected" class="ticket" value="{{t._id}}"/></td>
             {% for col in columns if col['active'] %}
               {% if col['name'] == 'ticket_num' %}
-                <td><a href="{{ t.url() }}" target="_blank" class="ticketLink" title="Click to view ticekt">{{t[col['name']]}}</a></td>
+                <td><a href="{{ t.url() }}" target="_blank" class="ticketLink" title="Click to view ticket">{{t[col['name']]}}</a></td>
               {% elif col['name'] == 'summary' %}
                 <td>{{t[col['name']]}}</td>
               {% elif col['name'] == 'status' %}
