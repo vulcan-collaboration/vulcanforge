@@ -8,12 +8,12 @@ import re
 
 from webob import exc
 from pylons import tmpl_context as c, request, app_globals as g
+from tg import config
 from tg.controllers.util import redirect
 from tg.flash import flash
 from bson import ObjectId
 from ming.utils import LazyProperty
 from vulcanforge.artifact.model import Shortlink
-
 from vulcanforge.auth.model import  User
 from vulcanforge.auth.schema import ACE
 from vulcanforge.neighborhood.model import Neighborhood
@@ -498,37 +498,38 @@ class SwiftAuthorizer(object):
 
     """
     def __init__(self):
+        full_prefix = u'^(?P<bucket_name>[a-z0-9\-]+)/{s3_prefix}'.format(
+            s3_prefix=config.get('s3.app_prefix', 'Forge'))
         self.key_parsers = {
             'deny': [],
             'allow': [
                 {
-                    "regex": re.compile(
-                        ur'^(?P<bucket_name>[a-z0-9\-]+)/Allura/Visualizer/'),
+                    "regex": re.compile(full_prefix + ur'/Visualizer/'),
                     "func": lambda *args: True
                 }, {
-                    "regex": re.compile(ur'''
-                        ^(?P<bucket_name>[a-z0-9\-]+)/Allura/Project/
-                        (?P<project>[^/]+)/(?P<filename>.*)
+                    "regex": re.compile(
+                        full_prefix + ur'''
+                        /Project/(?P<project>[^/]+)/(?P<filename>.*)
                         ''', re.VERBOSE),
                     "func": self.project_access
                 }, {
-                    "regex": re.compile(ur'''
-                        ^(?P<bucket_name>[a-z0-9\-]+)/Allura/Neighborhood/
-                        (?P<neighborhood>[^/]+)/(?P<filename>.*)
+                    "regex": re.compile(
+                        full_prefix + ur'''
+                        /Neighborhood/(?P<neighborhood>[^/]+)/(?P<filename>.*)
                         ''', re.VERBOSE),
                     "func": self.neighborhood_access
                 }, {
-                    "regex": re.compile(ur'''
-                        ^(?P<bucket_name>[a-z0-9\-]+)/Allura/User/
-                        (?P<user_id>[^/]+)/(?P<filename>.*)
+                    "regex": re.compile(
+                        full_prefix + ur'''
+                        /User/(?P<user_id>[^/]+)/(?P<filename>.*)
                         ''', re.VERBOSE),
                     "func": self.user_access,
                     "allow_methods": "GET, PUT, POST"
                 }, {
-                    "regex": re.compile(ur'''
-                        ^(?P<bucket_name>[a-z0-9\-]+)/Allura/
-                        (?P<project>[^/]+)/(?P<app>[^/]+)/
-                        (?P<shortlink_path>.*)  # shorthand_id#key
+                    "regex": re.compile(
+                        full_prefix + ur'''
+                        /(?P<project>[^/]+)/(?P<app>[^/]+)
+                        /(?P<shortlink_path>.*)  # shorthand_id#key
                         ''', re.VERBOSE),
                     "func": self.artifact_access
                 }
@@ -538,7 +539,7 @@ class SwiftAuthorizer(object):
 
     def neighborhood_access(self, match, user, keyname, method):
         prefix = match.group('neighborhood')
-        LOG.info('checking permission on neighborhood %s', prefix)
+        LOG.info('checking permission on neighborh2ood %s', prefix)
         neighborhood = Neighborhood.by_prefix(prefix)
         if neighborhood:
             return g.security.has_access(neighborhood, 'read', user=user)

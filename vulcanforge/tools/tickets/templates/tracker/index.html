@@ -1,4 +1,4 @@
-{% extends 'vehicleforge.tools.tickets:templates/tracker/master.html' %}
+{% extends 'vulcanforge.tools.tickets:templates/tracker/master.html' %}
 
 {% block title %}{{ c.project.name }} / {{ c.app.config.options.mount_label }}{% endblock %}
 
@@ -27,14 +27,14 @@
     <div class="padded">
         {% if count %}
             {{ c.ticket_search_results.display(solr_error=solr_error,
-      count=count,
-      limit=limit,
-      query=q,
-      tickets=tickets,
-      sortable_custom_fields=sortable_custom_fields,
-      columns=columns,
-      page=page,
-      sort=sort) }}
+                  count=count,
+                  limit=limit,
+                  query=q,
+                  tickets=tickets,
+                  sortable_custom_fields=sortable_custom_fields,
+                  columns=columns,
+                  page=page,
+                  sort=sort) }}
         {% else %}
             <p>No tickets found.</p>
         {% endif %}

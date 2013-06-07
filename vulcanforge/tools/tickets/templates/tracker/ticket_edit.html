@@ -1,4 +1,4 @@
-{% extends 'vulcanforge:tools/tickets/templates/master.html' %}
+{% extends 'vulcanforge:tools/tickets/templates/tracker/master.html' %}
 
 {% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
 
@@ -44,8 +44,7 @@
             </li>
         </ul>
     </div>
-    {{ c.ticket_update_form.display(action='update_ticket',
-      value=ticket, ticket=ticket) }}
+    {{ c.ticket_update_form.display(action='update_ticket', value=ticket, ticket=ticket) }}
 {% endblock %}
 
 {% block after_content %}

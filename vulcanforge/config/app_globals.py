@@ -41,7 +41,6 @@ from vulcanforge.resources import Icon
 __all__ = ['Globals']
 
 LOG = logging.getLogger(__name__)
-ALLURA_S3_PREFIX = 'Allura/'
 
 
 class ForgeGlobals(object):
@@ -72,6 +71,7 @@ class ForgeGlobals(object):
                                             "/auth/register/")
         self.site_issues_url = config.get("site_issues_url",
                                           "/projects/forgeadmin/issues/")
+        self.site_issues_label = config.get("site_issues_label", "Help Desk")
         self.site_faq_url = config.get("site_faq_url",
                                        "/projects/forgeadmin/help/Home")
         self.home_url = config.get("home_url", "/")
@@ -281,7 +281,7 @@ class ForgeGlobals(object):
             return ''
 
     def make_s3_keyname(self, key_name, artifact=None):
-        return ALLURA_S3_PREFIX + \
+        return config.get('s3.app_prefix', 'Forge') + '/' + \
                self.artifact_s3_prefix(artifact) + \
                h.urlquote(key_name)
 
@@ -311,8 +311,8 @@ class ForgeGlobals(object):
         return keys
 
     def delete_s3_key(self, key):
-        if key.name.startswith(ALLURA_S3_PREFIX) and \
-        key.name != ALLURA_S3_PREFIX:
+        prefix = config.get('s3.app_prefix', 'Forge') + '/'
+        if key.name.startswith(prefix) and key.name != prefix:
             self.s3_bucket.delete_key(key.name)
 
     def make_s3_request(self, method, key_name):

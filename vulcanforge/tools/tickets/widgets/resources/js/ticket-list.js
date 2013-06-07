@@ -30,24 +30,32 @@
     $('.ticketRow:has(.ticketLink), .ticketRow:has(.artifact-link-container)')
             .css('cursor', 'pointer')
             .bind('click', function (e) {
-                var target = $(e.target),
-                    checkbox = $('input[type="checkbox"]', target);
-                if (checkbox.length > 0) {
-                    checkbox.click();
-                } else if (!target.is('a, input, button')) {
-                    var link = $('.ticketLink, a', $(this));
-                    var href = link.attr('href');
-                    var linkTarget = link.attr('target');
+                var $target = $(e.target),
+                    $row = $target.closest('.ticketRow'),
+                    $checkbox = $('input[type="checkbox"]', $row),
+                    $link, linkHref, linkTarget;
+                if ($checkbox.length > 0) {
+                    if (!$target.is('input[type="checkbox"]')) {
+                        $checkbox.prop('checked', !$checkbox.prop('checked'));
+                    }
+                } else if (!$target.is('a, input, button')) {
+                    $link = $('.ticketLink, a', $(this));
+                    linkHref = $link.prop('href');
+                    linkTarget = $link.prop('target');
                     if (e.which === 1) {
-                        if (linkTarget == undefined) {
-                            window.location.href = href;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof linkTarget === 'undefined') {
+                            window.location.href = linkHref;
                         }
                         else {
-                            window.open(href, linkTarget);
+                            window.open(linkHref, linkTarget);
                         }
                     }
                     else if (e.which === 2) {
-                        window.open(href, '_blank');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(linkHref, '_blank');
                     }
                 }
             });

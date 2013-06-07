@@ -108,8 +108,6 @@ class MonQTask(MappedClass):
         @type function: function
         @type args: None, list, tuple
         @type kwargs: None, dict
-        @type result_type: str
-        @type priority: int
 
         @rtype: C{MonQTask}
         """

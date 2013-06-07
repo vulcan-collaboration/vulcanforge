@@ -286,8 +286,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     acl = FieldProperty(ACL)
     labels = FieldProperty([str])
     app_config = RelationProperty('AppConfig')
-    # Not null if artifact originated from external import, then API ticket id
-    import_id = FieldProperty(str, if_missing=None)
     preview_url = FieldProperty(str, if_missing=None)
     alt_resources = FieldProperty({str: None})
     _alt_loading = FieldProperty(bool, if_missing=False)
@@ -1048,7 +1046,7 @@ def find_shortlink_refs(text, **kw):
     # TODO: include markdown extensions in vulcanforge then uncomment following
     #fcp = FencedCodeProcessor()
     #converted = fcp.run(text.split('\n'))
-    converted = text
+    converted = text.split('\n')
     for line in converted:
         if not line.startswith('    '):
             ref_ids.extend(

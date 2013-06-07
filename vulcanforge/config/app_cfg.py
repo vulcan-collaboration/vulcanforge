@@ -185,10 +185,10 @@ class ForgeConfig(AppConfig):
                 (k, config.get("solr.%s" % k, d)) for k, d in (
                     ('host', 'localhost'),
                     ('port', 8983),
-                    ('allura.core', 'allura')
+                    ('vulcan.core', 'vulcan')
                 )
             ])
-            solr_server = "http://%(host)s:%(port)s/solr/%(allura.core)s" % (
+            solr_server = "http://%(host)s:%(port)s/solr/%(vulcan.core)s" % (
                 solr_info)
 
         if asbool(config.get('solr.mock')):

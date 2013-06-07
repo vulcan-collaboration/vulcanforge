@@ -1,4 +1,3 @@
-import webob
 import tg.decorators
 from pylons import request
 
@@ -6,22 +5,9 @@ from vulcanforge.common.helpers import monkeypatch
 
 
 def apply():
-    old_lookup_template_engine = tg.decorators.Decoration.lookup_template_engine
-
-    @monkeypatch(tg.decorators.Decoration)
-    def lookup_template_engine(self, request):
-        '''Wrapper to handle totally borked-up HTTP-ACCEPT headers'''
-        try:
-            return old_lookup_template_engine(self, request)
-        except:
-            pass
-        environ = dict(request.environ, HTTP_ACCEPT='*/*')
-        request = webob.Request(environ)
-        return old_lookup_template_engine(self, request)
-
     @monkeypatch(tg, tg.decorators)
     def override_template(controller, template):
-        '''Copy-pasted patch to allow multiple colons in a template spec'''
+        """Copy-pasted patch to allow multiple colons in a template spec"""
         if hasattr(controller, 'decoration'):
             decoration = controller.decoration
         else:

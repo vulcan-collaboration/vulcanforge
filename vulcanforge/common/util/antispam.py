@@ -9,6 +9,7 @@ from formencode import Invalid
 import pylons
 from tg.decorators import before_validate
 from ew import jinja2_ew as ew
+from vulcanforge.common.util.http import get_client_ip
 
 
 class AntiSpam(object):
@@ -120,14 +121,7 @@ class AntiSpam(object):
     def make_spinner(self, timestamp=None):
         if timestamp is None:
             timestamp = self.timestamp
-        try:
-            client_ip = self.request.headers.get(
-                'X_FORWARDED_FOR',
-                self.request.remote_addr
-            )
-            client_ip = client_ip.split(',')[0].strip()
-        except (TypeError, AttributeError), err:
-            client_ip = '127.0.0.1'
+        client_ip = get_client_ip(self.request) or '127.0.0.1'
         plain = '%d:%s:%s' % (
             timestamp,
             client_ip,
@@ -174,6 +168,6 @@ class AntiSpam(object):
             """
             try:
                 params.update(cls.validate_request())
-            except (ValueError, TypeError, binascii.Error):
+            except (ValueError, TypeError, binascii.Error) as e:
                 raise Invalid(error_msg, params, None)
         return before_validate(antispam_hook)

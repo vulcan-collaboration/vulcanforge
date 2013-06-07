@@ -23,6 +23,7 @@ from vulcanforge.visualize.manage_tool.admin import VisualizerUploadForm
 
 
 LOG = logging.getLogger(__name__)
+TEMPLATE_DIR = 'jinja:vulcanforge.visualize.manage_tool:templates/'
 
 
 class ForgeVisualizeApp(Application):
@@ -72,7 +73,7 @@ class VisualizerConfigController(BaseController):
     def _check_security(self):
         g.security.require_access(self.app, 'read')
 
-    @expose('jinja:forgevisualize:templates/manage.html')
+    @expose(TEMPLATE_DIR + 'manage.html')
     def index(self, **kw):
         c.upload_form = self.Forms.upload_form
         visualizers = Visualizer.query.find({}).sort(

@@ -93,7 +93,8 @@ class Notification(SOLRIndexed):
     pubdate = FieldProperty(datetime, if_missing=datetime.utcnow)
 
     view = jinja2.Environment(
-        loader=jinja2.PackageLoader('vulcanforge', 'templates'))
+        loader=jinja2.PackageLoader('vulcanforge.notification', 'templates')
+    )
 
     def __json__(self):
         data = {
@@ -339,7 +340,8 @@ class Notification(SOLRIndexed):
         context = {
             'notification': self,
             'prefix': config.get('forgemail.url', 'https://vehicleforge.net'),
-            'safe_text': safe_notifications
+            'safe_text': safe_notifications,
+            'forge_name': config.get('forge_name', 'Forge')
         }
         context.update(kwargs)
         return context
@@ -349,8 +351,8 @@ class Notification(SOLRIndexed):
         artifact = self.get_artifact()
         if artifact is not None:
             try:
-                template = self.view.get_template('mail/'+artifact.type_s+
-                                                  '.txt')
+                template = self.view.get_template(
+                    'mail/{}.txt'.format(artifact.type_s))
                 text += template.render(self.get_context(ticket=artifact))
             except Exception, e:
                 LOG.debug('Error rendering notification template '

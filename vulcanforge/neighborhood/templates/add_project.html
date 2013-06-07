@@ -1,6 +1,8 @@
 {% set hide_sidebar = True %}
 {% extends g.templates['master'] %}
 
+{% block head_extra %}<style>.{{ g.antispam.honey_class }} { display:none }</style>{% endblock %}
+
 {% block title %}{{neighborhood.name}} / {{ title }}{% endblock %}
 
 {% block header %}{{ title }}{% endblock %}
