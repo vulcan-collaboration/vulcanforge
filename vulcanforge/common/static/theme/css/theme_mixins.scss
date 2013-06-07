@@ -1,0 +1,489 @@
+/* Colors */
+$content-color: #444;
+$content-background-color: #fff;
+$field-label-color: #444;
+$border-color: #b9b9b9;
+$border-hover-color: #f50;
+$error-color: #f05;
+$ok-color: #009144;
+$warning-color: #ffc000;
+$info-background-color: #ebeff6;
+$table-row-hover-color: #ebeff6;
+
+$link-color: #36c;                  /* pond blue */
+$link-hover-color: #f50;
+
+$accent-color: #f50;                /* orange */
+$accent-color-pair: #fff;
+
+$quiet-color: #aaa;
+$quiet-color-pair: #333;
+
+$active-color: #333;
+$active-color-pair: #eee;
+
+$title-color: #222;
+
+$forge-toolbar-hover-background-color: #393939;
+
+$button-color: #444;
+$button-hover-color: #fff;
+
+$button-background-color: #bbb;
+$button-border-color: #888;
+$button-background-gradient-lighten-factor: 40%;
+
+$button-hover-color: #fff;
+$button-hover-background-color: darken($button-background-color, 35%);
+$button-hover-border-color: $button-hover-background-color;
+
+$tag-color: #fff;
+$tag-hover-color: #fff;
+
+$button-active-color: #333;
+$button-active-background-color: #fff;
+$button-active-border-color: #aaa;
+
+$icon-button-color: #bbb;
+$icon-button-hover-color: $link-hover-color;
+
+$header-background-color: #000;
+
+$panel-dark-gradient-start: #404040;
+$panel-dark-gradient-end: #202020;
+$panel-dark-highlight: #585858;
+$panel-dark-shadow: black;
+
+$panel-medium-gradient-start: #606060;
+$panel-medium-gradient-end: #505050;
+$panel-medium-highlight: #787878;
+$panel-medium-shadow: #404040;
+
+$input-box-shadow: #fff;
+
+$button-border-radius: 5px;
+$tab-border-radius: 0;
+
+$content-actions-icon-button-color: #777;
+$content-actions-icon-button-hover-color: #f50;
+
+$column-header-footer-color: #eee;
+$column-header-footer-border-color: #ddd;
+
+$pleae-wait-message-color: #00558e;
+
+$new-post-background-color: #E3E5E9;
+
+$toolbar-gradient-start: #282828;
+$toolbar-gradient-stop: #404040;
+
+$tool-link-color: #aaa;
+$tool-link-hover-color: #eee;
+
+$tool-icon-size: 39px;
+
+$more-button-color: $tool-link-color;
+$more-button-hover-color: $tool-link-hover-color;
+$more-button-border-color: $toolbar-gradient-stop;
+$more-button-circle-diameter: 4px;
+
+$sidebar-button-active-color: #fff;
+$sidebar-button-active-background-color: darken($button-background-color, 70%);
+$sidebar-hover-border-color: $sidebar-button-active-background-color;
+
+$h3-color: #555;
+
+$user-list-margin-right: $pu;
+$user-list-margin-top: $pu;
+
+/* Utilities */
+
+@mixin vertical-gradient-simple($topColor, $bottomColor) {
+    background: $bottomColor; /* Old browsers */
+    @include linearGradient2(top,  $topColor 0%, $bottomColor 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$topColor', endColorstr='$bottomColor',GradientType=0 ); /* IE6-9 */
+}
+
+@mixin vertical-gradient-glossy($color) {
+    $topColor = darken($color, 20%);
+    $middleColor = darken($color, 4%);
+    $bottomColor = lighten($color, 16%);
+    background: $topColor; /* Old browsers */
+    @include linearGradient4(top, $topColor 0%, $middleColor 50%, $color 51%, $bottomColor 100%)
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$topColor', endColorstr='$bottomColor',GradientType=0 ); /* IE6-9 */
+}
+
+@mixin panel-dark($dropShadowRadius: 6px) {
+    @include linearGradient2(top, $panel-dark-gradient-start, $panel-dark-gradient-end 80%);
+    @if $dropShadowRadius != 0 {
+        box-shadow: 0 1px $dropShadowRadius rgba(0,0,0,0.7),
+                    inset 0 -1px 2px $panel-dark-shadow,
+                    inset 0 1px 2px $panel-dark-highlight;
+    }
+}
+
+@mixin panel-medium {
+    @include linearGradient2(top, $panel-medium-gradient-start, $panel-medium-gradient-end 80%);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.7),
+                inset 0 -1px 2px $panel-medium-shadow,
+                inset 0 1px 2px $panel-medium-highlight;
+}
+
+/* Skins */
+@mixin body-skin {
+    background: #fff;
+    background-position: center center;
+    background-repeat: repeat-x;
+    background-attachment: fixed;
+    color: $content-color;
+}
+
+@mixin header-wrapper-skin {
+    background: $header-background-color;
+    @include panel-dark(0);
+}
+
+@mixin main-column-header-skin {
+    color: $title-color;
+    background-color: $column-header-footer-color;
+    border-bottom: 1px solid darken($column-header-footer-border-color, 5%);
+    //box-shadow: 0 0 5px rgba(0,0,0,.2);
+}
+
+@mixin form-controls-skin {
+    color: $title-color;
+    background-color:  #efefef;
+    border: 1px solid $column-header-footer-border-color;
+}
+
+
+@mixin form-embedded-skin {
+   border: 1px solid $column-header-footer-border-color;
+}
+
+@mixin footer-skin {
+    background: $header-background-color;
+    @include panel-dark();
+    box-shadow: none;
+}
+
+@mixin info-skin {
+    border: 2px solid darken($info-background-color, 20%);
+    border-radius: 15px;
+    background-color: $info-background-color;
+    color: darken($info-background-color, 40%);
+}
+
+@mixin info-legend-skin {
+    color: #fff;
+    background-color: darken($info-background-color, 30%);
+    border-radius: 1em;
+}
+
+
+@mixin fieldset-panel-skin {
+    border: 1px solid #bebebe;
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    color: #555;
+}
+
+
+@mixin fieldset-panel-legend-skin {
+    background-color: #999;
+    color: #fff;
+}
+
+
+@mixin ui-menu-skin {
+    background: #f0f0f0;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+}
+
+@mixin fieldset-skin {
+    background: rgba(0,0,0, 0.03);
+    box-shadow: inset 0 0 16px rgba(0,0,0,0.05);
+    color: #777;
+}
+
+@mixin legend-skin {
+    color: #666;
+
+}
+
+
+@mixin requirements-skin {
+    background-color: $info-background-color;
+    border-color: darken($info-background-color, 20%);
+
+    text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* Button skins */
+@mixin button-skin {
+
+    @include vertical-gradient-simple(lighten($button-background-color, $button-background-gradient-lighten-factor), $button-background-color);
+    //background: #111111 url(images/ui-bg_glass_40_111111_1x400.png) 50% 50% repeat-x;
+    border-color: $button-border-color;
+
+    box-shadow: inset 0 0 3px rgba(0,0,0,.2);
+    text-shadow: 0 0 1px #fff;
+    
+    color: $button-color;
+}
+
+@mixin button-hover-skin {
+    text-decoration: none;
+
+    @include vertical-gradient-simple(lighten($button-hover-background-color, $button-background-gradient-lighten-factor), $button-hover-background-color);
+    //background: #1c1c1c url(images/ui-bg_glass_55_1c1c1c_1x400.png) 50% 50% repeat-x;
+    border-color: $button-hover-border-color;
+
+    text-shadow: 0 0 1px #000;
+    box-shadow: inset 0 0 3px rgba(0,0,0,.3);
+
+    color: $button-hover-color;
+}
+
+@mixin button-focus-skin {
+    border: 1px solid $accent-color;
+    outline: none;
+}
+
+@mixin button-active-skin {
+    text-decoration: none;
+
+    @include vertical-gradient-simple(lighten($button-active-background-color, $button-background-gradient-lighten-factor), $button-active-background-color);
+    border-color: $button-active-border-color;
+
+    text-shadow: none;
+    box-shadow: none;
+
+    background-color: $button-active-background-color;
+    color: $button-active-color;
+}
+
+
+/* Global searchfield skins */
+@mixin global-search-field-skin {
+    border: 1px solid $accent-color;
+    outline: none;
+
+    border: 2px solid #ccc;
+    box-shadow: none;
+    border-radius: 15px;
+}
+
+@mixin global-search-field-empty-skin {
+    width: 37px;
+    background-repeat: no-repeat;
+    background-position: 10px 3px;
+
+    background-color: #333;
+    border: 2px solid #eee;
+}
+
+@mixin global-search-field-empty-hover-skin {
+    border-color: #fff;
+    background-color: #555;
+}
+
+/* Panel skinks */
+@mixin panel-skin {
+    border: 1px solid $border-color;
+    background-color: #fff;
+}
+
+@mixin panel-above-content-skin {
+    box-shadow: 0 0 3px rgba(0,0,0,.3);
+    z-index: $panel-above-content-z-index;
+}
+
+
+/* Left toolbar skins */
+@mixin left-toolbar-skin {
+    @include linearGradient3(right, $toolbar-gradient-start, #383838 20px, $toolbar-gradient-stop);
+}
+
+@mixin right-toolbar-skin {
+    @include linearGradient3(left, $toolbar-gradient-start, #383838 20px, $toolbar-gradient-stop);
+}
+
+/* Project toolbar skins */
+@mixin tool-link-skin {
+    color: $tool-link-color;
+}
+
+@mixin project-toolbar-skin {
+}
+
+@mixin  tool-link-hover-skin {
+    color: $tool-link-hover-color;
+}
+
+@mixin tool-link-wrapper-selected-skin {
+    overflow-x: hidden;
+}
+
+@mixin tool-link-wrapper-selected-icon-skin {
+    color: #aaa;
+    text-shadow: 0 0 1px #000;
+}
+
+@mixin more-hidden-skin {
+  @include left-toolbar-skin;
+}
+
+/* Sidebar skin */
+@mixin sidebar-skin {
+  background-color: #eee;
+  border-left: 1px solid $border-color;
+}
+
+@mixin sidebar-header-skin {
+  @include linearGradient2(top, rgba(0,0,0,0) 50%, rgba(0,0,0,0.06));
+}
+
+@mixin sidebar-menu-skin{
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #fcfcfc;
+}
+
+@mixin sidebar-menu-item-skin{
+    border:none;
+}
+
+@mixin sidebar-menu-item-first-child-skin {
+    border:none;
+}
+
+@mixin sidebar-menu-link-skin{
+    @include button-skin;
+    color: #505050;
+    background-color: #d0d0d0;
+    @include linearGradient2(top, #e0e0e0, #d8d8d8);
+    border-top: 1px solid #f8f8f8;
+    border-bottom: 1px solid #c8c8c8;
+    box-shadow: none;
+}
+
+@mixin sidebar-menu-link-hover-skin{
+    background-color: #d0d0d0;
+    @include linearGradient2(top, #d0d0d0, #c0c0c0);
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #a8a8a8;
+    box-shadow: none;
+}
+
+@mixin sidebar-menu-active-link-skin{
+    text-decoration: none;
+    color: #fff;
+    background-color: #d0d0d0;
+    @include linearGradient2(top, #505050, #404040);
+    border-top: 1px solid #404040;
+    border-bottom: 1px solid #282828;
+    text-shadow: 0 0 3px black;
+    box-shadow: none;
+}
+
+@mixin sidebar-menu-active-link-hover-skin{
+    box-shadow: inset 0 0 1em #282828;
+}
+
+@mixin sidebar-small-skin {
+    background-color: rgba(0,0,0,0.6);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.3), inset 0 1px 3px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 0 3px black;
+    color: #FFFFFF;
+}
+
+/* Property-list skins */
+
+@mixin property-list-item-label-skin {
+    color: #666;
+    background: #e8e8e8;
+}
+
+@mixin property-list-item-value-skin {
+    color: #222;
+    background: #f8f8f8;
+}
+
+/* Post-related */
+
+@mixin post-hover-skin {
+    background-color: #F3F6FC;
+}
+
+@mixin post-creator-skin {
+    font-weight: bold;
+}
+
+/* Process-step */
+
+@mixin process-step-skin {
+    color: #336;
+    font-weight: bold;
+    border-color: #336;
+}
+
+@mixin current-process-step-skin {
+    background-color: #336;
+    color: #fff;
+    font-weight: bold;
+    border-color: #336;
+}
+
+@mixin process-step-separa-skin {
+    background-color: #336;
+    text-shadow: 1px 1px 0 tgba
+}
+
+@mixin process-list-skin {
+    border-bottom: 1px solid #336;
+    background-color: #f5f5f5;
+}
+
+@mixin deleted-list-element-skin {
+    background-color: lighten(red, 45%);
+}
+
+@mixin content-actions-skin {
+    text-shadow: 0 1px 1px #fff;
+}
+
+/* Tooltip skins */
+
+@mixin tooltip-content-skin {
+    color: #fff;
+    background: #303030;
+    border-color: #202020;
+    box-shadow: 0 0 10px rgba(0,0,0,.5);
+}
+
+$user-id-background-color: #00294c;
+$user-id-content-color: #fff;
+
+@mixin user-id-content-skin {
+    color: #fff;
+    border-color: $user-id-content-color;
+    box-shadow: 0 0 10px rgba(0,0,0,.5);
+
+    @include vertical-gradient-simple($user-id-background-color, darken($user-id-background-color, 8%));
+}
+
+@mixin user-list-item-skin {
+    border: 1px solid lighten($border-color, 10%);
+    background-color: #f3f3f3;
+}
+
+$forgescore-panel-background-color: #333366;
+$forgescore-panel-content-color: #fff;
+
+@mixin forgescore-panel-content-skin {
+    color: #fff;
+    border-color: $forgescore-panel-content-color;
+    box-shadow: 0 0 10px rgba(0,0,0,.5);
+
+    @include vertical-gradient-simple($forgescore-panel-background-color, darken($forgescore-panel-background-color, 8%));
+}

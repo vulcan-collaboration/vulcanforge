@@ -5,8 +5,9 @@
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js', scope='forge') %}
 
-{% do g.resource_manager.register_css('css/core.scss', scope='forge') %}
+{% do g.resource_manager.register_css('css/core.scss') %}
 {% do g.resource_manager.register_css('css/hilite.css') %}
+{% do g.resource_manager.register_css('theme/css/theme.scss') %}
 
 <html lang="en">
     <head>

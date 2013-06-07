@@ -596,8 +596,7 @@ class VersionedArtifact(Artifact):
         session = artifact_orm_session
         name = 'versioned_artifact'
         history_class = Snapshot
-        indexes = Artifact.__mongometa__.indexes + \
-                  [('last_updated', pymongo.DESCENDING)]
+        indexes = [('last_updated', pymongo.DESCENDING)]
 
     version = FieldProperty(S.Int, if_missing=0)
     last_updated = FieldProperty(S.DateTime, if_missing=datetime.utcnow)

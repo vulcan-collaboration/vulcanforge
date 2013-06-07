@@ -96,7 +96,7 @@ class Application(object):
                 parent_module = '.'.join(cls_.__module__.rsplit('.', 1)[:-1])
                 folder = pkg_resources.resource_filename(parent_module, folder)
             if os.path.exists(folder):
-                folders.append(folder)
+                folders.insert(0, folder)
         return folders
 
     @classmethod
