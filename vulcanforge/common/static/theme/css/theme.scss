@@ -1,0 +1,68 @@
+@import "css/theme_mixins.scss";
+
+/* Layout background-images */
+
+body.front {
+    background-image: url("../images/vf_starry_sky.jpg");
+    background: #000;
+}
+
+body.front #bottom-bg-container {
+    background-image: url(../images/clouds_for_bottom.png);
+}
+
+
+/* Search result-icon images */
+
+#global-search-field.empty {
+    background-image: url(../images/search_icon_smaller.png);
+
+}
+
+.big_icon.ui-icon-tool-home {
+    background-image: url("../images/home_48.png");
+}
+
+.big_icon.ui-icon-tool-wiki {
+    background-image: url("../images/wiki_48.png");
+}
+
+.big_icon.ui-icon-tool-git, .big_icon.ui-icon-tool-svn, .big_icon.ui-icon-tool-hg {
+    background-image: url("../images/code_48.png");
+}
+
+.big_icon.ui-icon-tool-stats {
+    background-image: url("../images/stats_48.png");
+}
+
+.big_icon.ui-icon-tool-admin, .big_icon.ui-icon-admin {
+    background-image: url("../images/admin_48.png");
+}
+
+.big_icon.ui-icon-tool-discussion {
+    background-image: url("../images/forums_48.png");
+}
+
+.big_icon.ui-icon-tool-tickets {
+    background-image: url("../images/tickets_48.png");
+}
+
+.big_icon.ui-icon-tool-downloads {
+    background-image: url("../images/downloads_48.png");
+}
+
+.big_icon.ui-icon-tool-link {
+    background-image: url("../images/ext_48.png");
+}
+
+.big_icon.ui-icon-tool-blog {
+    background-image: url("../images/blog_48.png");
+}
+
+.big_icon.ui-icon-tool-chat {
+    background-image: url("../images/chat_48.png");
+}
+
+.big_icon.ui-icon-tool-components {
+    background-image: url("../images/publish_48.png");
+}
