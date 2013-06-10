@@ -14,7 +14,7 @@ from ming import schema as S
 from ming.odm import session, FieldProperty, state, Mapper
 from ming.odm.declarative import MappedClass
 
-from vulcanforge.common.exceptions import NoSuchProjectError
+from vulcanforge.common.exceptions import NoSuchProjectError, ForgeError
 from vulcanforge.common.model.session import main_orm_session
 LOG = logging.getLogger(__name__)
 
@@ -53,12 +53,11 @@ class MonQTask(MappedClass):
                 ('state', ming.ASCENDING),
                 ('priority', ming.DESCENDING),
                 ('time_queue', ming.ASCENDING)
-                ],
-            [
+            ], [
                 'state',
                 'time_queue'
-                ],
-            ]
+            ],
+        ]
 
     _id = FieldProperty(S.ObjectId)
     state = FieldProperty(S.OneOf(*states))
@@ -70,18 +69,20 @@ class MonQTask(MappedClass):
 
     task_name = FieldProperty(str)
     process = FieldProperty(str)
-    context = FieldProperty(dict(
-            project_id=S.ObjectId,
-            app_config_id=S.ObjectId,
-            user_id=S.ObjectId))
+    context = FieldProperty({
+        'project_id': S.ObjectId,
+        'app_config_id': S.ObjectId,
+        'user_id': S.ObjectId
+    })
     args = FieldProperty([])
     kwargs = FieldProperty({None: None})
     result = FieldProperty(None, if_missing=None)
 
     def __repr__(self):
-        project_url = c.project and c.project.url() or None
-        app_mount = c.app and c.app.config.options.mount_point or None
-        username = c.user and c.user.username or None
+        project_url = getattr(c, 'project', None) and c.project.url() or None
+        app_mount = getattr(
+            c, 'app', None) and c.app.config.options.mount_point or None
+        username = getattr(c, 'user', None) and c.user.username or None
         return '<%s %s (%s) P:%d %s %s project:%s app:%s user:%s>' % (
             self.__class__.__name__,
             self._id,
@@ -265,7 +266,7 @@ class MonQTask(MappedClass):
             g.context_manager.set(
                 self.context.project_id,
                 app_config_id=self.context.app_config_id)
-        except NoSuchProjectError:
+        except ForgeError:
             c.project = None
             c.app = None
         c.user = User.query.get(_id=self.context.user_id)
