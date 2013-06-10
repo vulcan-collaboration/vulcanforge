@@ -1,7 +1,7 @@
 {% extends 'vulcanforge:tools/tickets/templates/tracker/master.html' %}
 
 {% if allow_config %}
-  {% do g.resource_manager.register_js('tickets/custom-fields.js') %}
+  {% do g.resource_manager.register_js('tickets/js/custom-fields.js') %}
 {% endif %}
 
 {% block title %}{{c.project.name}} / {{app.config.options.mount_label}} /  Admin Fields{% endblock %}

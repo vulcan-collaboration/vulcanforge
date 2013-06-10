@@ -79,7 +79,7 @@ class CustomFieldAdmin(ew.CompoundField):
     def resources(self):
         for r in super(CustomFieldAdmin, self).resources():
             yield r
-        yield JSLink('tickets/custom-fields.js')
+        yield JSLink('tickets/js/custom-fields.js')
 
     fields = [
         ew.TextField(name='label'),

@@ -35,8 +35,8 @@ class TicketSearchResults(ew_core.SimpleForm):
         return result
 
     def resources(self):
-        yield JSLink('tracker_js/ticket-list.js')
-        yield CSSLink('tracker_css/ticket-list.css')
+        yield JSLink('tickets/js/ticket-list.js')
+        yield CSSLink('tickets/css/ticket-list.css')
         for r in super(TicketSearchResults, self).resources():
             yield r
 
@@ -53,7 +53,7 @@ class MassEdit(ew_core.Widget):
         sort=None)
 
     def resources(self):
-        yield JSLink('tracker_js/ticket-list.js')
+        yield JSLink('tickets/js/ticket-list.js')
 
 
 class MassEditForm(ew_core.Widget):
