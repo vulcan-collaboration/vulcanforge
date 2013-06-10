@@ -168,7 +168,7 @@ class ResourceManager(ew.ResourceManager):
         if res_path.startswith(SPRITE_MAP_PREFIX):
             # cleanup
             mod_res_path = res_path.split(SPRITE_MAP_PREFIX,1)[1]
-            fs_path = os.path.join(self.static_resources_dir, mod_res_path)
+            fs_path = os.path.join(self.build_dir, mod_res_path)
             if not os.path.isfile(fs_path):
                 return None
             elif not os.path.abspath(fs_path).startswith(self.static_resources_dir):
