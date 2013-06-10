@@ -4,7 +4,6 @@ import re
 import logging
 import urlparse
 import mimetypes
-import threading
 from random import random
 
 import tg
@@ -19,7 +18,9 @@ from paste import fileapp
 from paste.deploy.converters import asbool
 from pylons.util import call_wsgi_application
 from webob import exc, Request
-import scss
+
+from scss import Scss
+
 from vulcanforge.common.model.stats import Stats
 
 from vulcanforge.common.util import cryptographic_nonce
@@ -276,8 +277,6 @@ class StatsMiddleware(object):
 
 class WidgetMiddleware(ew.WidgetMiddleware):
 
-    scss_processing_lock = threading.Lock()
-
     def __init__(self, app, **kwargs):
         mgr = config['pylons.app_globals'].resource_manager
         kwargs['script_name'] = mgr.script_name
@@ -338,19 +337,13 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             LOG.warning('Could not map %s', res_path)
             return exc.HTTPNotFound(res_path)(environ, start_response)
         if res_path.endswith('.scss'):
-            scss_parser = scss.Scss(scss_opts={
+            scss_compiler = Scss(scss_opts={
                 'compress': False,
                 'debug_info': False,
+                'load_paths': mgr.get_directories()
             })
-
-            WidgetMiddleware.scss_processing_lock.acquire()
-            scss.STATIC_ROOT = mgr.get_directory_root(res_path)
-            scss.ASSETS_ROOT = os.path.split(mgr.get_filename(res_path))[0]
-            scss.ASSETS_URL = './'
-            scss.LOAD_PATHS = ','.join(mgr.get_directories())
             scss_data = open(fs_path).read()
-            compiled_data = scss_parser.compile(scss_data)
-            WidgetMiddleware.scss_processing_lock.release()
+            compiled_data = scss_compiler.compile(scss_data)
 
             app = fileapp.DataApp(
                 compiled_data, [('Content-Type', 'text/css')])

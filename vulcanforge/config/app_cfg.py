@@ -14,7 +14,6 @@ convert them into boolean, for example, you should use the
 """
 import logging
 import os
-import re
 import pkg_resources
 
 from paste.deploy.converters import asbool, asint
@@ -143,6 +142,8 @@ class ForgeConfig(AppConfig):
                 os_folder = pkg_resources.resource_filename(module, dir_path)
                 if os.path.exists(os_folder):
                     resource_manager.register_directory(namespace, os_folder)
+
+        resource_manager.config_scss()
 
     def _register_resources_for_tools(self, tool_manager):
         resource_manager = config['pylons.app_globals'].resource_manager

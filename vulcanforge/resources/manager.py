@@ -4,10 +4,13 @@ import re
 import jsmin
 import cssmin
 import gzip
+import glob
 
 from itertools import groupby
 from collections import defaultdict
-import scss
+
+from scss import config as scss_config, Scss
+
 from paste.deploy.converters import asbool
 from webhelpers.html import literal
 
@@ -30,7 +33,8 @@ CSS_FONTS_RE = re.compile(r"url\([\'\"]?../fonts/([^\"\'\)]+)[\'\"]?\)",
                           re.VERBOSE)
 
 RECIPE_FILE = 'static_recipes.txt'
-RFC_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
+
+SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
 
 
 class ResourceManager(ew.ResourceManager):
@@ -53,8 +57,12 @@ class ResourceManager(ew.ResourceManager):
         self.static_resources_dir = config.get('static_resources_dir', None)
         self.build_key = config.get('build_key', 'default')
 
-        debug_mode = asbool(config.get('debug', 'true'))
-        self.use_cache = self.use_cssmin = self.use_jsmin = not debug_mode
+        self.debug_mode = asbool(config.get('debug', 'true'))
+        self.use_cache = self.use_cssmin = self.use_jsmin = not self.debug_mode
+
+        self.build_dir = os.path.join(self.static_resources_dir, self.build_key)
+        if not os.path.exists(self.build_dir):
+            os.makedirs(self.build_dir)
 
         self.resources = {
             'js': defaultdict(list),
@@ -153,7 +161,21 @@ class ResourceManager(ew.ResourceManager):
     def register_js_snippet(self, text, **kw):
         self.register(JSScript(text, **kw))
 
-    def _locate_real_file(self, res_path):
+    def get_filename(self, res_path):
+        """
+        Translate a resource path to a filename
+        """
+        if res_path.startswith(SPRITE_MAP_PREFIX):
+            # cleanup
+            mod_res_path = res_path.split(SPRITE_MAP_PREFIX,1)[1]
+            fs_path = os.path.join(self.static_resources_dir, mod_res_path)
+            if not os.path.isfile(fs_path):
+                return None
+            elif not os.path.abspath(fs_path).startswith(self.static_resources_dir):
+                return None
+            else:
+                return fs_path
+
         res_prefix, res_remainder = res_path.split('/', 1)
         for url_path, dirs in self.paths:
             if url_path == '' or res_prefix == url_path:
@@ -170,26 +192,8 @@ class ResourceManager(ew.ResourceManager):
                     # using ../../.., etc
                     if not os.path.abspath(fs_path).startswith(directory):
                         return None
-                    return fs_path, url_path, directory, dirs
+                    return fs_path
         return None
-
-    def get_filename(self, res_path):
-        """
-        Translate a resource path to a filename
-        """
-        path_info = self._locate_real_file(res_path)
-        if path_info is None:
-            return None
-        return path_info[0]
-
-    def get_directory_root(self, res_path):
-        """
-        Translate a resource path to a filename
-        """
-        path_info = self._locate_real_file(res_path)
-        if path_info is None:
-            return None
-        return path_info[2]
 
     def get_directories(self):
         """Translate a resource path to a filename"""
@@ -212,16 +216,45 @@ class ResourceManager(ew.ResourceManager):
 
         recipe_file.close()
 
+    def config_scss(self):
+        scss_config.STATIC_ROOT = self.scss_static_root
+        scss_config.ASSETS_ROOT = self.build_dir
+
+        if self.debug_mode:
+            scss_config.ASSETS_URL = self.absurl('SPRITE-MAP/')
+        else:
+            scss_config.ASSETS_URL = 'SPRITE-MAP/'
+
+    def scss_static_root(self, scss_images):
+        """
+        Listing image files for scss
+        """
+        scss_images_dir, png_filter = scss_images.rsplit('/', 1)
+        res_prefix, res_remainder = scss_images_dir.split('/', 1)
+        for url_path, dirs in self.paths:
+            if url_path == '' or res_prefix == url_path:
+                for directory in dirs:
+                    if url_path == '':
+                        fs_path = os.path.join(directory, scss_images_dir)
+                    else:
+                        fs_path = os.path.join(directory, res_remainder)
+
+                    if os.path.isdir(fs_path):
+                        glob_path = os.path.join(fs_path, png_filter)
+                        files = glob.glob(glob_path)
+                        return [(file, None) for file in files]
+                    else:
+                        continue
+
+        return []
+
     def write_slim_file(self, file_type, rel_resource_paths):
         '''
         Write files with concat+minify+gzip
         '''
-        build_dir = os.path.join(self.static_resources_dir, self.build_key)
-        if not os.path.exists(build_dir):
-            os.makedirs(build_dir)
         joined_list = ';'.join(rel_resource_paths)
         file_hash = str(abs(hash(joined_list))) + '.' + file_type
-        build_file_path = os.path.join(build_dir, file_hash)
+        build_file_path = os.path.join(self.build_dir, file_hash)
         if not os.path.exists(build_file_path):
             if file_type == 'js' and self.use_jsmin:
                 content = '\n'.join(
@@ -243,16 +276,12 @@ class ResourceManager(ew.ResourceManager):
                             continue
 
                         if css_path.endswith('.scss'):
-                            scss_parser = scss.Scss(scss_opts={
+                            scss_compiler = Scss(scss_opts={
                                 'compress': False,
                                 'debug_info': False,
+                                'load_paths': self.get_directories()
                             })
-
-                            scss.STATIC_ROOT = self.get_directory_root(h)
-                            scss.ASSETS_ROOT = build_dir
-                            scss.ASSETS_URL = 'SPRITE-MAP/'
-                            scss.LOAD_PATHS = ','.join(self.get_directories())
-                            content = scss_parser.compile(content)
+                            content = scss_compiler.compile(content)
 
                         root3, css_name = os.path.split(css_path)
                         root2, folder2 = os.path.split(root3)
