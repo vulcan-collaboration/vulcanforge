@@ -176,7 +176,11 @@ class ResourceManager(ew.ResourceManager):
             else:
                 return fs_path
 
-        res_prefix, res_remainder = res_path.split('/', 1)
+        if '/' in res_path:
+            res_prefix, res_remainder = res_path.split('/', 1)
+        else:
+            res_prefix = ''
+
         for url_path, dirs in self.paths:
             if url_path == '' or res_prefix == url_path:
                 for directory in dirs:
