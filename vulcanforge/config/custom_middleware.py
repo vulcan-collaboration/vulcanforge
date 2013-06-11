@@ -291,6 +291,7 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             WidgetContext(
                 scheme=environ['wsgi.url_scheme'],
                 resource_manager=mgr))
+        mgr.init_resource_context()
 
         if not environ['PATH_INFO'].startswith(self.script_name):
             return self.app(environ, start_response)

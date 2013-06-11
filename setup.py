@@ -36,6 +36,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     install_requires=[
+        'ipython',
         "docutils < 0.10",
         "TurboGears2",
         "Pylons >= 1.0",

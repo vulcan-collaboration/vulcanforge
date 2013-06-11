@@ -48,6 +48,8 @@ def make_wsgi_app(base_config, global_conf, app_conf, get_template_vars):
 
 
 def add_forge_middleware(app, base_config, global_conf, app_conf):
+    # Setup resource manager, widget context SOP
+    app = WidgetMiddleware(app)
     # Required for pylons
     app = RoutesMiddleware(app, config['routes.map'])
     # Required for sessions
@@ -67,9 +69,6 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
 
     # credentials request-global credentials cache
     app = AuthMiddleware(app)
-
-    # Setup resource manager, widget context SOP
-    app = WidgetMiddleware(app)
 
     # Make sure that the wsgi.scheme is set appropriately when we
     # have the funky HTTP_X_SFINC_SSL  environ var

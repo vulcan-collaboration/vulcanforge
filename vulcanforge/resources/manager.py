@@ -1,19 +1,17 @@
 import logging
 import os
 import re
-import jsmin
-import cssmin
 import gzip
 import glob
-
 from itertools import groupby
 from collections import defaultdict
 
+import jsmin
+import cssmin
 from scss import config as scss_config, Scss
-
 from paste.deploy.converters import asbool
 from webhelpers.html import literal
-
+from pylons import tmpl_context as c
 import ew
 from ew.core import widget_context
 
@@ -52,19 +50,20 @@ class ResourceManager(ew.ResourceManager):
         self.script_name = config.get('ew.script_name', '/_ew_resources/')
         self._url_base = config.get('ew.url_base', '/_ew_resources/')
         self.combine_static_resources = asbool(
-            config.get('combine_static_resources', 'false')
-        )
+            config.get('combine_static_resources', 'false'))
         self.static_resources_dir = config.get('static_resources_dir', None)
         self.build_key = config.get('build_key', 'default')
 
         self.debug_mode = asbool(config.get('debug', 'true'))
         self.use_cache = self.use_cssmin = self.use_jsmin = not self.debug_mode
 
-        self.build_dir = os.path.join(self.static_resources_dir, self.build_key)
+        self.build_dir = os.path.join(
+            self.static_resources_dir, self.build_key)
         if not os.path.exists(self.build_dir):
             os.makedirs(self.build_dir)
 
-        self.resources = {
+    def init_resource_context(self):
+        widget_context.resources = {
             'js': defaultdict(list),
             'css': defaultdict(list)
         }
@@ -112,7 +111,7 @@ class ResourceManager(ew.ResourceManager):
 
         resources = []
         for scope in self.scopes:
-            resources += self.resources[file_type][scope]
+            resources += widget_context.resources[file_type][scope]
         resources = squash_dupes(resources)
         if self.combine_static_resources:
             resources = compress(resources)
@@ -140,7 +139,8 @@ class ResourceManager(ew.ResourceManager):
         if isinstance(resource, Resource):
             assert resource.scope in self.scopes, \
                 'Resource.scope must be one of %r' % self.scopes
-            self.resources[resource.file_type][resource.scope].append(resource)
+            widget_context.resources[
+                resource.file_type][resource.scope].append(resource)
             resource.manager = self
         elif isinstance(resource, ew.Widget):
             for r in resource.resources():
@@ -253,9 +253,9 @@ class ResourceManager(ew.ResourceManager):
         return []
 
     def write_slim_file(self, file_type, rel_resource_paths):
-        '''
+        """
         Write files with concat+minify+gzip
-        '''
+        """
         joined_list = ';'.join(rel_resource_paths)
         file_hash = str(abs(hash(joined_list))) + '.' + file_type
         build_file_path = os.path.join(self.build_dir, file_hash)
@@ -334,13 +334,3 @@ class ResourceManager(ew.ResourceManager):
         if self.use_cache:
             self.resource_cache[href] = resource
         return resource
-
-    def __repr__(self):  # pragma no cover
-        l = ['<ResourceManager>']
-        for name, res in self.resources.iteritems():
-            l.append('  <Location %s>' % name)
-            for r in res: l.append('    %r' % r)
-        for u, d in self.paths:
-            l.append('  <Path url="%s" directory="%s">' % (u, d))
-        return '\n'.join(l)
-

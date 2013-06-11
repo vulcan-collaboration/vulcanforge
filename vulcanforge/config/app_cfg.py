@@ -161,7 +161,7 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].context_manager = context_manager
 
     def setup_security(self):
-        manager_path = config.get('context_manager')
+        manager_path = config.get('security_manager')
         if manager_path:
             cls = import_object(manager_path)
             security_manager = cls()
