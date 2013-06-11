@@ -1,7 +1,7 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
 {% set has_related_artifacts = True %}
 {% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
-{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+{% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
 {% do g.resource_manager.register_css('css/hilite.css') %}
