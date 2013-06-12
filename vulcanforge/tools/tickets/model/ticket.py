@@ -11,7 +11,7 @@ from pylons import tmpl_context as c, app_globals as g
 
 from ming import schema
 from ming.utils import LazyProperty
-from ming.odm import Mapper, session
+from ming.odm import session
 from ming.odm import FieldProperty, ForeignIdProperty, RelationProperty
 from ming.odm.declarative import MappedClass
 
@@ -199,9 +199,9 @@ class TicketHistory(Snapshot):
 
     @property
     def assigned_to(self):
-        if self.data.assigned_to_id is None:
-            return None
-        return User.query.get(_id=self.data.assigned_to_id)
+        if self.assigned_to_ids:
+            return User.query.find({"_id": {"$in": self.assigned_to_ids}})
+        return []
 
     def index(self, **kw):
         return super(TicketHistory, self).index(
@@ -256,11 +256,10 @@ class Ticket(VersionedArtifact):
         indexes = [
             'ticket_num',
             'app_config_id',
-            ('app_config_id', 'custom_fields._milestone'),
-            ]
+            ('app_config_id', 'custom_fields._milestone')]
         unique_indexes = [
-            ('app_config_id', 'ticket_num'),
-            ]
+            ('app_config_id', 'ticket_num')
+        ]
 
     type_s = 'Ticket'
     _id = FieldProperty(schema.ObjectId)
@@ -272,7 +271,7 @@ class Ticket(VersionedArtifact):
     summary = FieldProperty(str, if_missing='')
     description = FieldProperty(str, if_missing='')
     reported_by_id = ForeignIdProperty(User, if_missing=lambda: c.user._id)
-    assigned_to_id = ForeignIdProperty(User, if_missing=None)
+    assigned_to_ids = FieldProperty([schema.ObjectId], if_missing=[])
     milestone = FieldProperty(str, if_missing='')
     status = FieldProperty(str, if_missing='open')
     custom_fields = FieldProperty({str: None})
@@ -312,8 +311,8 @@ class Ticket(VersionedArtifact):
             description_t=self.description,
             reported_by_s=self.reported_by_username,
             reported_by_name_s=self.reported_by_name,
-            assigned_to_s=self.assigned_to_username,
-            assigned_to_name_s=self.assigned_to_name,
+            assigned_to_s_mv=self.assigned_to_usernames,
+            assigned_to_name_s_mv=self.assigned_to_names,
             last_updated_dt=self.last_updated,
             text_objects=[
                 self.ticket_num,
@@ -322,8 +321,8 @@ class Ticket(VersionedArtifact):
                 self.status,
                 self.reported_by_name,
                 self.reported_by_username,
-                self.assigned_to_name,
-                self.assigned_to_username,
+                ','.join(self.assigned_to_names),
+                ','.join(self.assigned_to_usernames)
             ]
         )
         for k, v in self.custom_fields.iteritems():
@@ -395,9 +394,9 @@ class Ticket(VersionedArtifact):
 
     @property
     def assigned_to(self):
-        if self.assigned_to_id is None:
-            return None
-        return User.query.get(_id=self.assigned_to_id)
+        if self.assigned_to_ids:
+            return User.query.find({"_id": {"$in": self.assigned_to_ids}})
+        return []
 
     @property
     def reported_by_username(self):
@@ -413,17 +412,20 @@ class Ticket(VersionedArtifact):
         return who.get_pref('display_name')
 
     @property
-    def assigned_to_username(self):
-        if self.assigned_to:
-            return self.assigned_to.username
-        return 'nobody'
+    def assigned_to_usernames(self):
+        if self.assigned_to_ids:
+            return [u.username for u in self.assigned_to]
+        return ['nobody']
 
     @property
-    def assigned_to_name(self):
-        who = self.assigned_to
-        if who in (None, User.anonymous()):
-            return 'nobody'
-        return who.get_pref('display_name')
+    def assigned_to_names(self):
+        if self.assigned_to_ids:
+            names = [u.get_pref('display_name') for u in self.assigned_to
+                     if not u in (None, User.anonymous())]
+
+            if names:
+                return names
+        return ['nobody']
 
     @property
     def email_address(self):
@@ -486,27 +488,28 @@ class Ticket(VersionedArtifact):
             for title, o, n in fields:
                 if o != n:
                     changes.append('%s updated: %r => %r' % (
-                            title, o, n))
-            o = hist.assigned_to
-            n = self.assigned_to
-            if o != n:
-                changes.append('Owner updated: %r => %r' % (
-                        o and o.username, n and n.username))
-                self.autosubscribe(user=n)
+                        title, o, n))
+            if hist.assigned_to_ids != self.assigned_to_ids:
+                o = ', '.join(u.username for u in hist.assigned_to)
+                changes.append('Owners updated: {} => {}'.format(
+                    o, ','.join(self.assigned_to_usernames)))
+                new = [uid for uid in self.assigned_to_ids
+                       if uid not in hist.assigned_to_ids]
+                for u in User.query.find({"_id": {"$in": new}}):
+                    self.autosubscribe(user=u)
             if old.description != self.description:
                 changes.append('Description updated:')
                 changes.append('\n'.join(
-                        patience.unified_diff(
-                            a=old.description.split('\n'),
-                            b=self.description.split('\n'),
-                            fromfile='description-old',
-                            tofile='description-new')))
+                    patience.unified_diff(
+                        a=old.description.split('\n'),
+                        b=self.description.split('\n'),
+                        fromfile='description-old',
+                        tofile='description-new')))
             description = '\n'.join(changes)
         else:
             self.autosubscribe()
-            if self.assigned_to_id:
-                self.autosubscribe(
-                    user=User.query.get(_id=self.assigned_to_id))
+            for user in self.assigned_to:
+                self.autosubscribe(user=user)
             description = self.description
             subject = self.email_subject
             Thread(discussion_id=self.app_config.discussion_id,
@@ -660,10 +663,8 @@ class Ticket(VersionedArtifact):
         # other fields
         for k, v in ticket_form.iteritems():
             if k == 'assigned_to':
-                if v:
-                    user = c.project.user_in_project(v)
-                    if user:
-                        self.assigned_to_id = user._id
+                self.assigned_to_ids = [
+                    u._id for u in v if c.project.user_in_project(user=u)]
             elif k != 'super_id':
                 setattr(self, k, v)
         if 'custom_fields' in ticket_form:
@@ -696,11 +697,10 @@ class Ticket(VersionedArtifact):
             summary=self.summary,
             description=self.description,
             reported_by=self.reported_by_username,
-            assigned_to=self.assigned_to_username,
+            assigned_to=self.assigned_to_usernames,
             reported_by_id=self.reported_by_id and str(self.reported_by_id)
                            or None,
-            assigned_to_id=self.assigned_to_id and str(self.assigned_to_id)
-                           or None,
+            assigned_to_ids=map(str, self.assigned_to_ids),
             milestone=self.milestone,
             status=self.status,
             custom_fields=self.custom_fields)
@@ -789,7 +789,6 @@ class Ticket(VersionedArtifact):
             count<=limit in the result
         limit=-1 is NOT recognized as 'all'.  500 is a reasonable limit.
         """
-
         limit, page, start = g.handle_paging(limit, page, default=25)
         count = 0
         tickets = []
@@ -799,8 +798,7 @@ class Ticket(VersionedArtifact):
         try:
             if q:
                 matches = g.search.search_artifact(
-                    cls, q,
-                    rows=limit, sort=refined_sort, start=start,
+                    cls, q, rows=limit, sort=refined_sort, start=start,
                     fl='ticket_num_i', **kw)
             else:
                 matches = None
@@ -813,8 +811,8 @@ class Ticket(VersionedArtifact):
             # ticket_numbers is in sorted order
             ticket_numbers = [match['ticket_num_i'] for match in matches.docs]
             # but query, unfortunately, returns results in arbitrary order
-            query = cls.query.find(dict(app_config_id=c.app.config._id,
-                                        ticket_num={'$in': ticket_numbers}))
+            query = cls.query.find({'app_config_id': c.app.config._id,
+                                    'ticket_num': {'$in': ticket_numbers}})
             # so stick all the results in a dictionary...
             ticket_for_num = {}
             for t in query:
@@ -831,16 +829,16 @@ class Ticket(VersionedArtifact):
             c.app.globals.sortable_custom_fields_shown_in_search()
         if not columns:
             columns = [
-                dict(name='ticket_num', sort_name='ticket_num_i',
-                    label='Ticket Number', active=True),
-                dict(name='summary', sort_name='snippet_s',
-                    label='Summary', active=True),
-                dict(name='status', sort_name='status_s',
-                    label='Status', active=True),
-                dict(name='assigned_to', sort_name='assigned_to_name_s',
-                    label=c.app.globals.assigned_to_label, active=True),
-                dict(name='last_updated', sort_name='last_updated_dt',
-                     label='Last Updated', active=True)
+                {'name': 'ticket_num', 'sort_name': 'ticket_num_i',
+                 'label': 'Ticket Number', 'active': True},
+                {'name': 'summary', 'sort_name': 'snippet_s',
+                 'label': 'Summary', 'active': True},
+                {'name': 'status', 'sort_name': 'status_s', 'label': 'Status',
+                 'active': True},
+                {'name': 'assigned_to', 'sort_name': 'assigned_to_name_s',
+                 'label': c.app.globals.assigned_to_label, 'active': True},
+                {'name': 'last_updated', 'sort_name': 'last_updated_dt',
+                 'label': 'Last Updated', 'active': True}
             ]
             for field in sortable_custom_fields:
                 columns.append(dict(name=field['name'],

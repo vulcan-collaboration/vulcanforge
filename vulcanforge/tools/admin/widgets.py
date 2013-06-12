@@ -315,9 +315,7 @@ class ProjectOverviewForm(ForgeForm):
 
 
 class ProjectMemberAgreementForm(ForgeForm):
-    defaults = dict(
-        ForgeForm.defaults,
-        enctype='multipart/form-data')
+    defaults = dict(ForgeForm.defaults, enctype='multipart/form-data')
 
     class fields(ew_core.NameList):
         member_agreement_html = ew.HTMLField(wide=True)

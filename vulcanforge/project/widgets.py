@@ -82,7 +82,7 @@ class ProjectUserSelect(ew.InputField):
         name=None,
         value=None,
         show_label=True,
-        className=None)
+        className='project_user_select')
 
     def __init__(self, **kw):
         super(ProjectUserSelect, self).__init__(**kw)
@@ -112,6 +112,39 @@ class ProjectUserSelect(ew.InputField):
                 $input.data( "autocomplete" )._renderItem = function( ul, item ) {
                     return $( "<li></li>" ).
                         data( "item.autocomplete", item ).
+                        append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
+                        appendTo( ul );
+                };
+            }
+            ''' % json.dumps([dict(label=u.display_name, desc=u.username,
+            value=u.username) for u in c.project.users()]))
+
+
+class MultiProjectUserSelect(ProjectUserSelect):
+    defaults = dict(
+        ProjectUserSelect.defaults,
+        className='multi_project_user_select')
+
+    def resources(self):
+        for r in ew.InputField.resources(self):
+            yield r
+        yield JSLink('js/vf_form.js')
+        yield onready('''
+            var data = %s,
+                $input;
+            $input = $('input.multi_project_user_select').
+                multicomplete({
+                    source: data,
+                    autoFocus: true,
+                    minLength: 0,
+                    delay: 10
+                }).
+                focus(function(){$(this).multicomplete('search','');}).
+                click(function(){$(this).multicomplete('search','');});
+            if ($input.length) {
+                $input.data( "multicomplete" )._renderItem = function( ul, item ) {
+                    return $( "<li></li>" ).
+                        data( "item.multicomplete", item ).
                         append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
                         appendTo( ul );
                 };

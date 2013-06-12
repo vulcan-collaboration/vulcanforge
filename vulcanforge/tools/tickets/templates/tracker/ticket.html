@@ -1,7 +1,7 @@
 {% extends 'vulcanforge:tools/tickets/templates/tracker/master.html' %}
 
 {% set has_related_artifacts = True %}
-{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+{% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
 
 {% do g.resource_manager.register_css('css/hilite.css') %}
 
@@ -34,12 +34,14 @@
             <span class="ticket-assigned-to">
                 <span class="label">Assigned to:</span>
                 <span class="value">
-                    {% if ticket.assigned_to_id %}
-                        <a href="{{ticket.assigned_to.url()}}">
-                            {{ ticket.assigned_to.display_name }}
-                        </a>
+                    {% if ticket.assigned_to_ids %}
+                        {% for assignee in ticket.assigned_to %}
+                            <a href="{{assignee.url()}}">
+                                {{ assignee.display_name }}
+                            </a>
+                        {% endfor %}
                     {% else %}
-                        {{ ticket.assigned_to_name }}
+                        nobody
                     {% endif %}
                 </span>
             </span>
@@ -89,12 +91,14 @@
             <li>
                 <span class="label">{{ c.app.globals.assigned_to_label }}:</span>
                 <span class="value">
-                    {% if ticket.assigned_to_id %}
-                        <a href="{{ticket.assigned_to.url()}}">
-                            {{ ticket.assigned_to.display_name }}
-                        </a>
+                    {% if ticket.assigned_to_ids %}
+                        {% for assignee in ticket.assigned_to %}
+                            <a href="{{assignee.url()}}">
+                                {{ assignee.display_name }}
+                            </a><br>
+                        {% endfor %}
                     {% else %}
-                        {{ ticket.assigned_to_name }}
+                        nobody
                     {% endif %}
                 </span>
             </li>

@@ -38,6 +38,7 @@ setup(
     install_requires=[
         'ipython',
         "docutils < 0.10",
+        "Genshi < 0.7",
         "TurboGears2",
         "Pylons >= 1.0",
         "Ming",

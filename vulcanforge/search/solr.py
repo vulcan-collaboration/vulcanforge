@@ -20,6 +20,18 @@ def solarize(obj):
 
 class SolrSearch(object):
 
+    dynamic_postfixes = [
+        '_i',
+        '_s',
+        '_l',
+        '_t',
+        '_b',
+        '_f',
+        '_d',
+        '_dt',
+        '_s_mv'
+    ]
+
     def __init__(self, solr):
         self.solr = solr
 

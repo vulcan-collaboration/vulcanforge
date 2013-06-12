@@ -297,10 +297,12 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     @classmethod
     def translate_query(cls, q, fields):
         for f in fields:
-            if f[-2] == '_':
-                base = f[:-2]
-                actual = f
-                q = q.replace(base + ':', actual + ':')
+            for e in g.search.dynamic_postfixes:
+                if f.endswith(e):
+                    base = f[:-len(e)]
+                    actual = f
+                    q = q.replace(base + ':', actual + ':')
+                    break
         return q
 
     @LazyProperty

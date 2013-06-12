@@ -1,4 +1,4 @@
-{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+{% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
 <div class="markdown-edit">
   <div class="markdown-help-button-container flash-for-parent">
       {{g.icon_button_widget.display('Markdown syntax guide', None, 'markdown-help-button', 'ico-help')}}
@@ -14,8 +14,5 @@
   <input type="hidden" class="markdown_project" value="{{markdown_project}}">
   <input type="hidden" class="markdown_app" value="{{markdown_app}}">
 
-  {{g.button_widget.display(
-        css="exit-preview-button hidden",
-        label="Close Preview",
-        icon="ico-close")}}
+  {{g.button_widget.display(css="exit-preview-button hidden", label="Close Preview", icon="ico-close")}}
 </div>

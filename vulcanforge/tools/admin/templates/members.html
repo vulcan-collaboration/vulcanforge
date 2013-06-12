@@ -1,5 +1,6 @@
 {% extends 'vulcanforge:tools/admin/templates/master.html' %}
 
+{% do g.resource_manager.register_js('js/vf_form.js') %}
 {% do g.resource_manager.register_js('js/project_invitation.js') %}
 
 {% block title %}{{c.project.name}} / Members {% endblock %}

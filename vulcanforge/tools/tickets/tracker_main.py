@@ -94,7 +94,8 @@ class ForgeTrackerApp(Application):
         48: 'images/tickets_48.png'
     }
     # whether its artifacts are referenceable from the repo browser
-    reference_opts = dict(Application.reference_opts,
+    reference_opts = dict(
+        Application.reference_opts,
         can_reference=True,
         can_create=True
     )
@@ -425,12 +426,14 @@ class BaseTrackerController(BaseController):
                 values[k] = v
         if c.app.globals.can_edit_field('assigned_to'):
             assigned_to = post_data.get('assigned_to')
-            if assigned_to == '-':
-                values['assigned_to_id'] = None
-            elif assigned_to:
-                user = c.project.user_in_project(assigned_to)
-                if user:
-                    values['assigned_to_id'] = user._id
+            values['assigned_to_ids'] = []
+            if assigned_to and assigned_to.strip('-'):
+                for username in assigned_to.split(','):
+                    username = username.strip()
+                    if username:
+                        user = c.project.user_in_project(username)
+                        if user:
+                            values['assigned_to_ids'].append(user._id)
 
         custom_fields = {cf.name for cf in c.app.globals.custom_fields or []}
         custom_values = {}
@@ -749,8 +752,8 @@ class RootController(BaseTrackerController):
         if ticket_form is None:
             ticket_form = post_data
         posted_values = variable_decode(request.POST)
-        ticket_form['new_attachments'] = posted_values.get('new_attachments',
-            [])
+        ticket_form['new_attachments'] = posted_values.get(
+            'new_attachments', [])
         ticket_num = ticket_form.pop('ticket_num', None)
         ticket_form.pop('comment', None)
         if ticket_num:
@@ -1111,15 +1114,15 @@ class TicketController(BaseTrackerController):
             changes[k] = getattr(self.ticket, k)
         if 'assigned_to' in post_data \
                 and c.app.globals.can_edit_field('assigned_to'):
-            who = post_data['assigned_to']
-            changes['assigned_to'] = self.ticket.assigned_to
-            if who:
-                user = c.project.user_in_project(who)
-                if user:
-                    self.ticket.assigned_to_id = user._id
-            else:
-                self.ticket.assigned_to_id = None
-            changes['assigned_to'] = self.ticket.assigned_to
+            changes['assigned_to'] = ','.join(
+                u.display_name for u in self.ticket.assigned_to)
+            assigned_to_ids = []
+            for user in post_data['assigned_to']:
+                if c.project.user_in_project(user=user):
+                    assigned_to_ids.append(user._id)
+            self.ticket.assigned_to_ids = assigned_to_ids
+            changes['assigned_to'] = ','.join(
+                u.display_name for u in self.ticket.assigned_to)
         if c.app.globals.can_edit_field('private'):
             self.ticket.private = post_data.get('private', False)
 
@@ -1406,7 +1409,7 @@ class TicketRestController(BaseController):
         if ticket_num is not None:
             self.ticket_num = int(ticket_num)
             self.ticket = TM.Ticket.query.get(app_config_id=c.app.config._id,
-                                                    ticket_num=self.ticket_num)
+                                              ticket_num=self.ticket_num)
 
     def _check_security(self):
         g.security.require_access(self.ticket, 'read')
