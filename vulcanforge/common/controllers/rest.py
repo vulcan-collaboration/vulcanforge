@@ -54,7 +54,6 @@ class RestController(TGController):
 
     def __init__(self):
         self.user = UserRestController()
-        #self.exchange = ExchangeRestController()
         self.artifact = ArtifactRestController(index_only=True)
 
     def _check_security(self):

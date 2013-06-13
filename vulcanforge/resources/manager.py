@@ -11,27 +11,16 @@ import cssmin
 from scss import config as scss_config, Scss
 from paste.deploy.converters import asbool
 from webhelpers.html import literal
-from pylons import tmpl_context as c
+
 import ew
 from ew.core import widget_context
 
 from .widgets import Resource, CSSLink, JSLink, JSScript
 
 LOG = logging.getLogger(__name__)
-CSS_IMAGE_RE0 = re.compile(r"url\([\'\"]?images/([^\"\'\)]+)[\'\"]?\)",
-                           re.VERBOSE)
-CSS_IMAGE_RE1 = re.compile(r"url\([\'\"]?../images/([^\"\'\)]+)[\'\"]?\)",
-                           re.VERBOSE)
-CSS_IMAGE_RE2 = re.compile(r"url\([\'\"]?../img/([^\"\'\)]+)[\'\"]?\)",
-                           re.VERBOSE)
-CSS_IMAGE_RE3 = re.compile(r"url\([\'\"]?./([^\"\'\)]+)[\'\"]?\)", re.VERBOSE)
-CSS_IMAGE_RE4 = re.compile(r"url\([\'\"]?([^\"\'\/\)]+)[\'\"]?\)", re.VERBOSE)
 
-CSS_FONTS_RE = re.compile(r"url\([\'\"]?../fonts/([^\"\'\)]+)[\'\"]?\)",
-                          re.VERBOSE)
-
+RESOURCE_URL = re.compile(r"url\([\'\"]?([^\"\'\)]+)[\'\"]?\)")
 RECIPE_FILE = 'static_recipes.txt'
-
 SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
 
 
@@ -225,9 +214,9 @@ class ResourceManager(ew.ResourceManager):
         scss_config.ASSETS_ROOT = self.build_dir
 
         if self.debug_mode:
-            scss_config.ASSETS_URL = self.absurl('SPRITE-MAP/')
+            scss_config.ASSETS_URL = self.absurl(SPRITE_MAP_PREFIX)
         else:
-            scss_config.ASSETS_URL = 'SPRITE-MAP/'
+            scss_config.ASSETS_URL = SPRITE_MAP_PREFIX
 
     def scss_static_root(self, scss_images):
         """
@@ -269,8 +258,12 @@ class ResourceManager(ew.ResourceManager):
                 content_list = []
                 for h in rel_resource_paths:
                     css_path = self.get_filename(h)
+                    css_url_dir = os.path.dirname(h) # namespace/css/a.css -> namespace/css
+                    remove_starting_slash = False
+                    if not css_url_dir.startswith('/'):
+                        remove_starting_slash = True
+                        css_url_dir = '/' + css_url_dir # namespace/css -> /namespace/css
                     if h is not None and css_path is not None:
-
                         try:
                             with open(css_path, 'r') as fp:
                                 content = fp.read()
@@ -287,25 +280,16 @@ class ResourceManager(ew.ResourceManager):
                             })
                             content = scss_compiler.compile(content)
 
-                        root3, css_name = os.path.split(css_path)
-                        root2, folder2 = os.path.split(root3)
-                        root1, folder1 = os.path.split(root2)
+                        resource_urls = re.findall(RESOURCE_URL, content)
+                        for resource_url in resource_urls:
+                            if SPRITE_MAP_PREFIX in resource_url:
+                                continue
+                            namespaced_resource_url = os.path.abspath(os.path.join(css_url_dir, resource_url))
+                            if remove_starting_slash:
+                                namespaced_resource_url = namespaced_resource_url[1:]
+                            content = content.replace(resource_url, namespaced_resource_url)
 
-                        content = CSS_IMAGE_RE0.sub(
-                            'url(%s/images/\g<1>)' % folder2, content)
-                        content = CSS_IMAGE_RE1.sub(
-                            'url(%s/images/\g<1>)' % folder1, content)
-                        content = CSS_IMAGE_RE2.sub(
-                            'url(%s/img/\g<1>)' % folder1, content)
-                        content = CSS_IMAGE_RE3.sub(
-                            'url(%s/%s/\g<1>)' % (folder1, folder2), content)
-                        content = CSS_IMAGE_RE4.sub(
-                            'url(%s/%s/\g<1>)' % (folder1, folder2), content)
-
-                        content = CSS_FONTS_RE.sub(
-                            'url(%s/fonts/\g<1>)' % folder1, content)
-
-                        content = content.replace('SPRITE-MAP/', '')
+                        content = content.replace(SPRITE_MAP_PREFIX, '')
                         content_list.append(content)
 
                 content = cssmin.cssmin('\n'.join(content_list))
