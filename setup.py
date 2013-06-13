@@ -64,7 +64,6 @@ setup(
         "pyScss",
         "python-dateutil < 2.0",
         "requests",
-        "kombu",
         "Pypeline",
         "jinja2",
         "BeautifulSoup < 4.0",

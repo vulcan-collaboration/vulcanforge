@@ -148,10 +148,9 @@ class MonQTask(MappedClass):
             context=context
         )
         try:
-            if g.amq_conn:
-                g.amq_conn.queue.put('')
+            g.task_queue.put(str(obj._id))
         except Exception:
-            LOG.warning('Error putting to amq_conn', exc_info=True)
+            LOG.exception('Error putting to task queue')
         return obj
 
     @classmethod
@@ -169,8 +168,9 @@ class MonQTask(MappedClass):
         StopIteration, stop waiting for a task
 
         """
-        sort = son.SON([('priority', ming.DESCENDING),
-                ('time_queue', ming.ASCENDING)])
+        sort = son.SON([
+            ('priority', ming.DESCENDING),
+            ('time_queue', ming.ASCENDING)])
         while True:
             try:
                 query = {'state': state}
