@@ -66,6 +66,7 @@ class UserIdentifierValidator(fev.UnicodeString):
 
 
 class UsernameListValidator(fev.UnicodeString):
+
     def to_python(self, value, state=None):
         value = super(UsernameListValidator, self).to_python(value, state)
 

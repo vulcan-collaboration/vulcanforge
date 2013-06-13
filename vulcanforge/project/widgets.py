@@ -121,9 +121,17 @@ class ProjectUserSelect(ew.InputField):
 
 
 class MultiProjectUserSelect(ProjectUserSelect):
+    template = TEMPLATE_DIR + 'multi_project_user_select.html'
     defaults = dict(
         ProjectUserSelect.defaults,
         className='multi_project_user_select')
+
+    def from_python(self, value, state=None):
+        if value is None:
+            value = ''
+        if not isinstance(value, basestring):
+            value = ', '.join(u.username for u in value)
+        return value
 
     def resources(self):
         for r in ew.InputField.resources(self):
