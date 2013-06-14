@@ -66,6 +66,8 @@ class RedisQueue(object):
 
         if item:
             item = item[1]
+
+        LOG.debug('got item %s from redis queue at %s', item, self.key)
         return item
 
     @convert_conn_error
