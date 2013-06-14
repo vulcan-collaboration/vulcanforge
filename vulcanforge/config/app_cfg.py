@@ -49,6 +49,7 @@ from .template.filters import jsonify, timesince
 from .context_manager import ContextManager
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
+from vulcanforge.taskd.queue import RedisQueue
 
 LOG = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ class ForgeConfig(AppConfig):
         self.setup_object_store()
         self.setup_search()
         self.setup_cache()
+        self.setup_task_queue()
 
     def setup_profiling(self):
         # Profiling
@@ -242,7 +244,7 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].base_s3_url = base_s3_url
 
     def setup_cache(self):
-        # Redis!
+        """Setup redis as a cache"""
         if config.get('redis.host'):
             if 'redis.timeout' in config:
                 default_timeout = asint(config['redis.timeout'])
@@ -259,6 +261,32 @@ class ForgeConfig(AppConfig):
             cache = None
 
         config['pylons.app_globals'].cache = cache
+
+    def setup_task_queue(self):
+        """This sets up a redis task queue.
+
+        You may specify your own queue object to use, but you should probably
+        override this method if it does not use redis. Either way, your queue
+        should implement the API exposed on vulcanforge.taskd.queue.RedisQueue
+
+        """
+        api_path = config.get('task_queue.cls')
+        if api_path:
+            cls = import_object(api_path)
+        else:
+            cls = RedisQueue
+        kwargs = {
+            'host': config.get('task_queue.host', config['redis.host']),
+            'port': asint(config.get('task_queue.port',
+                                     config.get('redis.port', 6379))),
+            'db': asint(config.get('task_queue.db',
+                                   config.get('redis.db', 0)))
+        }
+        if config.get('task_queue.namespace'):
+            kwargs['namespace'] = config['task_queue.namespace']
+
+        task_queue = cls(config.get('task_queue.name', 'task_queue'), **kwargs)
+        config['pylons.app_globals'].task_queue = task_queue
 
     def setup_routes(self):
         map = Mapper(directory=config['pylons.paths']['controllers'],

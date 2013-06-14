@@ -113,5 +113,3 @@ class AJAXLocked(WSGIAJAXException, exc.HTTPLocked):
     pass
 
 
-class TaskdException(Exception):
-    pass

@@ -30,7 +30,6 @@ from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
 from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
-from vulcanforge.config.amqp import AMQPConnection, MockAMQ
 from vulcanforge.config.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
@@ -49,10 +48,18 @@ class ForgeGlobals(object):
     One instance of Globals is created during application initialization and
     is available during requests via the 'app_globals' variable.
 
+    # notes
+
+        task_queue:
+            Set to a task queue instance by the
+            ForgeConfig.setup_helpers_and_globals method.
+            If set to None, taskd daemon will use polling instead of a queue.
+
     """
     __shared_state = {}
     tool_manager = None
     resource_manager = None
+    task_queue = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -253,21 +260,6 @@ class ForgeGlobals(object):
                 response = request_function(uri, headers=headers)
 
             return response
-        else:
-            return None
-
-    @LazyProperty
-    def amq_conn(self):
-        if asbool(config.get('amqp.enabled', 'true')):
-            if asbool(config.get('amqp.mock')):
-                return MockAMQ(self)
-            else:
-                return AMQPConnection(
-                    hostname=config.get('amqp.hostname', 'localhost'),
-                    port=asint(config.get('amqp.port', 5672)),
-                    userid=config.get('amqp.userid', 'testuser'),
-                    password=config.get('amqp.password', 'testpw'),
-                    vhost=config.get('amqp.vhost', 'testvhost'))
         else:
             return None
 
@@ -556,7 +548,3 @@ class ForgeGlobals(object):
         #'num_downloads_week',
         'comments',
     ]
-
-
-def connect_amqp(config):
-    return

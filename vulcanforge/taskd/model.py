@@ -148,10 +148,10 @@ class MonQTask(MappedClass):
             context=context
         )
         try:
-            if g.amq_conn:
-                g.amq_conn.queue.put('')
+            LOG.debug('putting %s in the task queue', obj._id)
+            g.task_queue.put(str(obj._id))
         except Exception:
-            LOG.warning('Error putting to amq_conn', exc_info=True)
+            LOG.exception('Error putting to task queue')
         return obj
 
     @classmethod
@@ -161,7 +161,7 @@ class MonQTask(MappedClass):
         return obj
 
     @classmethod
-    def get(cls, process='worker', state='ready', waitfunc=None, only=None):
+    def get(cls, process='worker', state='ready', only=None):
         """Get the highest-priority, oldest, ready task and lock it to the
         current process.  If no task is available and waitfunc is supplied,
         call the waitfunc before trying to get the task again.  If waitfunc is
@@ -169,34 +169,40 @@ class MonQTask(MappedClass):
         StopIteration, stop waiting for a task
 
         """
-        sort = son.SON([('priority', ming.DESCENDING),
-                ('time_queue', ming.ASCENDING)])
+        obj = None
+        sort = son.SON([
+            ('priority', ming.DESCENDING),
+            ('time_queue', ming.ASCENDING)])
+        try:
+            query = {'state': state}
+            if only:
+                query['task_name'] = {'$in': only}
+            obj = cls.query.find_and_modify(
+                query=query,
+                update={
+                    '$set': {
+                        'state': 'busy',
+                        'process': process
+                    }
+                },
+                new=True,
+                sort=sort)
+        except pymongo.errors.OperationFailure, exc:
+            if 'No matching object found' not in exc.args[0]:
+                raise
+
+        return obj
+
+    @classmethod
+    def event_loop(cls, waitfunc=None, process='worker', **kwargs):
+        """Async event_loop that picks up tasks. Wait strategy determined by
+        waitfunc
+
+        """
         while True:
-            try:
-                query = {'state': state}
-                if only:
-                    query['task_name'] = {'$in': only}
-                obj = cls.query.find_and_modify(
-                    query=query,
-                    update={
-                        '$set': {
-                            'state': 'busy',
-                            'process': process
-                        }
-                    },
-                    new=True,
-                    sort=sort)
-                if obj is not None:
-                    return obj
-            except pymongo.errors.OperationFailure, exc:
-                if 'No matching object found' not in exc.args[0]:
-                    raise
-            if waitfunc is None:
-                return None
-            try:
+            if waitfunc is not None:
                 waitfunc()
-            except StopIteration:
-                return None
+            yield cls.get(process=process, **kwargs)
 
     @classmethod
     def wait_for_tasks(cls, task_name=None, query=None, timeout=10000,
@@ -326,6 +332,3 @@ class MonQTask(MappedClass):
         """
         for t in cls.query.find(dict(state=state)):
             sys.stdout.write('%r\n' % t)
-
-
-
