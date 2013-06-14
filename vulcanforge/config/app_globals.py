@@ -48,10 +48,18 @@ class ForgeGlobals(object):
     One instance of Globals is created during application initialization and
     is available during requests via the 'app_globals' variable.
 
+    # notes
+
+        task_queue:
+            Set to a task queue instance by the
+            ForgeConfig.setup_helpers_and_globals method.
+            If set to None, taskd daemon will use polling instead of a queue.
+
     """
     __shared_state = {}
     tool_manager = None
     resource_manager = None
+    task_queue = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state
