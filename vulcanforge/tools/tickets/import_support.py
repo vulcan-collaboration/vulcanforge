@@ -80,7 +80,7 @@ class ImportSupport(object):
         #   handler(ticket, field, val) - arbitrary transform, expected to
         #       modify ticket in-place
         self.FIELD_MAP = {
-            'assigned_to': ('assigned_to_id', self.get_user_id),
+            'assigned_to': ('assigned_to_ids', self.get_user_ids),
             'class': None,
             'date': ('created_date', self.parse_date), 
             'date_updated': ('mod_date', self.parse_date),
@@ -121,6 +121,10 @@ class ImportSupport(object):
         if u:
             return u._id
         return None
+
+    def get_user_ids(self, usernames):
+        return filter(
+            None, (self.get_user_id(username) for username in usernames))
 
     def custom(self, ticket, field, value):
         field = '_' + field
@@ -197,7 +201,7 @@ class ImportSupport(object):
         users = set()
         for a in artifacts:
             users.add(a['submitter'])
-            users.add(a['assigned_to'])
+            users = users.union(a['assigned_to'])
             for c in a['comments']:
                 users.add(c['submitter'])
         return users

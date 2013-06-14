@@ -1,4 +1,4 @@
-{% import 'vulcanforge.common:templates/master/lib.html' as lib with context %}
+{% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
 <form id="add_forum_form_el" method="{{method}}" action="{{action}}" enctype="multipart/form-data">
   <input type="hidden" name="add_forum.app_id" value="{{app and app.config._id}}">
   <div id="add_forum_form" style="display:none">

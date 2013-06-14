@@ -27,10 +27,6 @@
 
         this.form = null;
 
-        function extractLast(term) {
-            return term.split( /,\s*/).pop();
-        }
-
         function clear() {
             inputE.val("");
             inviteTextE.html("");
@@ -66,7 +62,9 @@
                 .append($('<td/>').append($('<label for="users">To:</label>')))
                 .append($('<td/>').append(
                 inputE = $('<input type="text" name="users" />')
-                    .autocomplete({
+                    .multicomplete({
+                        ignoreRe: /@/,
+                        minLength: 2,
                         source: function(request, callback) {
                             $.ajax({
                                 url: autocompleteUrl,
@@ -76,22 +74,8 @@
                                 }
                             });
                         },
-                        search: function() {
-                            var term = extractLast( this.value );
-                            if ( term.length < 2 || term.indexOf('@') !== -1 ) {
-                                return false;
-                            }
-                        },
                         focus: function() {return false;},
-                        autoFocus: true,
-                        select: function(ev, ui) {
-                            var terms = this.value.split( /,\s*/);
-                            terms.pop();
-                            terms.push( ui.item.value );
-                            terms.push( "" );
-                            this.value = terms.join( ", " );
-                            return false;
-                        }
+                        autoFocus: true
                     })))
                 .append($('<td class="explanation"/>')
                 .append("Enter usernames or email addresses, separated by commas"));

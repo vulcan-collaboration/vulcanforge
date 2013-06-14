@@ -57,14 +57,13 @@ class ConversationForm(ForgeForm):
             'disabled': {'$in': [False, None]},
             'public': {'$in': [True, None]},
         })
-        options = [self._mk_user_entry(u)
-                   for u in user_cursor
-                   if u.active()]
+        options = [self._mk_user_entry(u) for u in user_cursor if u.active()]
         options.sort(key=lambda x: x.label)
         return options
 
     def _available_recipient_roles(self):
-        cache = g.security.RoleCache(g.security.credentials, c.user.get_roles())
+        cache = g.security.RoleCache(
+            g.security.credentials, c.user.get_roles())
         admin_roles = cache.reaching_roles.find(name='Admin')
         options = []
         for role in admin_roles:

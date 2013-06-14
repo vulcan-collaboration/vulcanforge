@@ -1,5 +1,5 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
-{% from 'vulcanforge.common:templates/master/lib.html' import abbr_date with context %}
+{% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
 {% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{title}}{% endblock %}

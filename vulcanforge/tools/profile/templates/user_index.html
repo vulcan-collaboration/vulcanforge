@@ -1,6 +1,7 @@
 {% extends g.templates['master'] %}
 {% set hide_project_toolbar = true %}
 
+{% do g.resource_manager.register_js('js/vf_form.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/project_invitation.js', scope='forge') %}
 
 {% block title %}{{ user.display_name }} / Profile{% endblock %}

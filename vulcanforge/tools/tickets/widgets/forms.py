@@ -12,10 +12,11 @@ import formencode.validators as fev
 from pylons import tmpl_context as c
 import ew as ew_core
 import ew.jinja2_ew as ew
+from vulcanforge.auth.validators import UsernameListValidator
 
 from vulcanforge.common.widgets import form_fields
 from vulcanforge.common.widgets.forms import ForgeForm
-from vulcanforge.project.widgets import ProjectUserSelect
+from vulcanforge.project.widgets import ProjectUserSelect, MultiProjectUserSelect
 from vulcanforge.tools.tickets.widgets.validators import ProjectUser
 
 TEMPLATE_FOLDER = 'jinja:vulcanforge.tools.tickets:templates/tracker_widgets/'
@@ -31,8 +32,10 @@ class TicketCustomFields(ew.CompoundField):
                                  if c.app.globals.can_edit_field(cf.name)
                                  and cf.type != 'markdown'])
 
+
 class TicketMarkdownFields(ew.CompoundField):
     template = TEMPLATE_FOLDER + 'ticket_custom_fields.html'
+
     @property
     def fields(self):
         return ew_core.NameList([TicketCustomField.make(cf)
@@ -51,10 +54,9 @@ class TicketCustomField(object):
             if opt.startswith('*'):
                 opt = opt[1:]
                 selected = True
-            options.append(ew.Option(label=opt,
-                                     html_value=opt,
-                                     py_value=opt,
-                                     selected=selected))
+            options.append(
+                ew.Option(label=opt, html_value=opt, py_value=opt,
+                          selected=selected))
         return ew.SingleSelectField(label=field.label,
                                     name=str(field.name),
                                     options=options)
@@ -84,7 +86,8 @@ class TicketCustomField(object):
 
     @staticmethod
     def _markdown(field):
-        return form_fields.MarkdownEdit(label=field.label, name=str(field.name), wide=True)
+        return form_fields.MarkdownEdit(
+            label=field.label, name=str(field.name), wide=True)
 
     @staticmethod
     def _default(field):
@@ -130,12 +133,17 @@ class TrackerTicketForm(ForgeForm):
                     not_empty=True,
                     messages={'empty': "You must provide a Summary"},
                 )
-            ),
-            ProjectUserSelect(
-                name='assigned_to',
-                label=c.app.globals.assigned_to_label,
-                validator=ProjectUser(),
-            ) if c.app.globals.show_assigned_to else None,
+            )
+        ]
+        if c.app.globals.show_assigned_to:
+            raw_fields.append(
+                MultiProjectUserSelect(
+                    name='assigned_to',
+                    label=c.app.globals.assigned_to_label,
+                    validator=UsernameListValidator()
+                )
+            )
+        raw_fields.extend([
             ew.SingleSelectField(
                 name="status",
                 label='Status',
@@ -170,8 +178,8 @@ class TrackerTicketForm(ForgeForm):
                 name="new_attachments",
                 label="Attach Files",
                 wide=True,
-            ),
-        ]
+            )
+        ])
         if self.comment:
             raw_fields.append(form_fields.MarkdownEdit(
                 name="comment",

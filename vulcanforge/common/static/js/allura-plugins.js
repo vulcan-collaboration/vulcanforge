@@ -94,7 +94,7 @@ jQuery.cookie = function(name, value, options) {
  * http://bassistance.de/jquery-plugins/jquery-plugin-tooltip/
  * http://docs.jquery.com/Plugins/Tooltip
  *
- * Copyright (c) 2006 - 2008 Jšrn Zaefferer
+ * Copyright (c) 2006 - 2008 Jï¿½rn Zaefferer
  *
  * $Id: jquery.tooltip.js 5741 2008-06-21 15:22:16Z joern.zaefferer $
  *
@@ -103,7 +103,7 @@ jQuery.cookie = function(name, value, options) {
  *   http://www.gnu.org/licenses/gpl.html
  */
 
-;(function($) {
+(function($) {
 
 		// the tooltip element
 	var helper = {},
