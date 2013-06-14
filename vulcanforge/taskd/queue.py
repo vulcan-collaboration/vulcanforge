@@ -13,7 +13,7 @@ def convert_conn_error(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         except ConnectionError:
             raise QueueConnectionError("Connection failed to redis")
     return wrapper
@@ -67,7 +67,6 @@ class RedisQueue(object):
         if item:
             item = item[1]
 
-        LOG.debug('got item %s from redis queue at %s', item, self.key)
         return item
 
     @convert_conn_error

@@ -58,6 +58,7 @@ class TaskdWorker(object):
 
         # Build the (fake) request
         try:
+            self.log.debug(task.task_name)
             r = Request.blank('/--%s--/' % task.task_name, {
                 'task': task,
                 'wsgi.errors': self.wsgi_error_log or self.log,
@@ -78,9 +79,7 @@ class TaskdWorker(object):
     def event_loop(self):
         self.start_app()
         poll_interval = asint(config.get('monq.poll_interval', 10))
-        task_queue_timeout = None
-        if config.get('task_queue.timeout'):
-            task_queue_timeout = asint(config['task_queue.timeout'])
+        task_queue_timeout = asint(config.get('task_queue.timeout', 2))
 
         only = self.only
         if only:
@@ -94,31 +93,27 @@ class TaskdWorker(object):
         self.wsgi_error_log = open(wsgi_error_log_path, 'a')
 
         def waitfunc_queue():
-            return pylons.app_globals.task_queue.get(
-                timeout=task_queue_timeout)
+            while self.keep_running:
+                taskid = pylons.app_globals.task_queue.get(
+                    timeout=task_queue_timeout)
+                if taskid:
+                    self.log.debug('got item %s from redis queue', taskid)
+                    return
 
         def waitfunc_noq():
             time.sleep(poll_interval)
-
-        def check_running(func):
-            def waitfunc_checks_running():
-                if self.keep_running:
-                    return func()
-                else:
-                    raise StopIteration
-
-            return waitfunc_checks_running
 
         if pylons.app_globals.task_queue:
             waitfunc = waitfunc_queue
         else:
             waitfunc = waitfunc_noq
-        waitfunc = check_running(waitfunc)
 
         # run any available tasks on startup
         for task in MonQTask.event_loop(process=self.name, only=only):
             if task:
                 self.run_task(task)
+            else:
+                break
 
         # enter the loop
         eloop = MonQTask.event_loop(waitfunc, process=self.name, only=only)

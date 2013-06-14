@@ -828,7 +828,7 @@ class RootController(BaseTrackerController):
         week_comments = self.ticket_comments_since(week_ago)
         fortnight_comments = self.ticket_comments_since(fortnight_ago)
         month_comments = self.ticket_comments_since(month_ago)
-        c.user_select = ffw.ProjectUserSelect()
+        c.user_select = ProjectUserSelect()
         return dict(
                 now=str(now),
                 week_ago=str(week_ago),

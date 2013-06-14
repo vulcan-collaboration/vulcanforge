@@ -148,6 +148,7 @@ class MonQTask(MappedClass):
             context=context
         )
         try:
+            LOG.debug('putting %s in the task queue', obj._id)
             g.task_queue.put(str(obj._id))
         except Exception:
             LOG.exception('Error putting to task queue')
@@ -200,13 +201,8 @@ class MonQTask(MappedClass):
         """
         while True:
             if waitfunc is not None:
-                try:
-                    waitfunc()
-                except StopIteration:
-                    break
-            task = cls.get(process=process, **kwargs)
-            if task:
-                yield task
+                waitfunc()
+            yield cls.get(process=process, **kwargs)
 
     @classmethod
     def wait_for_tasks(cls, task_name=None, query=None, timeout=10000,
