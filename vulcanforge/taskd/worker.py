@@ -1,0 +1,140 @@
+import os
+import sys
+import time
+import logging
+
+from webob import Request
+from paste.deploy import loadapp
+from paste.deploy.converters import asint
+import pylons
+from tg import config
+from vulcanforge.taskd import MonQTask
+
+from vulcanforge.taskd.exceptions import QueueConnectionError, TaskdException
+
+
+class TaskdWorker(object):
+
+    def __init__(self, config_path, name='worker', only=None,
+                 relative_path=None, log=None):
+        self.config_path = config_path
+        if relative_path is None:
+            relative_path = os.getcwd()
+        self.relative_path = relative_path
+        self.name = name
+        self.only = only
+        self.keep_running = True
+        self.restart_when_done = False
+        if log is None:
+            log = logging.getLogger(__name__)
+        self.log = log
+        self.wsgi_app = None
+        self.wsgi_error_log = None
+
+    def graceful_restart(self, signum, frame):
+        self.log.info('taskd pid %s recieved signal %s restarting gracefully',
+                      os.getpid(), signum)
+        self.restart_when_done = True
+        self.keep_running = False
+
+    def graceful_stop(self, signum, frame):
+        self.log.info('taskd pid %s recieved signal %s stopping gracefully',
+                      os.getpid(), signum)
+        self.keep_running = False
+
+    def log_current_task(self, signum, frame):
+        self.log.info('taskd pid %s is currently handling task %s',
+                      os.getpid(), getattr(self, 'task', None))
+
+    def start_app(self):
+        self.wsgi_app = loadapp(
+            'config:%s#task' % self.config_path,
+            relative_to=self.relative_path)
+
+    def run_task(self, task):
+
+        def start_response(status, headers, exc_info=None):
+            pass
+
+        # Build the (fake) request
+        try:
+            r = Request.blank('/--%s--/' % task.task_name, {
+                'task': task,
+                'wsgi.errors': self.wsgi_error_log or self.log,
+            })
+            result = list(self.wsgi_app(r.environ, start_response))
+            if result != [True]:
+                raise TaskdException(
+                    "Task did not complete as expected")
+        except Exception:
+            self.log.exception('taskd pid %s error', os.getpid())
+            if self.keep_running:
+                self.log.exception('taskd pid %s pausing for 10s',
+                                   os.getpid())
+                time.sleep(10)
+        finally:
+            self.wsgi_error_log.flush()
+
+    def event_loop(self):
+        self.start_app()
+        poll_interval = asint(config.get('monq.poll_interval', 10))
+        task_queue_timeout = None
+        if config.get('task_queue.timeout'):
+            task_queue_timeout = asint(config['task_queue.timeout'])
+
+        only = self.only
+        if only:
+            only = only.split(',')
+
+        # errors get logged via regular logging and also recorded into the
+        # mongo task record so this is generally not needed, and only present
+        # to avoid errors within weberror's ErrorMiddleware if the default
+        # error stream (stderr?) doesn't work
+        wsgi_error_log_path = pylons.config.get('taskd.wsgi_log', '/dev/null')
+        self.wsgi_error_log = open(wsgi_error_log_path, 'a')
+
+        def waitfunc_queue():
+            return pylons.app_globals.task_queue.get(
+                timeout=task_queue_timeout)
+
+        def waitfunc_noq():
+            time.sleep(poll_interval)
+
+        def check_running(func):
+            def waitfunc_checks_running():
+                if self.keep_running:
+                    return func()
+                else:
+                    raise StopIteration
+
+            return waitfunc_checks_running
+
+        if pylons.app_globals.task_queue:
+            waitfunc = waitfunc_queue
+        else:
+            waitfunc = waitfunc_noq
+        waitfunc = check_running(waitfunc)
+
+        # run any available tasks on startup
+        for task in MonQTask.event_loop(process=self.name, only=only):
+            if task:
+                self.run_task(task)
+
+        # enter the loop
+        eloop = MonQTask.event_loop(waitfunc, process=self.name, only=only)
+        while self.keep_running:
+            try:
+                self.task = next(eloop)
+            except QueueConnectionError:
+                self.log.exception("taskd cannot connect to task_queue")
+                eloop = MonQTask.event_loop(
+                    waitfunc_noq, process=self.name, only=only)
+                self.task = None
+            if self.task:
+                self.run_task(self.task)
+
+        self.log.info('taskd pid %s stopping gracefully.', os.getpid())
+
+        if self.restart_when_done:
+            self.log.info('taskd pid %s restarting itself.', os.getpid())
+            os.execv(sys.argv[0], sys.argv)
