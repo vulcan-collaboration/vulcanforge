@@ -47,6 +47,8 @@ from vulcanforge.common.util.model import close_all_mongo_connections
 from .tool_manager import ToolManager, TOOLS_DIR
 from .template.filters import jsonify, timesince
 from .context_manager import ContextManager
+from vulcanforge.migration.runner import MigrationRunner
+from vulcanforge.migration.model import MigrationLog
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
 from vulcanforge.taskd.queue import RedisQueue
@@ -67,6 +69,8 @@ class ForgeConfig(AppConfig):
         'project': ['vulcanforge:project/static'],
         'visualize': ['vulcanforge:visualize/static']
     }
+
+    migration_modules = ['vulcanforge.migrations']
 
     def __init__(self, root_controller='root'):
         AppConfig.__init__(self)
@@ -95,6 +99,7 @@ class ForgeConfig(AppConfig):
         self.setup_search()
         self.setup_cache()
         self.setup_task_queue()
+        self.check_migrations()
 
     def setup_profiling(self):
         # Profiling
@@ -315,6 +320,10 @@ class ForgeConfig(AppConfig):
 
     def setup_json_renderer(self):
         self.render_functions.json = render_json
+
+    def check_migrations(self):
+
+        config['pylons.app_globals'].migration_modules = self.migration_modules
 
 
 class JinjaEngine(ew.TemplateEngine):
