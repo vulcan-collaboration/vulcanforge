@@ -9,7 +9,10 @@ test_reactor
 import json
 import unittest
 import mock
-from vulcanforge.websocket.exceptions import InvalidMessageException
+from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
+from vulcanforge.websocket.authorization import MessageAuthorizer
+from vulcanforge.websocket.exceptions import InvalidMessageException, \
+    NotAuthorized
 from vulcanforge.websocket.reactor import MessageReactor
 
 
@@ -18,7 +21,8 @@ class ReactorTestCase(unittest.TestCase):
     def setUp(self):
         self.mock_redis = mock.Mock()
         self.mock_pubsub = mock.Mock()
-        self.reactor = MessageReactor(self.mock_redis, self.mock_pubsub)
+        self.reactor = MessageReactor(DEFAULT_SERVER_CONFIG,
+                                      self.mock_redis, self.mock_pubsub)
 
 
 class TestMessageValidation(ReactorTestCase):
@@ -44,10 +48,13 @@ class TestMessageValidation(ReactorTestCase):
 
     def test_subscribe_schema(self):
         self._valid(json.dumps({
-            'subscribe': 'foo'
+            'subscribe': ['foo']
         }))
         self._valid(json.dumps({
             'subscribe': ['foo', 'bar']
+        }))
+        self._invalid(json.dumps({
+            'subscribe': []
         }))
         self._invalid(json.dumps({
             'subscribe': True
@@ -58,10 +65,13 @@ class TestMessageValidation(ReactorTestCase):
 
     def test_unsubscribe_schema(self):
         self._valid(json.dumps({
+            'unsubscribe': ['foo', 'bar']
+        }))
+        self._invalid(json.dumps({
             'unsubscribe': 'foo'
         }))
-        self._valid(json.dumps({
-            'unsubscribe': ['foo', 'bar']
+        self._invalid(json.dumps({
+            'unsubscribe': []
         }))
         self._invalid(json.dumps({
             'unsubscribe': True
@@ -71,48 +81,60 @@ class TestMessageValidation(ReactorTestCase):
         }))
 
     def test_publish_schema(self):
-        self._invalid(json.dumps({
-            'publish': 'foo'
-        }))
         self._valid(json.dumps({
             'publish': {
-                'channel': 'foo',
+                'channels': ['foo'],
                 'message': 'howdy'
             }
         }))
         self._valid(json.dumps({
             'publish': {
-                'channel': ['foo', 'bar'],
+                'channels': ['foo', 'bar'],
+                'message': 'howdy'
+            }
+        }))
+        self._invalid(json.dumps({
+            'publish': 'foo'
+        }))
+        self._invalid(json.dumps({
+            'publish': {
+                'channels': [],
+                'message': 'howdy'
+            }
+        }))
+        self._invalid(json.dumps({
+            'publish': {
+                'channels': 'foo',
                 'message': 'howdy'
             }
         }))
 
     def test_trigger_schema(self):
-        self._invalid(json.dumps({
-            'trigger': 'foo'
-        }))
         self._valid(json.dumps({
             'trigger': {
                 'type': 'foo',
-                'target': 'howdy'
+                'targets': ['howdy']
             }
         }))
         self._valid(json.dumps({
             'trigger': {
                 'type': 'foo',
-                'target': 'howdy',
+                'targets': ['howdy'],
                 'params': 'bar'
             }
         }))
         self._valid(json.dumps({
             'trigger': {
                 'type': 'foo',
-                'target': 'howdy',
+                'targets': ['howdy'],
                 'params': {
                     'foo': 'bar',
                     'howdy': 'yall'
                 }
             }
+        }))
+        self._invalid(json.dumps({
+            'trigger': 'foo'
         }))
 
 
@@ -121,7 +143,7 @@ class TestReactor(ReactorTestCase):
     def test_queue_event(self):
         event_dict = {
             'type': 'foo',
-            'target': 'bar'
+            'targets': ['bar']
         }
         message_dict = {
             'trigger': event_dict
@@ -133,25 +155,23 @@ class TestReactor(ReactorTestCase):
         self.assertFalse(self.mock_redis.publish.called)
 
     def test_publish_message(self):
-        channel = 'foo'
-        message = 'bar'
         socket_message_dict = {
             'publish': {
-                'channel': channel,
-                'message': message
+                'channels': ['foo'],
+                'message': 'bar'
             }
         }
         socket_message = json.dumps(socket_message_dict)
         self.reactor.react(socket_message)
-        self.mock_redis.publish.assert_called_with(channel, message)
+        self.mock_redis.publish.assert_called_with('foo', 'bar')
         self.assertFalse(self.mock_redis.rlpush.called)
 
     def test_publish_multiple_channels(self):
-        channel = ['foo1', 'foo2']
+        channels = ['foo1', 'foo2']
         message = 'bar'
         socket_message_dict = {
             'publish': {
-                'channel': channel,
+                'channels': channels,
                 'message': message
             }
         }
@@ -165,7 +185,7 @@ class TestReactor(ReactorTestCase):
 
     def test_subscribe(self):
         message_dict = {
-            'subscribe': 'foo'
+            'subscribe': ['foo']
         }
         message = json.dumps(message_dict)
         self.reactor.react(message)
@@ -181,7 +201,7 @@ class TestReactor(ReactorTestCase):
 
     def test_unsubscribe(self):
         message_dict = {
-            'unsubscribe': 'foo'
+            'unsubscribe': ['foo']
         }
         message = json.dumps(message_dict)
         self.reactor.react(message)
@@ -196,7 +216,82 @@ class TestReactor(ReactorTestCase):
         self.mock_pubsub.unsubscribe.assert_called_once_with(['foo', 'bar'])
 
 
-class TestAuthorizer(unittest.TestCase):
+class TestAuthorizer(ReactorTestCase):
 
-    def test_authorize_channels(self):
-        pass
+    class MockAuth(MessageAuthorizer):
+        can_listen = set()
+        can_publish = set()
+        can_target = set()
+
+        def auth_listen(self, channels):
+            if not self.can_listen.issuperset(channels):
+                self.fail()
+
+        def auth_publish(self, channels):
+            if not self.can_publish.issuperset(channels):
+                self.fail()
+
+        def auth_targets(self, targets):
+            if not self.can_target.issuperset(targets):
+                self.fail()
+
+    def setUp(self):
+        ReactorTestCase.setUp(self)
+        self.auth = self.MockAuth()
+        self.reactor.authorizer = self.auth
+
+    def test_authorize_subscribe(self):
+        self.auth.can_listen.add('foo')
+        self.reactor.react(json.dumps({
+            'subscribe': ['foo']
+        }))
+        self.mock_pubsub.subscribe.assert_called_once_with(['foo'])
+        self.mock_pubsub.subscribe.reset_mock()
+        with self.assertRaises(NotAuthorized):
+            self.reactor.react(json.dumps({
+                'subscribe': ['bar']
+            }))
+        self.assertFalse(self.mock_pubsub.subscribe.called)
+
+    def test_authorize_publish(self):
+        self.auth.can_publish.add('foo')
+        self.reactor.react(json.dumps({
+            'publish': {
+                'channels': ['foo'],
+                'message': 'howdy'
+            }
+        }))
+        self.mock_redis.publish.assert_called_once_with('foo', 'howdy')
+        self.mock_redis.publish.reset_mock()
+        with self.assertRaises(NotAuthorized):
+            self.reactor.react(json.dumps({
+                'publish': {
+                    'channels': ['bar'],
+                    'message': 'howdy'
+                }
+            }))
+        self.assertFalse(self.mock_redis.publish.called)
+
+    def test_authorize_trigger(self):
+        self.auth.can_target.add('foo')
+        self.reactor.react(json.dumps({
+            'trigger': {
+                'targets': ['foo'],
+                'type': 'howdy'
+            }
+        }))
+        self.mock_redis.rpush.assert_called_once_with(
+            self.reactor.event_queue_key,
+            {
+                'targets': ['foo'],
+                'type': 'howdy'
+            })
+        self.mock_redis.rpush.reset_mock()
+        with self.assertRaises(NotAuthorized):
+            self.reactor.react(json.dumps({
+                'trigger': {
+                    'targets': ['bar'],
+                    'type': 'howdy'
+                }
+            }))
+        self.assertFalse(self.mock_redis.rpush.called)

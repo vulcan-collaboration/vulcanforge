@@ -12,25 +12,26 @@ INCOMING_MESSAGE_SCHEMA = {
     "type": "object",
     "properties": {
         "subscribe": {
-            "type": ["string", "array"],
+            "type": "array",
             "items": {"type": "string"},
-            "additionalProperties": False
+            "minItems": 1
         },
         "unsubscribe": {
-            "type": ["string", "array"],
+            "type": "array",
             "items": {"type": "string"},
-            "additionalProperties": False
+            "minItems": 1
         },
         "publish": {
             "type": "object",
             "properties": {
-                "channel": {
-                    "type": ["string", "array"],
+                "channels": {
+                    "type": "array",
                     "items": {"type": "string"},
+                    "minItems": 1,
                 },
                 "message": {}
             },
-            "required": ["channel", "message"],
+            "required": ["channels", "message"],
             "additionalProperties": False
         },
         "trigger": {
@@ -39,12 +40,14 @@ INCOMING_MESSAGE_SCHEMA = {
                 "type": {
                     "type": "string"
                 },
-                "target": {
-                    "type": "string"
+                "targets": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
                 },
                 "params": {}
             },
-            "required": ["type", "target"],
+            "required": ["type", "targets"],
             "additionalProperties": False
         }
     },

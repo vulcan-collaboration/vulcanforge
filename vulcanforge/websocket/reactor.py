@@ -21,10 +21,11 @@ class MessageReactor(object):
     event_queue_key = EVENT_QUEUE_KEY
     incoming_message_schema = INCOMING_MESSAGE_SCHEMA
 
-    def __init__(self, redis_client, pubsub_client):
-        self.redis_client = redis_client
-        self.pubsub_client = pubsub_client
-        self.authorizer = self.authorizer_class(redis_client, pubsub_client)
+    def __init__(self, config, redis_client, pubsub_client):
+        self.config = config
+        self.redis = redis_client
+        self.pubsub = pubsub_client
+        self.authorizer = self.authorizer_class()
 
     def react(self, message):
         """
@@ -41,12 +42,12 @@ class MessageReactor(object):
         unsubscribe_from = message.get('unsubscribe')
         if unsubscribe_from:
             self.unsubscribe(unsubscribe_from)
-        publication = message.get('publish')
-        if publication:
-            self.publish(publication)
-        event = message.get('trigger')
-        if event:
-            self.queue(event)
+        publish = message.get('publish')
+        if publish:
+            self.publish(publish)
+        trigger = message.get('trigger')
+        if trigger:
+            self.queue(trigger)
 
     def validate(self, message):
         """
@@ -69,25 +70,32 @@ class MessageReactor(object):
         return message
 
     def authorize(self, message):
-        self.authorizer.authorize(message)
+        listen_channels = set()
+        publish_channels = set()
+        event_targets = set()
+        subscribe_to = message.get('subscribe')
+        if subscribe_to:
+            listen_channels.update(subscribe_to)
+        publish = message.get('publish')
+        if publish:
+            publish_channels.update(publish['channels'])
+        trigger = message.get('trigger')
+        if trigger:
+            event_targets.update(trigger['targets'])
+        self.authorizer.authorize(listen_channels=listen_channels,
+                                  publish_channels=publish_channels,
+                                  event_targets=event_targets)
 
     def subscribe(self, channels):
-        if isinstance(channels, basestring):
-            channels = [channels]
-        self.pubsub_client.subscribe(channels)
+        self.pubsub.subscribe(channels)
 
     def unsubscribe(self, channels):
-        if isinstance(channels, basestring):
-            channels = [channels]
-        self.pubsub_client.unsubscribe(channels)
+        self.pubsub.unsubscribe(channels)
 
     def publish(self, publication):
-        channels = publication['channel']
         message = publication['message']
-        if isinstance(channels, basestring):
-            channels = [channels]
-        for channel in channels:
-            self.redis_client.publish(channel, message)
+        for channel in publication['channels']:
+            self.redis.publish(channel, message)
 
     def queue(self, event):
-        self.redis_client.rpush(self.event_queue_key, event)
+        self.redis.rpush(self.event_queue_key, event)
