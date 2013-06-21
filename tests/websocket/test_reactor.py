@@ -9,7 +9,6 @@ test_reactor
 import json
 import unittest
 import mock
-from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
 from vulcanforge.websocket.authorization import MessageAuthorizer
 from vulcanforge.websocket.exceptions import InvalidMessageException, \
     NotAuthorized
@@ -21,8 +20,7 @@ class ReactorTestCase(unittest.TestCase):
     def setUp(self):
         self.mock_redis = mock.Mock()
         self.mock_pubsub = mock.Mock()
-        self.reactor = MessageReactor(DEFAULT_SERVER_CONFIG,
-                                      self.mock_redis, self.mock_pubsub)
+        self.reactor = MessageReactor({}, self.mock_redis, self.mock_pubsub)
 
 
 class TestMessageValidation(ReactorTestCase):

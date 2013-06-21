@@ -17,3 +17,7 @@ class InvalidMessageException(WebSocketException):
 
 class NotAuthorized(WebSocketException):
     pass
+
+
+class LostConnection(WebSocketException):
+    pass

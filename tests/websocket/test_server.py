@@ -9,7 +9,6 @@ import json
 from threading import Thread
 import unittest
 import mock
-from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
 from vulcanforge.websocket.exceptions import WebSocketException
 from vulcanforge.websocket.server import ConnectionController
 
@@ -21,7 +20,7 @@ class ConnectionControllerTestCase(unittest.TestCase):
         self.redis = mock.Mock()
         self.pubsub = mock.Mock()
         self.reactor = mock.Mock()
-        self.controller = ConnectionController(DEFAULT_SERVER_CONFIG,
+        self.controller = ConnectionController({},
                                                self.websocket, self.redis,
                                                self.pubsub, self.reactor)
 

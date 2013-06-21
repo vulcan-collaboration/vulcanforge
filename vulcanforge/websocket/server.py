@@ -5,14 +5,19 @@ server
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import logging
 import sys
 import json
 import redis
 import gevent
+import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
-from vulcanforge.websocket.exceptions import WebSocketException
+from vulcanforge.websocket.exceptions import WebSocketException, LostConnection
 from vulcanforge.websocket.reactor import MessageReactor
+
+
+LOG = logging.getLogger(__name__)
 
 
 class WebSocketApp(object):
@@ -27,18 +32,29 @@ class WebSocketApp(object):
         if websocket is None:
             return self._http_handler(environ, start_response)
         pubsub = self.redis.pubsub()
-        pubsub.subscribe(['system'])
+        reactor = MessageReactor(self.config, self.redis, pubsub)
         controller = ConnectionController(self.config, websocket, self.redis,
-                                          pubsub)
-        listener = gevent.Greenlet(controller.run_listener)
-        speaker = gevent.Greenlet(controller.run_speaker)
+                                          pubsub, reactor)
+        group = gevent.pool.Group()
+
+        def break_out(*args):
+            controller.connected = False
+            group.kill()
         try:
+            listener = gevent.Greenlet(controller.run_listener)
+            speaker = gevent.Greenlet(controller.run_speaker)
+            listener.link_exception(break_out)
+            speaker.link_exception(break_out)
+            group.add(listener)
+            group.add(speaker)
             listener.start()
             speaker.start()
-            gevent.joinall([listener, speaker])
+            while controller.is_connected():
+                group.join(timeout=0.5)
+        except:
+            break_out()
         finally:
-            pubsub.unsubscribe([])
-            gevent.killall([listener, speaker])
+            group.kill()
             websocket.close()
 
     @staticmethod
@@ -49,17 +65,22 @@ class WebSocketApp(object):
 
 class ConnectionController(object):
 
-    def __init__(self, config, websocket, redis, pubsub, reactor=None):
+    def __init__(self, config, websocket, redis, pubsub, reactor):
         self.config = config
         self.websocket = websocket
         self.redis = redis
         self.pubsub = pubsub
-        self.reactor = reactor or MessageReactor(config, redis, pubsub)
+        self.pubsub.subscribe(['system'])
+        self.reactor = reactor
         self.connected = True
 
     def _loop(self, method):
         while self.is_connected():
-            method()
+            try:
+                method()
+            except (geventwebsocket.WebSocketError, WebSocketException):
+                self.connected = False
+                pass
 
     def is_connected(self):
         return self.connected and self.websocket.socket is not None
@@ -71,9 +92,12 @@ class ConnectionController(object):
         self._loop(self._speak_frame)
 
     def _listen_frame(self):
-        message = self.websocket.receive()
+        try:
+            message = self.websocket.receive()
+        except:
+            raise LostConnection()
         if message is None:
-            return
+            raise LostConnection()
         try:
             self.reactor.react(message)
         except WebSocketException, e:
@@ -86,7 +110,10 @@ class ConnectionController(object):
 
     def _speak_frame(self):
         for message in self.pubsub.listen():
-            self.websocket.send(json.dumps(message))
+            try:
+                self.websocket.send(json.dumps(message))
+            except:
+                raise LostConnection()
 
 
 def get_config(filename):

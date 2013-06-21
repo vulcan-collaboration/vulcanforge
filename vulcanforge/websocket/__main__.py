@@ -5,6 +5,7 @@ __main__
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import os
 import sys
 import gevent.monkey
 from vulcanforge.websocket.server import make_server, get_config
@@ -24,8 +25,8 @@ if __name__ == '__main__':
     host = config['host']
     port = config['port']
     server = make_server(config)
-    sys.stdout.write("Serving Web Sockets at {} on port {}...\n".format(host,
-                                                                        port))
+    sys.stdout.write("starting Web Socket Server pid {}\n".format(os.getpid()))
+    sys.stdout.write("Serving at {} on port {}...\n".format(host, port))
     try:
         server.serve_forever()
     except KeyboardInterrupt:
