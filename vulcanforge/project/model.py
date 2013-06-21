@@ -1223,15 +1223,16 @@ class AppConfig(MappedClass):
                 # if not, search the heirarchy upwards for read access,
                 # starting with all direct children of the role
                 role = ProjectRole.query.get(_id=ace['role_id'])
-                readable = ProjectRole.fundamental_fulfillers(
-                    role.children(),
-                    lambda r: r._id in read_ids
-                )
-                for child in readable:
-                    new_ace = ace.copy()
-                    new_ace['role_id'] = child._id
-                    if new_ace not in self.acl:
-                        self.acl.append(new_ace)
+                if role:
+                    readable = ProjectRole.fundamental_fulfillers(
+                        role.children(),
+                        lambda r: r._id in read_ids
+                    )
+                    for child in readable:
+                        new_ace = ace.copy()
+                        new_ace['role_id'] = child._id
+                        if new_ace not in self.acl:
+                            self.acl.append(new_ace)
 
 
 

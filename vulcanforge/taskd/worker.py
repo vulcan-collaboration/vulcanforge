@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import logging
+from ming.odm import ThreadLocalODMSession
 
 from webob import Request
 from paste.deploy import loadapp
@@ -30,6 +31,8 @@ class TaskdWorker(object):
         self.log = log
         self.wsgi_app = None
         self.wsgi_error_log = None
+        self.poll_interval = asint(config.get('monq.poll_interval', 10))
+        self.task_queue_timeout = asint(config.get('task_queue.timeout', 2))
 
     def graceful_restart(self, signum, frame):
         self.log.info('taskd pid %s recieved signal %s restarting gracefully',
@@ -51,6 +54,11 @@ class TaskdWorker(object):
             'config:%s#task' % self.config_path,
             relative_to=self.relative_path)
 
+        # this is only present to avoid errors within weberror's
+        # ErrorMiddleware if the default error stream (stderr?) doesn't work
+        wsgi_error_log_path = pylons.config.get('taskd.wsgi_log', '/dev/null')
+        self.wsgi_error_log = open(wsgi_error_log_path, 'a')
+
     def run_task(self, task):
 
         def start_response(status, headers, exc_info=None):
@@ -67,46 +75,39 @@ class TaskdWorker(object):
             if result != [True]:
                 raise TaskdException(
                     "Task did not complete as expected")
+        except TaskdException, e:
+            # task failed to complete
+            self.log.error(
+                'taskd worker failed; %s; %s -- %s',
+                e.message, task.task_name, task._id)
         except Exception:
-            self.log.exception('taskd pid %s error', os.getpid())
-            if self.keep_running:
-                self.log.exception('taskd pid %s pausing for 10s',
-                                   os.getpid())
-                time.sleep(10)
+            # unknown exception
+            self.log.exception('taskd worker error')
         finally:
             self.wsgi_error_log.flush()
 
+    def _waitfunc_queue(self):
+        while self.keep_running:
+            taskid = pylons.app_globals.task_queue.get(
+                timeout=self.task_queue_timeout)
+            if taskid:
+                self.log.debug('got item %s from redis queue', taskid)
+                return
+
+    def _waitfunc_noq(self):
+        time.sleep(self.poll_interval)
+
     def event_loop(self):
         self.start_app()
-        poll_interval = asint(config.get('monq.poll_interval', 10))
-        task_queue_timeout = asint(config.get('task_queue.timeout', 2))
 
         only = self.only
         if only:
             only = only.split(',')
 
-        # errors get logged via regular logging and also recorded into the
-        # mongo task record so this is generally not needed, and only present
-        # to avoid errors within weberror's ErrorMiddleware if the default
-        # error stream (stderr?) doesn't work
-        wsgi_error_log_path = pylons.config.get('taskd.wsgi_log', '/dev/null')
-        self.wsgi_error_log = open(wsgi_error_log_path, 'a')
-
-        def waitfunc_queue():
-            while self.keep_running:
-                taskid = pylons.app_globals.task_queue.get(
-                    timeout=task_queue_timeout)
-                if taskid:
-                    self.log.debug('got item %s from redis queue', taskid)
-                    return
-
-        def waitfunc_noq():
-            time.sleep(poll_interval)
-
         if pylons.app_globals.task_queue:
-            waitfunc = waitfunc_queue
+            waitfunc = self._waitfunc_queue
         else:
-            waitfunc = waitfunc_noq
+            waitfunc = self._waitfunc_noq
 
         # run any available tasks on startup
         for task in MonQTask.event_loop(process=self.name, only=only):
@@ -123,7 +124,7 @@ class TaskdWorker(object):
             except QueueConnectionError:
                 self.log.exception("taskd cannot connect to task_queue")
                 eloop = MonQTask.event_loop(
-                    waitfunc_noq, process=self.name, only=only)
+                    self._waitfunc_noq, process=self.name, only=only)
                 self.task = None
             if self.task:
                 self.run_task(self.task)

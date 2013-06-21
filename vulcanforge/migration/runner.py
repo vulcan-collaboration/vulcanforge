@@ -1,5 +1,5 @@
+import logging
 import sys
-import types
 import os
 
 from ming.odm.odmsession import ThreadLocalODMSession
@@ -7,18 +7,20 @@ from tg import config
 from vulcanforge.migration.base import BaseMigration
 from vulcanforge.migration.model import MigrationLog
 
+LOG = logging.getLogger(__name__)
+
 
 class MigrationRunner(object):
 
     @property
     def _default_modules(self):
         return [
-            'vulcanforge.migrations',
-            config['package'].__name__ + '.migrations'
+            config['package'].__name__ + '.migrations',
+            'vulcanforge.migrations'
         ]
 
     def _load_migrations_from_dir(self, module):
-        for fname in os.listdir(module.__path__[0]):
+        for fname in sorted(os.listdir(module.__path__[0])):
             if os.path.isdir(fname):
                 module_name = module.__name__ + '.' + fname
                 try:
@@ -58,12 +60,12 @@ class MigrationRunner(object):
 
     def _mig_cls_needs_running(self, mig_cls, erroneous=True):
         old_log = MigrationLog.get_from_migration(mig_cls)
-        if old_log and (not erroneous or old_log.status == 'error'):
+        if old_log and (not erroneous or old_log.status != 'error'):
             return False
         return True
 
     def run_migrations(self, module_names=None, all_migrations=False,
-                       erroneous=True):
+                       erroneous=True, continue_on_error=False):
         for mig_cls in self.load_migrations(module_names):
             if not all_migrations and not self._mig_cls_needs_running(
                     mig_cls, erroneous):
@@ -71,7 +73,14 @@ class MigrationRunner(object):
 
             mig = mig_cls()
             if mig.is_needed():
-                mig.full_run()
+                LOG.info('Running %s', str(mig.get_name()))
+                try:
+                    mig.full_run()
+                except Exception:
+                    if continue_on_error:
+                        LOG.exception('Error running %s', mig)
+                    else:
+                        raise
             else:
                 mig.miglog.status = 'unnecessary'
             ThreadLocalODMSession.flush_all()

@@ -7,12 +7,7 @@ from pylons import tmpl_context as c, app_globals as g
 
 from ming import schema
 from ming.odm.base import session
-from ming.odm import (
-    FieldProperty,
-    RelationProperty,
-    ForeignIdProperty,
-    Mapper
-)
+from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
 
 from vulcanforge.artifact.model import (
     Artifact,

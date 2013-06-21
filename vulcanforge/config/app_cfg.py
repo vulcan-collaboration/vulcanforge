@@ -70,8 +70,6 @@ class ForgeConfig(AppConfig):
         'visualize': ['vulcanforge:visualize/static']
     }
 
-    migration_modules = ['vulcanforge.migrations']
-
     def __init__(self, root_controller='root'):
         AppConfig.__init__(self)
         self.root_controller = root_controller
@@ -99,7 +97,6 @@ class ForgeConfig(AppConfig):
         self.setup_search()
         self.setup_cache()
         self.setup_task_queue()
-        self.check_migrations()
 
     def setup_profiling(self):
         # Profiling
@@ -320,10 +317,6 @@ class ForgeConfig(AppConfig):
 
     def setup_json_renderer(self):
         self.render_functions.json = render_json
-
-    def check_migrations(self):
-
-        config['pylons.app_globals'].migration_modules = self.migration_modules
 
 
 class JinjaEngine(ew.TemplateEngine):

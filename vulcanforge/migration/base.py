@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from ming.odm import session
+from ming.odm.odmsession import ThreadLocalODMSession
 
 from vulcanforge.migration.model import MigrationLog
 
@@ -11,7 +12,7 @@ class BaseMigration(object):
         super(BaseMigration, self).__init__()
         if miglog is None:
             miglog = MigrationLog.upsert_from_migration(self)
-        self.miglog = miglog
+        self.miglog = miglog  # persisted
 
     @classmethod
     def get_name(cls):
@@ -31,6 +32,11 @@ class BaseMigration(object):
         """Appends the message to the log objects output array"""
         self.miglog.output.append(msg)
 
+    def close_sessions(self):
+        session(self.miglog).flush(self.miglog)
+        ThreadLocalODMSession.close_all()
+        self.miglog = MigrationLog.query.get(_id=self.miglog._id)
+
     def full_run(self):
         """This is the method called by the MigrationRunner, but for most
         purposes, overriding the run method should be sufficient.
@@ -39,13 +45,16 @@ class BaseMigration(object):
         try:
             self.run()
         except Exception as err:
-            self.write_output(str(err))
+            if session(self.miglog) is None:
+                self.miglog = MigrationLog.query.get(_id=self.miglog._id)
+            self.write_output(repr(err))
             self.miglog.status = 'error'
             session(self.miglog).flush(self.miglog)
             raise
         else:
             self.miglog.status = 'success'
             self.miglog.ended_dt = datetime.utcnow()
+            session(self.miglog).flush(self.miglog)
 
     def run(self):
         """Override this with your migration script logic"""

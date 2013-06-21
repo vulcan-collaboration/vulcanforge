@@ -147,11 +147,12 @@ class MonQTask(MappedClass):
             result=None,
             context=context
         )
-        try:
-            LOG.debug('putting %s in the task queue', obj._id)
-            g.task_queue.put(str(obj._id))
-        except Exception:
-            LOG.exception('Error putting to task queue')
+        if obj:
+            try:
+                LOG.debug('putting %s in the task queue', obj._id)
+                g.task_queue.put(str(obj._id))
+            except Exception:
+                LOG.exception('Error putting to task queue')
         return obj
 
     @classmethod
@@ -258,10 +259,14 @@ class MonQTask(MappedClass):
         cls.query.remove(spec)
 
     @classmethod
+    def get_ready(cls):  # pragma no cover
+        return cls.query.find(dict(state='ready')).all()
+
+    @classmethod
     def run_ready(cls, worker=None):
         """Run all the tasks that are currently ready"""
         i = 0
-        for i, task in enumerate(cls.query.find(dict(state='ready')).all()):
+        for i, task in enumerate(cls.get_ready()):
             task.process = worker
             task()
         return i

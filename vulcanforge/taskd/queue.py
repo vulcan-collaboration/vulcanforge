@@ -29,11 +29,13 @@ class RedisQueue(object):
     """
     def __init__(self, name, namespace='taskd', conn=None, **redis_kwargs):
         """The default connection parameters are:
-        host='localhost', port=6379, db=0"""
+        host='localhost', port=6379, db=0
+
+        """
         if conn:
             self.__db = conn
         else:
-            self.__db = redis.Redis(**redis_kwargs)
+            self.__db = redis.StrictRedis(**redis_kwargs)
         self.key = '%s:%s' % (namespace, name)
 
     @convert_conn_error
@@ -61,15 +63,17 @@ class RedisQueue(object):
         """
         if block:
             item = self.__db.blpop(self.key, timeout=timeout)
+            if item:
+                item = item[1]
         else:
             item = self.__db.lpop(self.key)
-
-        if item:
-            item = item[1]
 
         return item
 
     @convert_conn_error
     def get_nowait(self):
-        """Equivalent to get(False)."""
-        return self.get(False)
+        return self.get(block=False)
+
+    @convert_conn_error
+    def clear(self):
+        self.__db.delete(self.key)
