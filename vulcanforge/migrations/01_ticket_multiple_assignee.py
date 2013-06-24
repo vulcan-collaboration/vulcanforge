@@ -29,7 +29,7 @@ class TicketMultipleAssignees(BaseMigration):
         global_cur = Globals.query.find({
             "app_config_id": {"$in": list(ac_ids)}})
         for ticket_global in global_cur:
-            app_context = g.context_manager.push_context(
+            app_context = g.context_manager.push(
                 app_config_id=ticket_global.app_config_id)
             with app_context:
                 bin_cur = Bin.query.find({

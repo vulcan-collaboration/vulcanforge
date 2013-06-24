@@ -183,7 +183,7 @@ class Page(VersionedArtifact):
                     app_config_id=c.app.config._id,
                     )
                 Thread(discussion_id=obj.app_config.discussion_id,
-                           ref_id=obj.index_id())
+                       ref_id=obj.index_id())
             return obj
         else:
             pg = cls.upsert(title)

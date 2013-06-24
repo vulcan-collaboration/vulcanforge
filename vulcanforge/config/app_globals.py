@@ -25,6 +25,7 @@ from ming.utils import LazyProperty
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
 from vulcanforge.common.util.antispam import AntiSpam
+from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.widgets.analytics import GoogleAnalytics
 from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
@@ -164,6 +165,17 @@ class ForgeGlobals(object):
         self.icon_button_widget = IconButtonWidget()
         self.avatar = Avatar()
         self.subscription_popup_menu = SubscriptionPopupMenu()
+
+        # neighborhood controllers
+        nbhd_controller_path = config.get(
+            'default_nbhd_controller',
+            'vulcanforge.neighborhood.controllers:NeighborhoodController')
+        self.default_nbhd_controller = import_object(nbhd_controller_path)
+        nbhd_rest_controller_path = config.get(
+            'default_nbhd_rest_controller',
+            'vulcanforge.neighborhood.controllers:NeighborhoodRestController')
+        self.default_nbhd_rest_controller = import_object(
+            nbhd_rest_controller_path)
 
         # Registration blocker
         self.registration_allowed = config.get(

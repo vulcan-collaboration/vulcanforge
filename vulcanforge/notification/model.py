@@ -93,8 +93,7 @@ class Notification(SOLRIndexed):
     pubdate = FieldProperty(datetime, if_missing=datetime.utcnow)
 
     view = jinja2.Environment(
-        loader=jinja2.PackageLoader('vulcanforge.notification', 'templates')
-    )
+        loader=jinja2.PackageLoader('vulcanforge.notification', 'templates'))
 
     def __json__(self):
         data = {

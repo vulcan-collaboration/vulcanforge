@@ -158,13 +158,11 @@ class Neighborhood(MappedClass):
 
     @property
     def controller_class(self):
-        from .controllers import NeighborhoodController
-        return NeighborhoodController
+        return g.default_nbhd_controller
 
     @property
     def rest_controller_class(self):
-        from .controllers import NeighborhoodRestController
-        return NeighborhoodRestController
+        return g.default_nbhd_rest_controller
 
     def user_can_register(self, user=None):
         """

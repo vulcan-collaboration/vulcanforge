@@ -512,7 +512,6 @@ class User(SOLRIndexed):
         message_emails=S.Bool(if_missing=True),
     ))
 
-    # for customizable extra user fields (added for FANG)
     user_fields = FieldProperty({str: None})
 
     ###################################################################

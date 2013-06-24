@@ -10,7 +10,7 @@ from vulcanforge.resources.widgets import CSSLink, JSLink
 from vulcanforge.project.validators import (
     ProjectNameValidator,
     ProjectShortnameValidator
-    )
+)
 from vulcanforge.project.widgets import ProjectUserSelect
 
 TEMPLATE_DIR = 'jinja:vulcanforge:neighborhood/templates/widgets/'
@@ -40,7 +40,6 @@ class NeighborhoodAddProjectForm(ForgeForm):
         )
         Wiki = ew.Checkbox(label="Docs", attrs={'class': 'unlabeled'})
         Git = ew.Checkbox(label="Git", attrs={'class': 'labeled scm'})
-        Hg = ew.Checkbox(label="Mercurial", attrs={'class': 'labeled scm'})
         SVN = ew.Checkbox(label="Subversion", attrs={'class': 'labeled scm'})
         Tickets = ew.Checkbox(label="Manage", attrs={'class': 'unlabeled'})
         Downloads = ew.Checkbox(
@@ -48,10 +47,6 @@ class NeighborhoodAddProjectForm(ForgeForm):
             attrs={'class': 'unlabeled'}
         )
         Discussion = ew.Checkbox(label="Forums", attrs={'class': 'unlabeled'})
-        Components = ew.Checkbox(
-            label="Components",
-            attrs={'class': 'unlabeled'}
-        )
 
     def resources(self):
         for r in super(NeighborhoodAddProjectForm, self).resources():

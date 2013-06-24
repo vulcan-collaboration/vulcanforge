@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from ming.odm import session
 from ming.odm.odmsession import ThreadLocalODMSession
@@ -8,11 +9,14 @@ from vulcanforge.migration.model import MigrationLog
 
 class BaseMigration(object):
 
-    def __init__(self, miglog=None):
+    def __init__(self, miglog=None, log=None):
         super(BaseMigration, self).__init__()
         if miglog is None:
             miglog = MigrationLog.upsert_from_migration(self)
-        self.miglog = miglog  # persisted
+        self.miglog = miglog
+        if log is None:
+            log = logging.getLogger(__name__)
+        self.log = log
 
     @classmethod
     def get_name(cls):
@@ -28,9 +32,13 @@ class BaseMigration(object):
         """
         return True
 
-    def write_output(self, msg):
+    def write_output(self, msg, loglevel='info'):
         """Appends the message to the log objects output array"""
         self.miglog.output.append(msg)
+        if loglevel:
+            logfunc = getattr(self.log, loglevel, None)
+            if logfunc:
+                logfunc(msg)
 
     def close_sessions(self):
         session(self.miglog).flush(self.miglog)
