@@ -102,7 +102,8 @@ class ConnectionController(object):
             self.reactor.react(message)
         except WebSocketException, e:
             self.websocket.send(json.dumps({
-                'error': {
+                'type': 'error',
+                'data': {
                     'kind': e.__class__.__name__,
                     'message': unicode(e)
                 }
@@ -110,6 +111,7 @@ class ConnectionController(object):
 
     def _speak_frame(self):
         for message in self.pubsub.listen():
+            message.pop('pattern')
             try:
                 self.websocket.send(json.dumps(message))
             except:
