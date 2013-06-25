@@ -8,8 +8,7 @@ reactor
 import json
 import jsonschema
 from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA
-from vulcanforge.websocket.exceptions import InvalidMessageException, \
-    ConfigurationError
+from vulcanforge.websocket.exceptions import InvalidMessageException
 
 
 class MessageReactor(object):

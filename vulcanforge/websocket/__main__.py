@@ -5,16 +5,17 @@ __main__
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import gevent
+import gevent.monkey
+gevent.monkey.patch_all(dns=False)
 import os
 import sys
 from multiprocessing import Process
 import gevent.baseserver
-import gevent.monkey
 from vulcanforge.websocket.server import make_server, get_config
 
 
 def main():
-    gevent.monkey.patch_all(dns=False)
     try:
         config_path = sys.argv[1]
     except IndexError:

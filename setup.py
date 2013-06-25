@@ -71,7 +71,10 @@ setup(
         "BeautifulSoup < 4.0",
         "python-markdown-oembed",
         "redis == 2.7.2",
-        "hiredis"
+        "hiredis",
+        "gevent",
+        "gevent-websocket",
+        "jsonschema"
     ],
     setup_requires=["PasteScript >= 1.7"],
     paster_plugins=[
