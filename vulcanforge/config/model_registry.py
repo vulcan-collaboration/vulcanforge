@@ -1,4 +1,9 @@
-from vulcanforge.common.model import GlobalObjectReference, File, Stats
+from vulcanforge.common.model import (
+    GlobalObjectReference,
+    File,
+    Stats,
+    ForgeGlobals
+)
 from vulcanforge.artifact.model import (
     Artifact,
     Snapshot,

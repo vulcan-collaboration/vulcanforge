@@ -27,6 +27,7 @@ from ming.odm import (
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 from vulcanforge.common.model.base import BaseMappedClass
+from vulcanforge.common.model.globals import ForgeGlobals
 
 from vulcanforge.common.model.index import SOLRIndexed
 from vulcanforge.common.model.session import (
@@ -489,9 +490,10 @@ class User(SOLRIndexed):
             'needs_password_reset',
             'password_set_at',
         ]
-        unique_indexes = ['username']
+        unique_indexes = ['username', 'os_id']
 
     _id = FieldProperty(S.ObjectId)
+    os_id = FieldProperty(int)
     type_s = 'User'
     kind = FieldProperty(str, if_missing='user')
     username = FieldProperty(str)
@@ -514,12 +516,10 @@ class User(SOLRIndexed):
 
     user_fields = FieldProperty({str: None})
 
-    ###################################################################
-    # VF Specific Section
-
     #workspace_tabs = FieldProperty([{str: None}], if_missing=[])
     workspace_references = FieldProperty([str], if_missing=[])
-    workspace_references_last_mod = FieldProperty(datetime, if_missing=datetime(1978, 6, 5))
+    workspace_references_last_mod = FieldProperty(
+        datetime, if_missing=datetime(1978, 6, 5))
     public_key = FieldProperty(str, if_missing='')
 
     needs_password_reset = FieldProperty(bool, if_missing=False)
@@ -858,14 +858,15 @@ class User(SOLRIndexed):
         user = g.auth_provider.register_user(doc, neighborhood)
         if user and 'display_name' in doc:
             user.set_pref('display_name', doc['display_name'])
+        if user:
+            user.os_id = ForgeGlobals.inc_user_counter()
+            user.initialize_workspace_tabs()
         if user and make_project:
             n = Neighborhood.query.get(name='Users')
             p = n.register_project(
                 'u/' + user.username, user=user, user_project=True)
             # Allow for special user-only tools
             p._extra_tool_status = ['user']
-
-        user.initialize_workspace_tabs()
 
         return user
 

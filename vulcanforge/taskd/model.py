@@ -14,8 +14,9 @@ from ming import schema as S
 from ming.odm import session, FieldProperty, state, Mapper
 from ming.odm.declarative import MappedClass
 
-from vulcanforge.common.exceptions import NoSuchProjectError, ForgeError
+from vulcanforge.common.exceptions import ForgeError
 from vulcanforge.common.model.session import main_orm_session
+
 LOG = logging.getLogger(__name__)
 
 

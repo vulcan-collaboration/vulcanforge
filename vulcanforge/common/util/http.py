@@ -28,9 +28,13 @@ def set_cache_headers(last_modified=None, expires_in=365):
 def get_client_ip(request=None):
     if request is None:
         request = pylons.request
-    return request.environ.get("X_FORWARDED_FOR") or\
-           request.environ.get("HTTP_X_FORWARDED_FOR") or\
-           request.environ.get("REMOTE_ADDR")
+    try:
+        ip = request.environ.get("X_FORWARDED_FOR") or\
+            request.environ.get("HTTP_X_FORWARDED_FOR") or\
+            request.environ.get("REMOTE_ADDR")
+    except TypeError:  # no request global registered
+        ip = None
+    return ip
 
 
 def set_download_headers(filename=None, content_type=None, set_ctype=True,
@@ -50,8 +54,8 @@ def set_download_headers(filename=None, content_type=None, set_ctype=True,
 
 def cache_forever():
     headers = [
-    (k, v) for k, v in response.headers.items()
-    if k.lower() not in ('pragma', 'cache-control')]
+        (k, v) for k, v in response.headers.items()
+        if k.lower() not in ('pragma', 'cache-control')]
     delta = CACHE_CONTROL.apply(
         headers,
         public=True,

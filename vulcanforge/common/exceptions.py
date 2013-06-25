@@ -22,10 +22,6 @@ class NoSuchAppError(ForgeError):
     pass
 
 
-class NoSuchProjectError(ForgeError):
-    pass
-
-
 class CompoundError(ForgeError):
     def __repr__(self):
         return '<%s>\n%s\n</%s>' % (

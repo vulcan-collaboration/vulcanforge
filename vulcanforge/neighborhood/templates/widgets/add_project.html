@@ -4,17 +4,17 @@
     <div class="padded top-spaced">
         <fieldset class="vf-fieldset">
             <p>
-                <label for="{{ widget.context_for(widget.fields.project_name)['id'] }}">
+                <label for="{{ widget.context_for(widget.fields_dict.project_name)['id'] }}">
                     Project Name:
                 </label>
-                {{widget.display_field(widget.fields.project_name)}}
+                {{widget.display_field(widget.fields_dict.project_name)}}
             </p>
 
             <p>
-                <label for="{{ widget.context_for(widget.fields.project_unixname)['id'] }}">
+                <label for="{{ widget.context_for(widget.fields_dict.project_unixname)['id'] }}">
                     URL: {% if base_url %}{{base_url}}{% endif %}{{neighborhood.url()}}
                 </label>
-                {{widget.display_field(widget.fields.project_unixname)}}
+                {{widget.display_field(widget.fields_dict.project_unixname)}}
 
                 <span id="name_availablity" style="display:none"></span>
             </p>
@@ -24,8 +24,8 @@
         {% if not neighborhood.project_template %}
         <fieldset class="vf-fieldset">
             <p>
-                {{widget.display_field(widget.fields.private_project)}}
-                <label for="{{ widget.context_for(widget.fields.private_project)['id'] }}">
+                {{widget.display_field(widget.fields_dict.private_project)}}
+                <label for="{{ widget.context_for(widget.fields_dict.private_project)['id'] }}">
                     Private Project?
                 </label>
             </p>
@@ -42,7 +42,7 @@
                 <img src="{{g.tool_icon_url('Tickets', 48)}}"
                      alt="Manage">
             </div>
-            <h1>{{widget.display_field(widget.fields.Tickets)}}</h1>
+            <h1>{{widget.display_field(widget.fields_dict.Tickets)}}</h1>
             <p>
                 Coordinate your project's collaborative work with issues, milestones, and workflows.
             </p>
@@ -52,7 +52,7 @@
                 <img src="{{g.tool_icon_url('Wiki', 48)}}"
                      alt="Docs">
             </div>
-            <h1>{{widget.display_field(widget.fields.Wiki)}}</h1>
+            <h1>{{widget.display_field(widget.fields_dict.Wiki)}}</h1>
             <p>
                 Share information about your project, and get feedback from project members and others.
             </p>
@@ -62,7 +62,7 @@
                 <img src="{{g.tool_icon_url('Discussion', 48)}}"
                      alt="Forums">
             </div>
-            <h1>{{widget.display_field(widget.fields.Discussion)}}</h1>
+            <h1>{{widget.display_field(widget.fields_dict.Discussion)}}</h1>
             <p>
                 Collaborate with your project members, and with broader communities, using discussion forums.
             </p>
@@ -82,8 +82,8 @@
             </p>
 
             <p>
-                {{widget.display_field(widget.fields.Git)}}
-                {{widget.display_field(widget.fields.SVN)}}
+                {{widget.display_field(widget.fields_dict.Git)}}
+                {{widget.display_field(widget.fields_dict.SVN)}}
             </p>
         </div>
         <div id="start" class="tool">

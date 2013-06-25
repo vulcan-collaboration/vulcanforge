@@ -26,27 +26,54 @@ class NeighborhoodAddProjectForm(ForgeForm):
         neighborhood=None,
         base_url=None)
 
-    class fields(ew_core.NameList):
-        project_description = ew.HiddenField(label='Public Description')
-        private_project = ew.Checkbox(label="", attrs={'class': 'unlabeled'})
-        project_name = ew.InputField(
-            label='Project Name',
-            field_type='text',
-            validator=ProjectNameValidator())
-        project_unixname = ew.InputField(
-            label='Short Name',
-            field_type='text',
-            validator=ProjectShortnameValidator()
-        )
-        Wiki = ew.Checkbox(label="Docs", attrs={'class': 'unlabeled'})
-        Git = ew.Checkbox(label="Git", attrs={'class': 'labeled scm'})
-        SVN = ew.Checkbox(label="Subversion", attrs={'class': 'labeled scm'})
-        Tickets = ew.Checkbox(label="Manage", attrs={'class': 'unlabeled'})
-        Downloads = ew.Checkbox(
-            label="Downloads",
-            attrs={'class': 'unlabeled'}
-        )
-        Discussion = ew.Checkbox(label="Forums", attrs={'class': 'unlabeled'})
+    def __init__(self, *args, **kwargs):
+        super(NeighborhoodAddProjectForm, self).__init__(*args, **kwargs)
+        self._fields_dict = None
+
+    @property
+    def fields(self):
+        return [
+            ew.HiddenField(
+                label='Public Description', name='project_description'),
+            ew.Checkbox(
+                name='private_project',
+                label="",
+                attrs={'class': 'unlabeled'}),
+            ew.InputField(
+                name='project_name',
+                label='Project Name',
+                field_type='text',
+                validator=ProjectNameValidator()),
+            ew.InputField(
+                name='project_unixname',
+                label='Short Name',
+                field_type='text',
+                validator=ProjectShortnameValidator()),
+            ew.Checkbox(
+                name='Wiki', label="Docs", attrs={'class': 'unlabeled'}),
+            ew.Checkbox(
+                name='Git', label="Git", attrs={'class': 'labeled scm'}),
+            ew.Checkbox(
+                name='SVN',
+                label="Subversion",
+                attrs={'class': 'labeled scm'}),
+            ew.Checkbox(
+                name='Tickets', label="Manage", attrs={'class': 'unlabeled'}),
+            ew.Checkbox(
+                name='Downloads',
+                label="Downloads",
+                attrs={'class': 'unlabeled'}),
+            ew.Checkbox(
+                name='Discussion',
+                label="Forums",
+                attrs={'class': 'unlabeled'})
+        ]
+
+    @property
+    def fields_dict(self):
+        if self._fields_dict is None:
+            self._fields_dict = {f.name: f for f in self.fields}
+        return self._fields_dict
 
     def resources(self):
         for r in super(NeighborhoodAddProjectForm, self).resources():

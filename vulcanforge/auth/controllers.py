@@ -28,7 +28,6 @@ from vulcanforge.common.controllers.decorators import (
     validate_form,
     vardec
 )
-from vulcanforge.common.exceptions import NoSuchProjectError
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import get_client_ip, cryptographic_nonce
 from vulcanforge.common.validators import NullValidator
@@ -55,6 +54,7 @@ from vulcanforge.notification.model import Mailbox
 from vulcanforge.notification.tasks import sendmail
 from vulcanforge.notification.util import gen_message_id
 from vulcanforge.project.model import Project, AppConfig
+from vulcanforge.project.exceptions import NoSuchProjectError
 
 
 LOG = logging.getLogger(__name__)
