@@ -9,7 +9,9 @@ import json
 from threading import Thread
 import unittest
 import mock
-from vulcanforge.websocket.exceptions import WebSocketException
+from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
+from vulcanforge.websocket.exceptions import WebSocketException, \
+    InvalidMessageException
 from vulcanforge.websocket.server import ConnectionController
 
 
@@ -20,7 +22,7 @@ class ConnectionControllerTestCase(unittest.TestCase):
         self.redis = mock.Mock()
         self.pubsub = mock.Mock()
         self.reactor = mock.Mock()
-        self.controller = ConnectionController({},
+        self.controller = ConnectionController(DEFAULT_SERVER_CONFIG,
                                                self.websocket, self.redis,
                                                self.pubsub, self.reactor)
 
@@ -73,14 +75,13 @@ class ConnectionControllerTestCase(unittest.TestCase):
 
     def test_listener_exception(self):
         self.websocket.receive.side_effect = self._receive_side_effect(['hi'])
-        e = WebSocketException("foo")
+        e = InvalidMessageException("foo")
         self.reactor.react = self._raise_on_call(e)
-        listen_thread = Thread(target=self.controller.run_listener)
-        listen_thread.start()
-        listen_thread.join()
+        self.controller.run_listener()
         self.websocket.send.assert_called_once_with(json.dumps({
-            'error': {
-                'kind': 'WebSocketException',
+            'type': 'error',
+            'data': {
+                'kind': 'InvalidMessageException',
                 'message': 'foo'
             }
         }))
@@ -88,33 +89,31 @@ class ConnectionControllerTestCase(unittest.TestCase):
     def test_speaker(self):
         msgs = [
             {
-                'type': 'message',
-                'pattern': None,
                 'channel': 'foo',
-                'data': 'hi'
+                'data': 'hi',
+                'pattern': None,
+                'type': 'message'
             },
             {
-                'type': 'message',
-                'pattern': None,
                 'channel': 'foo',
-                'data': 'bye'
+                'data': 'bye',
+                'pattern': None,
+                'type': 'message'
             }
         ]
         self.pubsub.listen.side_effect = self._listen_side_effect(msgs)
-        speak_thread = Thread(target=self.controller.run_speaker)
-        speak_thread.start()
-        speak_thread.join()
-        self.websocket.send.assert_has_calls([
-            mock.call(json.dumps({
-                'type': 'message',
-                'pattern': None,
-                'channel': 'foo',
-                'data': 'hi'
-            })),
-            mock.call(json.dumps({
-                'type': 'message',
-                'pattern': None,
-                'channel': 'foo',
-                'data': 'bye'
-            }))
-        ])
+        self.controller.run_speaker()
+        self.assertEqual(self.websocket.send.call_count, 2)
+        call_1, call_2 = self.websocket.send.call_args_list
+        arg_1 = json.loads(call_1[0][0])
+        arg_2 = json.loads(call_2[0][0])
+        self.assertDictEqual(arg_1, {
+            'type': 'message',
+            'channel': 'foo',
+            'data': 'hi'
+        })
+        self.assertDictEqual(arg_2, {
+            'type': 'message',
+            'channel': 'foo',
+            'data': 'bye'
+        })

@@ -11,6 +11,10 @@ class WebSocketException(Exception):
     pass
 
 
+class ConfigurationError(WebSocketException):
+    pass
+
+
 class InvalidMessageException(WebSocketException):
     pass
 

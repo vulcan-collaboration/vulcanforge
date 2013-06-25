@@ -10,10 +10,12 @@ import sys
 import json
 import redis
 import gevent
+import gevent.baseserver
 import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
-from vulcanforge.websocket.exceptions import WebSocketException, LostConnection
+from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
+from vulcanforge.websocket.exceptions import WebSocketException, LostConnection, InvalidMessageException
 from vulcanforge.websocket.reactor import MessageReactor
 
 
@@ -36,13 +38,13 @@ class WebSocketApp(object):
         controller = ConnectionController(self.config, websocket, self.redis,
                                           pubsub, reactor)
         group = gevent.pool.Group()
+        listener = gevent.Greenlet(controller.run_listener)
+        speaker = gevent.Greenlet(controller.run_speaker)
 
         def break_out(*args):
             controller.connected = False
             group.kill()
         try:
-            listener = gevent.Greenlet(controller.run_listener)
-            speaker = gevent.Greenlet(controller.run_speaker)
             listener.link_exception(break_out)
             speaker.link_exception(break_out)
             group.add(listener)
@@ -56,6 +58,8 @@ class WebSocketApp(object):
         finally:
             group.kill()
             websocket.close()
+            del listener
+            del speaker
 
     @staticmethod
     def _http_handler(environ, start_response):
@@ -75,12 +79,16 @@ class ConnectionController(object):
         self.connected = True
 
     def _loop(self, method):
-        while self.is_connected():
-            try:
+        try:
+            while self.is_connected():
                 method()
-            except (geventwebsocket.WebSocketError, WebSocketException):
-                self.connected = False
-                pass
+        except (
+            gevent.GreenletExit,
+            geventwebsocket.WebSocketError,
+            WebSocketException
+        ):
+            self.connected = False
+            pass
 
     def is_connected(self):
         return self.connected and self.websocket.socket is not None
@@ -100,7 +108,7 @@ class ConnectionController(object):
             raise LostConnection()
         try:
             self.reactor.react(message)
-        except WebSocketException, e:
+        except InvalidMessageException, e:
             self.websocket.send(json.dumps({
                 'type': 'error',
                 'data': {
@@ -111,7 +119,7 @@ class ConnectionController(object):
 
     def _speak_frame(self):
         for message in self.pubsub.listen():
-            message.pop('pattern')
+            message.pop('pattern', None)
             try:
                 self.websocket.send(json.dumps(message))
             except:
@@ -124,7 +132,7 @@ def get_config(filename):
     with open(filename, 'r') as fp:
         parser.readfp(fp)
     section_name = "websocketserver"
-    config = {}
+    config = DEFAULT_SERVER_CONFIG
     try:
         for option in parser.options(section_name):
             config[option] = parser.get(section_name, option)
@@ -135,10 +143,12 @@ def get_config(filename):
     return config
 
 
-def make_server(config):
-    host = config['host']
-    port = int(config['port'])
+def make_server(config, listener=None):
+    if listener is None:
+        host = config['websocket.host']
+        port = int(config['websocket.port'])
+        listener = gevent.baseserver._tcp_listener((host, port))
     app = WebSocketApp(config)
-    server = WSGIServer((host, port), app,
+    server = WSGIServer(listener, app,
                         handler_class=geventwebsocket.WebSocketHandler)
     return server

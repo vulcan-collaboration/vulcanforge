@@ -53,3 +53,10 @@ INCOMING_MESSAGE_SCHEMA = {
     },
     "additionalProperties": False
 }
+DEFAULT_SERVER_CONFIG = {
+    'websocket.host': 'localhost',
+    'websocket.port': 8001,
+    'websocket.process_count': 1,
+    'websocket.message_authorizer': 'vulcanforge.websocket.authorization:'
+                                    'MessageAuthorizer'
+}
