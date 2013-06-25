@@ -3,7 +3,10 @@ import sys
 import os
 
 from ming.odm.odmsession import ThreadLocalODMSession
+import pkg_resources
+from pylons import app_globals as g
 from tg import config
+
 from vulcanforge.migration.base import BaseMigration
 from vulcanforge.migration.model import MigrationLog
 
@@ -14,10 +17,11 @@ class MigrationRunner(object):
 
     @property
     def _default_modules(self):
-        return [
-            config['package'].__name__ + '.migrations',
-            'vulcanforge.migrations'
-        ]
+        modules = [config['package'].__name__ + '.migrations']
+        for pkg in g.vulcan_packages:
+            if pkg_resources.resource_exists(pkg, 'migrations'):
+                modules.append(pkg + '.migrations')
+        return modules
 
     def _load_migrations_from_dir(self, module):
         for fname in sorted(os.listdir(module.__path__[0])):
