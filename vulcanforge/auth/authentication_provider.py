@@ -135,6 +135,26 @@ class BaseAuthenticationProvider(object):
         """
         raise NotImplementedError('set_password')
 
+    def _encode_password(self, password, salt=None):
+        if salt is None:
+            salt = os.urandom(4)
+        h = sha1(password)
+        h.update(salt)
+        return "{SSHA}" + b64encode(h.digest() + salt)
+
+    def get_salt(self, encoded):
+        decoded = b64decode(encoded[len('{SSHA}'):])
+        return decoded[-4:]
+
+    def assert_password_unused(self, password, user):
+        for old_pw in user.old_password_hashes:
+            compare_with = self._encode_password(
+                password.encode('utf-8'),
+                salt=self.get_salt(old_pw))
+            if compare_with == old_pw:
+                raise PasswordAlreadyUsedError(
+                    "This password has been used before")
+
     def upload_sshkey(self, username, pubkey):
         """
         Upload an SSH Key.  Providers do not necessarily need to implement
@@ -183,21 +203,14 @@ class LocalAuthenticationProvider(BaseAuthenticationProvider):
             return False
         if not user.password:
             return False
-        salt = str(user.password[6:6 + user.SALT_LEN])
-        check = self._encode_password(password, salt)
+        check = self._encode_password(password, self.get_salt(user.password))
         if check != user.password:
             return False
         return True
 
     def set_password(self, user, old_password, new_password, as_admin=False):
+        self.assert_password_unused(new_password, user)
         user.password = self._encode_password(new_password)
-
-    def _encode_password(self, password, salt=None):
-        if salt is None:
-            salt = ''.join(chr(randint(1, 0x7f))
-                           for i in xrange(self.user_cls.SALT_LEN))
-        hashpass = sha256(salt + password.encode('utf-8')).digest()
-        return 'sha256' + salt + b64encode(hashpass)
 
 
 class LdapAuthenticationProvider(BaseAuthenticationProvider):
@@ -271,16 +284,7 @@ class LdapAuthenticationProvider(BaseAuthenticationProvider):
             else:
                 dn = uid
                 pw = old_password.encode('utf-8')
-                # TODO: this should can be handled in ldap's ppolicy overlay
-            for old_pw in user.old_password_hashes:
-                decoded = b64decode(old_pw[len('{SSHA}'):])
-                salt = decoded[-4:]
-                compare_with = self._encode_password(
-                    new_password.encode('utf-8'),
-                    salt=salt)
-                if compare_with == old_pw:
-                    raise PasswordAlreadyUsedError(
-                        "This password has been used before")
+            self.assert_password_unused(new_password, user)
             encoded = self._encode_password(new_password.encode('utf-8'))
             con = ldap.initialize(config['auth.ldap.server'])
             con.bind_s(dn, pw)
@@ -312,10 +316,3 @@ class LdapAuthenticationProvider(BaseAuthenticationProvider):
         if not self.validate_password(user, request.params['password']):
             raise exc.HTTPUnauthorized()
         return user
-
-    def _encode_password(self, password, salt=None):
-        if salt is None:
-            salt = os.urandom(4)
-        h = sha1(password)
-        h.update(salt)
-        return "{SSHA}" + b64encode(h.digest() + salt)
