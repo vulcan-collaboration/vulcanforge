@@ -36,3 +36,14 @@ th[data-sort="ticket_num"] {
 .ticket-title-info {
     font-size: 0.7em;
 }
+
+#stats-container {
+    text-align: center;
+}
+
+.stats-detail-table-container {
+    display: inline-block;
+    margin: 1em;
+    width: 256px;
+    vertical-align: top;
+}

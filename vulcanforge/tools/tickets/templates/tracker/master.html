@@ -1,8 +1,117 @@
 {% extends g.templates['master'] %}
 
 {% do g.resource_manager.register_css('tickets/css/tickets.css', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.js', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.pie.js', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.time.js', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.selection.js', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.resize.js', scope='tool') %}
 
-{% block head %}
+{% do g.resource_manager.register_css('css/vf_stats.css', scope='tool') %}
+{% do g.resource_manager.register_js('js/vf_stats.js', scope='tool') %}
+
+{% block head %}{{ super() }}
+{% endblock %}
+
+{% block after_content %}{{ super() }}
+    <div class="padded top-spaced">
+    {% if c.aggregate_url %}
+        <div id="stats-container">
+            <div class="inline-stats-group">
+                <h3>Status</h3>
+                <div id="stats-status"></div>
+            </div>
+            <div class="inline-stats-group">
+                <h3>Assignment</h3>
+                <div id="stats-assignment"></div>
+            </div>
+            <div class="inline-stats-group">
+                <h3>Milestone</h3>
+                <div id="stats-milestone"></div>
+            </div>
+            <div class="inline-stats-group">
+                <h3>Reported By</h3>
+                <div id="stats-reporter"></div>
+            </div>
+            <div class="top-spaced">
+                <button id="detailed-stats-button">Detailed Stats</button>
+            </div>
+            <div id="detailed-stats-container" class="top-spaced">
+
+            </div>
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}{{ super() }}
+    <script>
+        {% if c.aggregate_url %}
+            $(function () {
+                var facetData = null,
+                        $statsContainer = $('#stats-container'),
+                        $detailedStatsContainer = $('#detailed-stats-container'),
+                        makeTable = function (label, dataset) {
+                            var $container = $('<div/>').
+                                            addClass('stats-detail-table-container'),
+                                    $table = $('<table/>').
+                                            addClass('vf-table').
+                                            append($('<caption/>',
+                                                    {text: label})).
+                                            appendTo($container),
+                                    $row;
+                            $.each(dataset, function (i, datum) {
+                                var mod = i % 2;
+                                if (mod === 0) {
+                                    $row = $('<tr/>').
+                                            append($('<th/>', {text: datum})).
+                                            appendTo($table);
+                                } else {
+                                    $('<td/>', {text: datum}).appendTo($row);
+                                }
+                            });
+                            return $container;
+                        };
+                $statsContainer.hide();
+                $detailedStatsContainer.hide();
+                $('#detailed-stats-button').
+                        bind('click', function () {
+                            $detailedStatsContainer.toggle();
+                        });
+                $.ajax({
+                    url: '{{ c.aggregate_url }}',
+                    success: function (data) {
+                        facetData = data;
+                        $('#stats-status').
+                            vfStatsWidget({
+                                graphType: 'facet-pie',
+                                dataset: data.facet_fields.status_s
+                            });
+                        $('#stats-assignment').
+                            vfStatsWidget({
+                                graphType: 'facet-pie',
+                                dataset: data.facet_fields.assigned_to_s_mv
+                            });
+                        $('#stats-milestone').
+                            vfStatsWidget({
+                                graphType: 'facet-pie',
+                                dataset: data.facet_fields.milestone_s
+                            });
+                        $('#stats-reporter').
+                            vfStatsWidget({
+                                graphType: 'facet-pie',
+                                dataset: data.facet_fields.reported_by_s
+                            });
+                        $statsContainer.show();
+                        makeTable("Status", data.facet_fields.status_s).appendTo($detailedStatsContainer);
+                        makeTable("Assignment", data.facet_fields.assigned_to_s_mv).appendTo($detailedStatsContainer);
+                        makeTable("Milestone", data.facet_fields.milestone_s).appendTo($detailedStatsContainer);
+                        makeTable("Reported By", data.facet_fields.reported_by_s).appendTo($detailedStatsContainer);
+                    }
+                });
+            });
+        {% endif %}
+    </script>
 {% endblock %}
 
 {% block pageType %}TICKETS{% endblock %}
