@@ -306,6 +306,7 @@ class Ticket(VersionedArtifact):
             ticket_num_i=self.ticket_num,
             milestone_s=self._milestone,
             status_s=self.status,
+            open_b=self.is_open(),
             snippet_s=self.summary,
             summary_t=self.summary,
             description_t=self.description,
@@ -314,6 +315,7 @@ class Ticket(VersionedArtifact):
             assigned_to_s_mv=self.assigned_to_usernames,
             assigned_to_name_s_mv=self.assigned_to_names,
             last_updated_dt=self.last_updated,
+            created_date_dt=self.created_date,
             text_objects=[
                 self.ticket_num,
                 self.summary,
@@ -441,11 +443,14 @@ class Ticket(VersionedArtifact):
     def globals(self):
         return Globals.query.get(app_config_id=self.app_config_id)
 
+    def is_open(self):
+        return self.status not in self.app.globals.set_of_closed_status_names
+
     @property
     def open_or_closed(self):
-        if self.status in c.app.globals.set_of_closed_status_names:
-            return 'closed'
-        return 'open'
+        if self.is_open():
+            return 'open'
+        return 'closed'
 
     def _get_private(self):
         return bool(self.acl)
@@ -844,6 +849,14 @@ class Ticket(VersionedArtifact):
                 columns.append(dict(name=field['name'],
                                     sort_name=field['sortable_name'],
                                     label=field['label'], active=True))
+        c.csv_url = '{}search/csv?{}'.format(c.app.url,
+                                           urllib.urlencode([
+                                               ('q', q), ('sort', sort)
+                                           ]))
+        c.aggregate_url = '{}search/aggregate?{}'.format(c.app.url,
+                                                        urllib.urlencode([
+                                                            ('q', q)
+                                                        ]))
         return dict(
             tickets=tickets,
             sortable_custom_fields=sortable_custom_fields,

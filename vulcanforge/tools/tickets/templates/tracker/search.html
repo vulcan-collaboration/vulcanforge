@@ -84,11 +84,11 @@
             columns=columns,
             page=page,
             sort=sort) }}
-
     </div>
 {% endblock %}
 
 {% block extra_js %}
+    {{ super() }}
     {% if q and g.security.has_access(c.app, 'save_searches') %}
         <script type="text/javascript">
             $(function () {

@@ -3,6 +3,9 @@
   {% if paged %}
     {{widget.fields['page_size'].display(page=page, count=count, limit=limit)}}
   {% endif %}
+    {% if c.csv_url %}
+        <p><a href="{{ c.csv_url }}">Download CSV</a></p>
+    {% endif %}
   {% if count %}
     <table class="ticket-list">
       <thead>

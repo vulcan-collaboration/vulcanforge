@@ -77,11 +77,13 @@
             selectedLabel: undefined
         },
         _create: function () {
-            if (this.options.dataSrc) {
-                this._loadDataFromSrc(this.options.dataSrc, this.options.dataParams);
-            }
             if (typeof this.options.dataParams === 'undefined'){
                 this.options.dataParams = {};
+            }
+            if (this.options.dataSrc) {
+                this._loadDataFromSrc(this.options.dataSrc, this.options.dataParams);
+            } else {
+                this.dataset = this.options.dataset;
             }
             this.element.addClass('vfStatsWidget');
             this.$tooltip = $('<div></div>').
@@ -93,6 +95,9 @@
                 'dataLoaded.vfStats': as(this._handleDataLoaded, this)
             });
             graphTypes[this.options.graphType].init.call(this);
+            if (typeof this.options.dataSrc !== 'undefined') {
+                this._render()
+            }
         },
         _loadDataFromSrc: function (dataSrc, dataParams) {
             var that = this,
@@ -514,6 +519,88 @@
                         addClass('selected').
                         parent().
                         addClass('selected');
+                });
+            }
+        },
+
+        // solr faceting
+        'facet-pie': {
+            'init': function () {
+
+            },
+            'renderer': function () {
+                var that = this,
+                    dataset = this.dataset,
+                    graphData = [],
+                    graphOptions = {
+                        series: {
+                            pie: {
+                                show: true,
+                                radius: 1,
+                                innerRadius: 0.5,
+                                label: {
+                                    show: false,
+                                },
+                                combine: {
+                                    color: '#aaa',
+                                    threshold: that.options.threshold
+                                }
+                            }
+                        },
+                        grid: {
+                            hoverable: true,
+                            clickable: this.options.clickable
+                        },
+                        legend: {
+                            show: false
+                        }
+                    };
+                // prepare data
+                $.each(dataset, function (i, datum) {
+                    var pointIndex = Math.floor(i / 2),
+                        point = graphData[pointIndex] = graphData[pointIndex] || {};
+                    if (i % 2) {  // value
+                        point.data = datum;
+                    } else {  // label
+                        point.label = datum;
+                    }
+                });
+                this.element.trigger('dataProcessed.vfStats', {
+                    graphData: graphData
+                });
+                // chart
+                this.$graph = $('<div/>').
+                    addClass('vfStatsMiniPieView').
+                    appendTo(this.element);
+                this.element.trigger('prepareGraphOptions.vfStats', {
+                    graphOptions: graphOptions
+                });
+                $.plot(this.$graph, graphData, graphOptions);
+                this.$graph.bind({
+                    'plothover': function (e, loc, plot) {
+                        var label;
+                        if (plot) {
+                            label = plot.series.label + '<br>' +
+                                plot.datapoint[1][0][1] + ' (' + Math.round(plot.datapoint[0]) + '%)';
+                            that.$tooltip.
+                                html(label).
+                                show().
+                                css({
+                                    'top': loc.pageY - that.$tooltip.outerHeight() - 10,
+                                    'left': loc.pageX - that.$tooltip.outerWidth() / 2,
+                                    'border-color': plot.series.color
+                                });
+                        } else if (e.target !== that.$tooltip) {
+                            that.$tooltip.
+                                hide();
+                        }
+                    }
+                });
+                this.element.bind('mouseleave', function () {
+                    that.$graph.trigger('plothover', {
+                        pageX: 0,
+                        pageY: 0
+                    }, null);
                 });
             }
         }
