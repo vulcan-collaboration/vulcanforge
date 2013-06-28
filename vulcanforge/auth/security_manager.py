@@ -14,7 +14,7 @@ from tg.flash import flash
 from bson import ObjectId
 from ming.utils import LazyProperty
 from vulcanforge.artifact.model import Shortlink
-from vulcanforge.auth.model import  User
+from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACE
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project, ProjectRole
@@ -28,7 +28,6 @@ Please click the back button to return to the previous page.
 
 
 class SecurityManager(object):
-
     def __init__(self):
         self.RoleCache = RoleCache
 
@@ -67,9 +66,9 @@ class SecurityManager(object):
             if ACE.match(ace, role_id, permission):
                 result = ace.access == ACE.ALLOW
                 break
-        if result is None and use_parent and\
-           hasattr(obj, 'parent_security_context')\
-        and obj.parent_security_context():
+        if result is None and use_parent and \
+                hasattr(obj, 'parent_security_context') \
+            and obj.parent_security_context():
             result = self.role_has_permission(
                 role_id,
                 obj.parent_security_context(),
@@ -101,7 +100,7 @@ class SecurityManager(object):
 
         if not pr_roles:
             # no roles specified, defaults to parent
-            parent = hasattr(obj, 'parent_security_context') and\
+            parent = hasattr(obj, 'parent_security_context') and \
                      obj.parent_security_context()
             if parent:
                 return self.roles_with_permission(
@@ -147,8 +146,8 @@ class SecurityManager(object):
                 chainable_roles.append(rid)
 
         # try parent obj if possible
-        if chainable_roles and hasattr(obj, 'parent_security_context') and\
-           obj.parent_security_context():
+        if chainable_roles and hasattr(obj, 'parent_security_context') and \
+                obj.parent_security_context():
             return self.any_role_has_permission(
                 chainable_roles,
                 obj.parent_security_context(),
@@ -161,32 +160,34 @@ class SecurityManager(object):
 
     def has_access(self, obj, permission, user=None, project=None, roles=None):
         """
-        Return whether the given user has the permission name on the given object.
+        Return whether the given user has the permission name on the given
+        object.
 
         - First, all the roles for a user in the given project context are
         computed.
 
-        - Next, for each role, the given object's ACL is examined linearly. If an
-        ACE is found which matches the permission and user, and that ACE ALLOWs
-        access, then the function returns True and access is permitted. If the ACE
-        DENYs access, then that role is removed from further consideration.
+        - Next, for each role, the given object's ACL is examined linearly. If
+        an ACE is found which matches the permission and user, and that ACE
+        ALLOWs access, then the function returns True and access is permitted.
+        If the ACE DENYs access, then that role is removed from further
+        consideration.
 
         - If the obj is not a Neighborhood and the given user has the 'admin'
-          permission on the current neighborhood, then the function returns True
-          and access is allowed.
+          permission on the current neighborhood, then the function returns
+          True and access is allowed.
 
         - If none of the ACEs on the object ALLOW access, and there are no more
         roles to be considered, then the function returns False and access is
         denied.
 
         - Processing continues using the remaining roles and the
-          obj.parent_security_context(). If the parent_security_context is None,
-          then the function returns False and access is denied.
+          obj.parent_security_context(). If the parent_security_context is
+          None, then the function returns False and access is denied.
 
-        The effect of this processing is that if *any* role for the user is ALLOWed
-        access via a linear traversal of the ACLs, then access is allowed. All of
-        the users roles must either be explicitly DENYed or processing terminate
-        with no matches to DENY access to the resource.
+        The effect of this processing is that if *any* role for the user is
+        ALLOWed access via a linear traversal of the ACLs, then access is
+        allowed. All of the users roles must either be explicitly DENYed or
+        processing terminate with no matches to DENY access to the resource.
 
         """
         # get user
@@ -205,8 +206,7 @@ class SecurityManager(object):
 
         # get roles
         if roles is None:
-            cred = self.credentials
-            roles = cred.user_roles(
+            roles = self.credentials.user_roles(
                 user_id=user._id, project_id=project._id).reaching_ids
 
         # determine permissions for this obj
@@ -296,6 +296,7 @@ class Credentials(object):
     @classmethod
     def get(cls):
         import vulcanforge.auth
+
         return vulcanforge.auth.credentials
 
     def clear(self):
@@ -392,7 +393,6 @@ class Credentials(object):
 
 
 class RoleCache(object):
-
     def __init__(self, cred, q):
         self.cred = cred
         self.q = q
@@ -456,6 +456,7 @@ class RoleCache(object):
                 yield r
                 pr_rindex = self.cred.project_roles(r.project_id).reverse_index
                 to_visit += pr_rindex[r._id]
+
         return RoleCache(self.cred, _iter())
 
     @LazyProperty
@@ -480,6 +481,7 @@ class RoleCache(object):
                 for i in pr_index[rid].roles:
                     if i in pr_index:
                         to_visit.append((i, pr_index[i]))
+
         return RoleCache(self.cred, _iter())
 
     @LazyProperty
@@ -497,6 +499,7 @@ class SwiftAuthorizer(object):
     whether the user has access to the resource.
 
     """
+
     def __init__(self):
         full_prefix = u'^(?P<bucket_name>[a-z0-9\-]+)/{s3_prefix}'.format(
             s3_prefix=config.get('s3.app_prefix', 'Forge'))
@@ -616,8 +619,8 @@ class SwiftAuthorizer(object):
         for parser in self.key_parsers['allow']:
             m = parser["regex"].match(keyname)
             if m:
-                if 'bucket_name' in m.groups() and\
-                   m.group('bucket_name') != g.s3_bucket.name:
+                if 'bucket_name' in m.groups() and \
+                                m.group('bucket_name') != g.s3_bucket.name:
                     LOG.warn('Wrong s3 bucket name in %s', keyname)
                     return False
                 if method.upper() not in parser.get("allow_methods", ["GET"]):
