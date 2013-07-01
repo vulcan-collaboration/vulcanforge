@@ -14,10 +14,12 @@ from vulcanforge.artifact.controllers import ArtifactReferenceController
 from vulcanforge.auth.controllers import AuthController, UserDiscoverController
 from vulcanforge.common.controllers.rest import (
     RestController,
-    SwiftAuthRestController,
-    WebServiceRestController
+    SwiftAuthRestController
 )
-from vulcanforge.common.controllers.static import NewForgeController, ForgeStaticController
+from vulcanforge.common.controllers.static import (
+    NewForgeController,
+    ForgeStaticController
+)
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import alpha_cmp_factory
 from vulcanforge.common.util.debug import profile_setup_request
@@ -68,7 +70,6 @@ class ForgeRootController(WsgiDispatchController):
     search = SearchController()
     static_auth = SwiftAuthRestController()
     visualize = VisualizerRootController()
-    webs = WebServiceRestController()
 
     # widgets
     class Widgets(WsgiDispatchController.Widgets):

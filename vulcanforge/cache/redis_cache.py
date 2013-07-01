@@ -106,3 +106,6 @@ class RedisCache(object):
             LOG.warn('Cannot cache to %s -- invalid json %s', name, value)
         else:
             return self.hset(name, key, value_json, expiration=expiration)
+
+    def clear(self):
+        self.redis.flushdb()

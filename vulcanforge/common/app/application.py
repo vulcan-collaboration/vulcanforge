@@ -140,8 +140,9 @@ class Application(object):
         raise DeprecationWarning()
 
     def subscribe_admins(self):
-        for uid in g.security.credentials.userids_with_named_role(
-            self.project._id, 'Admin'):
+        admins = g.security.credentials.userids_with_named_role(
+            self.project._id, 'Admin')
+        for uid in admins:
             Mailbox.subscribe(
                 type='direct',
                 user_id=uid,
@@ -201,9 +202,10 @@ class Application(object):
             # swoop
         g.solr.delete(q='project_id_s:"%s" AND mount_point_s:"%s"' % (
             project_id, self.config.options['mount_point']))
-        for d in Discussion.query.find({
+        discussions = Discussion.query.find({
             'project_id': project_id,
-            'app_config_id': self.config._id}):
+            'app_config_id': self.config._id})
+        for d in discussions:
             d.delete()
         ArtifactReference.query.remove({
             'artifact_reference.app_config_id': self.config._id

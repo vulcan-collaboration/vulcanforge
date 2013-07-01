@@ -1,0 +1,41 @@
+{% extends g.templates['master'] %}
+{% do g.resource_manager.register_css('css/error.css') %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div id="errorContentContainer">
+        {% if resp %}
+        <h1 id="errorHeader">
+            <span id="statusCode">{{ code }}</span>
+            <span id="statusMessage">{{ status_text }}</span>
+        </h1>
+        {% endif %}
+        <h2 id="errorMessage">{{ message }}</h2>
+        {% if code == 400 %}
+            <hr class="errorSeparator">
+            <p>It seems that you have made an invalid request...</p>
+            <ul>
+                <li>Go <a href="javascript:history.back()">back</a> and try whatever it is you just did again.</li>
+            </ul>
+        {% elif code == 403 %}
+            <hr class="errorSeparator">
+            <p>If you think we are wrong and you should have permission then try one of these:</p>
+            <ul>
+                <li>Ask the owner to give you permission.</li>
+                <li>Stomp and wave your fists.</li>
+                {% if site_issues_url %}
+                <li>File a ticket at the <a href="{{ site_issues_url }}">Help Desk</a></li>
+                {% endif %}
+            </ul>
+        {% elif code == 404 %}
+            <hr class="errorSeparator">
+            <p>We couldn't find what you were looking for.</p>
+            <ul>
+                <li>Try <a href="{{ c.url }}">reloading</a> the page.</li>
+                <li>Ask your friend to double check the link they gave you.</li>
+                <li>Wait a while and try again. Who knows? Maybe it's just hiding.</li>
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}

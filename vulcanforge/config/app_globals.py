@@ -25,12 +25,12 @@ from ming.utils import LazyProperty
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
 from vulcanforge.common.util.antispam import AntiSpam
+from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.widgets.analytics import GoogleAnalytics
 from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
 from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
-from vulcanforge.config.amqp import AMQPConnection, MockAMQ
 from vulcanforge.config.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
@@ -43,16 +43,24 @@ __all__ = ['Globals']
 LOG = logging.getLogger(__name__)
 
 
-class ForgeGlobals(object):
+class ForgeAppGlobals(object):
     """Container for objects available throughout the life of the application.
 
     One instance of Globals is created during application initialization and
     is available during requests via the 'app_globals' variable.
 
+    # notes
+
+        task_queue:
+            Set to a task queue instance by the
+            ForgeConfig.setup_helpers_and_globals method.
+            If set to None, taskd daemon will use polling instead of a queue.
+
     """
     __shared_state = {}
     tool_manager = None
     resource_manager = None
+    task_queue = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -158,6 +166,17 @@ class ForgeGlobals(object):
         self.avatar = Avatar()
         self.subscription_popup_menu = SubscriptionPopupMenu()
 
+        # neighborhood controllers
+        nbhd_controller_path = config.get(
+            'default_nbhd_controller',
+            'vulcanforge.neighborhood.controllers:NeighborhoodController')
+        self.default_nbhd_controller = import_object(nbhd_controller_path)
+        nbhd_rest_controller_path = config.get(
+            'default_nbhd_rest_controller',
+            'vulcanforge.neighborhood.controllers:NeighborhoodRestController')
+        self.default_nbhd_rest_controller = import_object(
+            nbhd_rest_controller_path)
+
         # Registration blocker
         self.registration_allowed = config.get(
             'registration.allow', 'true').lower().startswith('t')
@@ -253,21 +272,6 @@ class ForgeGlobals(object):
                 response = request_function(uri, headers=headers)
 
             return response
-        else:
-            return None
-
-    @LazyProperty
-    def amq_conn(self):
-        if asbool(config.get('amqp.enabled', 'true')):
-            if asbool(config.get('amqp.mock')):
-                return MockAMQ(self)
-            else:
-                return AMQPConnection(
-                    hostname=config.get('amqp.hostname', 'localhost'),
-                    port=asint(config.get('amqp.port', 5672)),
-                    userid=config.get('amqp.userid', 'testuser'),
-                    password=config.get('amqp.password', 'testpw'),
-                    vhost=config.get('amqp.vhost', 'testvhost'))
         else:
             return None
 
@@ -556,7 +560,3 @@ class ForgeGlobals(object):
         #'num_downloads_week',
         'comments',
     ]
-
-
-def connect_amqp(config):
-    return

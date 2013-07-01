@@ -28,7 +28,7 @@ from vulcanforge.common.helpers import strip_str
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import title_sort, push_config
 from vulcanforge.common.util.decorators import exceptionless
-from vulcanforge.auth.schema import ACL, ACE
+from vulcanforge.auth.schema import ACL, ACE, EVERYONE
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.tasks import unindex_project, reindex_project
 
@@ -1212,6 +1212,7 @@ class AppConfig(MappedClass):
 
     def clean_acl(self):
         read_ids = set(r._id for r in self.project.get_expanded_read_roles())
+        read_ids.add(EVERYONE)
         old_acl = self.acl
         self.acl = []
 
@@ -1223,16 +1224,16 @@ class AppConfig(MappedClass):
                 # if not, search the heirarchy upwards for read access,
                 # starting with all direct children of the role
                 role = ProjectRole.query.get(_id=ace['role_id'])
-                readable = ProjectRole.fundamental_fulfillers(
-                    role.children(),
-                    lambda r: r._id in read_ids
-                )
-                for child in readable:
-                    new_ace = ace.copy()
-                    new_ace['role_id'] = child._id
-                    if new_ace not in self.acl:
-                        self.acl.append(new_ace)
-
+                if role:
+                    readable = ProjectRole.fundamental_fulfillers(
+                        role.children(),
+                        lambda r: r._id in read_ids
+                    )
+                    for child in readable:
+                        new_ace = ace.copy()
+                        new_ace['role_id'] = child._id
+                        if new_ace not in self.acl:
+                            self.acl.append(new_ace)
 
 
 class ProjectRole(BaseMappedClass):

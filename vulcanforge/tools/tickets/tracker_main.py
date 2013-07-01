@@ -497,6 +497,70 @@ class TrackerSearchController(BaseController):
         result['bin'] = bin
         return result
 
+    @expose(content_type="text/csv")
+    def csv(self, **kwargs):
+        now = datetime.utcnow()
+        response.headerlist.append(
+            ('Content-Disposition',
+             'attachment;filename={}-{}-results-{}.csv'.format(
+                 c.app.project.shortname,
+                 c.app.config.options.mount_point,
+                 now.date().isoformat())))
+        fields = [
+            ('ticket_num_i', '#'),
+            ('summary_t', 'Summary'),
+            ('status_s', 'Status'),
+            ('open_b', 'Open'),
+            ('last_updated_dt', 'Last Updated'),
+            ('assigned_to_s_mv', 'Assigned To'),
+            ('reported_by_s', 'Reported By')
+        ] + [
+            (field['name'] + '_s', field['label'])
+            for field in c.app.globals.sortable_custom_fields_shown_in_search()
+        ]
+        solr_query = kwargs.pop('q', None)
+        solr_sort = kwargs.pop('sort', 'ticket_num_i asc')
+        solr_result = g.search.search_artifact(TM.Ticket, solr_query,
+                                               sort=solr_sort)
+
+        # yield labels
+        yield self.mk_csv_row([label for key, label in fields])
+        # yield rows
+        for result in solr_result.docs:
+            yield self.mk_csv_row([result[key] for key, label in fields])
+
+    @staticmethod
+    def mk_csv_row(items):
+        for i in range(len(items)):
+            if isinstance(items[i], (tuple, list)):
+                items[i] = ', '.join(items[i])
+            if isinstance(items[i], basestring):
+                items[i] = items[i].replace(r'"', r'""')
+        return ','.join(['"{}"'.format(item) for item in items]) + '\n'
+
+    @expose('json')
+    def aggregate(self, q, **kwargs):
+        facet_query = {
+            'facet': 'true',
+            'facet.field': [
+                'status_s',
+                'open_b',
+                'milestone_s',
+                'assigned_to_s_mv',
+                'reported_by_s',
+                'labels_t'
+            ]
+            #'facet.date': [
+            #    'last_updated_dt',
+            #    'created_date_dt'
+            #],
+            #'facet.date.start': 'NOW/DAY-30DAYS',
+            #'facet.date.end': 'NOW/DAY+1DAY',
+            #'facet.date.gap': '+1DAY'
+        }
+        solr_result = g.search.search_artifact(TM.Ticket, q, **facet_query)
+        return solr_result.facets
+
 
 class RootController(BaseTrackerController):
 
@@ -828,7 +892,7 @@ class RootController(BaseTrackerController):
         week_comments = self.ticket_comments_since(week_ago)
         fortnight_comments = self.ticket_comments_since(fortnight_ago)
         month_comments = self.ticket_comments_since(month_ago)
-        c.user_select = ffw.ProjectUserSelect()
+        c.user_select = ProjectUserSelect()
         return dict(
                 now=str(now),
                 week_ago=str(week_ago),

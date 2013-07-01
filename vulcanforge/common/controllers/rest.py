@@ -383,67 +383,6 @@ class WebServiceAuthController(object):
             LOG.info('invalid web service token %s', str(token))
             raise exc.HTTPNotFound()
 
-    @expose('json:')
-    def repo_permissions(self, repo_path=None, username=None, **kw):
-        """Expects repo_path to be a filesystem path like
-            <tool>/<project>.<neighborhood>/reponame[.git]
-        unless the <neighborhood> is 'p', in which case it is
-            <tool>/<project>/reponame[.git]
-
-        Returns JSON describing this user's permissions on that repo.
-        """
-        disallow = dict(
-            allow_read=False,
-            allow_write=False,
-            allow_create=False
-        )
-        if not repo_path:
-            response.status = 400
-            return dict(disallow, error='no path specified')
-            # Find the user
-        user = User.by_username(username)
-        if not user:
-            response.status = 404
-            return dict(disallow, error='unknown user')
-        if user.disabled:
-            response.status = 404
-            return dict(disallow, error='user is disabled')
-
-        parsed = filter(None, repo_path.split('/'))
-        project = os.path.splitext(parsed[1])[0]
-        mount = os.path.splitext(parsed[2])[0]
-        try:
-            g.context_manager.set(project, mount)
-        except NoSuchProjectError:
-            n = Neighborhood.by_prefix(project)
-            if n:
-                g.context_manager.set('--init--', mount, neighborhood=n)
-            else:
-                LOG.info("Can't find project from repo_path %s", repo_path)
-                response.status = 404
-                return dict(disallow, error='unknown project')
-
-        if c.app is None:
-            LOG.info("Can't find repo at %s on repo_path %s", mount, repo_path)
-            return disallow
-        return dict(
-            allow_read=g.security.has_access(c.app, 'read', user=user),
-            allow_write=g.security.has_access(c.app, 'write', user=user),
-            allow_create=g.security.has_access(c.app, 'create', user=user)
-        )
-
-    @expose('json')
-    def ip_status(self, ip_address=None):
-        if g.maxmind:
-            allowed = g.maxmind.validate_ip_info(ip_address=ip_address)
-        else:
-            allowed = True
-        return {'allowed': allowed}
-
-
-class WebServiceRestController(object):
-    auth = WebServiceAuthController()
-
 
 class SwiftAuthRestController(object):
 

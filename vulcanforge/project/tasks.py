@@ -7,11 +7,7 @@ from vulcanforge.common.model.session import (
     artifact_orm_session
 )
 from vulcanforge.common.tasks.index import LOG, add_global_objs
-from vulcanforge.common.util.model import (
-    build_model_inheritance_graph,
-    dfs,
-    chunked_find
-)
+from vulcanforge.common.util.model import chunked_find
 from vulcanforge.artifact.tasks import add_artifacts
 from vulcanforge.taskd import task
 
@@ -25,7 +21,7 @@ def unindex_project(project_id=None):
         return
     project = Project.query.get(_id=project_id)
     LOG.info("Unindexing project: %s", project.shortname)
-    g.solr.delete(q='shortname_s:{} AND neighborhood_id_s:{}'.format(
+    g.solr.delete(q='shortname_s:"{}" AND neighborhood_id_s:{}'.format(
         project.shortname,
         project.neighborhood_id
     ))
@@ -36,21 +32,17 @@ def unindex_project(project_id=None):
 
 
 @task
-def reindex_project(project_id=None):
+def reindex_project(project_id):
     from vulcanforge.common.model.index import GlobalObjectReference
     from vulcanforge.artifact.model import (
-        Artifact,
         ArtifactReference,
         Shortlink
     )
+    from vulcanforge.artifact.util import iter_artifact_classes
     from vulcanforge.neighborhood.marketplace.model import ProjectAdvertisement
     from vulcanforge.project.model import Project, AppConfig
-    if project_id is None:
-        LOG.error("reindex_project() requires a project id")
-        return
     project = Project.query.get(_id=project_id)
     unindex_project(project_id)
-    graph = build_model_inheritance_graph()
     LOG.info("Reindexing project: %s", project)
     app_config_ids = []
     for ac in project.app_configs:
@@ -60,9 +52,7 @@ def reindex_project(project_id=None):
 
     # Traverse the inheritance graph, finding all artifacts that
     # belong to this project
-    for _, a_cls in dfs(Artifact, graph):
-        if not session(a_cls):
-            continue
+    for a_cls in iter_artifact_classes():
         LOG.info('  %s', a_cls)
         ref_ids = []
         # Create artifact references and shortlinks

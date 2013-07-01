@@ -34,13 +34,8 @@
 
 {%- macro forgeToolbar() %}
 <ul id="forge-toolbar">
-    <li><a href="/exchange/search" id="discover-components" title="Components"><span>Components</span></a></li>
-    {% if g.is_fang %}
-        <li><a href="{{ g.browse_home }}browse/" id="discover-projects" title="Teams"><span>Teams</span></a></li>
-    {% else %}
-        <li><a href="{{ g.browse_home }}browse/" id="discover-projects" title="Projects"><span>Projects</span></a></li>
-    {% endif %}
-    <li><a href="{{ g.browse_home }}designers/" id="discover-designers" title="Designers"><span>Designers</span></a></li>
+    <li><a href="{{ g.browse_home }}browse/" id="discover-projects" title="Projects"><span>Projects</span></a></li>
+    <li><a href="{{ g.browse_home }}designers/" id="discover-designers" title="Users"><span>Users</span></a></li>
 </ul>
 {%- endmacro %}
 

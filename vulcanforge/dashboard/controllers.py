@@ -45,8 +45,8 @@ class BaseDashboardController(BaseController):
         if reg_nbhd and reg_nbhd.user_can_register():
             c.custom_sidebar_menu.extend([
                 SitemapEntry(
-                    'Form a Team' if g.is_fang else 'Start a project',
-                    reg_nbhd.url()+'add_project',
+                    'Start a {}'.format(reg_nbhd.project_cls.type_label),
+                    reg_nbhd.url() + 'add_project',
                     ui_icon=Icon('', 'ico-plus')
                 ),
                 SitemapEntry('Dashboard')
@@ -142,7 +142,6 @@ class MessagesController(BaseMessagesController):
         start_conversation_form = StartConversationForm()
         announce_to_all_form = AnnounceToAllForm()
 
-
     @expose()
     def _lookup(self, _id, *remainder):
         return self.conversation_controller(_id), remainder
@@ -152,12 +151,9 @@ class MessagesController(BaseMessagesController):
         c.page_list = self.Widgets.page_list_widget
         c.page_size = self.Widgets.page_size_widget
         limit, page, start = g.handle_paging(limit, page)
-        cursor = ConversationStatus.query.find({
-                                                   'user_id': c.user._id,
-                                               }, start=start,
-                                               limit=limit).sort('updated_at',
-                                                                 pymongo
-                                                                 .DESCENDING)
+        cursor = ConversationStatus.query.find(
+            {'user_id': c.user._id}, start=start, limit=limit
+        ).sort('updated_at', pymongo.DESCENDING)
         return {
             'conversation_statuses': cursor.all(),
             'limit': limit,

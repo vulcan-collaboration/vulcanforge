@@ -99,22 +99,22 @@ class AutocompleteController(BaseController):
         def get_label(entry):
             return "{display_name_s} ({username_s})".format(**entry)
         return {
-            'results': self._solr_query('User', q, limit=limit,
-                id_field="id",
+            'results': self._solr_query(
+                'User', q, limit=limit, id_field="id",
                 value_field="username_s",
                 label_field={
                     'solr_field': "display_name_s",
                     'display_field': get_label,
-                    }),
-            }
+                }
+            ),
+        }
 
     @expose('json')
     def project(self, q, limit=DEFAULT_LIMIT, **kw):
         return {
-            'results': self._solr_query('Project', q, limit=limit,
-                id_field="id",
-                value_field="shortname_s",
-                label_field="name_s")
+            'results': self._solr_query(
+                'Project', q, limit=limit, id_field="id",
+                value_field="shortname_s", label_field="name_s")
         }
 
     @expose('json')

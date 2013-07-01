@@ -250,7 +250,8 @@ class NeighborhoodController(BaseTGController):
     @expose('json:')
     def check_name(self, project_name=None):
         msg = False
-        validator = self.Forms.add_project.fields.project_unixname.validator
+        name_field = self.Forms.add_project.fields_dict['project_unixname']
+        validator = name_field.validator
         try:
             validator.to_python(project_name)
         except Invalid as e:

@@ -1,4 +1,9 @@
-from vulcanforge.common.model import GlobalObjectReference, File, Stats
+from vulcanforge.common.model import (
+    GlobalObjectReference,
+    File,
+    Stats,
+    ForgeGlobals
+)
 from vulcanforge.artifact.model import (
     Artifact,
     Snapshot,
@@ -75,3 +80,4 @@ from vulcanforge.tools.forum.model import *
 from vulcanforge.tools.home.model import UserJoin, UserExit, PortalConfig
 from vulcanforge.tools.tickets.model import *
 from vulcanforge.tools.wiki.model import *
+from vulcanforge.migration.model import MigrationLog

@@ -44,11 +44,12 @@ from vulcanforge.common.util.debug import (
 from vulcanforge import resources
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.util.model import close_all_mongo_connections
-from .tool_manager import ToolManager, TOOLS_DIR
+from .tool_manager import ToolManager
 from .template.filters import jsonify, timesince
 from .context_manager import ContextManager
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
+from vulcanforge.taskd.queue import RedisQueue
 
 LOG = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class ForgeConfig(AppConfig):
         'project': ['vulcanforge:project/static'],
         'visualize': ['vulcanforge:visualize/static']
     }
+    vulcan_packages = ['vulcanforge']
 
     def __init__(self, root_controller='root'):
         AppConfig.__init__(self)
@@ -85,6 +87,7 @@ class ForgeConfig(AppConfig):
 
     def setup_helpers_and_globals(self):
         super(ForgeConfig, self).setup_helpers_and_globals()
+        self.register_packages()
         self.setup_profiling()
         self.setup_tool_manager()
         self.setup_resource_manager()
@@ -93,6 +96,14 @@ class ForgeConfig(AppConfig):
         self.setup_object_store()
         self.setup_search()
         self.setup_cache()
+        self.setup_task_queue()
+
+    def register_packages(self):
+        """This is a placeholder for now, but soon it will hold our extension
+        framework
+
+        """
+        config['pylons.app_globals'].vulcan_packages = self.vulcan_packages
 
     def setup_profiling(self):
         # Profiling
@@ -242,7 +253,7 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].base_s3_url = base_s3_url
 
     def setup_cache(self):
-        # Redis!
+        """Setup redis as a cache"""
         if config.get('redis.host'):
             if 'redis.timeout' in config:
                 default_timeout = asint(config['redis.timeout'])
@@ -259,6 +270,32 @@ class ForgeConfig(AppConfig):
             cache = None
 
         config['pylons.app_globals'].cache = cache
+
+    def setup_task_queue(self):
+        """This sets up a redis task queue.
+
+        You may specify your own queue object to use, but you should probably
+        override this method if it does not use redis. Either way, your queue
+        should implement the API exposed on vulcanforge.taskd.queue.RedisQueue
+
+        """
+        api_path = config.get('task_queue.cls')
+        if api_path:
+            cls = import_object(api_path)
+        else:
+            cls = RedisQueue
+        kwargs = {
+            'host': config.get('task_queue.host', config['redis.host']),
+            'port': asint(config.get('task_queue.port',
+                                     config.get('redis.port', 6379))),
+            'db': asint(config.get('task_queue.db',
+                                   config.get('redis.db', 0)))
+        }
+        if config.get('task_queue.namespace'):
+            kwargs['namespace'] = config['task_queue.namespace']
+
+        task_queue = cls(config.get('task_queue.name', 'task_queue'), **kwargs)
+        config['pylons.app_globals'].task_queue = task_queue
 
     def setup_routes(self):
         map = Mapper(directory=config['pylons.paths']['controllers'],

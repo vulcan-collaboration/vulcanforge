@@ -310,9 +310,9 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         return ArtifactReference.from_artifact(self)
 
     def index_id(self):
-        id = '%s.%s#%s' % (
+        index_id = '%s.%s#%s' % (
             self.__class__.__module__, self.__class__.__name__, self._id)
-        return id.replace('.', '/')
+        return index_id.replace('.', '/')
 
     def shorthand_id(self):
         return str(self._id)  # pragma no cover
@@ -1085,7 +1085,7 @@ class ArtifactReference(BaseMappedClass):
     ))])
 
     # patterns for looking up artifacts by index_id when no ArtifactReference
-    # document yet exists
+    # document yet exists, or the artifact is not persisted (repo objects)
     EPHEMERAL_PATTERNS = {
         REPO_INDEX_ID_RE: repo_get_by_index_id
     }

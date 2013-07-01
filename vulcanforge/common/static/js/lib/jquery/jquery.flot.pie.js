@@ -121,6 +121,7 @@ More detail and specific examples can be found in the included HTML file.
 			if (options.series.pie.show) {
 				if (options.grid.hoverable) {
 					eventHolder.unbind("mousemove").mousemove(onMouseMove);
+                    eventHolder.unbind("mouseleave").mouseleave(onMouseLeave);
 				}
 				if (options.grid.clickable) {
 					eventHolder.unbind("click").click(onClick);
@@ -640,6 +641,10 @@ More detail and specific examples can be found in the included HTML file.
 		function onClick(e) {
 			triggerClickHoverEvent("plotclick", e);
 		}
+
+        function onMouseLeave(e) {
+            triggerClickHoverEvent("plothover", e);
+        }
 
 		// trigger click or hover event (they send the same parameters so we share their code)
 
