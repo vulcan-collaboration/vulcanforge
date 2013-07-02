@@ -10,7 +10,7 @@ import json
 import unittest
 import mock
 from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
-from vulcanforge.websocket.authorization import MessageAuthorizer
+from vulcanforge.websocket.auth import BaseWebSocketAuth
 from vulcanforge.websocket.exceptions import InvalidMessageException, \
     NotAuthorized
 from vulcanforge.websocket.reactor import MessageReactor
@@ -19,9 +19,10 @@ from vulcanforge.websocket.reactor import MessageReactor
 class ReactorTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.mock_auth = mock.Mock()
         self.mock_redis = mock.Mock()
         self.mock_pubsub = mock.Mock()
-        self.reactor = MessageReactor(DEFAULT_SERVER_CONFIG,
+        self.reactor = MessageReactor({}, DEFAULT_SERVER_CONFIG, self.mock_auth,
                                       self.mock_redis, self.mock_pubsub)
 
 
@@ -216,9 +217,9 @@ class TestReactor(ReactorTestCase):
         self.mock_pubsub.unsubscribe.assert_called_once_with(['foo', 'bar'])
 
 
-class TestAuthorizer(ReactorTestCase):
+class TestAuth(ReactorTestCase):
 
-    class MockAuth(MessageAuthorizer):
+    class MockAuth(BaseWebSocketAuth):
         can_listen = set()
         can_publish = set()
         can_target = set()
@@ -237,8 +238,8 @@ class TestAuthorizer(ReactorTestCase):
 
     def setUp(self):
         ReactorTestCase.setUp(self)
-        self.auth = self.MockAuth()
-        self.reactor.authorizer = self.auth
+        self.auth = self.MockAuth({}, DEFAULT_SERVER_CONFIG)
+        self.reactor.auth = self.auth
 
     def test_authorize_subscribe(self):
         self.auth.can_listen.add('foo')

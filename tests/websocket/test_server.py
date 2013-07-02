@@ -19,10 +19,12 @@ class ConnectionControllerTestCase(unittest.TestCase):
 
     def setUp(self):
         self.websocket = mock.Mock()
+        self.auth = mock.Mock()
         self.redis = mock.Mock()
         self.pubsub = mock.Mock()
         self.reactor = mock.Mock()
-        self.controller = ConnectionController(DEFAULT_SERVER_CONFIG,
+        self.controller = ConnectionController({}, DEFAULT_SERVER_CONFIG,
+                                               self.auth,
                                                self.websocket, self.redis,
                                                self.pubsub, self.reactor)
 

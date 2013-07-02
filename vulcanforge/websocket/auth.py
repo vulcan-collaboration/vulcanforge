@@ -8,7 +8,15 @@ authorization
 from vulcanforge.websocket.exceptions import NotAuthorized
 
 
-class MessageAuthorizer(object):
+class BaseWebSocketAuth(object):
+
+    def __init__(self, environ, config):
+        self.config = config
+        self.environ = environ
+
+    def authenticate(self, environ):
+        #raise NotAuthorized("Unable to authorize request")
+        pass
 
     def authorize(self, listen_channels=None, publish_channels=None,
                   event_targets=None):

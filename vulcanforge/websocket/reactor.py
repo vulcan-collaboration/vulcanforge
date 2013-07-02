@@ -7,7 +7,8 @@ reactor
 """
 import json
 import jsonschema
-from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA
+from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA, \
+    load_auth
 from vulcanforge.websocket.exceptions import InvalidMessageException
 
 
@@ -19,18 +20,12 @@ class MessageReactor(object):
     event_queue_key = EVENT_QUEUE_KEY
     incoming_message_schema = INCOMING_MESSAGE_SCHEMA
 
-    def __init__(self, config, redis_client, pubsub_client):
+    def __init__(self, environ, config, auth, redis_client, pubsub_client):
+        self.environ = environ
         self.config = config
         self.redis = redis_client
         self.pubsub = pubsub_client
-        self.authorizer_class = self._load_authorizer()
-        self.authorizer = self.authorizer_class()
-
-    def _load_authorizer(self):
-        path = self.config['websocket.message_authorizer']
-        modulename, classname = path.rsplit(':', 1)
-        module = __import__(modulename, fromlist=[classname])
-        return getattr(module, classname)
+        self.auth = auth
 
     def react(self, message):
         """
@@ -87,7 +82,7 @@ class MessageReactor(object):
         trigger = message.get('trigger')
         if trigger:
             event_targets.update(trigger['targets'])
-        self.authorizer.authorize(listen_channels=listen_channels,
+        self.auth.authorize(listen_channels=listen_channels,
                                   publish_channels=publish_channels,
                                   event_targets=event_targets)
 
