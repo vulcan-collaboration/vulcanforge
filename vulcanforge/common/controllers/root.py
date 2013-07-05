@@ -12,6 +12,7 @@ from vulcanforge.auth.model import User
 from vulcanforge.common.controllers.base import WsgiDispatchController
 from vulcanforge.artifact.controllers import ArtifactReferenceController
 from vulcanforge.auth.controllers import AuthController, UserDiscoverController
+from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
     SwiftAuthRestController
@@ -64,6 +65,7 @@ class ForgeRootController(WsgiDispatchController):
     autocomplete = AutocompleteController()
     dashboard = DashboardRootController()
     designers = UserDiscoverController()
+    error = ErrorController()
     nf = NewForgeController()
     forge_global = ForgeStaticController()
     rest = RestController()
