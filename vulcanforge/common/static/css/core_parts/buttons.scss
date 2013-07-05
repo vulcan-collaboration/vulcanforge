@@ -1,0 +1,104 @@
+/*Remove button padding in FF*/
+input::-moz-focus-inner,
+button::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+a, a:link, a:visited {
+    color: $link-color;
+    text-decoration: none;
+}
+
+a:hover, a:active {
+    text-decoration: none;
+    color: $link-hover-color;
+    cursor: pointer;
+}
+
+.btn,
+.btn:link,
+.btn:visited,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+.qq-upload-button,
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+    border: 1px solid;
+    display: inline-block;
+    font-weight: normal;
+    font-size: $button-font-size;
+    margin: 0 $pu 0 0;
+    overflow: hidden;
+    padding: 0 7px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    text-transform: capitalize;
+    cursor: pointer;
+    vertical-align: middle;
+
+    font-family: Verdana, sans-serif;
+
+    width: auto;
+
+    @extend .bbs;
+
+    @include create_transition(opacity, .2s);
+
+    @include button-skin;
+}
+
+.btn,
+.btn:link,
+.btn:visited,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+.qq-upload-button {
+    border-radius: $button-border-radius;
+    height: auto;
+    min-height: $button-height;
+    line-height: $button-height;
+
+}
+
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+a.btn.link {
+    height: $button-height;
+}
+
+
+.btn:hover,
+.btn:active,
+button:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover,
+.qq-upload-button-hover,
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover,
+.ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus {
+    @include button-hover-skin;
+}
+
+.btn:focus,
+button:focus,
+input:focus,
+select:focus,
+[contenteditable]:focus {
+    @include button-focus-skin;
+}
+
+.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active {
+    border-color: $border-color;
+    box-shadow: none;
+    @include button-active-skin;
+}
+
+button img {
+    vertical-align: middle;
+}

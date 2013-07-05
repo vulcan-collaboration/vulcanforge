@@ -1,0 +1,70 @@
+body.fullscreen-vis{
+    overflow: hidden;
+}
+.visualizer_options{
+    position: absolute;
+    left: 0;
+    font-size: 1.1em;
+    z-index: $panel-above-content-z-index;
+    padding: 6px 0;
+}
+
+.visualizer_options ul{
+    padding: 0;
+    margin: 2px 0;
+    @include panel-skin;
+    @include panel-above-content-skin;
+}
+
+.visualizer_options ul li{
+    display: block;
+    list-style-type: none;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    cursor: pointer;
+    padding: 3px 6px;
+    position: relative;
+}
+
+.visualizer_options ul li:last-child{
+    border-bottom: none;
+}
+
+.vis-fullscreen .visualizerFooter, .vis-fullscreen .visualizerToolbar{
+    width: 100%;
+    background-color: #000;
+}
+
+.vis-fullscreen .visualizerToolbar{
+    height: 36px;
+}
+
+.vis-fullscreen .visualizerWrapper{
+    padding-top: 30px;
+}
+
+body.vis-fullscreen .visualizerTabs {
+    margin: 0;
+}
+
+.visualizerContainer div.grid-19{
+    float: none;
+    display: block;
+    width: auto;
+}
+
+a.more-btn{
+    border: none;
+}
+
+.callout-wrapper {
+    padding: 0px;
+    background-color: transparent;
+    width: 20px;
+    height: 10px;
+}
+
+.callout-wrapper svg {
+    fill: $border-color;
+    stroke-width:0;
+}

@@ -1,0 +1,87 @@
+#sidebar:focus {
+    outline:none;
+}
+
+#sidebar li small {
+    border: medium none;
+    border-radius: 4px 4px 4px 4px;
+    display: inline-block;
+    margin: 0 0 0 4px;
+    padding: 0 3px;
+    position: absolute;
+    right: 5px;
+    text-align: center;
+    top: 12px;
+    width: 26px;
+    float: right;
+
+    @include sidebar-small-skin;
+}
+
+.sidebarmenu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 3*$pu 0;
+
+    font-size: 12px;
+    @include sidebar-menu-skin;
+}
+
+.sidebarmenu li {
+    text-align: left;
+    position: relative;
+    @include sidebar-menu-item-skin;
+}
+
+.sidebarmenu li.active {
+  text-align: left;
+  position: relative
+}
+
+.sidebarmenu li:first-child {
+   border-top: 1px solid;
+   @include sidebar-menu-item-first-child-skin;
+}
+
+.sidebarmenu a {
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .15);
+    display: inline-block;
+    width: 150px;
+    padding: 12px 10px 10px 10px;
+}
+
+.sidebarmenu {
+  a:link,
+  a:visited {
+    @include sidebar-menu-link-skin;
+  }
+}
+
+.sidebarmenu {
+  a:active,
+  a:hover {
+    @include sidebar-menu-link-hover-skin;
+  }
+}
+
+.sidebarmenu .active {
+  a:link,
+  a:visited {
+    @include sidebar-menu-active-link-skin;
+  }
+}
+
+.sidebarmenu .active {
+  a:active,
+  a:hover {
+    @include sidebar-menu-active-link-hover-skin;
+  }
+}
+
+.sidebar h3 {
+    margin: 0;
+    padding: 1em 1ex 4px 1ex;
+    font-size: 1em;
+    @include sidebar-header-skin;
+}

@@ -1,0 +1,100 @@
+.avatar > ul.extras {
+    list-style-type: none;
+    padding-left: 0;
+    font-size: $small-font-size;
+    margin: 0;
+}
+
+.avatar small {
+    font-size: 10px;
+    line-height: 10px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.avatar-list {
+    display: inline-block;
+    margin-left: 2*$pu;
+    vertical-align: top;
+}
+
+.avatar-list > .avatar {
+    vertical-align: middle;
+    display: inline-block;
+    text-align: center;
+}
+
+
+p.avatar {
+    margin-top: 0;
+}
+
+.editbox .avatar {
+    background-image: url(../images/lil_elbow.png);
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    width: auto !important;
+    margin-left: 4 * $pu;
+    padding-left: 7px;
+    margin-top: $pu;
+    line-height: .9em;
+}
+
+.editbox .avatar>label {
+    font-weight: normal;
+    font-size: 10px;
+    text-transform: lowercase;
+    position: relative;
+    top: -4px;
+    margin-right: 2px;
+}
+
+
+.editbox .view_holder>div {
+    margin-top: 4px;
+    margin-right: 2px;
+}
+
+/* user browse */
+
+.user-list-container {
+    padding-top: $pu;
+}
+
+.user-list-item {
+    display: inline-block;
+    text-align: center;
+    vertical-align: top;
+    margin-right: $user-list-margin-right;
+    margin-top: $user-list-margin-top;
+    padding: $pu;
+    border-radius: $pu;
+
+    @include user-list-item-skin;
+}
+
+.user-list-item .user-name {
+    font-size: 11px;
+    vertical-align: top;
+    display: inline-block;
+    text-align: left;
+}
+
+.user-list-item .user-name img {
+    display: inline-block;
+    border-radius: 5px;
+    border: 1px solid #fff;
+    overflow: hidden;
+    border-collapse: collapse;
+}
+
+.user-list-item ul.extras {
+    display: inline-block;
+    width: 80px;
+    vertical-align: middle;
+    line-height: 13px;
+}
+
+.user-list-item ul.extras li {
+    text-align: left;
+}

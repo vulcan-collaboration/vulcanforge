@@ -1,0 +1,72 @@
+#forge-toolbar {
+    z-index: $forge-toolbar-z-index;
+    position: absolute;
+    left: 182px;
+    margin: 0;
+    padding: 0px;
+    list-style-type: none;
+    overflow: auto;
+}
+
+#forge-toolbar li {
+    display: block;
+    float: left;
+    position: relative;
+    margin: 2px 8px;
+    background-repeat: no-repeat;
+}
+
+#forge-toolbar li a {
+    display: block;
+    width: 36px;
+    height: 36px;
+
+    @include create_transition(background-color, .2s);
+}
+
+#forge-toolbar li a span {
+    display: none;
+}
+
+#forge-toolbar li a:hover {
+    text-decoration: none;
+}
+
+$forge-toolbar-icons: sprite-map("images/forge_toolbar_icons/*.png");
+
+#forge-toolbar #discover-components {
+    background: sprite($forge-toolbar-icons, components_icon_off) no-repeat;
+}
+
+#forge-toolbar #discover-components:hover {
+    background: $forge-toolbar-hover-background-color sprite($forge-toolbar-icons, components_icon_on) no-repeat;
+}
+
+#forge-toolbar #discover-projects {
+    background: sprite($forge-toolbar-icons, projects_icon_off) no-repeat;
+}
+
+#forge-toolbar #discover-projects:hover {
+    background: $forge-toolbar-hover-background-color sprite($forge-toolbar-icons, projects_icon_on) no-repeat;
+}
+
+#forge-toolbar #discover-designers {
+    background: sprite($forge-toolbar-icons, designers_icon_off) no-repeat;
+}
+
+#forge-toolbar #discover-designers:hover {
+    background: $forge-toolbar-hover-background-color sprite($forge-toolbar-icons, designers_icon_on) no-repeat;
+}
+
+#forge-toolbar #discover-competitions {
+    width: 109px;
+    height: 30px;
+    margin: 3px 0;
+    background: url('../images/fang_logo_header_short.png') center no-repeat;
+    opacity: 0.7;
+}
+
+#forge-toolbar #discover-competitions:hover {
+    background-color: $forge-toolbar-hover-background-color;
+    opacity: 1;
+}

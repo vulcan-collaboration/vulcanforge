@@ -1,0 +1,272 @@
+$post-avatar-witdh: 100px;
+$post-avatar-column-witdh: 100px;
+$post-max-witdh: 100%;
+$post-extras-height: 1.7em;
+$post-options-width: 80px;
+
+.post-centerpart {
+  margin-left: $post-avatar-witdh;
+  margin-right: $post-options-width;
+}
+
+.posts-holder {
+  border: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.posts-holder.new {
+  margin-top: $pu*2;
+}
+
+
+.post-avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: $pu $pu*2;
+  width: $post-avatar-witdh;
+  text-align: center;
+  @extend .bbs;
+}
+
+.post-thread-replies,
+.post-thread-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0;
+}
+
+.post.old:hover,
+.post.old:hover {
+
+    @include post-hover-skin;
+}
+
+.post-body {
+  vertical-align: top;
+  margin: 0;
+  padding: 0;
+}
+
+.edit-post,
+.post-creator{
+  padding: $pu*2 $pu*2 $pu 0;
+}
+
+.post.reply,
+.post.new {
+    .edit-post,
+    .post-creator{
+      @extend .post-centerpart;
+    }
+}
+
+.post.edit {
+    .edit-post,
+    .post-creator{
+      margin-left: 2 * $pu;
+    }
+}
+
+.post-creator {
+    display: block;
+
+    @include post-creator-skin;
+}
+
+.new-post-connector {
+  width: 30px;
+  height: 19px;
+  margin-left: 35px;
+}
+
+.new-post-connector svg {
+    fill: $new-post-background-color;
+    stroke-width: 0;
+}
+
+.post {
+    position: relative;
+    max-width: $post-max-witdh;
+}
+
+.post.edit,
+.post.reply,
+.post.new {
+    background-color: $new-post-background-color;
+}
+
+.post.old {
+    border-top: 1px dotted $border-color;
+}
+
+.post-columns {
+    @extend .horizontal-stretching;
+    width: 100%;
+}
+
+
+.post-body-column {
+    @include box-flex(1);
+}
+
+.no-posts {
+    @extend .padded;
+}
+
+.discussion-holder {
+    padding-top: $pu*2;
+}
+
+.post-avatar-column {
+  padding: $pu*2 $pu*4;
+  text-align: center;
+  width: $post-avatar-column-witdh;
+}
+
+.post-thread-replies .post-avatar-column {
+    padding: $pu*2 $pu $pu*2 0;
+    width: $post-avatar-column-witdh * 0.8;
+}
+
+h2.discussion-title {
+  margin: 0;
+  @extend .padded;
+}
+
+
+.post-options {
+
+    list-style-type: none;
+    padding: $pu $pu 0;
+
+    text-align: center;
+
+    width: $post-options-width;
+
+    opacity: 0;
+
+    transition: opacity .4s;
+    -moz-transition: opacity .4s; /* Firefox 4 */
+    -webkit-transition: opacity .4s; /* Safari and Chrome */
+    -o-transition: opacity .4s;
+}
+
+.post-options > li {
+    width: 100%;
+    position: relative;
+}
+
+.post-options > li button {
+    width: 100%;
+    border-radius: 0;
+    text-align: left;
+}
+
+:hover > .post-options {
+    opacity: 1;
+}
+
+
+.info-button-container {
+    position: absolute;
+    top: 0;
+    left: -20px;
+
+    transition: opacity .4s;
+    -moz-transition: opacity .4s; /* Firefox 4 */
+    -webkit-transition: opacity .4s; /* Safari and Chrome */
+    -o-transition: opacity .4s;
+}
+
+.post .info-button-container {
+    opacity: 0;
+}
+
+.post:hover .info-button-container {
+    opacity: 1;
+}
+
+.post-attachments {
+  padding: 0 0 2*$pu;
+  border-top: 0;
+  margin-top: 0;
+}
+
+.post-extras {
+    list-style-type: none;
+    padding: 0;
+    line-height: 1.1em;
+    color: $quiet-color;
+    font-size: .8em;
+    text-align: center;
+    margin-top: $pu;
+    width: $post-extras-width;
+
+    @extend .bbs;
+}
+
+.post-extras li {
+    display: inline-block;
+    height: $post-extras-height;
+}
+
+.post-thread-replies {
+    padding-left: $post-avatar-witdh/4;
+}
+
+
+/* Old stuff */
+
+#forums table.holder_table {
+  width: auto;
+}
+
+#forums .editable a.edit_btn {
+  display: none;
+}
+
+.viewing .editor {
+  display: none;
+}
+
+.editing .viewer {
+  display: none;
+}
+
+div.markdown_content > p {
+  margin-left: 0;
+}
+
+#forums td.forum_action_cont {
+  text-align: center;
+}
+
+#forums td.forum_action_cont .btn {
+  float: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#forums td.forum_action_cont a {
+  width: 53px;
+}
+
+#forums td.forum_action_cont input {
+  width: 69px;
+}
+
+#forums td.forum_action_cont a.forum_cancel_edit {
+  display: none;
+}
+
+#forums span.icon_uploader input {
+  font-size: 10px;
+}
+
+#forums textarea {
+  resize: none;
+}
+

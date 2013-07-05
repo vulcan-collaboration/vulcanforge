@@ -1,0 +1,674 @@
+form {
+    overflow: visible;
+}
+
+input:not([type]),
+input[type="text"],
+input[type="password"],
+input[type="color"],
+input[type="date"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="email"],
+input[type="month"],
+input[type="number"],
+input[type="range"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+input[type="week"],
+ textarea, select,
+.popup_contents button,
+label {
+    @extend .bbs;
+    display: inline-block;
+    outline: medium none;
+    font-size: 12px;
+    line-height: 1.1em;
+}
+
+input:not([type]),
+input[type="text"],
+input[type="password"],
+input[type="color"],
+input[type="date"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="email"],
+input[type="month"],
+input[type="number"],
+input[type="range"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+input[type="week"],
+textarea,
+select,
+.popup_contents button {
+    width: $field-width;
+}
+
+input.long,
+textarea.long,
+select.long {
+    width: $long-field-width;
+}
+
+input.short,
+textarea.short,
+select.short {
+    width: $short-field-width;
+}
+
+label {
+    color: $field-label-color;
+    font-weight: bold;
+    padding: $pu 0;
+    border: none;
+    margin-right: $pu;
+    text-transform: capitalize;
+}
+
+fieldset {
+    border: 1px solid $border-color;
+}
+
+input:not([type]),
+input[type="text"],
+input[type="password"],
+input[type="color"],
+input[type="date"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="email"],
+input[type="month"],
+input[type="number"],
+input[type="range"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+input[type="week"],
+textarea, select,
+.popup_contents button {
+
+    color: $content-color;
+    box-shadow: 0 1px $input-box-shadow;
+    border: 1px solid $border-color;
+    border-radius: $pu;
+    padding: $pu / 2;
+
+}
+
+textarea#key {
+    width: 600px;
+    border-radius: 0;
+    height: 5em;
+    resize: none;
+    font-family: "Courier New", Monospace;
+}
+
+textarea.big-textarea {
+    width: 100%;
+    height: 15em;
+}
+
+input[type=file] {
+    box-shadow: none;
+}
+
+.file-inputs {
+    position: relative;
+    display: inline-block;
+}
+
+.real-file {
+	position: absolute;
+	text-align: right;
+	opacity: 0;
+    left: -999999px;
+}
+
+.fake-file-holder {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.fake-file {
+    line-height: $button-height;
+    color: $quiet-color;
+    font-style: italic;
+    vertical-align: middle;
+}
+
+textarea {
+    border-radius: 2 * $pu;
+    overflow-x: hidden;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+    border-color: $accent-color;
+}
+
+input[disabled]:hover,
+textarea[disabled]:hover,
+select[disabled]:hover {
+    border-color: $quiet-color;
+}
+
+form input.invalid {
+    background: #fcc;
+    border-color: #f00;
+}
+
+.attachment-form-fields {
+    padding: 0;
+}
+
+#loginform  form, #loginform_oid form {
+    padding-left: 10px;
+}
+
+.field-list {
+    list-style-type: none;
+    margin: 2*$pu 0 3*$pu;
+    overflow: auto;
+}
+
+.field-list > li > input[type="text"],
+.field-list > li > input[type="password"],
+.field-list > li > input[type="file"],
+.field-list > li > input[type="color"],
+.field-list > li > input[type="date"],
+.field-list > li > input[type="datetime"],
+.field-list > li > input[type="datetime-local"],
+.field-list > li > input[type="email"],
+.field-list > li > input[type="month"],
+.field-list > li > input[type="number"],
+.field-list > li > input[type="range"],
+.field-list > li > input[type="search"],
+.field-list > li > input[type="tel"],
+.field-list > li > input[type="time"],
+.field-list > li > input[type="url"],
+.field-list > li > input[type="week"] {
+    display: inline-block;
+}
+
+.field-list > li {
+    padding: 0;
+    min-height: $button-height+2px;
+    margin: 0.5ex 0;
+}
+
+.field-list-item {
+    float: left;
+    display: table;
+    table-layout: fixed;
+    width: 50%;
+}
+
+.field-list-item-wide {
+    width: 100%;
+}
+
+.field-list-item-label {
+    display: table-cell;
+    width: $label-width;
+    vertical-align: top;
+}
+
+.field-list-item-wide .field-list-item-label {
+    width: $wide-label-width;
+}
+
+
+.field-list-item-field {
+//    display: table-cell;  Blocks positioning the error message
+    position: relative;
+}
+
+.field-list-item-field:first-child:last-child {
+    display: table-row;
+}
+
+.field-list-two-column > li {
+    float: left;
+    width: 50%;
+}
+
+.field-list-two-column > li:nth-child(odd) {
+    clear: both;
+}
+
+.prt label {
+    width: $label-width;
+}
+
+.label-edit-holder {
+    display: inline-block;
+    line-height: 1.1em;
+    @extend .bbs;
+}
+
+input.label-edit {
+    width: $short-field-width;
+}
+
+.labelList,
+.tagEditor {
+	margin: 0 0 0 $pu;
+	padding: 1px;
+    line-height: 1.1em;
+    display: inline-block;
+}
+
+.tagEditor {
+    width: $tag-editor-width;
+}
+
+
+.labelList-container {
+    clear: both;
+    overflow: auto;
+    padding: $pu*2 0;
+    text-align: center;
+    border-top: 1px dotted $border-color;
+}
+
+.labelList > li,
+.tagEditor > li {
+	display: inline-block;
+	background-color: $button-background-color;
+	list-style-type: none;
+	margin: 1px 2px;
+	cursor: pointer;
+	border-radius: $tag-height / 2;
+	color: $tag-color;
+    font-size: $tag-height - 6px;
+    line-height: $tag-height;
+    height: $tag-height;
+    @extend .bbs;
+}
+
+.tagEditor > li {
+	padding: 0 $pu/2 0 $pu;
+}
+
+.labelList > li {
+	padding: 0 $pu 0 $pu;
+}
+
+.labelList > li:hover,
+.tagEditor > li:hover {
+	background-color: $button-hover-background-color;
+    color: $tag-hover-color;
+}
+
+.labelList > li:after,
+.tagEditor > li:after {
+    font-size: $tag-height - 7px;
+}
+
+.labelList > li a,
+.tagEditor > li a {
+    color: inherit;
+}
+
+.form-controls {
+    padding: $pu*3 $pu*2;
+    margin-top: $pu;
+
+    @include form-controls-skin();
+}
+
+form.embedded .form-controls {
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}
+
+.form-controls input {
+    margin: 0 $pu 0 0 !important;
+}
+
+form.fix-controls {
+    padding-bottom: 60px;
+}
+
+form.fix-controls .form-controls {
+    position: fixed;
+    bottom: $footer-height;
+    width: 100%;
+}
+
+.attachment-list {
+    list-style: none;
+    padding: $pu 0;
+    display: block;
+    margin: 0;
+}
+
+.attachment-label {
+    margin: 0;
+}
+
+.attachment-list li {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.attachment{
+    position: relative;
+    z-index: 10;
+    padding: 1ex;
+    margin: 1ex;
+}
+
+.attachment:hover,
+.attachment.vo-engaged {
+    z-index: 11;
+    background: rgba(0,0,0,0.04);
+}
+
+.img-thumb img {
+    display: inline-block;
+    border: 1px solid $border-color;
+    position: relative;
+}
+
+.img-thumb:hover img {
+    border-color: $border-hover-color;
+}
+
+.img-thumb-wrapper {
+    display: block;
+    text-align: center;
+}
+
+a.attachment-actions {
+    display: inline-block;
+}
+
+.attachment-list-wrapper {
+    border-top: 1px dotted $border-color;
+    margin-top: $pu;
+    padding-top: $pu;
+    padding-bottom: $pu;
+}
+
+.file-link {
+    vertical-align: text-top;
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow-x: hidden;
+    white-space: nowrap;
+    line-height: 1.6em;
+}
+
+.file-link-wrapper {
+    display: block;
+}
+
+.attachment-note {
+    color: #808080;
+}
+
+.property-list {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0;
+    text-align: center;
+    list-style: none;
+    font-size: 0.85em;
+}
+
+.property-list > li {
+    display: inline-block;
+    min-width: $property-list-item-width;
+    max-width: 3*$property-list-item-width;
+    vertical-align: top;
+}
+
+.property-list > li > .label,
+.property-list > li > .value {
+    display: block;
+    margin: 1px 0;
+    padding: 1ex;
+}
+
+.property-list > li > .label {
+    font-weight: bold;
+    @include property-list-item-label-skin;
+}
+
+.property-list > li > .value {
+    @include property-list-item-value-skin;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+form.embedded {
+    margin-bottom: 2*$pu;
+    @include form-embedded-skin;
+}
+
+
+fieldset {
+    border: none;
+    border-radius: 3px;
+    padding: 1px 1em;
+    margin: 0 0 1em 0;
+
+    @include fieldset-skin;
+}
+
+legend {
+    padding: $pu $pu*2;
+    font-weight: bold;
+    font-size: 1em;
+
+    @include legend-skin;
+}
+
+.vf-fieldset label {
+    display: inline;
+}
+
+.info {
+    margin: $pu*2;
+    padding: $pu;
+
+    @include info-skin;
+}
+
+.fieldset-panel {
+    margin: $pu*2;
+    padding: $pu;
+    @extend .bbs;
+
+    @include fieldset-panel-skin;
+}
+
+.info legend {
+    @include info-legend-skin;
+}
+.info legend::before {
+    margin-right: 1ex;
+}
+
+.info > h2 {
+    margin: $pu 0;
+}
+
+.info a:link {
+    text-decoration: underline;
+}
+
+form > div {
+    @extend .padded;
+}
+
+form div.error,
+form .fielderror,
+.warning_text {
+    display: inline-block;
+    background-color: $error-color;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 0;
+    padding: 3px $pu;
+}
+
+.field-list-item-field > div .fielderror {
+    position: absolute;
+    left: $field-width;
+    margin-left: 2*$pu;
+}
+
+.wide-table {
+    width: 100%;
+}
+
+.vf-field-list {
+    margin: 1em 0;
+}
+
+.vf-form-controls {
+    padding: 1em;
+    background: rgba(0,0,0,0.15);
+    box-shadow: inset 0 0 1em rgba(0, 0, 0, 0.35),
+                0 1px 0px rgba(255,255,255,0.2),
+                inset 0 1px 0 rgba(0,0,0,0.2);
+    border-radius: 3px;
+}
+
+.fieldset-panel legend {
+    @include fieldset-panel-legend-skin;
+}
+
+// Repository access dropdown list
+
+#repo-access-urls {
+    text-align: center;
+    white-space: nowrap;
+}
+
+#repo-access-url {
+    width: 60%;
+}
+
+#repo-access-type {
+    width: 20%;
+}
+
+.large-button,
+button.large-button,
+input.large-button,
+input[type="submit"].large-button,
+input[type="button"].large-button  {
+    height: auto;
+    border-radius: 7px;
+    font-size: 14px;
+    padding: 1.5ex;
+}
+
+
+.primary-button,
+a.primary-button,
+a.primary-button:link,
+a.primary-button:visited,
+button.primary-button,
+input.primary-button,
+input[type="submit"].primary-button,
+input[type="button"].primary-button  {
+    border: 1px solid #444;
+    color: #fff;
+    text-shadow: 0 1px 2px black;
+    display: inline-block;
+    @include linearGradient2(top, #39f 19%, #36c 85%);
+}
+
+.primary-button:hover,
+a.primary-button:hover,
+button.primary-button:hover,
+input.primary-button:hover,
+input[type="submit"].primary-button:hover,
+input[type="button"].primary-button:hover  {
+    @include linearGradient2(top, #f93 19%, #ff8000 85%);
+}
+
+input:disabled, input[type="button"]:disabled, input[type="button"]:disabled:hover {
+background: rgba(0,0,0,0.1);
+color: rgba(0,0,0,0.4);
+border-color: rgba(0,0,0,0.2);
+font-weight: normal;
+text-shadow: none;
+cursor: default;
+}
+
+.terms-agree textarea, .terms-agree iframe {
+    width: 600px;
+    height: 225px;
+}
+
+fieldset.vf-fieldset
+{
+    margin: 1em 0;
+    padding: 1em;
+}
+fieldset.vf-fieldset legend
+{
+    border-radius: 3px;
+    background: #777;
+    color: white;
+    box-shadow: inset 0 0 1em #666;
+    text-shadow: 0 0 4px #444;
+}
+
+/* perilous fieldsets */
+fieldset.perilous
+{
+    background-color: rgba(255,0,0,0.05);
+}
+fieldset.perilous legend
+{
+    background: #f44;
+    box-shadow: inset 0 0 1em #c00;
+    text-shadow: 0 0 4px #800;
+}
+/* */
+
+
+textarea.terms {
+    padding: 1em;
+}
+
+.terms-agreement-div
+{
+    width: 650px;
+    max-height: 250px;
+    overflow: auto;
+    padding: 1ex 1em;
+    border: 1px solid #aaa;
+    border-radius: 1ex;
+    background: white;
+}
+
+.field-list-item .vf-fieldset:first-child {
+    margin-top: 1ex;
+}
+
+.field-list-item .vf-fieldset:last-child {
+    margin-bottom: 1ex;
+}
+

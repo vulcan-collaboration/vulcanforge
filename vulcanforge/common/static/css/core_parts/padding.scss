@@ -1,0 +1,40 @@
+/* Padders, spacers */
+
+.CL, .clear {
+    clear: both;
+}
+
+
+.padded {
+    padding: 0 $content-side-padding 0 $content-side-padding;
+}
+
+.top-spaced {
+    margin-top: $content-top-padding;
+}
+
+.bottom-spaced {
+    padding-bottom: $content-bottom-padding;
+}
+
+.top-fixed {
+    position: fixed;
+    top: $header-wrapper-height+$forge-toolbar-height;
+}
+
+.flash-for-parent {
+    opacity: 0;
+    @include create_transition(opacity, .3s);
+}
+
+:hover > .flash-for-parent {
+    opacity: 1;
+}
+
+.auto-width {
+    width: auto;
+}
+
+p {
+    max-width: 1000px;
+}

@@ -1,0 +1,81 @@
+#project-floating-details {
+    margin: $pu 0 0 0;
+    padding: 0;
+    text-align: right;
+    width: inherit;
+}
+
+#project-floating-details > * {
+    display: inline-block;
+}
+
+#project-floating-details button {
+    float: none;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+#project-floating-details button::-moz-focus-inner {
+    padding: 0;
+    margin: 0;
+}
+
+#project-floating-details h1 {
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    font-weight: normal;
+}
+
+#project-floating-details .actions {
+    margin: 1ex 4px;
+}
+
+#project-floating-details .actions .action {
+    position: relative;
+    overflow: visible;
+    margin: 4px 0;
+    cursor: pointer;
+}
+
+#project-floating-details .actions .action button {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+}
+#project-floating-details .actions .action .label {
+    display: none;
+}
+#project-floating-details .actions .action .counter {
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 20px;
+    font-size: 9px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    line-height: 1em;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 1px 2px black;
+}
+
+#project-floating-details .actions .watch button {
+    background: url(../images/watch-20-gray.png) no-repeat center;
+}
+
+#project-floating-details .actions .watch:hover button {
+    background-image: url(../images/watch-20-pink.png);
+}
+
+#project-floating-details.watched .actions .watch button {
+    background-image: url(../images/watch-20-blue.png);
+}
+
+#project-floating-details.watched .actions .watch:hover button {
+    background-image: url(../images/watch-20-pink.png);
+}

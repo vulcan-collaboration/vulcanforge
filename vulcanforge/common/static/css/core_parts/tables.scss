@@ -1,0 +1,71 @@
+table {
+    font-size: inherit;
+}
+
+table.content-table {
+    width: 100%;
+}
+
+table thead tr th, table tr td {
+    padding: 3px 6px;
+}
+
+table th {
+    background-color: #e5e5e5;
+    text-align: left;
+    text-shadow: 0 1px 0 #FFFFFF;
+}
+
+table th, table td, table caption {
+    vertical-align: middle;
+}
+
+.vf-table {
+    margin: 2em 0;
+    width: 100%;
+    box-shadow: inset 0 0 1em rgba(0,0,0,0.05);
+    border-collapse: collapse;
+    border-spacing: 0;
+    border-radius: 3px;
+}
+.vf-table th,
+.vf-table td {
+    padding: 0.5ex;
+}
+.vf-table thead td,
+.vf-table thead th {
+    background: none;
+    text-align: center;
+}
+.vf-table thead {
+    background: rgba(0,0,0,0.08);
+}
+.vf-table tbody {
+    background: rgba(0,0,0,0.01);
+}
+.vf-table tbody tr:nth-child(odd) {
+    background: rgba(0,0,0,0.02);
+}
+.vf-table tbody tr:hover {
+    background: #ebeff6;
+}
+
+.vf-table tbody tr.no-hover {
+  background-color: transparent;
+}
+
+
+.item-actions {
+    margin: 0 $pu;
+    font-size: 0;
+    vertical-align: middle;
+    text-align: left
+}
+
+table.hover-rows tr:hover {
+    background-color: $table-row-hover-color;
+}
+
+table.hover-rows tr.no-hover {
+    background-color: transparent;
+}
