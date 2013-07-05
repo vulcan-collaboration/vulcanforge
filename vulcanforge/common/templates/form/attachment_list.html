@@ -1,7 +1,7 @@
 {% if attachments %}
 <div class="attachment-list-wrapper padded {{extraCSS}}">
     <label class="attachment-label">Attachments:</label>
-    <ul class="attachment-list">
+    <ul class="attachment-list"{% if context_id %} id="attachment-list-{{ context_id }}"{% endif %}>
         {% for att in attachments %}
         <li class="attachment-wrapper">{{widgets.attachment.display(value=att, delete_url=has_del_permission and
             widget.get_delete_url(att))}}

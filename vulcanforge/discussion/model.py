@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import re
 from ming.utils import LazyProperty
 
 import pymongo
@@ -172,13 +173,16 @@ class AbstractThread(Artifact):
 
     def add_post(self, **kw):
         """Helper function to avoid code duplication."""
-        p = self.post(**kw)
-        p.commit()
+        post = self.post(**kw)
+        post.commit()
+        self.add_post_obj(post)
+
+    def add_post_obj(self, post):
         self.num_replies += 1
         if not self.first_post:
-            self.first_post_id = p._id
-        Feed.post(self, title=p.subject, description=p.text)
-        return p
+            self.first_post_id = post._id
+        Feed.post(self, title=post.subject, description=post.text)
+        return post
 
     def update_stats(self):
         self.num_replies = self.post_class().query.find(
@@ -545,6 +549,16 @@ class AbstractPost(Message, VersionedArtifact):
     def spam(self):
         self.status = 'spam'
         g.post_event('spam', self.index_id())
+
+    def expand_markdown_attachment_urls(self, attachments=None):
+        """Replace relative links to attachments with absolute"""
+        if attachments is None:
+            attachments = self.attachments
+        for att in attachments:
+            self.text = re.sub(
+                'src="?{}"?'.format(att.filename),
+                'src="{}"'.format(att.url()),
+                self.text)
 
 
 class Post(AbstractPost):

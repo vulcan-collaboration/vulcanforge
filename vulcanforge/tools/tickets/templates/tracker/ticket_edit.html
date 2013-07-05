@@ -44,9 +44,9 @@
             </li>
         </ul>
     </div>
-    {{ c.ticket_update_form.display(action='update_ticket', value=ticket, ticket=ticket) }}
+    {{ c.ticket_update_form.display(action='update_ticket', value=ticket, ticket=ticket, attachment_context_id=attachment_context_id) }}
 {% endblock %}
 
 {% block after_content %}
-    {{ c.attachment_list.display(value=ticket) }}
+    {{ c.attachment_list.display(value=ticket, context_id=attachment_context_id) }}
 {% endblock %}

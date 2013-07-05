@@ -101,22 +101,25 @@ class PostController(BaseController):
         if request.method == 'POST':
             g.security.require_access(self.post, 'moderate')
             posted_values = variable_decode(request.POST)
+            attachments = []
             for attachment in posted_values.pop('new_attachments', []):
                 if not hasattr(attachment, 'file'):
                     continue
-                self.post.attach(
-                    attachment.filename,
-                    attachment.file,
-                    content_type=attachment.type,
-                    post_id=self.post._id,
-                    thread_id=self.post.thread_id,
-                    discussion_id=self.post.discussion_id)
+                attachments.append(
+                    self.post.attach(
+                        attachment.filename,
+                        attachment.file,
+                        content_type=attachment.type,
+                        post_id=self.post._id,
+                        thread_id=self.post.thread_id,
+                        discussion_id=self.post.discussion_id))
             post_fields = self.Forms.edit_post.to_python(kw, None)
             for k, v in post_fields.iteritems():
                 try:
                     setattr(self.post, k, v)
                 except AttributeError:
                     continue
+            self.post.expand_markdown_attachment_urls(attachments)
             self.post.edit_count = self.post.edit_count + 1
             self.post.last_edit_date = datetime.utcnow()
             self.post.last_edit_by_id = c.user._id
@@ -273,18 +276,25 @@ class ThreadController(BaseController):
             flash('Your post was not saved. You must provide content.',
                   'error')
             redirect(request.referer or 'index')
-        p = self.thread.add_post(**kw)
+        post = self.thread.post(**kw)
         posted_values = variable_decode(request.POST)
+        attachments = []
         for attachment in posted_values.get('new_attachments', []):
             if not hasattr(attachment, 'file'):
                 continue
-            p.attach(
-                attachment.filename,
-                attachment.file,
-                content_type=attachment.type,
-                post_id=p._id,
-                thread_id=p.thread_id,
-                discussion_id=p.discussion_id)
+            attachments.append(
+                post.attach(
+                    attachment.filename,
+                    attachment.file,
+                    content_type=attachment.type,
+                    post_id=post._id,
+                    thread_id=post.thread_id,
+                    discussion_id=post.discussion_id)
+            )
+
+        # replace relative urls with absolute
+        post.expand_markdown_attachment_urls(attachments)
+
         if self.thread.artifact:
             self.thread.artifact.mod_date = datetime.utcnow()
         flash('Message posted')

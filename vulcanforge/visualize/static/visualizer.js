@@ -5,7 +5,6 @@
         defaults = {
             targetAlign: "right bottom",
             linksAlign: "right top",
-            offset: "0 0"
         },
         AltResourceManager;
 
@@ -118,7 +117,6 @@
     };
 
     $.fn.visualizerOptions = function(options){
-
         options = $.extend(true, {},
             defaults,
             {},

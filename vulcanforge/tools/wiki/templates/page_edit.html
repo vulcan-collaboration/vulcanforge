@@ -36,7 +36,7 @@
         <li>
             <label>Content:</label>
             <div>
-                {{c.markdown_editor.display(id='text', name='text',value=page.text)}}
+                {{c.markdown_editor.display(id='text', name='text', value=page.text, attachment_context_id=attachment_context_id)}}
             </div>
         </li>
         {% if not page_exists or g.security.has_access(page, 'edit') %}
@@ -52,7 +52,7 @@
     </div>
 </form>
     {% if page_exists %}
-        {{c.attachment_list.display(value=page)}}
+        {{c.attachment_list.display(value=page, context_id=attachment_context_id)}}
     {% endif %}
 {% endblock %}
 

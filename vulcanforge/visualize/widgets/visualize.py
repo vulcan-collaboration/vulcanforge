@@ -378,7 +378,7 @@ class DesignSpace(BaseContentWidget):
 
         page_JS_urls = [
             'js/lib/jquery/jquery.1.7.2.min.js',
-            'js/lib/jquery/jquery-ui.1.8.19.min.js',
+            'js/lib/jquery/jquery-ui.1.10.3.min.js',
             'js/lib/jquery/jquery.qtip.js',
             'js/lib/raphael/raphael.js',
             'js/lib/utils.js',

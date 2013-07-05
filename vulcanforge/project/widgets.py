@@ -111,7 +111,7 @@ class ProjectUserSelect(ew.InputField):
             if ($input.length) {
                 $input.data( "autocomplete" )._renderItem = function( ul, item ) {
                     return $( "<li></li>" ).
-                        data( "item.autocomplete", item ).
+                        data( "ui-autocomplete-item", item ).
                         append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
                         appendTo( ul );
                 };

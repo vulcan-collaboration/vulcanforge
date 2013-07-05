@@ -137,6 +137,7 @@ class EditPost(ff.ForgeForm):
         value=None,
         show_cancel=True,
         embedded=False,
+        attachment_context_id=None
     )
 
     @property
@@ -152,8 +153,8 @@ class EditPost(ff.ForgeForm):
         fields.append(ew.HiddenField(name='forum', if_missing=None))
         if ew_core.widget_context.widget and ew_core.widget_context.render_context:
             # we are being displayed
-            if ew_core.widget_context.render_context.get('show_subject',
-                                                         self.show_subject):
+            if ew_core.widget_context.render_context.get(
+                    'show_subject', self.show_subject):
                 fields.append(ew.TextField(name='subject'))
         else:
             # We are being validated
@@ -295,9 +296,11 @@ class PostWidget(HierWidget):
         yield JSLink('visualize/visualizer.js')
         yield JSLink('discussion/post.js')
 
-    def display(self, value=None, **kw):
+    def display(self, value=None, attachment_context_id=None, **kw):
         last_edit_name, last_edit_date = None, None
         if value is not None:
+            if attachment_context_id is None:
+                attachment_context_id = str(value.slug)
             if value.edit_count:
                 last_edit_date = value.last_edit_date
                 if value.author().display_name != value.last_edit_by().display_name:
@@ -305,12 +308,10 @@ class PostWidget(HierWidget):
             else:
                 last_edit_date = value.timestamp
 
-        return HierWidget.display(self,
-                                  value=value,
-                                  last_edit_date=last_edit_date,
-                                  last_edit_name=last_edit_name,
-                                  **kw
-        )
+        return HierWidget.display(
+            self, value=value, last_edit_date=last_edit_date,
+            attachment_context_id=attachment_context_id,
+            last_edit_name=last_edit_name, **kw)
 
 
 class PostThread(ew_core.Widget):
