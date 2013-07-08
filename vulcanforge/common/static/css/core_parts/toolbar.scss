@@ -1,0 +1,17 @@
+.toolbar-item {
+    position: relative;
+}
+
+.toolbar-item-counter {
+    position: absolute;
+    top: -0.5ex;
+    right: -0.5ex;
+    display: block;
+    padding: 1px 2px;
+    font-size: 10px;
+    line-height: 10px;
+    background-color: #aaa;
+    color: #333;
+    box-shadow: 0 0 3px black;
+    text-align: center;
+}

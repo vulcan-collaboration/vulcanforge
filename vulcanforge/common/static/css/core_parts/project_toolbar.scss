@@ -1,0 +1,266 @@
+#project-toolbar {
+  width: $left-toolbar-width;
+  background-position: top;
+  background-repeat: repeat-x;
+  padding: $pu*2 0;
+  position: relative;
+  z-index: $project-toolbar-z-index;
+
+  @include project-toolbar-skin;
+}
+
+#project-toolbar .links {
+    padding: 0;
+    text-align: center;
+}
+
+#project-toolbar .links li {
+    display: block;
+    width: auto;
+    padding: 0;
+    overflow: visible;
+}
+
+.tool-link,
+.tool-link:link,
+.tool-link:visited,
+#project-toolbar .intellitrigger a{
+    display: inline-block;
+    padding: $pu/2;
+    margin-top: $pu;
+    height: $project-toolbar-item-height;
+    width: $project-toolbar-item-width;
+    background-repeat: no-repeat;
+    vertical-align: bottom;
+    text-align: center;
+    overflow: visible;
+
+    @extend .bbs;
+    @include tool-link-skin;
+}
+
+.tool-link:hover,
+.tool-link:active {
+    @include tool-link-hover-skin;
+}
+
+.tool-label {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+
+.tool-link-wrapper {
+    position: relative;
+}
+
+.tool-link-wrapper.selected {
+    @include tool-link-wrapper-selected-skin;
+}
+
+.tool-link-wrapper.selected:before {
+    content:"\e047";
+    position: absolute;
+    left: 0px;
+    top: 50%;
+    font-size: 14px;
+    margin-top: -7px;
+    font-family: $icon-font-family;
+
+    @include tool-link-wrapper-selected-icon-skin;
+}
+
+.tool-link-wrapper.home:last-child {
+    border-bottom: 0px;
+}
+
+#project-toolbar .links li.intellitrigger {
+}
+
+.intellitrigger .triple-circle-madness {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  height: $tool-icon-size;
+}
+
+.intellitrigger .triple-circle-madness .circle {
+  position: absolute;
+  background-color: $more-button-color;
+  border-color: transparent;
+  border-radius: 4px 4px 4px 4px;
+  border-style: solid;
+  border-width: 1px;
+  height: $more-button-circle-diameter;
+  top: ($tool-icon-size - $more-button-circle-diameter)/2;
+  width: $more-button-circle-diameter;
+}
+
+.intellitrigger a:hover .triple-circle-madness span.circle {
+  background-color: $more-button-hover-color;
+}
+
+.intellitrigger a:hover span.tool-label {
+  @include tool-link-hover-skin;
+}
+
+.triple-circle-madness .c1 {
+  left: ($project-toolbar-item-width - 2*$more-button-circle-diameter)/4;
+}
+
+.triple-circle-madness .c2 {
+  left:  ($project-toolbar-item-width - 2*$more-button-circle-diameter)/2;
+}
+
+.triple-circle-madness .c3 {
+  left:  ($project-toolbar-item-width - 2*$more-button-circle-diameter)*3/4;
+}
+
+.project-toolbar-hidden {
+  padding: $pu*2 0;
+  height:  $project-toolbar-item-width;
+  position: absolute;
+  background-color: $toolbar-gradient-stop;
+  white-space: nowrap;
+}
+
+.project-toolbar-hidden .more-callout-container {
+  position: absolute;
+  left: -10px;
+  top: $project-toolbar-item-width/2;
+  width: 12px;
+}
+
+.project-toolbar-hidden .more-callout-container svg {
+  fill: $toolbar-gradient-stop;
+}
+
+.project-toolbar-hidden ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+div.project-toolbar-hidden > ul > li.tool-link-wrapper {
+  display: inline !important;
+}
+
+/* Old Icon stuff */
+
+.ui-no-icon img {
+    box-shadow: 0 0 3px rgba(255,255,255,0.5);
+    overflow: hidden;
+}
+.tool-link.ui-no-icon:hover  img {
+    box-shadow: 0 0 3px white;
+}
+
+
+$tool-icons: sprite-map("images/tools/*.png");
+
+.ui-icon-home {
+    background: sprite($tool-icons, icon_home_off);
+}
+
+.tool-link:hover .ui-icon-home {
+    background: sprite($tool-icons, icon_home_on);
+}
+
+.ui-icon-tool,
+.ui-icon-tool-admin {
+    display: block;
+    height: $tool-icon-size;
+    width: $tool-icon-size;
+    margin-left: auto;
+    margin-right: auto;
+    background: sprite($tool-icons, icon_admin_off) no-repeat;
+    overflow: hidden;
+}
+
+.tool-link:hover .ui-icon-tool,
+.tool-link:hover .ui-icon-tool-admin {
+    background: sprite($tool-icons, icon_admin_on) no-repeat;
+}
+
+.ui-icon-tool-tickets {
+    background: sprite($tool-icons, icon_tickets_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-tickets {
+    background: sprite($tool-icons, icon_tickets_on) no-repeat;
+}
+
+.ui-icon-tool-wiki {
+    background: sprite($tool-icons, icon_wiki_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-wiki {
+    background: sprite($tool-icons, icon_wiki_on) no-repeat;
+}
+
+.ui-icon-tool-discussion {
+    background: sprite($tool-icons, icon_discussion_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-discussion {
+    background: sprite($tool-icons, icon_discussion_on) no-repeat;
+}
+
+.ui-icon-tool-blog {
+    background: sprite($tool-icons, icon_blog_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-blog {
+    background: sprite($tool-icons, icon_blog_on) no-repeat;
+}
+
+.ui-icon-tool-chat {
+    background: sprite($tool-icons, icon_chat_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-chat {
+    background: sprite($tool-icons, icon_chat_on) no-repeat;
+}
+
+.ui-icon-tool-downloads {
+    background: sprite($tool-icons, downloads_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-downloads {
+    background: sprite($tool-icons, downloads_on) no-repeat;
+}
+
+.ui-icon-tool-components {
+    background: sprite($tool-icons, icon_publish_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-components {
+    background: sprite($tool-icons, icon_publish_on) no-repeat;
+}
+
+.ui-icon-tool-cloud {
+    background: sprite($tool-icons, cloud_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-cloud {
+    background: sprite($tool-icons, cloud_on) no-repeat;
+}
+
+.ui-icon-tool-vcde {
+    background: sprite($tool-icons, vcde_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-vcde {
+    background: sprite($tool-icons, vcde_on) no-repeat;
+}
+
+.ui-icon-tool-svn,
+.ui-icon-tool-git {
+    background: sprite($tool-icons, code_off) no-repeat;
+}
+
+.tool-link:hover .ui-icon-tool-svn,
+.tool-link:hover .ui-icon-tool-git {
+    background: sprite($tool-icons, code_on) no-repeat;
+}

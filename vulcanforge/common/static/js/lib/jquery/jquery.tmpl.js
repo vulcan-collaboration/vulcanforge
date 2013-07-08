@@ -376,7 +376,7 @@
 		return div.innerHTML;
 	}
 
-	// Store template items in jQuery.data(), ensuring a unique tmplItem data data structure for each rendered template instance.
+	/* Store template items in jQuery.data(), ensuring a unique tmplItem data data structure for each rendered template instance. */
 	function storeTmplItems( content ) {
 		var keySuffix = "_" + cloneIndex, elem, elems, newClonedItems = {}, i, l, m;
 		for ( i = 0, l = content.length; i < l; i++ ) {

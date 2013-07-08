@@ -1,0 +1,80 @@
+#errorContentContainer {
+    padding: 0;
+    margin: 4rem auto;
+    padding: 2rem 3rem;
+    width: 40rem;
+    font-size: 1rem;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #606060;
+    overflow: auto;
+    background: #edeeef;
+}
+
+#errorHeader {
+    display: block;
+    float: left;
+    margin: 0 3rem 2rem 0;
+    padding: 0;
+    width: 17rem;
+    font-weight: bold;
+    font-family: inherit;
+    vertical-align: baseline;
+    text-transform: none;
+    text-align: center;
+    color: #a0a8af;
+}
+
+#statusCode {
+    display: block;
+    font-size: 10rem;
+    line-height: 1em;
+}
+
+#statusMessage {
+    display: block;
+    font-size: 2rem;
+    line-height: 2rem;
+}
+
+#errorMessage {
+    height: auto;
+    margin: 1rem 0 2rem 20rem;
+    padding: 0;
+    font-size: 2rem;
+    line-height: 3rem;
+    font-weight: lighter;
+    font-style: italic;
+    font-family: inherit;
+    color: inherit;
+    border: none;
+    text-transform: none;
+    vertical-align: baseline;
+}
+
+.errorSeparator {
+    clear: left;
+    margin: 3rem 1rem;
+    height: 1px;
+    border: none;
+    background: #d0d8df;
+}
+
+#errorContentContainer p,
+#errorContentContainer ul {
+    margin: 1rem 0;
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+#errorContentContainer ul {
+    padding: 0 0 0 3rem;
+    list-style-type: disc;
+    list-style-position: outside;
+}
+
+#errorContentContainer li {
+    margin: 1rem 0;
+    font-size: inherit;
+    line-height: inherit;
+}

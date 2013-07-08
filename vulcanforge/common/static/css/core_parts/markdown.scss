@@ -1,0 +1,200 @@
+// VERY SPECIFIC FONT SIZES USED HERE
+// all relative to the the core font-size
+.markdown_content {
+    margin: 0;
+    padding: 0 1.2rem;
+    font-size: 1em; // <-- OK to change
+    line-height: 1.2rem;
+    color: #202020;
+    overflow: auto;
+
+    h1, h2, h3, h4, h5, h6,
+    p,
+    ul, ol,
+    hr,
+    blockquote, table, .codehilite
+    {
+        margin: 1.2rem 0;
+    }
+    h1, h2, h3, h4, h5, h6
+    {
+        height: auto;
+        line-height: 1em;
+        margin: 1.2rem 0;
+        border: none;
+        text-transform: none;
+        font-weight: bold;
+        color: #404040;
+        font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+        vertical-align: baseline;
+    }
+    h1 {
+        font-size: 2rem;
+        margin-top: 1.6rem;
+    }
+    h2 {
+        font-size: 1.6rem;
+        margin-top: 2.2rem;
+    }
+    h3 {
+        font-size: 1.28rem;
+        margin-top: 1.12rem;
+    }
+    h4 {
+        font-size: 1rem;
+        margin-top: 1.4rem;
+    }
+    h5 {
+        font-size: 0.8rem;
+        margin-top: 1.6rem;
+    }
+    h6 {
+        font-size: 0.64rem;
+        margin-top: 1.76rem;
+    }
+
+    ol, ul {
+        padding-left: 2.4rem;
+    }
+
+    hr {
+        margin: 2.4rem 0;
+        border: 0;
+        height: 1px;
+        background: #e8e8e8;
+    }
+
+    blockquote {
+        position: relative;
+        overflow: auto;
+        border: none;
+        padding: 0 1.2rem;
+        background: #f0f0f0;
+    }
+
+    table {
+        border-collapse: collapse;
+        td, th {
+            padding: 0.6rem 1.2rem;
+            line-height: 1.2rem;
+        }
+        th {
+            background: #dcdcdc;
+        }
+        td {
+            background: #ececec;
+        }
+        tr:nth-child(odd) td {
+            background: #f4f4f4;
+        }
+    }
+
+    .codehilite {
+        pre {
+            padding: 1.2rem;
+        }
+    }
+
+    .toc {
+        float: right;
+        margin: 0 0 0 1.2rem;
+        padding: 1.2rem;
+        background: #f8f8f8;
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        ul ul {
+            padding-left: 1rem;
+        }
+    }
+}
+
+.markdown-edit {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    margin-bottom: 2*$pu;
+}
+
+.markdown-tabs {
+    display: none;
+}
+
+.markdown-edit textarea{
+    min-height: 200px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    font-family: Consolas, "Andale Mono", "Lucida Console", monospace;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin: 0;
+    padding: 5px;
+
+    resize: vertical;
+
+    @extend .bbs;
+}
+
+body[data-pagetype="WIKI"] .markdown-edit textarea {
+    height: 400px;
+}
+
+.markdown-preview {
+    border: 1px solid $border-color;
+    padding: 0;
+    margin: 10px 0;
+    background-color: #fff;
+    border-radius: 8px;
+    display: none;
+}
+
+.icon.close {
+    cursor: pointer;
+    float: right;
+}
+
+.markdown-edit .ui-tabs-panel {
+    padding: 0;
+    border: 0;
+    min-height: 200px;
+}
+
+.markdown-help-button-container {
+    float: right;
+    padding: 0;
+    margin-right: 0px;
+    margin-top: 3px;
+}
+
+.markdown-preview,
+.markdown-add-attachment {
+    border: 1px solid $border-color !important;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    background-color: #fff !important;
+    border-radius: 2*$pu;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.md-read-more {
+    position: relative;
+    overflow: auto;
+    margin: 1.2rem 1.2rem;
+    padding: 0 1.2rem;
+    background: #f0f8ff;
+}
+.md-read-more-show {
+    display: block;
+    margin: 1.2rem;
+    color: #808080;
+}
+.md-read-more-hide {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+}

@@ -1,0 +1,225 @@
+#global-search-field {
+    font-size: 12px;
+    font-weight: normal;
+    width: 200px;
+    padding: 0 6px;
+    margin: 0;
+    height: 24px;
+    line-height: 18px;
+
+    transition: width .4s, opacity .4s;
+    -moz-transition: width .4s, opacity .4s; /* Firefox 4 */
+    -webkit-transition: width .4s, opacity .4s; /* Safari and Chrome */
+    -o-transition: width .4s, opacity .4s;
+
+    opacity: .75;
+
+    @include global-search-field-skin();
+}
+
+#global-search-field:hover {
+    opacity: 1;
+}
+
+
+#global-search-field:focus {
+    outline: none;
+    opacity: 1;
+}
+
+#global-search-field.empty {
+    @include global-search-field-empty-skin();
+}
+
+#global-search-field.empty:hover {
+    @include global-search-field-empty-hover-skin();
+}
+
+
+ul.search-result {
+    list-style-type: none;
+    padding: 0px 5px 0px 0px;
+    border-bottom: 1px solid #ccc;
+}
+
+ul.search-result li {
+    padding: 5px 15px 5px 4px;
+    border-top: 1px dotted #999;
+    margin-bottom: 1px;
+}
+
+ul.search-result li:hover {
+    background-color: #f5f5ff;
+}
+
+ul.search-result .title {
+    padding: 0;
+    margin: 0 0 3px 0;
+    font-weight: bold;
+    font-size: 13px;
+    position: relative;
+}
+
+ul.search-result .title > a{
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+$search-icons: sprite-map("images/search/*.png");
+
+ul.search-result li {
+    position: relative;
+}
+
+ul.search-result .flag {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 10px;
+}
+
+.iconic-results ul.search-result .project .flag {
+    background: sprite($search-icons, search_result_type_markers_projects) no-repeat;
+}
+
+.iconic-results ul.search-result .user .title,
+.iconic-results ul.search-result .user .flag {
+    background: sprite($search-icons, search_result_type_markers_users) no-repeat;
+}
+
+.iconic-results ul.search-result .component .flag {
+    background: sprite($search-icons, search_result_type_markers_components) no-repeat;
+}
+
+.iconic-results ul.search-result .term .flag,
+.iconic-results ul.search-result .domain .flag {
+    background: sprite($search-icons, search_result_type_markers_terms) no-repeat;
+}
+
+.iconic-results ul.search-result .competition .flag {
+    background: sprite($search-icons, search_result_type_markers_competitions) no-repeat;
+}
+
+ul.search-result .score_container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 39px;
+    height: 8px;
+    padding: 0;
+    background: sprite($search-icons, relevance_empty) no-repeat;
+}
+
+ul.search-result .search_score {
+    height: 8px;
+    width: 39px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0;
+    background: sprite($search-icons, relevance_filled) no-repeat;
+}
+
+ul.search-result .summary{
+    margin-left: 21px;
+}
+
+ul.search-result a.artifact-link{
+    vertical-align: bottom;
+    line-height: inherit;
+}
+
+ul.search-result span.artifact-label{
+    vertical-align: bottom;
+}
+
+#tool-search-form-input {
+    border-radius: 0;
+    width: 154px;
+    margin: 0;
+    vertical-align: top;
+}
+
+/* START firefox specific fix */
+/* currently broken by pyScss */
+@-moz-document url-prefix() {
+    #tool-search-form-input {
+        border-radius: 0;
+        width: 154px;
+        padding: 3px 2px;
+        margin: 0;
+        font-size: 14px;
+    }
+}
+/* END firefox specific fix */
+
+#sidebar_search input[type="submit"],
+#sidebar_search button {
+    display: inline-block;
+    float: none;
+}
+
+#sidebar_search label {
+    display: block;
+    padding: 0;
+    margin: 1ex;
+    text-align: left;
+}
+
+#sidebar_search #sidebar_search_submit {
+    display: block;
+    margin: 4px;
+    padding: 2px;
+    height: 26px;
+    width: 162px;
+    border-color: #999;
+
+    @extend .bbs;
+}
+
+#sidebar_search #legend {
+    margin-top: 40px;
+}
+
+#sidebar_search .legend {
+    font-size: 11px;
+    padding-top: 2px;
+    padding-left: 14px;
+    margin-top: 4px;
+    margin-left: 8px;
+}
+
+#sidebar_search #users {
+    background: sprite($search-icons, search_result_type_markers_users) no-repeat;
+}
+
+#sidebar_search #components {
+    background: sprite($search-icons, search_result_type_markers_components) no-repeat;
+}
+
+#sidebar_search #projects {
+    background: sprite($search-icons, search_result_type_markers_projects) no-repeat;
+}
+
+#sidebar_search #terms {
+    background: sprite($search-icons, search_result_type_markers_terms) no-repeat;
+}
+
+#tool-search {
+    display: inline-block;
+    margin: 0;
+    padding: 1ex;
+    text-align: center;
+    float: right;
+    height: 33px;
+    vertical-align: middle;
+    box-sizing: border-box;
+    width: 170px;
+}
+
+#user-search #tool-search-form-input{
+    margin-top: 1ex;
+}

@@ -21,7 +21,7 @@
         {% endfor %}
       </fieldset>
       <form method="post" action="update_mounts" id="install_form" style="display:none">
-        <input type="hidden" name="new.ordinal" value="{{installable_tools|length + c.project.direct_subprojects|length}}"/>
+        <input type="hidden" name="new.ordinal" value="{{installable_tools|length}}"/>
         <input type="hidden" name="new.ep_name" class="new_ep_name">
         <label >Label</label>
         <div><input type="text" name="new.mount_label" class="new_mount_label"></div>

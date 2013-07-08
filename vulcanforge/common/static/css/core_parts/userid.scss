@@ -1,0 +1,272 @@
+/* user-id style */
+
+$user-id-height: 160px;
+$user-id-width: 320px;
+
+.user-id .qtip-content {
+
+    width: $user-id-width;
+    height: $user-id-height;
+    border-radius: 0;
+    padding: 0;
+
+    @include user-id-content-skin;
+
+    border: none;
+}
+
+.user-id.qtip {
+    min-width: $user-id-width;
+}
+
+.user-id .ui-tooltip-tip {
+    background-color: $user-id-background-color;
+}
+
+.user-id {
+    background-color: $user-id-background-color;
+}
+
+.userid-pleaseWait {
+    text-align: center;
+    background-image: url(../images/PleaseWait.gif);
+    background-color: rgba(255,255,255,.6);
+    width: $user-id-width;
+    height: $user-id-height;
+    background-repeat: no-repeat;
+    margin: auto;
+}
+
+.user-id-content {
+    position: relative;
+    padding: $pu;
+    overflow: hidden;
+    height: 100%;
+
+    @extend .bbs;
+}
+
+.user-id-content.standalone {
+    width: auto;
+    height: auto;
+    min-height: 187px;
+    border-radius: 0;
+    padding: 10px;
+
+    @include user-id-content-skin;
+}
+
+.reputation-container {
+    position: relative;
+    top: 0;
+    right: 0;
+    display: inline-block;
+    width: 70px;
+    line-height: 13px;
+    height: 14px;
+    padding: 0;
+    margin: 0px auto;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: default;
+    color: #fff;
+    border: 1px solid #fff;
+    white-space: nowrap;
+    background-repeat: no-repeat;
+    background-position: center center;
+
+    @extend .bbs;
+}
+
+.reputation-container.bright {
+    color: #000;
+    border-color: #000;
+    background-image: url(../images/trust_badge_dark.png);
+}
+
+.reputation-container.dark {
+    color: #fff;
+    border-color: #fff;
+    background-image: url(../images/trust_badge_bright.png);
+}
+
+.history-graph-container {
+    width: 68px;
+    height: 40px;
+    background-color: #000;
+    border: 1px solid #999;
+    margin: 0 auto;
+
+    @extend .bbs;
+
+    box-shadow: 0 0 5px rgba(0,0,0,.5);
+}
+
+.history-graph-container.loading {
+    background-image: url(../images/loading_small_white.gif);
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.user-id-content {
+
+    .id-photo {
+        border: 1px solid darken($user-id-content-color, 8%);
+        border-radius: 0px;
+        border-collapse: collapse;
+        width: 80px;
+        height: 80px;
+        position: absolute;
+        left: $pu*1.5;
+        top: $pu*1.5;
+        line-height: 1em;
+    }
+
+    .id-inner-contents {
+        position: relative;
+        padding: 2px 2px 2px 90px;
+        width: 100%;
+        text-shadow: 0 0 5px rgba(0,0,0,1);
+        font-size: 11px;
+
+        @extend .bbs;
+    }
+
+    .id-full-name {
+        font-weight: bold;
+        color: $user-id-content-color;
+        font-size: 14px;
+        border-bottom: 1px solid $user-id-content-color;
+        height: 17px;
+        padding: 0 0 2px 0;
+        margin-bottom: .5em;
+
+        max-height: 1em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+    }
+
+    .id-full-name a:link,
+    .id-full-name a:visited {
+        color: $user-id-content-color;
+    }
+
+    .id-full-name a:hover,
+    .id-full-name a:active {
+        color: $link-hover-color;
+    }
+
+    .id-full-name a::after {
+        font-family: $icon-font-family;
+        content:"\e047";
+        font-size: .6em;
+        position: relative;
+        padding-left: 2px;
+        top: -2px;
+    }
+
+    .id-user-since {
+        text-align: right;
+        margin: 0.3em 0.5em 0.5em;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        font-size: 10px;
+    }
+
+    .id-mission {
+        font-style: italic;
+        padding: 2px;
+        max-height: 3em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .id-expertise {
+        padding: 2px;
+        max-height: 3em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+    }
+
+    .id-interests {
+        padding: 2px;
+        max-height: 3em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    h4 {
+        margin: 0.5em 0;
+        color: #fff;
+        text-transform: uppercase;
+    }
+
+    .id-extra-info
+    {
+        position: absolute;
+        width: 82px;
+        top: 90px;
+        left: $pu*1.5;
+    }
+
+    .id-reputation {
+        margin: $pu 0;
+        text-align: center;
+    }
+
+    .id-actions {
+        margin: $pu 0;
+        min-height: 18px;
+        padding: 2px 4px;
+        border-radius: 3px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-top: 1px solid rgba(0,0,0,0.5);
+        background: rgba(0,0,0,0.1);
+    }
+
+    .id-actions a,
+    .id-actions a:link
+    {
+        color: white;
+    }
+
+    .id-actions a:hover
+    {
+        color: $link-hover-color;
+    }
+
+    .id-seal {
+        width: 470px;
+        height: 235px;
+        background-image: url(../images/usa_flag.png);
+        background-repeat: no-repeat;
+        background-position: left top;
+        position: absolute;
+        top: 0;
+        right: 0;
+        opacity: .2;
+    }
+
+}
+
+.user-id-content.standalone {
+    .id-inner-contents {
+        font-size: 12px;
+    }
+
+    .id-inner-contents div {
+        overflow: auto;
+        max-height:none;
+    }
+
+    .id-inner-contents .id-full-name {
+        overflow: hidden;
+    }
+
+    .id-seal {
+        opacity: .4;
+    }
+}

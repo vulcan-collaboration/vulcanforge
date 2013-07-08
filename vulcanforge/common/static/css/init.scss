@@ -1,0 +1,98 @@
+@import "theme/css/theme_mixins.scss";
+
+/* z-indexes */
+$click-condom-z-index: 100000;
+$instances-list-z-index: 16000;
+$messages-z-index: 9000;
+$panel-above-content-z-index: 8000;
+$header-logo-holder-z-index: 250;
+$forge-toolbar-z-index: 250;
+$header-wrapper-z-index: 200;
+$footer-z-index: 200;
+$left-toolbar-z-index: 100;
+$right-toolbar-z-index: 100;
+$nice-scroll-z-index: 85;  // to take effect set in vf.js
+$sidebar-z-index: 80;
+$main-column-header-z-index: 90;
+$content-columns-z-index: 60;
+$project-toolbar-z-index: 30;
+$content-areas-wrapper-z-index: 10;
+$fake-file-z-index: 1;
+$bottom-bg-container-z-index: -10;
+
+/* Paddings and Margins */
+$pu = 5px;
+$content-side-padding: 3 * $pu;
+$content-top-padding: 3 * $pu;
+$content-bottom-padding: 5 * $pu;
+
+/* Dimensions */
+$main-column-min-width: 700px;
+$sidebar-width: 170px;
+$main-column-header-height: 34px;
+$button-font-size: 11px;
+$button-height: 24px;
+$footer-height: 20px;
+$left-toolbar-min-width: 20px;
+$right-toolbar-width: 20px;
+$header-wrapper-height: 44px;
+$forge-toolbar-height: 26px;
+$icon-button-size: 11px;
+$content-actions-icon-button-size: 14px;
+$label-width: 100px;
+$wide-label-width: 150px;
+$field-width: 250px;
+$short-field-width: 125px;
+$long-field-width: 400px;
+$tag-height: 16px;
+$tag-editor-width: 515px;
+$project-toolbar-item-height: 60px;
+$project-toolbar-item-width: 80px;
+$small-font-size: 10px;
+$property-list-item-width: 140px;
+$related-artifacts-height: 24px;
+
+/* Durations */
+$icon-color-transition-duration: .2s;
+
+/* Mixins */
+@mixin create_transition($property, $duration) {
+    transition: $property $duration;
+    -moz-transition: $property $duration; /* Firefox 4 */
+    -webkit-transition: $property $duration; /* Safari and Chrome */
+    -o-transition: $property $duration;
+}
+
+
+@mixin linearGradient2($direction, $stop1, $stop2) {
+  background: -o-linear-gradient($direction, $stop1, $stop2);
+  background: -ms-linear-gradient($direction, $stop1, $stop2);
+  background: -webkit-linear-gradient($direction, $stop1, $stop2);
+  background: -moz-linear-gradient($direction, $stop1, $stop2);
+  background: linear-gradient($direction, $stop1, $stop2);
+}
+
+@mixin linearGradient3($direction, $stop1, $stop2, $stop3) {
+  background: -o-linear-gradient($direction, $stop1, $stop2, $stop3);
+  background: -ms-linear-gradient($direction, $stop1, $stop2, $stop3);
+  background: -webkit-linear-gradient($direction, $stop1, $stop2, $stop3);
+  background: -moz-linear-gradient($direction, $stop1, $stop2, $stop3);
+  background: linear-gradient($direction, $stop1, $stop2, $stop3);
+}
+
+@mixin linearGradient4($direction, $stop1, $stop2, $stop3, $stop4) {
+  background: -o-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4);
+  background: -ms-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4);
+  background: -webkit-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4);
+  background: -moz-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4);
+  background: linear-gradient($direction, $stop1, $stop2, $stop3, $stop4);
+}
+
+@mixin linearGradient5($direction, $stop1, $stop2, $stop3, $stop4, $stop5) {
+  background: -o-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
+  background: -ms-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
+  background: -webkit-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
+  background: -moz-linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
+  background: linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
+}
+
