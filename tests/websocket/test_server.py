@@ -10,13 +10,13 @@ from threading import Thread
 import unittest
 import mock
 from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
-from vulcanforge.websocket.exceptions import WebSocketException, \
-    InvalidMessageException
+from vulcanforge.websocket.auth_broker import BaseWebSocketAuthBroker
+from vulcanforge.websocket.exceptions import InvalidMessageException, \
+    NotAuthorized, LostConnection
 from vulcanforge.websocket.server import ConnectionController
 
 
 class ConnectionControllerTestCase(unittest.TestCase):
-
     def setUp(self):
         self.websocket = mock.Mock()
         self.auth = mock.Mock()
@@ -119,3 +119,74 @@ class ConnectionControllerTestCase(unittest.TestCase):
             'channel': 'foo',
             'data': 'bye'
         })
+
+    def test_listen_frame_exceptions(self):
+        self.websocket.receive = self._raise_on_call(Exception())
+        with self.assertRaises(LostConnection):
+            self.controller._listen_frame()
+        self.websocket.receive = self._raise_on_call(LostConnection())
+        with self.assertRaises(LostConnection):
+            self.controller._listen_frame()
+        self.websocket.receive = self._raise_on_call(ValueError())
+        with self.assertRaises(LostConnection):
+            self.controller._listen_frame()
+
+    def test_speak_frame_exceptions(self):
+        msgs = [
+            {
+                'channel': 'foo',
+                'data': 'hi',
+                'pattern': None,
+                'type': 'message'
+            },
+            {
+                'channel': 'foo',
+                'data': 'bye',
+                'pattern': None,
+                'type': 'message'
+            }
+        ]
+        self.pubsub.listen.side_effect = self._listen_side_effect(msgs)
+        self.websocket.send = self._raise_on_call(Exception())
+        with self.assertRaises(LostConnection):
+            self.controller._speak_frame()
+        self.pubsub.listen.side_effect = self._listen_side_effect(msgs)
+        self.websocket.receive = self._raise_on_call(LostConnection())
+        with self.assertRaises(LostConnection):
+            self.controller._speak_frame()
+        self.pubsub.listen.side_effect = self._listen_side_effect(msgs)
+        self.websocket.receive = self._raise_on_call(ValueError())
+        with self.assertRaises(LostConnection):
+            self.controller._speak_frame()
+
+
+class ConnectionControllerAuthTestCase(unittest.TestCase):
+
+    def _raise_on_call(self, exception):
+
+        def do_raise(*args, **kwargs):
+            raise exception
+        return do_raise
+
+    def test_anonymous(self):
+        websocket = mock.Mock()
+        auth = mock.Mock()
+        auth.authenticate = self._raise_on_call(NotAuthorized("whoopsies!"))
+        ConnectionController({}, DEFAULT_SERVER_CONFIG, auth, websocket,
+                             mock.Mock(), mock.Mock(), mock.Mock())
+        websocket.send.assert_called_once_with(json.dumps({
+            'type': 'error',
+            'data': {
+                'kind': 'NotAuthorized',
+                'message': 'whoopsies!'
+            }
+        }))
+
+
+class AuthBrokerTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.broker = BaseWebSocketAuthBroker({}, DEFAULT_SERVER_CONFIG)
+
+    def test_authenticate(self):
+        self.broker.authenticate()

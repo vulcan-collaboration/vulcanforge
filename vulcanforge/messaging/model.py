@@ -44,6 +44,7 @@ from ming.odm.property import (
 )
 
 from vulcanforge.auth.model import User
+from vulcanforge.auth.security_manager import RoleCache
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.project.model import ProjectRole
 
@@ -93,12 +94,14 @@ class Conversation(MappedClass):
     def get_url(self):
         return '/dashboard/messages/{}'.format(self._id)
 
-    def get_messages(self):
+    def get_messages(self, limit=None):
         params = {
             'conversation_id': self._id,
         }
         cursor = ConversationMessage.query.find(params)
         cursor.sort('pubdate', pymongo.ASCENDING)
+        if limit is not None:
+            cursor.limit(limit)
         return cursor
 
     def get_message_count(self):
@@ -114,11 +117,8 @@ class Conversation(MappedClass):
         })
 
     def get_latest_message(self):
-        messages = self.get_messages()
-        count = messages.count()
-        if count > 0:
-            return messages.all()[count - 1]
-        return None
+        messages = self.get_messages(limit=1)
+        return messages.first()
 
     def get_user_ids(self):
         user_ids = set(self.user_ids)
@@ -130,13 +130,13 @@ class Conversation(MappedClass):
                 user_ids.add(user_role.user._id)
         return list(user_ids)
 
-    def get_status_for_user_id(self, user_id):
+    def get_status_for_user_id(self, user_id, create=True):
         params = {
             'user_id': user_id,
             'conversation_id': self._id,
         }
         status = ConversationStatus.query.get(**params)
-        if status is None:
+        if status is None and create:
             status = ConversationStatus(**params)
             status.query.session.flush(status)
         return status

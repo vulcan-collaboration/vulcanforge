@@ -10,7 +10,7 @@ import json
 import unittest
 import mock
 from vulcanforge.websocket import DEFAULT_SERVER_CONFIG
-from vulcanforge.websocket.auth import BaseWebSocketAuth
+from vulcanforge.websocket.auth_broker import BaseWebSocketAuthBroker
 from vulcanforge.websocket.exceptions import InvalidMessageException, \
     NotAuthorized
 from vulcanforge.websocket.reactor import MessageReactor
@@ -217,28 +217,28 @@ class TestReactor(ReactorTestCase):
         self.mock_pubsub.unsubscribe.assert_called_once_with(['foo', 'bar'])
 
 
-class TestAuth(ReactorTestCase):
+class TestAuthBroker(ReactorTestCase):
 
-    class MockAuth(BaseWebSocketAuth):
+    class MockAuthBroker(BaseWebSocketAuthBroker):
         can_listen = set()
         can_publish = set()
         can_target = set()
 
-        def auth_listen(self, channels):
-            if not self.can_listen.issuperset(channels):
-                self.fail()
-
-        def auth_publish(self, channels):
-            if not self.can_publish.issuperset(channels):
-                self.fail()
-
-        def auth_targets(self, targets):
-            if not self.can_target.issuperset(targets):
-                self.fail()
+        def authorize(self, listen_channels=None, publish_channels=None,
+                      event_targets=None):
+            if listen_channels is not None:
+                if not self.can_listen.issuperset(listen_channels):
+                    self.fail()
+            if publish_channels is not None:
+                if not self.can_publish.issuperset(publish_channels):
+                    self.fail()
+            if event_targets is not None:
+                if not self.can_target.issuperset(event_targets):
+                    self.fail()
 
     def setUp(self):
         ReactorTestCase.setUp(self)
-        self.auth = self.MockAuth({}, DEFAULT_SERVER_CONFIG)
+        self.auth = self.MockAuthBroker({}, DEFAULT_SERVER_CONFIG)
         self.reactor.auth = self.auth
 
     def test_authorize_subscribe(self):

@@ -7,8 +7,7 @@ reactor
 """
 import json
 import jsonschema
-from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA, \
-    load_auth
+from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA
 from vulcanforge.websocket.exceptions import InvalidMessageException
 
 

@@ -13,14 +13,14 @@ import gevent.baseserver
 import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
+import time
 from vulcanforge.websocket import load_auth
-from vulcanforge.websocket.exceptions import WebSocketException,\
+from vulcanforge.websocket.exceptions import WebSocketException, \
     LostConnection, InvalidMessageException, NotAuthorized
 from vulcanforge.websocket.reactor import MessageReactor
 
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler())
 LOG = logging.getLogger(__name__)
 
 
@@ -35,7 +35,7 @@ class WebSocketApp(object):
         websocket = environ.get('wsgi.websocket')
         if websocket is None:
             return self._http_handler(environ, start_response)
-        LOG.debug('new connection established: %s', environ)
+        LOG.info('new connection established: %s', environ)
         pubsub = self.redis.pubsub()
         auth_class = load_auth(self.config)
         auth = auth_class(environ, self.config)
@@ -57,11 +57,12 @@ class WebSocketApp(object):
             listener.start()
             speaker.start()
             while controller.is_connected():
-                group.join(timeout=0.5)
+                time.sleep(0.1)
         except:
+            LOG.warn("unknown exception")
             break_out()
         finally:
-            LOG.debug('connection closed: %s', environ)
+            LOG.info('connection closed: %s', environ)
             group.kill()
             websocket.close()
             del listener
@@ -87,7 +88,7 @@ class ConnectionController(object):
         self.connected = True
         self.auth = auth
         try:
-            self.auth.authenticate(self.environ)
+            self.auth.authenticate()
         except NotAuthorized, e:
             self._send_exception(e)
 
@@ -100,8 +101,8 @@ class ConnectionController(object):
             geventwebsocket.WebSocketError,
             WebSocketException
         ):
+            LOG.exception("loop finished")
             self.connected = False
-            pass
 
     def is_connected(self):
         return self.connected and self.websocket.socket is not None
@@ -116,12 +117,17 @@ class ConnectionController(object):
         try:
             message = self.websocket.receive()
         except:
+            LOG.exception("websocket.receive failed")
             raise LostConnection()
         if message is None:
-            raise LostConnection()
+            LOG.error("message is none")
+            return
         try:
             self.reactor.react(message)
+            LOG.exception("reactor.react failed")
         except InvalidMessageException, e:
+            self._send_exception(e)
+        except NotAuthorized, e:
             self._send_exception(e)
 
     def _speak_frame(self):
@@ -130,6 +136,7 @@ class ConnectionController(object):
             try:
                 self.websocket.send(json.dumps(message))
             except:
+                LOG.exception("websocket.send failed")
                 raise LostConnection()
 
     def _send_error(self, kind, message):
