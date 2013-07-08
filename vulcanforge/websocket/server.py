@@ -124,11 +124,12 @@ class ConnectionController(object):
             return
         try:
             self.reactor.react(message)
-            LOG.exception("reactor.react failed")
         except InvalidMessageException, e:
             self._send_exception(e)
         except NotAuthorized, e:
             self._send_exception(e)
+        except:
+            LOG.exception("reactor.react failed")
 
     def _speak_frame(self):
         for message in self.pubsub.listen():

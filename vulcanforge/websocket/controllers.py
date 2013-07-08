@@ -33,7 +33,10 @@ class WebSocketAPIController(BaseController):
             authenticated = False
         return {
             'authenticated': authenticated,
-            'user_id': str(c.user._id)
+            'user': {
+                '_id': str(c.user._id),
+                'username': c.user.username
+            }
         }
 
     @expose('json')
@@ -49,14 +52,18 @@ class WebSocketAPIController(BaseController):
                 self._auth_publish(publish_channels)
             if event_targets:
                 self._auth_targets(event_targets)
-        except NotAuthorized:
+        except (NotAuthorized, ValueError):
             authorized = False
         except:
             raise
         else:
             authorized = True
         return {
-            'authorized': authorized
+            'authorized': authorized,
+            'user': {
+                '_id': str(c.user._id),
+                'username': c.user.username
+            }
         }
 
     def _auth_listen(self, listen_channels):
