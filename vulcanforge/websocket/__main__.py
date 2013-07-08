@@ -37,7 +37,9 @@ def main():
     host = config['websocket.host']
     port = int(config['websocket.port'])
     process_count = int(config['websocket.process_count'])
-    LOG.info("starting {} server processes...".format(process_count))
+
+    listener = gevent.baseserver._tcp_listener((host, port), reuse_addr=1)
+    processes = []
 
     def start_server_process(listener):
         gevent.reinit()
@@ -50,13 +52,6 @@ def main():
             LOG.info("stopping Web Socket Worker process: pid {}\n"
                      "".format(os.getpid()))
             sys.exit(0)
-    listener = gevent.baseserver._tcp_listener((host, port), reuse_addr=1)
-    processes = []
-    for i in range(process_count):
-        process = Process(target=start_server_process, args=(listener,))
-        process.start()
-        processes.append(process)
-    LOG.info("Serving at {} on port {}...".format(host, port))
 
     def cleanup_and_quit():
         LOG.info("Stopping server...")
@@ -67,6 +62,14 @@ def main():
         listener.close()
         LOG.info("Server has been terminated")
         sys.exit(0)
+
+    LOG.info("starting {} server processes...".format(process_count))
+    for i in range(process_count):
+        process = Process(target=start_server_process, args=(listener,))
+        process.start()
+        processes.append(process)
+    LOG.info("Serving at {} on port {}...".format(host, port))
+
     signal.signal(signal.SIGHUP, cleanup_and_quit)
     signal.signal(signal.SIGTERM, cleanup_and_quit)
     # restore default behavior of not interrupting system calls
@@ -74,6 +77,7 @@ def main():
     # and http://linux.die.net/man/3/siginterrupt
     signal.siginterrupt(signal.SIGHUP, False)
     signal.siginterrupt(signal.SIGTERM, False)
+
     try:
         while True:
             sleep(1)  # todo: join process pool with timeout instead of sleep
