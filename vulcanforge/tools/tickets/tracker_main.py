@@ -527,7 +527,8 @@ class TrackerSearchController(BaseController):
         yield self.mk_csv_row([label for key, label in fields])
         # yield rows
         for result in solr_result.docs:
-            yield self.mk_csv_row([result[key] for key, label in fields])
+            yield self.mk_csv_row([result.get(key, '')
+                                   for key, label in fields])
 
     @staticmethod
     def mk_csv_row(items):
