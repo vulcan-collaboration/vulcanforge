@@ -35,7 +35,6 @@ class WebSocketApp(object):
         websocket = environ.get('wsgi.websocket')
         if websocket is None:
             return self._http_handler(environ, start_response)
-        LOG.info('new connection established: %s', environ)
         pubsub = self.redis.pubsub()
         auth_class = load_auth(self.config)
         auth = auth_class(environ, self.config)
@@ -59,10 +58,9 @@ class WebSocketApp(object):
             while controller.is_connected():
                 time.sleep(0.1)
         except:
-            LOG.warn("unknown exception")
+            LOG.exception("unknown exception")
             break_out()
         finally:
-            LOG.info('connection closed: %s', environ)
             group.kill()
             websocket.close()
             del listener
@@ -101,7 +99,6 @@ class ConnectionController(object):
             geventwebsocket.WebSocketError,
             WebSocketException
         ):
-            LOG.exception("loop finished")
             self.connected = False
 
     def is_connected(self):

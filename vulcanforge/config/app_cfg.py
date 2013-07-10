@@ -65,7 +65,8 @@ class ForgeConfig(AppConfig):
         'neighborhood': ['vulcanforge:neighborhood/static'],
         'notification': ['vulcanforge:notification/static'],
         'project': ['vulcanforge:project/static'],
-        'visualize': ['vulcanforge:visualize/static']
+        'visualize': ['vulcanforge:visualize/static'],
+        'websocket': ['vulcanforge:websocket/static']
     }
     vulcan_packages = ['vulcanforge']
 

@@ -60,8 +60,8 @@ DEFAULT_SERVER_CONFIG = {
     'websocket.host': 'localhost',
     'websocket.port': 8001,
     'websocket.process_count': multiprocessing.cpu_count(),
-    'websocket.auth_class': 'vulcanforge.websocket.auth_broker:'
-                            'WebSocketAuthBroker'
+    'websocket.auth_broker': 'vulcanforge.websocket.auth_broker:'
+                              'WebSocketAuthBroker'
 }
 
 
@@ -78,7 +78,7 @@ def get_config(filename):
 
 
 def load_auth(config):
-    path = config['websocket.auth_class']
+    path = config['websocket.auth_broker']
     modulename, classname = path.rsplit(':', 1)
     module = __import__(modulename, fromlist=[classname])
     return getattr(module, classname)

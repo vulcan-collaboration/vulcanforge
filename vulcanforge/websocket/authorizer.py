@@ -97,4 +97,17 @@ class WebSocketAuthorizer(object):
         if status is None:
             self.fail()
 
+    @_listen_map.decorate(r'^system$')
+    def system_listen(self, name, match):
+        pass  # allow listening to system channel
+
+    @_publish_map.decorate(r'^system$')
+    def system_publish(self, name, match):
+        self.fail()  # do not allow publishing to system channel
+
+    @_listen_map.decorate(r'^test\.(.+)$')
+    @_publish_map.decorate(r'^test\.(.+)$')
+    def test_channel(self, name, match):
+        pass  # allow both for test channels
+
 
