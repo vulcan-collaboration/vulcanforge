@@ -139,18 +139,22 @@
     @extend .bbs;
 }
 
-body[data-pagetype="WIKI"] .markdown-edit textarea {
+.markdown-edit.wiki-markdown textarea {
     height: 400px;
 }
 
 .markdown-preview {
-    border: 1px solid $border-color;
+    border: 2px dotted $border-color;
     padding: 0;
     margin: 10px 0;
     background-color: #fff;
     border-radius: 8px;
-    height: 200px;
-    overflow: scroll;
+    height: 100%;
+    overflow: visible;
+}
+
+.post-markdown .markdown-preview {
+    margin-top: 0;
 }
 
 .icon.close {
@@ -173,11 +177,8 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
 
 .markdown-preview,
 .markdown-add-attachment {
-    border: 1px solid $border-color !important;
     padding: 0;
-    margin: 0;
     width: 100%;
-    background-color: #fff !important;
     border-radius: 2*$pu;
     border-top-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -227,12 +228,16 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
 .wmd-button-row
 {
 	position: relative;
-	margin-left: 5px;
-	margin-right: 5px;
-	margin-bottom: 5px;
-	margin-top: 10px;
-	padding: 0px;
+	padding-bottom: 5px;
+	padding-top: 5px;
+    margin: 0 0 1px;
+    background-color: #fff;
 	height: 20px;
+    width: 340px;
+}
+
+.post-markdown .wmd-button-row {
+    border: 1px solid #ccc;
 }
 
 .wmd-spacer
@@ -240,7 +245,6 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
 	width: 1px;
 	height: 20px;
 	margin-left: 14px;
-
 	position: absolute;
 	background-color: Silver;
 	display: inline-block;
@@ -307,4 +311,31 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
 	font-family: trebuchet MS, helvetica, sans-serif;
 	font-size: 0.8em;
 	font-weight: bold;
+}
+
+.markdown-img-add-btn-row {
+    margin: 12px 0 0;
+    padding: 0;
+}
+
+
+.markdownPlaceholder {
+    @include linearGradient2(top, #999, #555);
+    height: 200px;
+    color: #fff;
+    padding: 2px 15px;
+}
+
+.markdownPlaceholder p {
+    max-width: none;
+}
+
+.markdownPlaceholder a {
+    text-decoration: underline;
+    color: #fff;
+}
+
+.markdownPlaceholder.oembedPlaceholder {
+    width: 459px;
+    height: 344px;
 }

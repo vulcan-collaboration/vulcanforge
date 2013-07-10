@@ -150,9 +150,9 @@ class MultiProjectUserSelect(ProjectUserSelect):
                 focus(function(){$(this).multicomplete('search','');}).
                 click(function(){$(this).multicomplete('search','');});
             if ($input.length) {
-                $input.data( "multicomplete" )._renderItem = function( ul, item ) {
+                $input.data( "vfMulticomplete" )._renderItem = function( ul, item ) {
                     return $( "<li></li>" ).
-                        data( "item.multicomplete", item ).
+                        data( "ui-multicomplete-item", item ).
                         append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
                         appendTo( ul );
                 };

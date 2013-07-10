@@ -27,16 +27,10 @@
             <label>Labels:</label>
             {{c.label_edit.display(id='labels', name='labels', value=page.labels)}}
         </li>
-        {% if c.app.content_agreement %}
-        <li>
-            <label>Protected by Content Agreement:</label>
-            <input type="checkbox" name="content_agreement_protected" id="content_agreement_protected" {% if page.content_agreement_protected %} checked {% endif %}/>
-        </li>
-        {% endif %}
         <li>
             <label>Content:</label>
             <div>
-                {{c.markdown_editor.display(id='text', name='text', value=page.text, attachment_context_id=attachment_context_id)}}
+                {{c.markdown_editor.display(id='text', name='text', value=page.text, attachment_context_id=attachment_context_id, class_name="markdown-edit wiki-markdown")}}
             </div>
         </li>
         {% if not page_exists or g.security.has_access(page, 'edit') %}

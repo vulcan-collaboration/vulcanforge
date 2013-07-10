@@ -360,7 +360,9 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
     def _rewrite_abs(self, tag, attr):
         self._rewrite(tag, attr)
         val = tag.get(attr)
-        val = urljoin(config.get('base_url', 'http://vehicleforge.net/'), val)
+        base_url = config.get('base_url')
+        if base_url:
+            val = urljoin(base_url, val)
         tag[attr] = val
 
 
@@ -442,11 +444,11 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
         if m:
             before = block[:start]
             self.parser.parseBlocks(parent, [before])
-            block ='\n'.join([self.clean(line)for line in
+            block = '\n'.join([self.clean(line)for line in
                               block[start:].split('\n')])
         sibling = self.lastChild(parent)
         if sibling and sibling.tag == "div" \
-        and sibling.attrib.get('class', None) == self.css_class:
+                and sibling.attrib.get('class', None) == self.css_class:
             element = sibling
         else:
             element = markdown.util.etree.SubElement(parent, 'div')

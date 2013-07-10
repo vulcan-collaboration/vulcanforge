@@ -1,4 +1,4 @@
-{% if attachments %}
+{% if attachments.count() %}
 <div class="attachment-list-wrapper padded {{extraCSS}}">
     <label class="attachment-label">Attachments:</label>
     <ul class="attachment-list"{% if context_id %} id="attachment-list-{{ context_id }}"{% endif %}>

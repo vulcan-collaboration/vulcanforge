@@ -7,6 +7,7 @@ forms
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import logging
 
 import formencode.validators as fev
 from pylons import tmpl_context as c
@@ -16,9 +17,9 @@ from vulcanforge.auth.validators import UsernameListValidator
 
 from vulcanforge.common.widgets import form_fields
 from vulcanforge.common.widgets.forms import ForgeForm
-from vulcanforge.project.widgets import ProjectUserSelect, MultiProjectUserSelect
-from vulcanforge.tools.tickets.widgets.validators import ProjectUser
+from vulcanforge.project.widgets import MultiProjectUserSelect
 
+LOG = logging.getLogger(__name__)
 TEMPLATE_FOLDER = 'jinja:vulcanforge.tools.tickets:templates/tracker_widgets/'
 
 
@@ -208,5 +209,7 @@ class TrackerTicketForm(ForgeForm):
         ctx = super(TrackerTicketForm, self).context_for(field)
         if isinstance(field, form_fields.MarkdownEdit) or \
                 isinstance(field, TicketMarkdownFields):
-            ctx['attachment_context_id'] = self.attachment_context_id
+            w_ctx = ew_core.widget_context
+            ctx['attachment_context_id'] = w_ctx.render_context.get(
+                'attachment_context_id')
         return ctx

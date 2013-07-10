@@ -557,7 +557,7 @@ class AbstractPost(Message, VersionedArtifact):
         for att in attachments:
             self.text = re.sub(
                 'src="?{}"?'.format(att.filename),
-                'src="{}"'.format(att.url()),
+                'src="{}"'.format(att.url(absolute=True)),
                 self.text)
 
 

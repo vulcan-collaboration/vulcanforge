@@ -936,9 +936,8 @@ class BaseAttachment(File):
                 return [orig, thumbnail]
         else:
             return [
-                cls.from_stream(filename, fp, content_type=content_type,
-                    **original_meta)
-            ]
+                cls.from_stream(
+                    filename, fp, content_type=content_type, **original_meta)]
 
 
 class ArtifactProcessor(object):

@@ -1761,7 +1761,7 @@
 
                     if (isImage && attachmentMatch !== null){
                         /* vf attachment tag */
-                        chunk.startTag = '[[img src=' + properlyEncoded(attachmentMatch[1]) + ' alt="';
+                        chunk.startTag = '[[img src="' + properlyEncoded(attachmentMatch[1]) + '" alt="';
                         chunk.endTag = '"]]';
                     } else {
                         if (attachmentMatch !== null){

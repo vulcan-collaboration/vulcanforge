@@ -144,7 +144,8 @@ class EditPost(ff.ForgeForm):
     def fields(self):
         fields = ew_core.NameList()
         fields.append(ffw.MarkdownEdit(
-            name='text'
+            name='text',
+            class_name='markdown-edit post-markdown'
         ))
         fields.append(ffw.RepeatedAttachmentField(
             name='new_attachments',

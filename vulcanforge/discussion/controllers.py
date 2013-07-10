@@ -112,7 +112,7 @@ class PostController(BaseController):
                         content_type=attachment.type,
                         post_id=self.post._id,
                         thread_id=self.post.thread_id,
-                        discussion_id=self.post.discussion_id))
+                        discussion_id=self.post.discussion_id)[0])
             post_fields = self.Forms.edit_post.to_python(kw, None)
             for k, v in post_fields.iteritems():
                 try:
@@ -289,7 +289,7 @@ class ThreadController(BaseController):
                     content_type=attachment.type,
                     post_id=post._id,
                     thread_id=post.thread_id,
-                    discussion_id=post.discussion_id)
+                    discussion_id=post.discussion_id)[0]
             )
 
         # replace relative urls with absolute

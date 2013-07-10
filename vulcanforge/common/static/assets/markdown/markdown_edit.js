@@ -44,6 +44,7 @@
         }
 
         function parseUploadFields(){
+            that.uploadAttachments = {};
             if ($uploadFieldList !== undefined && $uploadFieldList !== null){
                 $uploadFieldList.find('input').each(function(i, el){
                     var file = el.files[0];
@@ -78,16 +79,16 @@
         getAvailableImages: function () {
             var available = [], fname;
             for (fname in this.attachments){
-                if (this.attachments.hasOwnProperty('fname') && this.attachments[fname]['is_image']){
+                if (this.attachments.hasOwnProperty(fname) && this.attachments[fname]['is_image']){
                     available.push({
                         filename: fname,
-                        url: fname
+                        url: this.attachments[fname].url
                     });
                 }
             }
             this.parseUploadFields();
             for (fname in this.uploadAttachments){
-                if (this.attachments.hasOwnProperty('fname') && this.uploadAttachments[fname]['is_image']){
+                if (this.uploadAttachments.hasOwnProperty(fname) && this.uploadAttachments[fname]['is_image']){
                     available.push({
                         filename: fname,
                         url: fname
@@ -144,7 +145,8 @@
     $.widget('vf.markdownEdit', {
         options: {
             converter: null,
-            attachmentManager: null
+            attachmentManager: null,
+            previewHeight: null
         },
         _create: function() {
             var that = this;
@@ -154,6 +156,19 @@
             this.$textarea = this.element.find('textarea');
             this.$textarea.tabby({tabString : "    "});
             this.context_id = this.element.attr("data-context-id");
+            that.$preview = this.element.find('#wmd-preview-' + this.context_id);
+            if (that.$preview){
+                if (this.options.previewHeight === 'auto'){
+                    this.$textarea.resize(function(){
+                        that.$preview.height(that.$textarea.height());
+                    });
+                    this.$textarea.resize();
+                } else if (this.options.previewHeight) {
+                    that.$preview.height(this.options.previewHeight);
+                } else {
+                    that.$preview.css('min-height', that.$textarea.height());
+                }
+            }
             this.converter = this.options.converter;
             this.attachmentManager = this.options.attachmentManager;
             if (this.attachmentManager === null){
@@ -180,20 +195,94 @@
         _setupConverter: function(){
             var that = this;
             this.converter = new Markdown.Converter();
+
+            /* add wrapper */
             this.converter.hooks.chain("postConversion", function(text){
-                 return '<div class="markdown_content">' + text + '</div>';
+                return '<div class="markdown_content">' + text + '</div>';
             });
+
+            /* prettyprint code plugin */
             this.converter.hooks.chain("postConversion", function(text){
-                return text.replace(/.*<pre><code>([^<]+)<\/code><\/pre>.*/gm, function(whole, inner){
+                var rePattern = /<pre><code>([^<]+)<\/code><\/pre>/gm;
+                return text.replace(rePattern, function(whole, inner){
                     return '<pre><code class="prettyprint">'+ prettyPrintOne(inner) + '</code></pre>';
                 });
             });
+
+            /* custom img tag */
             this.converter.hooks.chain("postSpanGamut", function(text){
-                return text.replace(/\[\[(img[^\]]+src="?([^"\s]+)"?[^\]]+)\]\]/g, function (whole, attributes, src) {
-                    var localUrl = that.attachmentManager.getLocalUrlforFilename(src);
-                    return '<' + attributes.replace(src, localUrl) + '/>';
+                var rePattern = /\[\[(img[^\]]+src="?([^"\s]+)"?[^\]]+)\]\]/g;
+                return text.replace(rePattern, function (whole, attributes, src) {
+                    if (! /[A-z]:\/\//.test(src)){  // if not absolute
+                        attributes = attributes.replace(src, that.attachmentManager.getLocalUrlforFilename(src));
+                    }
+                    return '<' + attributes + '/>';
                 });
             });
+
+            /* shortlink conversion */
+            this.converter.hooks.chain("postSpanGamut", function(text){
+                var rePattern = /(\[)?\[([^\]\[]+)\]/g;
+                return text.replace(rePattern, function (whole, extraBracket0, shortLink) {
+                    if (extraBracket0){
+                        return whole;
+                    }
+                    return '<a href="#" class="shortlink-placeholder">' + whole + '</a>';
+                });
+            });
+
+            /* oembed */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /!\[([^\]]+)\]\((https?:\/\/[^\)]+)(png|jpg|jpeg|gif)?\)/g;
+                console.log(text);
+                return text.replace(rePattern, function (whole, altText, url, imgExt) {
+                    if (imgExt){
+                        return whole;
+                    } else {
+                        return '<div class="markdownPlaceholder oembedPlaceholder">'
+                            + '<p>Video at ' + url + ' will be rendered here</p>'
+                            + '</div>';
+                    }
+                });
+            });
+
+            /* embedded visualization */
+            this.converter.hooks.chain("postSpanGamut", function(text){
+                var rePattern = /\^v\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
+                return text.replace(rePattern, function (whole, resourceUrl, props) {
+                    return '<div class="markdownPlaceholder visualizerPlaceholder">' +
+                        '<p>Visualizer for ' + resourceUrl + ' will be embedded here...</p>' +
+                        '</div>';
+                });
+            });
+
+            /* include */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /\[\[include +ref="?([^\]"]+)"?\]\]/g;
+                return text.replace(rePattern, function (whole, pageName) {
+                    return '<div class="markdownPlaceholder wikiPlaceholder">' +
+                        '<p>Contents of *' + pageName + '* will be rendered here...</p>' +
+                        '</div>';
+                });
+            });
+
+
+            /* fenced code */
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /^ {0,3}~T~T~T~T *\n((?:.*?\n)+?) {0,3}~T~T~T~T *$/gm;
+                return text.replace(rePattern, function(whole, inner){
+                    return '<pre><code>' + inner + '</code></pre>';
+                });
+            });
+
+            /* read more */
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /^ {0,3}\/\/(.*)(\n\n)?/gm;
+                return text.replace(rePattern, function(whole, inner){
+                     return '<div class="md-read-more">' + runBlockGamut(inner) + '</div>';
+                });
+            });
+
             return this.converter;
         },
         _setupEditor: function(){
@@ -206,7 +295,7 @@
             this.editor.run();
         },
         _insertImageDialog: function(callback) {
-            var $container = $('<div/>', {"class": "modal"}),
+            var $container = $('<div/>', {"class": "modal markdown-img-container"}),
                 availableImages = this.attachmentManager.getAvailableImages(),
                 that = this,
                 $form,
@@ -253,15 +342,16 @@
                 .append($('<div/>')
                     .append($('<label for="markdown-img-url">Url</label>'))
                     .append($urlInput))
-                .append($('<input/>', {
-                    "type": "submit",
-                    "value": "OK"
-                }))
-                .append($('<input/>', {
-                    'type': "button",
-                    "value": "Cancel",
-                    "class": "close"
-                }))
+                .append($('<div/>', {"class": "markdown-img-add-btn-row"})
+                    .append($('<input/>', {
+                        "type": "submit",
+                        "value": "OK"
+                    }))
+                    .append($('<input/>', {
+                        'type': "button",
+                        "value": "Cancel",
+                        "class": "close"
+                    })))
                 .submit(function(){
                     callback($urlInput.val());
                     $container.trigger('close');
