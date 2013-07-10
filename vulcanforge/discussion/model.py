@@ -176,6 +176,7 @@ class AbstractThread(Artifact):
         post = self.post(**kw)
         post.commit()
         self.add_post_obj(post)
+        return post
 
     def add_post_obj(self, post):
         self.num_replies += 1

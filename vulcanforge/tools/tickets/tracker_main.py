@@ -1341,8 +1341,8 @@ class RootRestController(BaseController):
         ])
 
     @expose()
-    @vardec
     @require_post()
+    @vardec
     @validate_form("ticket_form", error_handler=h.json_validation_error)
     def new(self, ticket_form=None, **post_data):
         """
