@@ -519,7 +519,9 @@ class TrackerSearchController(BaseController):
             for field in c.app.globals.sortable_custom_fields_shown_in_search()
         ]
         solr_query = kwargs.pop('q', None)
-        solr_sort = kwargs.pop('sort') or 'ticket_num_i asc'
+        solr_sort = kwargs.pop('sort', None)
+        if solr_sort in (None, 'None'):
+            solr_sort = 'ticket_num_i asc'
         solr_result = g.search.search_artifact(TM.Ticket, solr_query,
                                                sort=solr_sort)
 
