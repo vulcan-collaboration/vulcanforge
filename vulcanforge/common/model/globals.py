@@ -1,4 +1,6 @@
+from ming import schema as S
 from ming.odm import FieldProperty
+
 from .base import BaseMappedClass
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.common.util.model import pymongo_db_collection
@@ -11,6 +13,7 @@ class ForgeGlobals(BaseMappedClass):
         name = 'forge_globals'
         session = main_orm_session
 
+    _id = FieldProperty(S.ObjectId)
     user_counter = FieldProperty(int, if_missing=1)
 
     @classmethod

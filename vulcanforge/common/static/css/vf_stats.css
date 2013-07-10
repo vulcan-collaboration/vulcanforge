@@ -55,3 +55,20 @@
 .vfStatsTableView tr.selected {
     background: #def;
 }
+
+.vfStatsMiniPieView {
+    display: inline-block;
+    margin: 0;
+    width: 128px;
+    height: 128px;
+    vertical-align: top;
+}
+
+
+.inline-stats-group {
+    display: inline-block;
+    margin: 1ex;
+}
+.inline-stats-group .vfStatsWidget {
+    margin: 0;
+}

@@ -518,16 +518,27 @@ class TrackerSearchController(BaseController):
             (field['name'] + '_s', field['label'])
             for field in c.app.globals.sortable_custom_fields_shown_in_search()
         ]
-        solr_query = kwargs.pop('q', None)
-        solr_sort = kwargs.pop('sort', 'ticket_num_i asc')
-        solr_result = g.search.search_artifact(TM.Ticket, solr_query,
-                                               sort=solr_sort)
-
         # yield labels
         yield self.mk_csv_row([label for key, label in fields])
+
         # yield rows
-        for result in solr_result.docs:
-            yield self.mk_csv_row([result[key] for key, label in fields])
+        solr_query = kwargs.pop('q', None)
+        solr_sort = kwargs.pop('sort', None)
+        if solr_sort in (None, 'None'):
+            solr_sort = 'ticket_num_i asc'
+        start = 0
+        rows = 100
+        while True:
+            solr_result = g.search.search_artifact(TM.Ticket, solr_query,
+                                                   sort=solr_sort, start=start,
+                                                   rows=rows)
+            for result in solr_result.docs:
+                yield self.mk_csv_row([result.get(key, '')
+                                       for key, label in fields])
+            if solr_result.hits > start + rows:
+                start += rows
+            else:
+                break
 
     @staticmethod
     def mk_csv_row(items):

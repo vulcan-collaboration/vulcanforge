@@ -95,7 +95,7 @@
                 'dataLoaded.vfStats': as(this._handleDataLoaded, this)
             });
             graphTypes[this.options.graphType].init.call(this);
-            if (typeof this.options.dataSrc !== 'undefined') {
+            if (this.options.dataset) {
                 this._render()
             }
         },
