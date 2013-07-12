@@ -7,6 +7,7 @@ forms
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import logging
 
 import formencode.validators as fev
 from pylons import tmpl_context as c
@@ -16,9 +17,9 @@ from vulcanforge.auth.validators import UsernameListValidator
 
 from vulcanforge.common.widgets import form_fields
 from vulcanforge.common.widgets.forms import ForgeForm
-from vulcanforge.project.widgets import ProjectUserSelect, MultiProjectUserSelect
-from vulcanforge.tools.tickets.widgets.validators import ProjectUser
+from vulcanforge.project.widgets import MultiProjectUserSelect
 
+LOG = logging.getLogger(__name__)
 TEMPLATE_FOLDER = 'jinja:vulcanforge.tools.tickets:templates/tracker_widgets/'
 
 
@@ -105,7 +106,8 @@ class TrackerTicketForm(ForgeForm):
     defaults = dict(
         ForgeForm.defaults,
         enctype='multipart/form-data',
-        form_id='ticket_form'
+        form_id='ticket_form',
+        attachment_context_id=None
     )
 
     def __init__(self, comment=False, *args, **kw):
@@ -163,13 +165,20 @@ class TrackerTicketForm(ForgeForm):
                 name="private",
                 label='Make Issue Private',
                 attrs={'class': 'mark-as-private-checkbox'},
-            ),
-            form_fields.MarkdownEdit(
-                name="description",
-                label=c.app.globals.description_label,
-                attrs={'class': 'ticket-description'},
-                wide=True,
-            ) if c.app.globals.show_description else None,
+            )
+        ])
+        if c.app.globals.show_description:
+            raw_fields.append(
+                form_fields.MarkdownEdit(
+                    name="description",
+                    label=c.app.globals.description_label,
+                    attrs={'class': 'ticket-description'},
+                    wide=True,
+                )
+            )
+        else:
+            raw_fields.append(None)
+        raw_fields.extend([
             TicketMarkdownFields(
                 label="",
                 name="markdown_custom_fields",
@@ -195,3 +204,12 @@ class TrackerTicketForm(ForgeForm):
             return item is not None and c.app.globals.can_edit_field(item.name)
 
         return ew_core.NameList(filter(filter_check, raw_fields))
+
+    def context_for(self, field):
+        ctx = super(TrackerTicketForm, self).context_for(field)
+        if isinstance(field, form_fields.MarkdownEdit) or \
+                isinstance(field, TicketMarkdownFields):
+            w_ctx = ew_core.widget_context
+            ctx['attachment_context_id'] = w_ctx.render_context.get(
+                'attachment_context_id')
+        return ctx

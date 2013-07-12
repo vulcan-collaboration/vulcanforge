@@ -24,12 +24,13 @@
                     value=value,
                     submit_text='Save',
                     action=value.absolute_url(),
+                    attachment_context_id=attachment_context_id,
                     embedded=True
                     )}}
                 </div>
             </div>
             {% endif %}
-            {{widgets.attachment_list.display(value=value, extraCSS='post-attachments')}}
+            {{widgets.attachment_list.display(value=value, extraCSS='post-attachments', context_id=attachment_context_id)}}
             {% if g.security.has_access(value.thread, 'post') %}
             <div class="reply_post_form hidden">
                 <div class="posts-holder reply">

@@ -54,16 +54,6 @@ class FileController(BaseTGController):
         if fd_file is None:
             raise exc.AJAXNotFound('The requested file does not exist.')
 
-        if c.app.content_agreement\
-                and not c.user.has_content_agreed_artifact(fd_file.index_id()):
-            redirect(
-                ("{app_url}content_agreement/?"
-                 "requested_resource={requested_resource}"
-                 "&manual_leave=False").format(
-                    app_url=c.app.url,
-                    requested_resource=request.url)
-            )
-
         c.related_artifacts_widget = self.Widgets.related_artifacts
         c.url_file_widget = self.Widgets.url_file_widget
         return dict(

@@ -1,10 +1,27 @@
 {% extends 'vulcanforge.visualize:templates/widgets/iframecontent.html' %}
 
-{% do g.resource_manager.register_css('visualize/prettify.min.css', scope="page") %}
+{% do g.resource_manager.register_css('js/lib/google-code-prettify/prettify.css', scope="page") %}
 {% do g.resource_manager.register_css('visualize/syntaxvis.css', scope="page") %}
-{% do g.resource_manager.register_js('visualize/prettify.min.js', scope="page") %}
-{% do g.resource_manager.register_js('visualize/jquery.syntaxhighlighter.js', scope="page") %}
+{% do g.resource_manager.register_js('js/lib/google-code-prettify/prettify.js', scope="page") %}
 
 {% block content %}
-<pre id="{{prefix}}code" class="highlight embedded"></pre>
+<pre class="highlight embedded prettyprint"><code id="{{prefix}}code"></code></pre>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $(document).ready(function(){
+        var codeContainer = $('#{{prefix}}code');
+        $.ajax({
+            url: "{{value|safe}}",
+            dataType: "text",
+            xhrFields: {
+                withCredentials: {{with_credentials}}
+            },
+            success: function(resp){
+                codeContainer.html(prettyPrintOne(resp));
+            }
+        });
+    });
+</script>
 {% endblock %}
