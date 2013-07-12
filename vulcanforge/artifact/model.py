@@ -653,10 +653,8 @@ class VersionedArtifact(Artifact):
             n = self.version + n + 1
         ss = self.__mongometa__.history_class.query.get(
             artifact_id=self._id,
-            artifact_class='%s.%s' % (
-                self.__class__.__module__,
-                self.__class__.__name__),
-            version=n)
+            version=n
+        )
         if ss is None:
             raise IndexError(n)
         return ss
