@@ -19,10 +19,14 @@ from vulcanforge.websocket.reactor import MessageReactor
 class ReactorTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.environ = {
+            'HTTP_COOKIE': "dummy-cookie"
+        }
         self.mock_auth = mock.Mock()
         self.mock_redis = mock.Mock()
         self.mock_pubsub = mock.Mock()
-        self.reactor = MessageReactor({}, DEFAULT_SERVER_CONFIG, self.mock_auth,
+        self.reactor = MessageReactor(self.environ, DEFAULT_SERVER_CONFIG,
+                                      self.mock_auth,
                                       self.mock_redis, self.mock_pubsub)
 
 
@@ -152,7 +156,10 @@ class TestReactor(ReactorTestCase):
         message = json.dumps(message_dict)
         self.reactor.react(message)
         self.mock_redis.rpush.assert_called_with(self.reactor.event_queue_key,
-                                                 event_dict)
+                                                 {
+                                                     'cookie': 'dummy-cookie',
+                                                     'event': event_dict
+                                                 })
         self.assertFalse(self.mock_redis.publish.called)
 
     def test_publish_message(self):
@@ -238,7 +245,7 @@ class TestAuthBroker(ReactorTestCase):
 
     def setUp(self):
         ReactorTestCase.setUp(self)
-        self.auth = self.MockAuthBroker({}, DEFAULT_SERVER_CONFIG)
+        self.auth = self.MockAuthBroker(self.environ, DEFAULT_SERVER_CONFIG)
         self.reactor.auth = self.auth
 
     def test_authorize_subscribe(self):
@@ -284,8 +291,11 @@ class TestAuthBroker(ReactorTestCase):
         self.mock_redis.rpush.assert_called_once_with(
             self.reactor.event_queue_key,
             {
-                'targets': ['foo'],
-                'type': 'howdy'
+                'cookie': 'dummy-cookie',
+                'event': {
+                    'targets': ['foo'],
+                    'type': 'howdy'
+                }
             })
         self.mock_redis.rpush.reset_mock()
         with self.assertRaises(NotAuthorized):

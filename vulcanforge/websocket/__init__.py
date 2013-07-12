@@ -10,7 +10,6 @@ __init__.py
 import multiprocessing
 
 
-EVENT_QUEUE_KEY = 'queue.event'
 INCOMING_MESSAGE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -61,7 +60,8 @@ DEFAULT_SERVER_CONFIG = {
     'websocket.port': 8001,
     'websocket.process_count': multiprocessing.cpu_count(),
     'websocket.auth_broker': 'vulcanforge.websocket.auth_broker:'
-                              'WebSocketAuthBroker'
+                              'WebSocketAuthBroker',
+    'eventd.queue_name': 'queue.event'
 }
 
 

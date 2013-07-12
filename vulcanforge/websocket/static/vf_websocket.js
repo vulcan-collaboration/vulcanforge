@@ -22,6 +22,9 @@
                 VFSOCK.subscriptions.push(VFSOCK.userChannel);
             }
             VFSOCK._connect();
+            VFSOCK.addHandler(/^test\.(.+)$/, function (match, msg) {
+                console.info(msg.data);
+            });
         },
         _connect: function () {
             VFSOCK.ws = new WebSocket(VFSOCK.socketURL, "vulcanForge");

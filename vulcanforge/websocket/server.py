@@ -20,7 +20,6 @@ from vulcanforge.websocket.exceptions import WebSocketException, \
 from vulcanforge.websocket.reactor import MessageReactor
 
 
-logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 
@@ -117,7 +116,6 @@ class ConnectionController(object):
             LOG.exception("websocket.receive failed")
             raise LostConnection()
         if message is None:
-            LOG.error("message is none")
             return
         try:
             self.reactor.react(message)

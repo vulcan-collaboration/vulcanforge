@@ -76,4 +76,4 @@ class WebSocketAPIController(BaseController):
 
     def _auth_targets(self, event_targets):
         for target in event_targets:
-            self._authorizer.can_trigger(target)
+            self._authorizer.can_target(target)

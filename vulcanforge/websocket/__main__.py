@@ -7,7 +7,6 @@ __main__
 """
 import gevent
 import gevent.monkey
-import signal
 
 gevent.monkey.patch_all(dns=False)
 import logging
@@ -15,13 +14,17 @@ import os
 import sys
 from time import sleep
 from multiprocessing import Process
+import signal
+from paste.util.converters import asbool
 import gevent.baseserver
+
+
+logging.basicConfig(level=logging.WARN)
+LOG = logging.getLogger("vulcanforge.websocket")
+
+
 from vulcanforge.websocket import get_config
 from vulcanforge.websocket.server import make_server
-
-
-logging.basicConfig(level=logging.INFO)
-LOG = logging.getLogger("vulcanforge.websocket")
 
 
 def main():
@@ -34,6 +37,8 @@ def main():
     if not config:
         LOG.info("could not load file config at {}".format())
         sys.exit(2)
+    if asbool(config.get('debug', False)):
+        logging.getLogger('vulcanforge').setLevel(logging.DEBUG)
     host = config['websocket.host']
     port = int(config['websocket.port'])
     process_count = int(config['websocket.process_count'])

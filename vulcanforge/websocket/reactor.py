@@ -7,7 +7,8 @@ reactor
 """
 import json
 import jsonschema
-from vulcanforge.websocket import EVENT_QUEUE_KEY, INCOMING_MESSAGE_SCHEMA
+from vulcanforge.taskd.queue import RedisQueue
+from vulcanforge.websocket import INCOMING_MESSAGE_SCHEMA
 from vulcanforge.websocket.exceptions import InvalidMessageException
 
 
@@ -16,7 +17,6 @@ class MessageReactor(object):
     One reactor created for each connection. Incoming messages from the client
     are passed to the `react` method.
     """
-    event_queue_key = EVENT_QUEUE_KEY
     incoming_message_schema = INCOMING_MESSAGE_SCHEMA
 
     def __init__(self, environ, config, auth, redis_client, pubsub_client):
@@ -25,6 +25,10 @@ class MessageReactor(object):
         self.redis = redis_client
         self.pubsub = pubsub_client
         self.auth = auth
+        self.event_queue = RedisQueue(
+            self.config.get('event_queue.name', 'event_queue'),
+            namespace=self.config.get('event_queue.namespace'),
+            conn=self.redis)
 
     def react(self, message):
         """
@@ -82,8 +86,8 @@ class MessageReactor(object):
         if trigger:
             event_targets.update(trigger['targets'])
         self.auth.authorize(listen_channels=listen_channels,
-                                  publish_channels=publish_channels,
-                                  event_targets=event_targets)
+                            publish_channels=publish_channels,
+                            event_targets=event_targets)
 
     def subscribe(self, channels):
         self.pubsub.subscribe(channels)
@@ -97,4 +101,8 @@ class MessageReactor(object):
             self.redis.publish(channel, message)
 
     def queue(self, event):
-        self.redis.rpush(self.event_queue_key, event)
+        event_info = {
+            'event': event,
+            'cookie': self.environ['HTTP_COOKIE']
+        }
+        self.event_queue.put(json.dumps(event_info))

@@ -98,6 +98,7 @@ class ForgeConfig(AppConfig):
         self.setup_search()
         self.setup_cache()
         self.setup_task_queue()
+        self.setup_event_queue()
 
     def register_packages(self):
         """This is a placeholder for now, but soon it will hold our extension
@@ -297,6 +298,29 @@ class ForgeConfig(AppConfig):
 
         task_queue = cls(config.get('task_queue.name', 'task_queue'), **kwargs)
         config['pylons.app_globals'].task_queue = task_queue
+
+    def setup_event_queue(self):
+        """This sets up a redis event queue.
+
+        """
+        api_path = config.get('event_queue.cls')
+        if api_path:
+            cls = import_object(api_path)
+        else:
+            cls = RedisQueue
+        kwargs = {
+            'host': config.get('event_queue.host', config['redis.host']),
+            'port': asint(config.get('event_queue.port',
+                                     config.get('redis.port', 6379))),
+            'db': asint(config.get('event_queue.db',
+                                   config.get('redis.db', 0)))
+        }
+        if config.get('event_queue.namespace'):
+            kwargs['namespace'] = config['event_queue.namespace']
+
+        event_queue = cls(config.get('event_queue.name', 'event_queue'),
+                          **kwargs)
+        config['pylons.app_globals'].event_queue = event_queue
 
     def setup_routes(self):
         map = Mapper(directory=config['pylons.paths']['controllers'],
