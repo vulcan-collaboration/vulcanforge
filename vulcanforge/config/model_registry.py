@@ -68,6 +68,7 @@ from vulcanforge.project.model import (
     ProjectCategory,
     ProjectFile,
     AppConfig,
+    ProjectRole
 )
 from vulcanforge.taskd.model import MonQTask
 from vulcanforge.visualize.model import Visualizer
