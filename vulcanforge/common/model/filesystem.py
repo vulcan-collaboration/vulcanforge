@@ -138,9 +138,12 @@ class File(MappedClass):
     def local_url(self):
         raise NotImplementedError('local_url')
 
-    def url(self):
+    def url(self, absolute=False):
         if g.s3_serve_local:
-            return self.local_url()
+            url = self.local_url()
+            if absolute:
+                url = g.url(url)
+            return url
         else:
             return self.remote_url()
 

@@ -14,12 +14,11 @@
 {% do g.resource_manager.register_css('assets/tutorial/tutorial.scss', scope='forge') %}
 
 {% do g.resource_manager.register_css('css/progress-polyfill.css', scope='forge') %}
-{% do g.resource_manager.register_css('css/fang.css', scope='forge') %}
 {% do g.resource_manager.register_css('theme/css/theme.scss', scope='forge') %}
 
 {# *********************** These are original Allura scripts ********************************* #}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.8.19.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.10.3.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js', scope='forge') %}
 
 {% do g.resource_manager.register_js('js/allura-plugins.js', scope='forge') %}
@@ -46,7 +45,6 @@
 {% do g.resource_manager.register_js('artifact/subscription_popup_menu.js', scope='forge') %}
 {% do g.resource_manager.register_js('assets/workspace/Workspace.js', scope='forge') %}
 {% do g.resource_manager.register_js('assets/tutorial/Tutorial.js', scope='forge') %}
-{% do g.resource_manager.register_js('assets/markdown/markdown_edit.js', scope='forge') %}
 {% do g.resource_manager.register_js('auth/userid.js', scope='forge') %}
 
 

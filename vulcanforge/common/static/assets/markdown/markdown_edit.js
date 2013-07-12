@@ -15,132 +15,383 @@
         $closeButton = $('<div/>', {
             "class": "icon ico-close close",
             title: 'Close Markdown Help'
-        });
+        }),
+        helpArea = null,
+        windowURL = global.URL || global.webkitURL;
 
-    $(function() {
+    /* AttachmentManager manages markdown attachment interaction
+       (finds urls, available attachments, etc) */
+    function AttachmentManager($uploadFieldList, $attachmentList){
+        var that = this;
+        this.attachments = {};
+        this.uploadAttachments = {};
 
-        if(!global.markdown_init){
-            global.markdown_init = true;
+        function init(){
+            parseAttachmentList();
+        }
 
-            var helpArea = null,
-                helpPanelOpener = function(evt){
-                    evt.preventDefault();
-                    if (!helpArea){
-                        $.ajax({
-                            url: '/nf/markdown_syntax',
-                            type: "GET",
-                            success: function(response){
-                                helpArea = $('<div/>', {
-                                    "class": "modal markdown-help"
-                                }).append( $closeButton ).css("display", "none")
-                                    .append(response);
-
-                                oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
-                                contentAreasWrapper.css('position', 'fixed');
-
-                                helpArea.lightbox_me({
-                                    centered: true,
-                                    overlayCSS: {
-                                        position: 'fixed',
-                                        background: 'black',
-                                        opacity: .3
-                                    },
-                                    onClose: function () {
-                                        contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
-                                    }
-                                });
-                            }
-                        });
-                    } else{
-
-                        oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
-                        contentAreasWrapper.css('position', 'fixed');
-
-                        helpArea.lightbox_me({
-                            onClose: function () {
-                                contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
-                            }
-                        });
-                    }
-                };
-
-
-
-            $('.markdown-help-button').click(helpPanelOpener);
-            $('#sidebarmenu-item-markdown-syntax a.nav_child').click(helpPanelOpener);
-
-            var isScrolledIntoView = function (elem) {
-                var docViewTop = $(window).scrollTop();
-                var docViewBottom = docViewTop + $(window).height();
-
-                var elemTop = $(elem).offset().top;
-                var elemBottom = elemTop + $(elem).height();
-
-                return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
-            };
-
-
-            $('div.markdown-edit').each(function(){
-                var $container = $(this);
-
-                $container.tabs({selected: 0});
-
-                var $textarea = $('textarea', $container);
-                $textarea.tabby({tabString : "    "});
-                var $preview = $('a.markdown-preview-button', $container);
-                var $edit = $('a.markdown-edit-button', $container);
-                //var $edit = $('a.markdown-edit-button', $container);
-                var $preview_area = $('div.markdown-preview', $container);
-                var $formControls = $('.form-controls');
-                var exitPreviewButton = $('.exit-preview-button', $container).remove().removeClass('hidden');
-                var $form = $('form', $container.parents());
-
-                exitPreviewButton.click(function() {
-                    $edit.click();
+        function parseAttachmentList(){
+            if ($attachmentList !== undefined && $attachmentList !== null){
+                $attachmentList.find('.attachment').each(function(i){
+                    var filename = $(this).attr('data-filename');
+                    that.attachments[filename] = {
+                        is_image: $(this).find('.img-thumb').length > 0,
+                        $el: $(this)
+                    };
+                    that.attachments[filename].url = $(this).attr('data-url') ? $(this).attr('data-url') : null;
                 });
+            }
+        }
 
-                if ($formControls) {
-                    exitPreviewButton.hide();
-                }
-
-                $preview.click(function(evt){
-                    $preview_area.html('');
-                    $preview_area.addClass('waiting-on-something');
-                    evt.preventDefault();
-                    var cval = $.cookie('_session_id');
-
-                    if ($formControls) {
-                        $formControls.prepend(exitPreviewButton);
-                        exitPreviewButton.show();
+        function parseUploadFields(){
+            that.uploadAttachments = {};
+            if ($uploadFieldList !== undefined && $uploadFieldList !== null){
+                $uploadFieldList.find('input').each(function(i, el){
+                    var file = el.files[0];
+                    if (file){
+                        that.uploadAttachments[file.name] = {
+                            is_image: file.type.match(/image.*/),
+                            $el: this
+                        };
                     }
+                });
+            }
+        }
 
-                    $.post('/nf/markdown_to_html', {
-                        markdown:$textarea.val(),
-                        project:$('input.markdown_project', $container).val(),
-                        app:$('input.markdown_app', $container).val(),
-                        _session_id:cval
+        /* api (these are used by prototype methods) */
+        this.parseUploadFields = parseUploadFields;
 
-                    },
-                    function(resp){
-                        $preview_area.html(resp);
-                        $preview_area.removeClass('waiting-on-something');
-
-                        if ($formControls && !isScrolledIntoView($formControls)) {
-                            $form.addClass('fix-controls');
-                        }
-
+        init();
+    }
+    AttachmentManager.prototype = {
+        getLocalUrlforFilename: function (filename){
+            var att, previewUrl = null;
+            if (this.uploadAttachments.hasOwnProperty(decodeURIComponent(filename))){
+                att = this.uploadAttachments[decodeURIComponent(filename)];
+                previewUrl = windowURL.createObjectURL(att.$el.files[0]);
+            } else if (this.attachments.hasOwnProperty(filename) && this.attachments[filename].url){
+                previewUrl = this.attachments[filename].url;
+            } else {
+                previewUrl = './attachment/' + filename;
+            }
+            return previewUrl;
+        },
+        getAvailableImages: function () {
+            var available = [], fname;
+            for (fname in this.attachments){
+                if (this.attachments.hasOwnProperty(fname) && this.attachments[fname]['is_image']){
+                    available.push({
+                        filename: fname,
+                        url: this.attachments[fname].url
                     });
-                });
+                }
+            }
+            this.parseUploadFields();
+            for (fname in this.uploadAttachments){
+                if (this.uploadAttachments.hasOwnProperty(fname) && this.uploadAttachments[fname]['is_image']){
+                    available.push({
+                        filename: fname,
+                        url: fname
+                    });
+                }
+            }
+            return available;
+        }
+    };
 
-                $edit.click(function() {
-                    if (exitPreviewButton) {
-                        exitPreviewButton.hide();
-                        $form.removeClass('fix-controls');
+    /* help panel */
+    function openHelpPanel(evt) {
+        evt.preventDefault();
+        if (!helpArea){
+            $.ajax({
+                url: '/nf/markdown_syntax',
+                type: "GET",
+                success: function(response){
+                    helpArea = $('<div/>', {
+                        "class": "modal markdown-help"
+                    }).append( $closeButton ).css("display", "none")
+                        .append(response);
+
+                    oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
+                    contentAreasWrapper.css('position', 'fixed');
+
+                    helpArea.lightbox_me({
+                        centered: true,
+                        overlayCSS: {
+                            position: 'fixed',
+                            background: 'black',
+                            opacity: .3
+                        },
+                        onClose: function () {
+                            contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
+                        }
+                    });
+                }
+            });
+        } else {
+
+            oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
+            contentAreasWrapper.css('position', 'fixed');
+
+            helpArea.lightbox_me({
+                onClose: function () {
+                    contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
+                }
+            });
+        }
+    }
+
+    /* Markdown Edit Widget -- called on markdown edit container*/
+    $.widget('vf.markdownEdit', {
+        options: {
+            converter: null,
+            attachmentManager: null,
+            previewHeight: null
+        },
+        _create: function() {
+            var that = this;
+            this.element.find('.markdown-help-button').click(function(evt){
+                return that._help(evt, that);
+            });
+            this.$textarea = this.element.find('textarea');
+            this.$textarea.tabby({tabString : "    "});
+            this.context_id = this.element.attr("data-context-id");
+            that.$preview = this.element.find('#wmd-preview-' + this.context_id);
+            if (that.$preview){
+                if (this.options.previewHeight === 'auto'){
+                    this.$textarea.resize(function(){
+                        that.$preview.height(that.$textarea.height());
+                    });
+                    this.$textarea.resize();
+                } else if (this.options.previewHeight) {
+                    that.$preview.height(this.options.previewHeight);
+                } else {
+                    that.$preview.css('min-height', that.$textarea.height());
+                }
+            }
+            this.attachmentManager = this.options.attachmentManager;
+            if (this.attachmentManager === null){
+                this._setupAttachmentManager();
+            }
+
+            this.converter = this.options.converter;
+            if (this.converter === null){
+                this._setupConverter();
+            }
+            this._setupEditor();
+        },
+        _setupAttachmentManager: function(){
+            var $uploadFieldList = this.element.closest('form').find('.vf-repeated-attachment-field'),
+                attachmentContextId,
+                $attachmentList;
+            if ($uploadFieldList.length === 0){
+                $uploadFieldList = null;
+            }
+            if (attachmentContextId = this.element.attr("data-attachment-context-id")){
+                $attachmentList = $("#attachment-list-" + attachmentContextId);
+            }
+            this.attachmentManager = new AttachmentManager($uploadFieldList, $attachmentList);
+            return this.attachmentManager;
+        },
+        _setupConverter: function(){
+            var that = this;
+            this.converter = new Markdown.Converter();
+
+            /* add wrapper */
+            this.converter.hooks.chain("postConversion", function(text){
+                return '<div class="markdown_content">' + text + '</div>';
+            });
+
+            /* prettyprint code plugin */
+            this.converter.hooks.chain("postConversion", function(text){
+                var rePattern = /<pre><code>([^<]+)<\/code><\/pre>/gm;
+                return text.replace(rePattern, function(whole, inner){
+                    return '<pre><code class="prettyprint">'+ prettyPrintOne(inner) + '</code></pre>';
+                });
+            });
+
+            /* custom img tag */
+            this.converter.hooks.chain("postSpanGamut", function(text){
+                var rePattern = /\[\[(img[^\]]+src="?([^"\s]+)"?[^\]]+)\]\]/g;
+                return text.replace(rePattern, function (whole, attributes, src) {
+                    if (! /[A-z]:\/\//.test(src)){  // if not absolute
+                        attributes = attributes.replace(src, that.attachmentManager.getLocalUrlforFilename(src));
+                    }
+                    return '<' + attributes + '/>';
+                });
+            });
+
+            /* shortlink conversion */
+            this.converter.hooks.chain("postSpanGamut", function(text){
+                var rePattern = /(\[)?\[([^\]\[]+)\]/g;
+                return text.replace(rePattern, function (whole, extraBracket0, shortLink) {
+                    if (extraBracket0){
+                        return whole;
+                    }
+                    return '<a href="#" class="shortlink-placeholder">' + whole + '</a>';
+                });
+            });
+
+            /* oembed */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /!\[([^\]]+)\]\((https?:\/\/[^\)]+)(png|jpg|jpeg|gif)?\)/g;
+                console.log(text);
+                return text.replace(rePattern, function (whole, altText, url, imgExt) {
+                    if (imgExt){
+                        return whole;
+                    } else {
+                        return '<div class="markdownPlaceholder oembedPlaceholder">'
+                            + '<p>Video at ' + url + ' will be rendered here</p>'
+                            + '</div>';
                     }
                 });
             });
 
-            $('.markdown-tabs').fadeIn('slow');
+            /* embedded visualization */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /\^v\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
+                return text.replace(rePattern, function (whole, resourceUrl, props) {
+                    return '<div class="markdownPlaceholder visualizerPlaceholder">' +
+                        '<p>Visualizer for ' + resourceUrl + ' will be embedded here...</p>' +
+                        '</div>';
+                });
+            });
+
+            /* include */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /\[\[include +ref="?([^\]"]+)"?\]\]/g;
+                return text.replace(rePattern, function (whole, pageName) {
+                    return '<div class="markdownPlaceholder wikiPlaceholder">' +
+                        '<p>Contents of *' + pageName + '* will be rendered here...</p>' +
+                        '</div>';
+                });
+            });
+
+
+            /* fenced code */
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /^ {0,3}~T~T~T~T *\n((?:.*?\n)+?) {0,3}~T~T~T~T *$/gm;
+                return text.replace(rePattern, function(whole, inner){
+                    return '<pre><code>' + inner + '</code></pre>';
+                });
+            });
+
+            /* read more */
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /^ {0,3}\/\/(.*)(\n\n)?/gm;
+                return text.replace(rePattern, function(whole, inner){
+                     return '<div class="md-read-more">' + runBlockGamut(inner) + '</div>';
+                });
+            });
+
+            return this.converter;
+        },
+        _setupEditor: function(){
+            var that = this;
+            this.editor = new Markdown.Editor(this.converter, "-" + this.context_id);
+            this.editor.hooks.set("insertImageDialog", function(callback) {
+                that._insertImageDialog(callback);
+                return true;
+            });
+            this.editor.run();
+        },
+        _insertImageDialog: function(callback) {
+            var $container = $('<div/>', {"class": "modal markdown-img-container"}),
+                availableImages = this.attachmentManager.getAvailableImages(),
+                that = this,
+                $form,
+                $attachmentsUL,
+                $attachmentInputs,
+                $urlInput,
+                aCount = 0,
+                i;
+            $form = $('<form/>');
+
+            /* make attachment selector */
+            if (availableImages.length){
+                $attachmentsUL = $('<ul/>', {
+                    "class": "markdown-attachment-img-list-insert"
+                });
+                $.each(availableImages, function(i, el){
+                    $attachmentsUL
+                        .append($('<li/>')
+                            .append($('<a/>', {
+                                "class": 'close',
+                                "text": el.filename,
+                                "href": "#",
+                                "click": function() {
+                                    callback('attachment:' + el.url);
+                                    return true;
+                                }
+                        })));
+                });
+                $form
+                    .append($('<p/>', {
+                        "text": "Add an image attachment: "
+                    }))
+                    .append($attachmentsUL);
+            }
+
+            /* standard url input */
+            $urlInput = $('<input/>', {
+                "name": "markdown-img-url"
+            });
+            $form
+                .append($('<p/>', {
+                    "text": "Add an image by url (e.g. http://example.com/image.jpg *optional title*)"
+                }))
+                .append($('<div/>')
+                    .append($('<label for="markdown-img-url">Url</label>'))
+                    .append($urlInput))
+                .append($('<div/>', {"class": "markdown-img-add-btn-row"})
+                    .append($('<input/>', {
+                        "type": "submit",
+                        "value": "OK"
+                    }))
+                    .append($('<input/>', {
+                        'type': "button",
+                        "value": "Cancel",
+                        "class": "close"
+                    })))
+                .submit(function(){
+                    callback($urlInput.val());
+                    $container.trigger('close');
+                    return false;
+                });
+
+            $container.append($form);
+            $container.lightbox_me({
+                centered: true,
+                overlayCSS: {
+                    position: 'fixed',
+                    background: 'black',
+                    opacity: .3
+                },
+                onClose: function () {
+                    $('.wmd-prompt-background').remove();
+                }
+            });
+
+        },
+        _help: function(evt, ui){
+            return ui.element.trigger("help", evt);
+        },
+        isScrolledIntoView: function () {
+            var docViewTop = $(window).scrollTop(),
+                docViewBottom = docViewTop + $(window).height(),
+                elemTop = $(this.element).offset().top,
+                elemBottom = elemTop + $(this.element).height();
+
+            return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
         }
     });
+
+    $('#sidebarmenu-item-markdown-syntax').find('a.nav_child').click(openHelpPanel);
+
+    $('div.markdown-edit')
+        .markdownEdit()
+        .bind({'help': openHelpPanel});
+
+    $('.markdown-tabs').fadeIn('slow');
+
 }(window));

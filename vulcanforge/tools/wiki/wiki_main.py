@@ -630,15 +630,21 @@ class PageController(WikiContentBaseController):
         if page_exists:
             g.security.require_access(self.page, 'edit')
             page = self.page
+            attachment_context_id = str(page._id)
         else:
             page = self.fake_page()
             page['text'] = unquote(default_content)
+            attachment_context_id = None
         c.markdown_editor = self.Widgets.markdown_editor
         c.attachment_list = self.Widgets.attachment_list
         c.label_edit = self.Widgets.label_edit
         c.subscribe_form = self.Forms.page_subscribe_form
         c.attachments_field = self.Widgets.attachments_field
-        return dict(page=page, page_exists=page_exists)
+        return {
+            'page': page,
+            'page_exists': page_exists,
+            'attachment_context_id': attachment_context_id
+        }
 
     @without_trailing_slash
     @expose('json')

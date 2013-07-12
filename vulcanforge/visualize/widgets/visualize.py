@@ -117,28 +117,6 @@ class RetrieveContent(BaseContentWidget):  # pragma no cover
 
 class JSSyntax(BaseContentWidget):
     template = TEMPLATE_DIR + 'jssyntax.html'
-    js_template = '''
-    $(document).ready(function(){
-        var highlighter, codeContainer = $('#{{prefix}}code');
-        $.ajax({
-            url: "{{value|safe}}",
-            dataType: "text",
-            xhrFields: {
-                withCredentials: {{with_credentials}}
-            },
-            success: function(resp){
-                codeContainer.text(resp);
-                highlighter = $.SyntaxHighlighter.init({
-                    'wrapLines': false,
-                    'load': false,
-                    'highlight': false,
-                    'debug': true
-                });
-                highlighter.loadedExtras = true;
-                highlighter.highlight({'el': codeContainer});
-            }
-        });
-    });'''
 
     def __init__(self, *args, **kw):
         super(JSSyntax, self).__init__(*args, **kw)
@@ -378,7 +356,7 @@ class DesignSpace(BaseContentWidget):
 
         page_JS_urls = [
             'js/lib/jquery/jquery.1.7.2.min.js',
-            'js/lib/jquery/jquery-ui.1.8.19.min.js',
+            'js/lib/jquery/jquery-ui.1.10.3.js',
             'js/lib/jquery/jquery.qtip.js',
             'js/lib/raphael/raphael.js',
             'js/lib/utils.js',

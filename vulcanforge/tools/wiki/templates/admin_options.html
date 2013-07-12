@@ -25,15 +25,6 @@
             <span>{{app.show_right_bar}}</span>
             {% endif %}
         </div>
-        <div class="vf-field">
-            <label for="content_agreement">Content agreement message:</label>
-            {% if allow_config %}
-            <textarea style="width: 685px; height:140px;" name="content_agreement" id="content_agreement">{% if app.content_agreement %}{{app.content_agreement}}{% endif %}</textarea>
-            {% else %}
-            {% if app.content_agreement %}{{app.content_agreement}}{% endif %}
-            {% endif %}
-            If content agreement message is set, you may mark certain pages to be viewable only after a user has agreed to the content agreement.
-        </div>
     </div>
     {% if allow_config %}
         <div class="vf-form-controls">

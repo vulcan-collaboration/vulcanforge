@@ -36,6 +36,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     install_requires=[
+        'FormEncode==1.2.4',
         'ipython',
         "docutils < 0.10",
         "Genshi < 0.7",

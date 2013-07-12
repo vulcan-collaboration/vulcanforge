@@ -1,16 +1,13 @@
 {% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
-<div class="markdown-edit">
+<div class="{{ class_name }}" data-context-id="{{ context_id }}" {% if attachment_context_id %}data-attachment-context-id="{{ attachment_context_id }}"{% endif %}>
   <div class="markdown-help-button-container flash-for-parent">
       {{g.icon_button_widget.display('Markdown syntax guide', None, 'markdown-help-button', 'ico-help')}}
   </div>
-  <ul class="markdown-tabs">
-    <li><a href="#markdown-edit-{{context_id}}" title="Edit" class="markdown-edit-button has-icon ico-edit">Edit</a></li>
-    <li><a href="#markdown-preview-{{context_id}}" title="Preview" class="markdown-preview-button has-icon ico-preview">Preview</a></li>
-  </ul>
-  <div id="markdown-edit-{{context_id or id}}">
-    <textarea id="{{id}}" name="{{name}}" class="auto_resize" {{widget.j2_attrs(attrs)}}>{{value or ''}}</textarea>
+  <div id="markdown-edit-{{context_id}}">
+    <div id="wmd-button-bar-{{ context_id }}" class="markdown-button-bar"></div>
+    <textarea id="wmd-input-{{context_id}}" name="{{name}}" class="auto_resize" {{widget.j2_attrs(attrs)}}>{{value or ''}}</textarea>
   </div>
-  <div id="markdown-preview-{{context_id or id}}" class="markdown-preview "></div>
+  <div id="wmd-preview-{{context_id}}" class="markdown-preview"></div>
   <input type="hidden" class="markdown_project" value="{{markdown_project}}">
   <input type="hidden" class="markdown_app" value="{{markdown_app}}">
 
