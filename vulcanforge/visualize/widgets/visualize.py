@@ -117,28 +117,6 @@ class RetrieveContent(BaseContentWidget):  # pragma no cover
 
 class JSSyntax(BaseContentWidget):
     template = TEMPLATE_DIR + 'jssyntax.html'
-    js_template = '''
-    $(document).ready(function(){
-        var highlighter, codeContainer = $('#{{prefix}}code');
-        $.ajax({
-            url: "{{value|safe}}",
-            dataType: "text",
-            xhrFields: {
-                withCredentials: {{with_credentials}}
-            },
-            success: function(resp){
-                codeContainer.text(resp);
-                highlighter = $.SyntaxHighlighter.init({
-                    'wrapLines': false,
-                    'load': false,
-                    'highlight': false,
-                    'debug': true
-                });
-                highlighter.loadedExtras = true;
-                highlighter.highlight({'el': codeContainer});
-            }
-        });
-    });'''
 
     def __init__(self, *args, **kw):
         super(JSSyntax, self).__init__(*args, **kw)

@@ -66,8 +66,8 @@
     AttachmentManager.prototype = {
         getLocalUrlforFilename: function (filename){
             var att, previewUrl = null;
-            if (this.uploadAttachments.hasOwnProperty(filename)){
-                att = this.uploadAttachments[filename];
+            if (this.uploadAttachments.hasOwnProperty(decodeURIComponent(filename))){
+                att = this.uploadAttachments[decodeURIComponent(filename)];
                 previewUrl = windowURL.createObjectURL(att.$el.files[0]);
             } else if (this.attachments.hasOwnProperty(filename) && this.attachments[filename].url){
                 previewUrl = this.attachments[filename].url;
@@ -169,11 +169,12 @@
                     that.$preview.css('min-height', that.$textarea.height());
                 }
             }
-            this.converter = this.options.converter;
             this.attachmentManager = this.options.attachmentManager;
             if (this.attachmentManager === null){
                 this._setupAttachmentManager();
             }
+
+            this.converter = this.options.converter;
             if (this.converter === null){
                 this._setupConverter();
             }
@@ -247,7 +248,7 @@
             });
 
             /* embedded visualization */
-            this.converter.hooks.chain("postSpanGamut", function(text){
+            this.converter.hooks.chain("preSpanGamut", function(text){
                 var rePattern = /\^v\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
                 return text.replace(rePattern, function (whole, resourceUrl, props) {
                     return '<div class="markdownPlaceholder visualizerPlaceholder">' +
