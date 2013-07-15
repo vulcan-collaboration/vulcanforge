@@ -281,7 +281,9 @@ class ResourceManager(ew.ResourceManager):
                             content = scss_compiler.compile(content)
 
                         resource_urls = re.findall(RESOURCE_URL, content)
-                        for resource_url in resource_urls:
+                        # Just in case the same url is listed twice
+                        resource_urls_set = set(resource_urls)
+                        for resource_url in resource_urls_set:
                             if SPRITE_MAP_PREFIX in resource_url:
                                 continue
                             namespaced_resource_url = os.path.abspath(os.path.join(css_url_dir, resource_url))
