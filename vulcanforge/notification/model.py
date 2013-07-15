@@ -24,8 +24,11 @@ from bson import ObjectId
 import pymongo
 from ming import schema as S
 from ming.odm import (
-    FieldProperty, ForeignIdProperty, RelationProperty, session
-    )
+    FieldProperty,
+    ForeignIdProperty,
+    RelationProperty,
+    session
+)
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 from paste.deploy.converters import asbool
@@ -452,7 +455,8 @@ class Mailbox(MappedClass):
         indexes = [('project_id', 'artifact_index_id')]
 
     _id = FieldProperty(S.ObjectId)
-    user_id = ForeignIdProperty('User', if_missing=lambda: c.user._id)
+    user_id = ForeignIdProperty(User, if_missing=lambda: c.user._id)
+    user = RelationProperty(User, via="user_id")
     project_id = ForeignIdProperty('Project', if_missing=lambda: c.project._id)
     app_config_id = ForeignIdProperty(
         'AppConfig',
@@ -676,11 +680,12 @@ class Mailbox(MappedClass):
             'topic': {'$in': [None, topic]}
         }
         for mbox in cls.query.find(d):
-            mbox.query.update(
-                {'$push': dict(queue=nid),
-                 '$set': dict(last_modified=datetime.utcnow())})
-            # Make sure the mbox doesn't stick around to be flush()ed
-            session(mbox).expunge(mbox)
+            if mbox.user and mbox.user.active():
+                mbox.query.update(
+                    {'$push': dict(queue=nid),
+                     '$set': dict(last_modified=datetime.utcnow())})
+                # Make sure the mbox doesn't stick around to be flush()ed
+                session(mbox).expunge(mbox)
 
     @classmethod
     def fire_ready(cls):
