@@ -1,0 +1,80 @@
+<div class="padded">
+    <div id="marketplace">
+        <div id="marketplace_users">
+            <div id="marketplace_users_liner">
+                <form method="get" action="{{ market_url }}search">
+                    <input type="hidden" name="search_type" value="User">
+                    <h3 class="content-section-header marketplace-header">
+                        <span class="marketplace-header-label">Competitors looking for teams</span>
+                        <input type="search" class="marketplace-search-input large_search_input"
+                               name="q"
+                               placeholder="Search Users"/>
+                    </h3>
+                </form>
+
+                <div class="marketplace_ads">
+                    {% for ad in user_ads %}
+                        <div class="marketplace_user_ad marketplace_ad">
+                            <div class="marketplace_ad_info marketplace_ad_cell">
+                                {{ g.avatar.display(user=ad.user, compact=True) }}
+                            </div>
+                            <div class="marketplace_ad_text marketplace_ad_cell">
+                                <h4 class="marketplace_ad_title">
+                                    <a href="{{ ad.url_s }}">{{ ad.title_s }}</a>
+                                </h4>
+                                <p>{{ ad.text_content_s }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p>No ads.</p>
+                    {% endfor %}
+                </div>
+                {% if more_users %}
+                    <p><a href="{{ market_url }}browse_users">Show All &raquo;</a></p>
+                {% endif %}
+                {% if not user_has_ad %}
+                    <p><a class="ico-add inline-icon large-icon" href="{{ c.user.url() }}profile/edit_profile">Create your personal advertisement</a></p>
+                {% endif %}
+            </div>
+        </div>
+        <div id="marketplace_projects">
+            <div id="marketplace_projects_liner">
+                <form method="get" action="{{ market_url }}search">
+                    <input type="hidden" name="search_type" value="Project">
+                    <h3 class="content-section-header marketplace-header">
+                        <span class="marketplace-header-label">Teams looking for members</span>
+                        <input type="search" class="marketplace-search-input large_search_input"
+                               name="q"
+                               placeholder="Search Projects"/>
+                    </h3>
+                </form>
+
+                <div class="marketplace_ads">
+                    {% for ad in project_ads %}
+                        <div class="project_ad marketplace_ad">
+                            <div class="marketplace_ad_info marketplace_ad_cell">
+                                <a href="{{ ad.project.url() }}">
+                                    <img src="{{ ad.project.icon_url }}"/>
+                                </a>
+                            </div>
+                            <div class="marketplace_ad_text marketplace_ad_cell">
+                                <h4 class="marketplace_ad_title">
+                                    <a href="{{ ad.url_s }}">{{ ad.title_s }}</a>
+                                </h4>
+                                <p>{{ ad.text_content_s }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p>No ads.</p>
+                    {% endfor %}
+                </div>
+                {% if more_projects %}
+                    <p><a href="{{ market_url }}browse_projects">Show All &raquo;</a></p>
+                {% endif %}
+                {% for project in creatable_ad_projects %}
+                    <p><a class="ico-add inline-icon large-icon" href="{{ project.url() }}admin/overview">Create advertisement for {{ project.name }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
