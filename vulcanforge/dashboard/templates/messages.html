@@ -7,7 +7,7 @@
 {% block header %}Conversations{% endblock %}
 
 {% block content %}
-    {% if not conversation_statuses|length %}
+    {% if not conversation_statuses.count() %}
         <div class="padded">
             <p>You have no messages yet. Would you like to <a href="/dashboard/messages/start_conversation">start a conversation</a>?</p>
         </div>
