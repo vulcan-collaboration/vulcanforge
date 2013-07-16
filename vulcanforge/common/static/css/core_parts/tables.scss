@@ -29,7 +29,13 @@ table th, table td, table caption {
     border-radius: 3px;
 }
 .vf-table caption {
-
+    background: #808080;
+    margin: 0 0 1px 0;
+    padding: 1ex 1em;
+    font-size: 1em;
+    color: white;
+    letter-spacing: 0.2em;
+    border-radius: 1ex 1ex 0 0;
 }
 .vf-table th,
 .vf-table td {
@@ -46,14 +52,18 @@ table th, table td, table caption {
 .vf-table tbody {
     background: rgba(0,0,0,0.01);
 }
+.vf-table tbody th {
+    background: rgba(0,0,0,0.1);
+}
+.vf-table tbody td {
+    background: transparent;
+}
 .vf-table tbody tr:nth-child(odd) {
     background: rgba(0,0,0,0.02);
 }
-.vf-table tbody tr:hover td,
-.vf-table tbody tr:hover th {
+.vf-table tbody tr:hover {
     background: #ebeff6;
 }
-
 .vf-table tbody tr.no-hover {
   background-color: transparent;
 }
