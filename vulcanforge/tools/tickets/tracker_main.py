@@ -561,7 +561,8 @@ class TrackerSearchController(BaseController):
                 'assigned_to_s_mv',
                 'reported_by_s',
                 'labels_t'
-            ]
+            ],
+            'facet.mincount': 1
             #'facet.date': [
             #    'last_updated_dt',
             #    'created_date_dt'

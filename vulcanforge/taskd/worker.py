@@ -72,9 +72,6 @@ class TaskdWorker(object):
                 'wsgi.errors': self.wsgi_error_log or self.log,
             })
             result = list(self.wsgi_app(r.environ, start_response))
-            if result != [True]:
-                raise TaskdException(
-                    "Task did not complete as expected")
         except TaskdException, e:
             # task failed to complete
             self.log.error(
