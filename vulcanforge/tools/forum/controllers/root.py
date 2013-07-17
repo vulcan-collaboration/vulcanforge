@@ -61,10 +61,10 @@ class RootController(BaseController):
         c.add_forum = self.Forms.add_forum
         c.announcements_table = self.Widgets.announcements_table
         c.url = url.current()
-        announcements=model.ForumThread.query.find(dict(
-                app_config_id=c.app.config._id,
-                flags='Announcement',
-                )).all()
+        announcements = model.ForumThread.query.find(dict(
+            app_config_id=c.app.config._id,
+            flags='Announcement',
+        )).all()
         forums_cursor = model.Forum.query.find(dict(
             app_config_id=c.app.config._id,
             parent_id=None
