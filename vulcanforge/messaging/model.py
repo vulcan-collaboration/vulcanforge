@@ -44,6 +44,7 @@ from ming.odm.property import (
 )
 
 from vulcanforge.auth.model import User
+from vulcanforge.auth.security_manager import RoleCache
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.project.model import ProjectRole
 
