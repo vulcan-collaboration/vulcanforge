@@ -42,7 +42,7 @@ setup(
         "Genshi < 0.7",
         "TurboGears2",
         "Pylons >= 1.0",
-        "Ming",
+        "Ming == 0.4.0",
         "boto >= 2.6",
         "WebOb == 1.1.1",
         "PasteScript",
