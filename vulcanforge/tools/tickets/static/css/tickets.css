@@ -38,6 +38,7 @@ th[data-sort="ticket_num"] {
 }
 
 #stats-container {
+    margin: 0 0 6rem 0;
     text-align: center;
 }
 
