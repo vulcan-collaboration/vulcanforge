@@ -252,6 +252,7 @@ class MarkdownEdit(ew.TextArea):
         yield CSSLink('js/lib/google-code-prettify/prettify.css')
         yield JSLink('js/lib/google-code-prettify/prettify.js')
         yield JSLink('js/lib/pagedown/Markdown.Converter.js')
+        yield JSLink('js/lib/pagedown/Markdown.Sanitizer.js')
         yield JSLink('js/lib/pagedown/Markdown.Editor.js')
         yield JSLink('assets/markdown/markdown_edit.js')
 

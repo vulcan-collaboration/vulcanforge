@@ -36,7 +36,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     install_requires=[
-        'FormEncode==1.2.4',
+        'FormEncode == 1.2.4',
         'ipython',
         "docutils < 0.10",
         "Genshi < 0.7",
@@ -54,7 +54,7 @@ setup(
         "PyYAML >= 3.09",
         "python-openid >= 2.2.4",
         "python-dateutil >= 1.4.1",
-        "EasyWidgets >= 0.1.1",
+        "EasyWidgets==0.2dev-20130716",
         "PIL >= 1.1.7",
         "iso8601",
         "chardet == 1.0.1",

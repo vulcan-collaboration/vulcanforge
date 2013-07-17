@@ -195,7 +195,7 @@
         },
         _setupConverter: function(){
             var that = this;
-            this.converter = new Markdown.Converter();
+            this.converter = Markdown.getSanitizingConverter();
 
             /* add wrapper */
             this.converter.hooks.chain("postConversion", function(text){
