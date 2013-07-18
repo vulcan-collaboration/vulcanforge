@@ -186,7 +186,10 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
         if prettify:
             prettify.run(toc_div)
         if not marker_found and header_count > 0:
-            doc.insert(0, toc_div)
+            app = getattr(c, 'app', None)
+            show_table_of_contents = getattr(app, 'show_table_of_contents')
+            if show_table_of_contents is not None and show_table_of_contents:
+                doc.insert(0, toc_div)
 
 
 # Extension

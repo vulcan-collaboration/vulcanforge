@@ -25,6 +25,15 @@
             <span>{{app.show_right_bar}}</span>
             {% endif %}
         </div>
+        <div class="vf-field">
+            <label for="show_table_of_contents">Show Table of Contents:</label>
+            {% if allow_config %}
+            <input type="checkbox" name="'" id="show_table_of_contents"{% if app.show_table_of_contents %} checked="checked"{% endif %}/>
+            {% else %}
+            <span>{{app.show_table_of_contents}}</span>
+            {% endif %}
+            <p>Display Table of Contents automatically for pages in this wiki. When disabled, the table of contents can still be included manually with the <code>{Table of Contents}</code> statement.</p>
+        </div>
     </div>
     {% if allow_config %}
         <div class="vf-form-controls">
