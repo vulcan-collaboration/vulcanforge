@@ -169,7 +169,7 @@ class BaseArtifactRest(object):
         self.index_only = index_only
 
     def _from_shortlink(self, shortlink):
-        full_shortlink = '[{}:{}:{}]'.format(
+        full_shortlink = u'[{}:{}:{}]'.format(
             c.project.shortname,
             c.app.config.options.mount_point,
             shortlink
@@ -189,7 +189,7 @@ class BaseArtifactRest(object):
                 urllib.unquote(request.params['shortlink']))
         if not self.artifact and 'index_id' in request.params:
             self.artifact = self._from_index_id(
-                urllib.unquote(request.params['index_id']))
+                urllib.unquote(request.params['index_id']).decode('utf8'))
         if not self.artifact:
             raise AJAXNotFound
         g.security.require_access(self.artifact.project.neighborhood, 'read')

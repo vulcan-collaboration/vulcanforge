@@ -194,21 +194,6 @@ class ForgeAppGlobals(object):
         self.idle_logout_countdown_seconds = asint(
             config.get('idle_logout_countdown_seconds', 30))
 
-        self.exchange_service_path = config.get(
-            'exchange_tool.service.path', '/rest/exchange')
-
-        self.exchange_content_agreement_message = config.get(
-            'exchange.content_agreement_message', None
-        )
-
-        self.exchange_data_dir = config.get('exchange.component_staging')
-        self.exchange_top_category_generation = asbool(
-            config.get('exchange.top_category_generation', True)
-        )
-        self.exchange_send_notifications = asbool(
-            config.get('exchange.send_notifications', True)
-        )
-
         # is openid enabled
         self.openid_enabled = asbool(config.get('openid.enabled', False))
 
