@@ -4,6 +4,7 @@ from cStringIO import StringIO
 from boto.s3.key import Key
 
 from pylons import app_globals as g
+import pymongo
 from tg import config
 
 from vulcanforge.common.helpers import urlquote
@@ -13,13 +14,20 @@ from vulcanforge.tools.wiki.model import WikiAttachment
 
 class MigrateWikiAttachmentS3Keys(BaseMigration):
 
+    def is_needed(self):
+        cursor = WikiAttachment.query.find()
+        cursor.sort('_id', pymongo.ASCENDING)
+        cursor.limit(1)
+        oldest = cursor.first()
+        return oldest.artifact.shorthand_id() in oldest.keyname
+
     def run(self):
         count = 0
         self.write_output('Transferring Wiki Attachments')
-        for wiki_attachment in WikiAttachment.query.find({
+        cursor = WikiAttachment.query.find({
             'attachment_type': 'WikiAttachment'
-        }):
-
+        })
+        for wiki_attachment in cursor:
             try:
                 old_key = self.get_s3_key(wiki_attachment.keyname,
                                           wiki_attachment.artifact)
@@ -34,7 +42,7 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
                 old_key.delete()
                 count += 1
             except Exception, e:
-                print str(e)
+                self.write_output(e)
 
         ThreadLocalODMSession.close_all()
         self.write_output('Done %s' % str(count))
@@ -49,9 +57,11 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
             return ''
 
     def make_s3_keyname(self, key_name, artifact=None):
-        return config.get('s3.app_prefix', 'Forge') +\
-               self.artifact_s3_prefix(artifact) +\
-               urlquote(key_name)
+        return ''.join([
+            config.get('s3.app_prefix', 'Forge'),
+            self.artifact_s3_prefix(artifact),
+            urlquote(key_name)
+        ])
 
     def get_s3_key(self, key_name, artifact=None, bucket=None,
                    insert_if_missing=True):
