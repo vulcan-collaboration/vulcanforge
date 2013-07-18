@@ -7,7 +7,7 @@ from tg import config
 
 from vulcanforge.common.helpers import urlquote
 from vulcanforge.migration.base import BaseMigration
-from vulcanforge.tools.wiki.model import WikiAttachment
+from vulcanforge.tools.wiki.model import WikiAttachment, PageHistory
 
 
 class MigrateWikiAttachmentS3Keys(BaseMigration):
@@ -53,10 +53,14 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
 
     def artifact_s3_prefix(self, artifact):
         if artifact is not None:
+            if isinstance(artifact, PageHistory):
+                title = artifact.data.title
+            else:
+                title = artifact.title
             return urlquote('/'.join((
                 artifact.project.shortname,
                 artifact.app_config.options.mount_point,
-                artifact.shorthand_id())) + '#')
+                title)) + '#')
         else:
             return ''
 
