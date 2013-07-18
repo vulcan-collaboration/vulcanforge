@@ -233,3 +233,19 @@
 .tooltip .ui-tooltip-content {
     @include tooltip-content-skin;
 }
+
+
+/* titlebar dropdowns (as used in wiki) */
+
+.titlebarDropdownTip {
+    padding: 0;
+    font-size: 12px;
+    background: #f8f8f8;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.titlebarDropdownTip.ui-tooltip-default .qtip-content {
+    padding: 0;
+    background: transparent;
+    border: none;
+}

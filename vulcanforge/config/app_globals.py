@@ -37,6 +37,7 @@ import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
 from vulcanforge.project.model import Project
 from vulcanforge.resources import Icon
+from vulcanforge.tools.wiki.mdx_forgewiki import ForgeWikiExtension
 
 
 __all__ = ['Globals']
@@ -443,14 +444,17 @@ class ForgeAppGlobals(object):
 
     def forge_markdown(self, **kwargs):
         """return a markdown.Markdown object on which you can call convert"""
-        return markdown.Markdown(
-            extensions=[
-                #'toc',
-                'codehilite',
-                ForgeExtension(**kwargs),
-                'tables',
-            ],
-            output_format='html4')
+        extensions = [
+            'codehilite',
+            ForgeExtension(**kwargs),
+            'tables',
+        ]
+        extension_configs = {}
+        if kwargs.get('wiki', False):
+            extensions.append(ForgeWikiExtension())
+        return markdown.Markdown(extensions=extensions,
+                                 extension_configs=extension_configs,
+                                 output_format='html4')
 
     @property
     def markdown(self):

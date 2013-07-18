@@ -30,7 +30,11 @@ class NewForgeController(BaseController):
             g.set_project(project)
             if app is not None and app != 'None':
                 g.set_app(app)
-        html = g.markdown_wiki.convert(markdown)
+        if hasattr(c, 'app'):
+            md = c.app.get_markdown()
+        else:
+            md = g.markdown
+        html = md.convert(markdown)
         return html
 
     @expose(TEMPLATE_DIR + 'markdown_syntax_fragment.html')
@@ -65,4 +69,8 @@ class ForgeStaticPage(BaseController):
     def index(self, **kw):
         if not self.page:
             raise exc.HTTPNotFound()
-        return dict(page=self.page)
+        return {
+            'page': self.page,
+            'hide_sidebar': True,
+            'hide_project_toolbar': True
+        }

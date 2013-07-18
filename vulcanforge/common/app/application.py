@@ -305,3 +305,16 @@ class Application(object):
                 parent_id=parent_id,
                 text=text,
                 subject=message['headers'].get('Subject', 'no subject'))
+
+    def get_markdown(self):
+        """
+        App definitions can override this method to use a different markdown
+        setup.
+
+        @status: Implemented to consolidate which markdown logic to the
+        application instance for markdown preview mode. Not used consistently
+        throughout codebase.
+
+        @return: an instance of markdown ready to use for conversion
+        """
+        return g.markdown

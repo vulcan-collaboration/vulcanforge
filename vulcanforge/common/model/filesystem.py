@@ -92,6 +92,7 @@ class File(MappedClass):
         metadata from swift key.
         """
         self.length = self.key.size
+        FileReference.upsert_from_file_instance(self)
 
     def set_contents_from_file(self, file_pointer, headers=None, **kw):
         if headers is None:
@@ -128,6 +129,7 @@ class File(MappedClass):
 
     def delete(self):
         key = self.get_key(insert_if_missing=False)
+        FileReference.delete_for_key_name(key.name)
         if key:
             key.delete()
         super(File, self).delete()
@@ -254,3 +256,80 @@ class File(MappedClass):
     def is_image(self):
         return (self.content_type
                 and self.content_type.lower() in SUPPORTED_BY_PIL)
+
+
+class FileReference(MappedClass):
+    """
+    Persists a single collection mapping of S3 keys to File (and File subclass)
+    documents.
+
+    Intended for use going from keys to `File` objects.
+
+    Creation of `FileReference` documents is triggered in the `File` class
+    automatically.
+
+    ## Usage:
+
+        >>> my_s3_key = "Allura/something/something/something..."
+        >>> FileReference.get_file_from_key_name(my_s3_key)
+        <TicketAttachment ...>
+
+    """
+    class __mongometa__:
+        session = project_orm_session
+        name = 'file_reference'
+        indexes = ['key_name']
+
+    _id = FieldProperty(S.ObjectId)
+    key_name = FieldProperty(S.String)
+    file_class_name = FieldProperty(S.String)
+    file_id = FieldProperty(S.ObjectId)
+
+    def __repr__(self):
+        keys = self.query.mapper.property_index.keys()
+        return "<{} {}>".format(
+            self.__class__.__name__,
+            ' '.join(['{}={!r}'.format(k, getattr(self, k)) for k in keys])
+        )
+
+    @classmethod
+    def upsert_from_file_instance(cls, file_instance):
+        """
+        Create/update FileReference document for the file instance.
+
+        @param file_instance: instance of `File` to be referenced, subclasses
+            of `File` are supported.
+        @type file_instance: File
+        """
+        query = {
+            'key_name': file_instance.key.name
+        }
+        update = {
+            '$set': {
+                'file_class_name': file_instance.__class__.__name__,
+                'file_id': file_instance._id
+            }
+        }
+        cls.query.update(query, update, upsert=True)
+
+    @classmethod
+    def get_file_from_key_name(cls, key_name):
+        """
+        @param key_name: full key name to look up
+        @return: File instance (or subclass of File) for key
+        """
+        instance = cls.query.get(key_name=key_name)
+        if instance is None:
+            return None
+        return instance.get_file()
+
+    @classmethod
+    def delete_for_key_name(cls, key_name):
+        cls.query.remove({'key_name': key_name})
+
+    def get_file(self):
+        """
+        @return: File instance (or subclass of File) for key
+        """
+        mapper = self.query.mapper.by_classname(self.file_class_name)
+        return mapper.mapped_class.query.get(_id=self.file_id)

@@ -2,18 +2,13 @@
 
 ---
 
-** [{{ticket.app_config.options.mount_point}}:{{ticket.ticket_num}}] {{ticket.summary}}**
+** [{{artifact.app_config.options.mount_point}}:{{artifact.ticket_num}}] {{artifact.summary}}**
 
-**Status:** {{ticket.status}}  
-{% if ticket.labels.__len__() -%}
-    **Labels:** {% for label in ticket.labels %}{{label}} {% else %}None{% endfor %}  
-{% endif -%}
-**Created:** {{ticket.created_date.strftime('%a %b %d, %Y %I:%M %p UTC')}} by {{ticket.reported_by.display_name}}  
-{% if (ticket.mod_date - ticket.created_date).days >= 0 -%}
-    **Last Updated:** {{ticket.mod_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}
-{% endif -%}
-**Owner:** {{ticket.assigned_to_name}}
-
-{% if not safe_text %}
-    {{ticket.description}}
-{% endif -%}
+- **Status:** {{artifact.status}}{% if artifact.labels.__len__() %}
+- **Labels:** {% for label in artifact.labels %}{{label}} {% else %}None{% endfor %}{% endif %}
+- **Created:** {{artifact.created_date.strftime('%a %b %d, %Y %I:%M %p UTC')}} by {{artifact.reported_by.display_name}}{% if (artifact.mod_date - artifact.created_date).days >= 0 %}
+- **Last Updated:** {{artifact.mod_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}{% endif %}
+- **Owner:** {{artifact.assigned_to_name}}
+{% if not safe_notifications %}
+{{artifact.description}}
+{% endif %}

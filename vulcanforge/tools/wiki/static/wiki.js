@@ -62,6 +62,42 @@
             });
 
             checkIfDiffIsEnabled(true);
+
+            $('.wiki-titlebar-item').each(function () {
+                var $this = $(this),
+                    $label = $('.wiki-titlebar-item-label', $this),
+                    $content = $('.wiki-titlebar-item-popup', $this);
+                if ($content.length > 0) {
+                    $content.remove();
+                    $label.qtip({
+                        content: {
+                            text: $content
+                        },
+                        show: {
+                            solo: true,
+                            event: 'mouseenter click'
+                        },
+                        hide: {
+                            delay: 100,
+                            event: 'unfocus mouseleave',
+                            fixed: true
+                        },
+                        position: {
+                            at: 'bottom left'
+                        },
+                        style: {
+                            classes: 'titlebarDropdownTip wikiTitlebarDropdownTip',
+                            tip: false
+                        },
+                        events: {
+                            toggle: function (event, api) {
+                                var enabled = event.type === 'tooltipshow';
+                                api.elements.target.toggleClass('hover', enabled);
+                            }
+                        }
+                    });
+                }
+            });
         });
 
     });

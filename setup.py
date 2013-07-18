@@ -49,7 +49,7 @@ setup(
         "Babel >= 0.9.4",
         "pymongo >= 2.0",
         "pysolr",
-        "Markdown >= 2.0.3",
+        "Markdown >= 2.3.1",
         "Pygments >= 1.1.1",
         "PyYAML >= 3.09",
         "python-openid >= 2.2.4",

@@ -57,12 +57,13 @@ class UserRegistrationEmailForm(ForgeForm):
                 wide=True,
             )
         ]
-        self.fields.append(
-            ReCaptchaField(
-                name="recaptcha",
-                validator=Empty(if_missing=None)
+        if not asbool(tg.config.get('disable_captcha_validation', 'false')):
+            self.fields.append(
+                ReCaptchaField(
+                    name="recaptcha",
+                    label=False
+                )
             )
-        )
 
     @validator
     def validate(self, value, state=None):
