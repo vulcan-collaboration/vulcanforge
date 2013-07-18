@@ -286,6 +286,117 @@
                 });
             });
 
+            /* tables */
+            var leadingPipe = new RegExp(
+                  ['^'                         ,
+                   '[ ]{0,3}'                  , // Allowed whitespace
+                   '[|]'                       , // Initial pipe
+                   '(.+)\\n'                   , // $1: Header Row
+
+                   '[ ]{0,3}'                  , // Allowed whitespace
+                   '[|]([ ]*[-:]+[-| :]*)\\n'  , // $2: Separator
+
+                   '('                         , // $3: Table Body
+                     '(?:[ ]*[|].*\\n?)*'      , // Table rows
+                   ')',
+                   '(?:\\n|$)'                   // Stop at final newline
+                  ].join(''),
+                  'gm'
+                );
+
+            var noLeadingPipe = new RegExp(
+                ['^'                         ,
+                '[ ]{0,3}'                  , // Allowed whitespace
+                '(\\S.*[|].*)\\n'           , // $1: Header Row
+
+                '[ ]{0,3}'                  , // Allowed whitespace
+                '([-:]+[ ]*[|][-| :]*)\\n'  , // $2: Separator
+
+                '('                         , // $3: Table Body
+                 '(?:.*[|].*\\n?)*'        , // Table rows
+                ')'                         ,
+                '(?:\\n|$)'                   // Stop at final newline
+                ].join(''),
+                'gm'
+            );
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut){
+
+                text = text.replace(leadingPipe, doTable);
+                text = text.replace(noLeadingPipe, doTable);
+
+                function trim(str) {
+                    return str.replace(/^\s+|\s+$/g, '');
+                }
+
+                // $1 = header, $2 = separator, $3 = body
+                function doTable(match, header, separator, body, offset, string) {
+                    var alignspecs, align = [];
+                    // remove any leading pipes and whitespace
+                    header = header.replace(/^ *[|]/m, '');
+                    separator = separator.replace(/^ *[|]/m, '');
+                    body = body.replace(/^ *[|]/gm, '');
+
+                    // remove trailing pipes and whitespace
+                    header = header.replace(/[|] *$/m, '');
+                    separator = separator.replace(/[|] *$/m, '');
+                    body = body.replace(/[|] *$/gm, '');
+
+                    // determine column alignments
+                    alignspecs = separator.split(/ *[|] */);
+                    for (var i = 0; i < alignspecs.length; i++) {
+                    var spec = alignspecs[i];
+                    if (spec.match(/^ *-+: *$/m))
+                        align[i] = ' style="text-align:right;"';
+                    else if (spec.match(/^ *:-+: *$/m))
+                        align[i] = ' style="text-align:center;"';
+                    else if (spec.match(/^ *:-+ *$/m))
+                        align[i] = ' style="text-align:left;"';
+                    else align[i] = '';
+                    }
+
+                    // TODO: parse spans in header and rows before splitting, so that pipes
+                    // inside of tags are not interpreted as separators
+                    var headers = header.split(/ *[|] */);
+                    var colCount = headers.length;
+
+                    // build html
+                    var html = ['<table>\n', '<thead>\n', '<tr>\n'].join('');
+
+                    // build column headers.
+                    for (i = 0; i < colCount; i++) {
+                    var headerHtml = that.converter.hooks.postSpanGamut(trim(headers[i]));
+                    html += ["  <th", align[i], ">", headerHtml, "</th>\n"].join('');
+                    }
+                    html += "</tr>\n</thead>\n";
+
+                    // build rows
+                    var rows = body.split('\n');
+                    for (i = 0; i < rows.length; i++) {
+                        if (rows[i].match(/^\s*$/)) // can apply to final row
+                            continue;
+
+                        // ensure number of rowCells matches colCount
+                        var rowCells = rows[i].split(/ *[|] */);
+                        var lenDiff = colCount - rowCells.length;
+                        for (var j = 0; j < lenDiff; j++)
+                            rowCells.push('');
+
+                        html += "<tr>\n";
+                        for (j = 0; j < colCount; j++) {
+                            var colHtml = that.converter.hooks.postSpanGamut(trim(rowCells[j]));
+                            html += ["  <td", align[j], ">", colHtml, "</td>\n"].join('');
+                        }
+                        html += "</tr>\n";
+                    }
+
+                    html += "</table>\n";
+
+                    return html;
+                }
+
+                return text;
+            });
+
             return this.converter;
         },
         _setupEditor: function(){
