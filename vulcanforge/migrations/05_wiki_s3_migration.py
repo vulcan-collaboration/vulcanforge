@@ -1,10 +1,8 @@
-from ming.odm import ThreadLocalODMSession
 from cStringIO import StringIO
 
 from boto.s3.key import Key
 
 from pylons import app_globals as g
-import pymongo
 from tg import config
 
 from vulcanforge.common.helpers import urlquote
@@ -14,23 +12,32 @@ from vulcanforge.tools.wiki.model import WikiAttachment
 
 class MigrateWikiAttachmentS3Keys(BaseMigration):
 
-    def is_needed(self):
-        cursor = WikiAttachment.query.find()
-        cursor.sort('_id', pymongo.ASCENDING)
-        cursor.limit(1)
-        oldest = cursor.first()
-        return oldest.artifact.shorthand_id() in oldest.keyname
-
     def run(self):
-        count = 0
-        self.write_output('Transferring Wiki Attachments')
+        self.write_output('Migrating Wiki Attachments...')
         cursor = WikiAttachment.query.find({
             'attachment_type': 'WikiAttachment'
         })
         for wiki_attachment in cursor:
-            try:
+            wikipage = wiki_attachment.artifact
+            old_key = None
+            while old_key is None and wikipage.version >= 0:
                 old_key = self.get_s3_key(wiki_attachment.keyname,
-                                          wiki_attachment.artifact)
+                                          wikipage,
+                                          insert_if_missing=False)
+                if old_key is not None:
+                    break
+                try:
+                    wikipage = wiki_attachment.artifact.\
+                        get_version(wikipage.version - 1)
+                except IndexError:
+                    break
+            old_key_name = self.make_s3_keyname(wiki_attachment.keyname,
+                                                wikipage)
+            if old_key is None:
+                self.write_output("  skipping: {}".format(old_key_name))
+                continue
+            self.write_output("  migrating: {}".format(old_key_name))
+            try:
                 key_data = StringIO()
                 old_key.get_contents_to_file(key_data)
 
@@ -40,12 +47,9 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
                 new_key.set_contents_from_file(key_data)
 
                 old_key.delete()
-                count += 1
             except Exception, e:
                 self.write_output(e)
-
-        ThreadLocalODMSession.close_all()
-        self.write_output('Done %s' % str(count))
+        self.write_output('Finished migrating Wiki Attachments.')
 
     def artifact_s3_prefix(self, artifact):
         if artifact is not None:
@@ -58,7 +62,7 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
 
     def make_s3_keyname(self, key_name, artifact=None):
         return ''.join([
-            config.get('s3.app_prefix', 'Forge'),
+            config.get('s3.app_prefix', 'Forge'), '/',
             self.artifact_s3_prefix(artifact),
             urlquote(key_name)
         ])

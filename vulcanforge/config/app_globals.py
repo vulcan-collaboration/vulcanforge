@@ -267,7 +267,7 @@ class ForgeAppGlobals(object):
             return h.urlquote('/'.join((
                 artifact.project.shortname,
                 artifact.app_config.options.mount_point,
-                artifact.shorthand_id())) + '#')
+                artifact.s3_key_prefix())) + '#')
         else:
             return ''
 
