@@ -228,14 +228,13 @@
                     if (extraBracket0){
                         return whole;
                     }
-                    return '<a href="#" class="shortlink-placeholder">' + whole + '</a>';
+                    return '<a href="##" class="shortlink-placeholder">' + whole + '</a>';
                 });
             });
 
             /* oembed */
             this.converter.hooks.chain("preSpanGamut", function(text){
                 var rePattern = /!\[([^\]]+)\]\((https?:\/\/[^\)]+)(png|jpg|jpeg|gif)?\)/g;
-                console.log(text);
                 return text.replace(rePattern, function (whole, altText, url, imgExt) {
                     if (imgExt){
                         return whole;
@@ -272,7 +271,10 @@
             this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
                 var rePattern = /^ {0,3}~T~T~T~T *\n((?:.*?\n)+?) {0,3}~T~T~T~T *$/gm;
                 return text.replace(rePattern, function(whole, inner){
-                    return '<pre><code>' + inner + '</code></pre>';
+                    var indented = $.map(inner.split('\n'), function(line){
+                        return '    ' + line;
+                    }).join('\n');
+                    return indented;
                 });
             });
 
