@@ -3,6 +3,7 @@ from cStringIO import StringIO
 from boto.s3.key import Key
 
 from pylons import app_globals as g
+import pymongo
 from tg import config
 
 from vulcanforge.common.helpers import urlquote
@@ -11,6 +12,26 @@ from vulcanforge.tools.wiki.model import WikiAttachment, PageHistory
 
 
 class MigrateWikiAttachmentS3Keys(BaseMigration):
+
+    def is_needed(self):
+        cursor = WikiAttachment.query.find({})
+        cursor.sort('_id', pymongo.ASCENDING)
+        cursor.limit(1)
+        wiki_attachment = cursor.first()
+        wikipage = wiki_attachment.artifact
+        old_key = None
+        while old_key is None and wikipage.version >= 0:
+            old_key = self.get_s3_key(wiki_attachment.keyname,
+                                      wikipage,
+                                      insert_if_missing=False)
+            if old_key is not None:
+                break
+            try:
+                wikipage = wiki_attachment.artifact.\
+                    get_version(wikipage.version - 1)
+            except IndexError:
+                break
+        return old_key is not None
 
     def run(self):
         self.write_output('Migrating Wiki Attachments...')
