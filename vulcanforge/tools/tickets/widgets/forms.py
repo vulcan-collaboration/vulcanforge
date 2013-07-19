@@ -181,7 +181,7 @@ class TrackerTicketForm(ForgeForm):
         raw_fields.extend([
             TicketMarkdownFields(
                 label="",
-                name="markdown_custom_fields",
+                name="custom_fields",
             ),
             form_fields.RepeatedAttachmentField(
                 name="new_attachments",
@@ -203,7 +203,7 @@ class TrackerTicketForm(ForgeForm):
         def filter_check(item):
             return item is not None and c.app.globals.can_edit_field(item.name)
 
-        return ew_core.NameList(filter(filter_check, raw_fields))
+        return filter(filter_check, raw_fields)
 
     def context_for(self, field):
         ctx = super(TrackerTicketForm, self).context_for(field)
