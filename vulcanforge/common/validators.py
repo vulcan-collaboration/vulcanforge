@@ -1,3 +1,4 @@
+import cgi
 from pylons import tmpl_context as c
 import re
 import logging
@@ -176,3 +177,9 @@ class MountPointValidator(fev.Regex):
         if c.project.app_instance(value) is not None:
             raise fev.Invalid(self.message('taken', state), value, state)
         return value
+
+
+class HTMLEscapeValidator(fev.String):
+    def _to_python(self, value, state):
+        value = super(HTMLEscapeValidator, self)._to_python(value, state)
+        return cgi.escape(value)

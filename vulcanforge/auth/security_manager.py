@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from itertools import chain
 import re
+import urllib
 
 from webob import exc
 from pylons import tmpl_context as c, request, app_globals as g
@@ -16,6 +17,7 @@ from ming.utils import LazyProperty
 from vulcanforge.artifact.model import Shortlink
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACE
+from vulcanforge.common.model import FileReference
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project, ProjectRole
 
@@ -569,9 +571,7 @@ class SwiftAuthorizer(object):
         LOG.info('user is a swift admin: %s', result)
         return result
 
-    def artifact_access(self, match, user, keyname, method):
-        # find shortlink for artifact
-        has_permission = False
+    def _get_artifact_from_match(self, match):
         shorthand_id, key = match.group('shortlink_path').rsplit('#', 1)
         link = u'[{}:{}:{}]'.format(
             match.group('project'), match.group('app'), shorthand_id)
@@ -581,6 +581,21 @@ class SwiftAuthorizer(object):
         if shortlink:
             # load artifact and check acl
             artifact = shortlink.ref.artifact
+
+    def artifact_access(self, match, user, keyname, method):
+        # find shortlink for artifact
+        has_permission = False
+        bucket_name = match.group('bucket_name')
+        rev_keyname = urllib.quote(
+            keyname.split(bucket_name, 1)[-1].lstrip('/'))
+        forge_file = FileReference.get_file_from_key_name(
+            rev_keyname)
+        if forge_file:
+            artifact = forge_file.artifact
+        else:
+            artifact = self._get_artifact_from_match(match)
+
+        if artifact:
             if method.upper() == "GET":
                 permission = 'read'
             else:
@@ -588,20 +603,6 @@ class SwiftAuthorizer(object):
             LOG.info('checking permission on artifact %s', artifact.index_id())
             has_permission = g.security.has_access(
                 artifact, permission, user=user)
-        else:
-            # check acl of app instead
-            project = Project.query.get(
-                shortname=match.group('project'))
-            if project:
-                ac = project.app_config(match.group('app'))
-                if ac:
-                    LOG.info('checking permission on appconfig %s', str(ac))
-                    if method.upper() == "GET":
-                        permission = 'read'
-                    else:
-                        permission = ac.reference_opts['create_perm']
-                    has_permission = g.security.has_access(
-                        ac, permission, user=user)
 
         return has_permission
 
@@ -617,15 +618,16 @@ class SwiftAuthorizer(object):
 
         # allow regexes (only GET for now)
         for parser in self.key_parsers['allow']:
-            m = parser["regex"].match(keyname)
-            if m:
-                if 'bucket_name' in m.groups() and \
-                                m.group('bucket_name') != g.s3_bucket.name:
-                    LOG.warn('Wrong s3 bucket name in %s', keyname)
-                    return False
-                if method.upper() not in parser.get("allow_methods", ["GET"]):
-                    LOG.info('invalid method %s', method)
-                    return False
-                return parser["func"](m, user, keyname, method)
+            match = parser["regex"].match(keyname)
+            if not match:
+                continue
+            if 'bucket_name' in match.groups() and \
+                    match.group('bucket_name') != g.s3_bucket.name:
+                LOG.warn('Wrong s3 bucket name in %s', keyname)
+                return False
+            if method.upper() not in parser.get("allow_methods", ["GET"]):
+                LOG.info('invalid method %s', method)
+                return False
+            return parser["func"](match, user, keyname, method)
 
         return False

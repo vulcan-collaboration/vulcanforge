@@ -56,6 +56,13 @@
     ol, ul {
         padding-left: 2.4rem;
     }
+    ol ol,
+    ol ul,
+    ul ol,
+    ul ul {
+        margin: 0;
+        padding-left: 1.2rem;
+    }
 
     hr {
         margin: 2.4rem 0;
@@ -109,6 +116,14 @@
         ul ul {
             padding-left: 1rem;
         }
+    }
+    .toctitle {
+        display: block;
+        margin: 0 0 1em 0;
+        color: #aaa;
+    }
+    .toclink {
+        color: inherit;
     }
 }
 

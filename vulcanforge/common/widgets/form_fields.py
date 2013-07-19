@@ -232,17 +232,21 @@ class MarkdownEdit(ew.TextArea):
         return value
 
     def prepare_context(self, *args, **kw):
-        c = super(MarkdownEdit, self).prepare_context(*args, **kw)
-        c['context_id'] = ''.join(random.sample(string.ascii_uppercase, 8))
+        context = super(MarkdownEdit, self).prepare_context(*args, **kw)
+        context['context_id'] = ''.join(random.sample(string.ascii_uppercase, 8))
         try:
-            c['markdown_project'] = c.project.shortname
+            context['markdown_neighborhood'] = c.project.neighborhood.name
         except AttributeError:
             pass
         try:
-            c['markdown_app'] = c.app.config.options.mount_point
+            context['markdown_project'] = c.project.shortname
         except AttributeError:
             pass
-        return c
+        try:
+            context['markdown_app'] = c.app.config.options.mount_point
+        except AttributeError:
+            pass
+        return context
 
     def resources(self):
         for r in super(MarkdownEdit, self).resources():
@@ -252,6 +256,7 @@ class MarkdownEdit(ew.TextArea):
         yield CSSLink('js/lib/google-code-prettify/prettify.css')
         yield JSLink('js/lib/google-code-prettify/prettify.js')
         yield JSLink('js/lib/pagedown/Markdown.Converter.js')
+        yield JSLink('js/lib/pagedown/Markdown.Sanitizer.js')
         yield JSLink('js/lib/pagedown/Markdown.Editor.js')
         yield JSLink('assets/markdown/markdown_edit.js')
 

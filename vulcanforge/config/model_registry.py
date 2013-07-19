@@ -1,6 +1,7 @@
 from vulcanforge.common.model import (
     GlobalObjectReference,
     File,
+    FileReference,
     Stats,
     ForgeGlobals
 )

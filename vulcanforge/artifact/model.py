@@ -317,6 +317,9 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     def shorthand_id(self):
         return str(self._id)  # pragma no cover
 
+    def s3_key_prefix(self):
+        return str(self._id)
+
     def related_artifacts(self):
         related_artifacts = []
         for ref_id in self.refs + self.backrefs:
@@ -530,11 +533,12 @@ class Snapshot(Artifact):
     artifact_id = FieldProperty(S.ObjectId)
     artifact_class = FieldProperty(str)
     version = FieldProperty(S.Int, if_missing=0)
-    author = FieldProperty(dict(
-            id=S.ObjectId,
-            username=str,
-            display_name=str,
-            logged_ip=str))
+    author = FieldProperty({
+        'id': S.ObjectId,
+        'username': str,
+        'display_name': str,
+        'logged_ip': str
+    })
     timestamp = FieldProperty(datetime)
     data = FieldProperty(None)
 

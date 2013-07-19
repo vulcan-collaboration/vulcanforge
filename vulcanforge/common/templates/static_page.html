@@ -11,7 +11,5 @@
 {% block header %}{{page.title}}{% endblock %}
 
 {% block content %}
-    <div class="static-page">
-        {{page.html_text|safe}}
-    </div>
+    <div class="static-page">{{page.get_rendered_html()|safe}}</div>
 {% endblock %}
