@@ -17,6 +17,7 @@ from ming.utils import LazyProperty
 from vulcanforge.artifact.model import Shortlink
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACE
+from vulcanforge.common.model import FileReference
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project, ProjectRole
 
@@ -587,7 +588,7 @@ class SwiftAuthorizer(object):
         bucket_name = match.group('bucket_name')
         rev_keyname = urllib.quote(
             keyname.split(bucket_name, 1)[-1].lstrip('/'))
-        forge_file = self.model.FileReferences.get_file_from_key_name(
+        forge_file = FileReference.get_file_from_key_name(
             rev_keyname)
         if forge_file:
             artifact = forge_file.artifact
