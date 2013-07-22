@@ -40,6 +40,6 @@ class MigrateEvents(BaseMigration):
                     {'_id': {'$lt': PAGESIZE*(page+1)}}
                 ]
             })
-            if not results: break
+            if results.count() == 0: break
             yield list(results)
             page += 1
