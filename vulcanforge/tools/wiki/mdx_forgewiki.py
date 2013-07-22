@@ -164,8 +164,8 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
 
                 # Do not override pre-existing ids
                 if not "id" in element.attrib:
-                    intended_id = ("markdown-header-" +
-                                   self.config["slugify"](text, '-'))
+                    slug = self.config["slugify"](unicode(text), '-')
+                    intended_id = "markdown-header-" + slug
                     elem_id = unique(intended_id, used_ids)
                     element.attrib["id"] = elem_id
                 else:
