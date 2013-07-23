@@ -531,11 +531,13 @@ class Ticket(VersionedArtifact):
 
     @LazyProperty
     def next_ticket(self):
-        return self.__class__.query.get(ticket_num=self.ticket_num + 1)
+        return self.__class__.query.get(ticket_num=self.ticket_num + 1,
+                                        app_config_id=self.app_config_id)
 
     @LazyProperty
     def prev_ticket(self):
-        return self.__class__.query.get(ticket_num=self.ticket_num - 1)
+        return self.__class__.query.get(ticket_num=self.ticket_num - 1,
+                                        app_config_id=self.app_config_id)
 
     def shorthand_id(self):
         return '#' + str(self.ticket_num)
