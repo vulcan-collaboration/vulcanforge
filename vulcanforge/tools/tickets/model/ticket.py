@@ -708,6 +708,10 @@ class Ticket(VersionedArtifact):
                 elif k in other_custom_fields:
                     # strings are good enough for any other custom fields
                     self.custom_fields[k] = v
+        if 'markdown_custom_fields' in ticket_form:
+            for k, v in ticket_form['markdown_custom_fields'].items():
+                if k in other_custom_fields:
+                    self.custom_fields[k] = v
         self.commit()
         # flush so we can participate in a subticket search (if any)
         session(self.__class__).flush()
