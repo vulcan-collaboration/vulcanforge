@@ -65,7 +65,6 @@ class AdminApp(Application):
 
     """
     __version__ = vulcanforge.__version__
-    installable = False
     tool_label = 'admin'
     static_folder = "admin"
     default_mount_label = 'Admin'

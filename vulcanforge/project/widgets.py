@@ -109,7 +109,7 @@ class ProjectUserSelect(ew.InputField):
                     $(this).autocomplete('search','');
                 });
             if ($input.length) {
-                $input.data( "autocomplete" )._renderItem = function( ul, item ) {
+                $input.data( "ui-autocomplete" )._renderItem = function( ul, item ) {
                     return $( "<li></li>" ).
                         data( "ui-autocomplete-item", item ).
                         append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
@@ -150,9 +150,9 @@ class MultiProjectUserSelect(ProjectUserSelect):
                 focus(function(){$(this).multicomplete('search','');}).
                 click(function(){$(this).multicomplete('search','');});
             if ($input.length) {
-                $input.data( "vfMulticomplete" )._renderItem = function( ul, item ) {
+                $input.data( "vf-multicomplete" )._renderItem = function( ul, item ) {
                     return $( "<li></li>" ).
-                        data( "ui-multicomplete-item", item ).
+                        data( "vf-multicomplete-item", item ).
                         append( "<a><strong>" + item.label + "</strong><br>" + item.desc + "</a>" ).
                         appendTo( ul );
                 };

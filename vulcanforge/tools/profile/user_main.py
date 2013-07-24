@@ -45,7 +45,6 @@ TEMPLATE_DIR = 'jinja:vulcanforge.tools.profile:templates/'
 
 
 class UserProfileApp(Application):
-    installable = False
 
     def __init__(self, user_project, config):
         Application.__init__(self, user_project, config)

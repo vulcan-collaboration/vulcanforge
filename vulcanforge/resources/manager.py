@@ -51,6 +51,10 @@ class ResourceManager(ew.ResourceManager):
         if not os.path.exists(self.build_dir):
             os.makedirs(self.build_dir)
 
+    @property
+    def resources(self):
+        return widget_context.resources
+
     def init_resource_context(self):
         widget_context.resources = {
             'js': defaultdict(list),

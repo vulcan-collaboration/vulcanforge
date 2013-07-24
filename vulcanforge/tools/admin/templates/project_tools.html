@@ -57,7 +57,7 @@
                             <a href="{{ link.url }}" class="{{ link.className }}">{{ link.label }}</a>
                         </li>
                         {% endfor %}
-                        {% if app.installable %}
+                        {% if g.tool_manager.is_installable(mount['ac'].tool_name) %}
                         <li>
                           <form method="post" action="update_mounts" id="mounts_edit_2-{{loop.index0}}">
                             <input type="hidden" class="mount_point"
@@ -69,7 +69,7 @@
                         </li>
                         {% endif %}
                     </ul>
-                    {% if not app.installable %}
+                    {% if not g.tool_manager.is_installable(mount['ac'].tool_name) %}
                       <input type="hidden" class="mount_point" value="{{mount['ac'].options.mount_point}}"/>
                     {% endif %}
                 </div>

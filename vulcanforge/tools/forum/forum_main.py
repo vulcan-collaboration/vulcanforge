@@ -29,7 +29,6 @@ LOG = logging.getLogger(__name__)
 
 class ForgeDiscussionApp(Application):
     __version__ = version.__version__
-    #installable=False
     permissions = [
         'configure', 'read', 'unmoderated_post', 'post', 'moderate', 'admin'
     ]

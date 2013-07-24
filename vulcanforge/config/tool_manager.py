@@ -89,3 +89,8 @@ class ToolManager(object):
                     "app": spec["app"]
                 })
         return tools
+
+    def is_installable(self, ep_name):
+        if self.tools.get(ep_name.lower(), {}).get('installable'):
+            return True
+        return False

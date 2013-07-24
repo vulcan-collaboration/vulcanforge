@@ -30,7 +30,6 @@ class ForgeVisualizeApp(Application):
     """The definitive Visualize App for VehicleForge"""
     __version__ = "0.1"
     searchable = False
-    installable = False
     permissions = ['read', 'edit', 'admin']
     tool_label = "Visualizers"
     static_folder = 'Visualizers'

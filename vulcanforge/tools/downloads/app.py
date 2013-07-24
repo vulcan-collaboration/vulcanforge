@@ -36,7 +36,6 @@ class ForgeDownloadsApp(Application):
     static_folder = "ForgeDownloads"
     reference_opts = dict(Application.reference_opts, can_reference=True)
     admin_description = "Offer things for download with the Downloads tool!"
-    installable = False
     icons = {
         24: 'images/downloads_24.png',
         32: 'images/downloads_32.png',

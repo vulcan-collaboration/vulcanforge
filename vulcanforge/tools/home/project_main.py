@@ -29,7 +29,6 @@ TEMPLATE_HOME = 'jinja:vulcanforge.tools.home:templates/'
 
 
 class ProjectHomeApp(Application):
-    installable = False
     tool_label = 'home'
     static_folder = 'home'
     default_mount_label = 'Project Home'
