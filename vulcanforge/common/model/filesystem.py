@@ -129,8 +129,8 @@ class File(MappedClass):
 
     def delete(self):
         key = self.get_key(insert_if_missing=False)
-        FileReference.delete_for_key_name(key.name)
         if key:
+            FileReference.delete_for_key_name(key.name)
             key.delete()
         super(File, self).delete()
 

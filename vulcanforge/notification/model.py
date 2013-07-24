@@ -323,7 +323,7 @@ class Notification(SOLRIndexed):
         cur = cls.query.find(query)
         cur.sort('pubdate', pymongo.DESCENDING)
         cur.limit(limit or 10)
-        cur.offset(offset or 0)
+        cur.skip(offset or 0)
         for r in cur:
             feed.add_item(
                 title=r.subject,
