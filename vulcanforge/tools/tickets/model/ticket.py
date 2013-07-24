@@ -539,6 +539,28 @@ class Ticket(VersionedArtifact):
         return self.__class__.query.get(ticket_num=self.ticket_num - 1,
                                         app_config_id=self.app_config_id)
 
+    def get_next_accessible_for(self, user=None):
+        if user is None:
+            user = c.user
+        next_ticket = self.next_ticket
+        while next_ticket:
+            if g.security.has_access(next_ticket, 'read', user):
+                break
+            else:
+                next_ticket = next_ticket.next_ticket
+        return next_ticket
+
+    def get_prev_accessible_for(self, user=None):
+        if user is None:
+            user = c.user
+        prev_ticket = self.prev_ticket
+        while prev_ticket:
+            if g.security.has_access(prev_ticket, 'read', user):
+                break
+            else:
+                prev_ticket = prev_ticket.prev_ticket
+        return prev_ticket
+
     def shorthand_id(self):
         return '#' + str(self.ticket_num)
 
@@ -547,10 +569,11 @@ class Ticket(VersionedArtifact):
 
     @property
     def attachments(self):
-        return TicketAttachment.query.find(dict(
-            app_config_id=self.app_config_id,
-            artifact_id=self._id,
-            type='attachment'))
+        return TicketAttachment.query.find({
+            'app_config_id': self.app_config_id,
+            'artifact_id': self._id,
+            'type': 'attachment'
+        })
 
     def set_as_subticket_of(self, new_super_id):
         # For this to be generally useful we would have to check first that
