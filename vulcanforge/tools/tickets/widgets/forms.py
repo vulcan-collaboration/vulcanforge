@@ -181,7 +181,7 @@ class TrackerTicketForm(ForgeForm):
         raw_fields.extend([
             TicketMarkdownFields(
                 label="",
-                name="custom_fields",
+                name="markdown_custom_fields",
             ),
             form_fields.RepeatedAttachmentField(
                 name="new_attachments",
@@ -212,4 +212,6 @@ class TrackerTicketForm(ForgeForm):
             w_ctx = ew_core.widget_context
             ctx['attachment_context_id'] = w_ctx.render_context.get(
                 'attachment_context_id')
+            if field.name.startswith('markdown_custom_fields'):
+                ctx['value'] = w_ctx.render_context['value']['custom_fields']
         return ctx
