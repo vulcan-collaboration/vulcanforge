@@ -77,9 +77,7 @@ class TicketCustomField(object):
 
     @staticmethod
     def _boolean(field):
-        return ew.Checkbox(label=field.label,
-                           name=str(field.name),
-                           suppress_label=True)
+        return ew.Checkbox(label=field.label, name=str(field.name))
 
     @staticmethod
     def _number(field):
