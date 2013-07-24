@@ -256,16 +256,18 @@ class ForgeTrackerApp(Application):
                 ui_icon='ico-moderate',
                 small=pending_mod_count))
         if ticket:
-            if ticket.next_ticket:
+            next_ticket = ticket.get_next_accessible_for()
+            if next_ticket:
                 links.append(SitemapEntry(
                     'Next',
-                    ticket.next_ticket.url(),
+                    next_ticket.url(),
                     ui_icon=Icon('', 'ico-next')
                 ))
-            if ticket.prev_ticket:
+            prev_ticket = ticket.get_prev_accessible_for()
+            if prev_ticket:
                 links.append(SitemapEntry(
                     'Previous',
-                    ticket.prev_ticket.url(),
+                    prev_ticket.url(),
                     ui_icon=Icon('', 'ico-previous')
                 ))
             if ticket.super_id:
