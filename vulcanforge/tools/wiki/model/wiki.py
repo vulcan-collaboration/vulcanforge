@@ -154,9 +154,6 @@ class Page(VersionedArtifact):
     def shorthand_id(self):
         return self.title
 
-    def s3_key_prefix(self):
-        return str(self._id)
-
     def index(self, **kw):
         return super(VersionedArtifact, self).index(
             title_s='WikiPage %s' % self.title,

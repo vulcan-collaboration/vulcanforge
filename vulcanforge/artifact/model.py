@@ -84,6 +84,9 @@ class ArtifactApiMixin(object):
         """
         raise NotImplementedError('shorthand_id')
 
+    def s3_key_prefix(self):
+        return self.shorthand_id()
+
     def link_text(self):
         """
         The link text that will be used when a shortlink to this artifact
@@ -868,7 +871,7 @@ class Feed(MappedClass):
             limit = 10
         query = cur.limit(limit)
         if offset is not None:
-            query = cur.offset(offset)
+            query = cur.skip(offset)
         for r in query:
             feed.add_item(title=r.title,
                           link=absurl(r.link.encode('utf-8')),
