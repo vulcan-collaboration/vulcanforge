@@ -32,10 +32,6 @@ class UserRegistrationEmailForm(ForgeForm):
     style = 'wide'
 
     def __init__(self, affiliate=False, ignore_key_missing=False, **kwargs):
-        super(UserRegistrationEmailForm, self).__init__(
-            ignore_key_missing=ignore_key_missing,
-            **kwargs
-        )
         self.fields = [
             ew.TextField(
                 label="Name",
@@ -57,16 +53,26 @@ class UserRegistrationEmailForm(ForgeForm):
                 wide=True,
             )
         ]
-        self.fields.append(
-            ReCaptchaField(
-                name="recaptcha",
-                validator=Empty(if_missing=None)
+        if not asbool(tg.config.get('disable_captcha_validation', 'false')):
+            self.fields.append(
+                ReCaptchaField(
+                    name="recaptcha",
+                    label=False
+                )
             )
+            ignore_key_missing = True
+
+        super(UserRegistrationEmailForm, self).__init__(
+            ignore_key_missing=ignore_key_missing,
+            **kwargs
         )
 
     @validator
     def validate(self, value, state=None):
         super(UserRegistrationEmailForm, self).validate(value, state)
+        if self.ignore_key_missing and (not 'name' in value
+                or not 'email' in value):
+            raise Invalid('Missing Value', value, state)
 
         if asbool(config.get('is_itar', 'false')):
             if not value.get("verify_citizen"):

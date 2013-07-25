@@ -5,6 +5,7 @@ import cgi
 import json
 import datetime
 import os
+import re
 import requests
 import urllib
 import time
@@ -36,6 +37,7 @@ import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
 from vulcanforge.project.model import Project
 from vulcanforge.resources import Icon
+from vulcanforge.tools.wiki.mdx_forgewiki import ForgeWikiExtension
 
 
 __all__ = ['Globals']
@@ -193,21 +195,6 @@ class ForgeAppGlobals(object):
         self.idle_logout_countdown_seconds = asint(
             config.get('idle_logout_countdown_seconds', 30))
 
-        self.exchange_service_path = config.get(
-            'exchange_tool.service.path', '/rest/exchange')
-
-        self.exchange_content_agreement_message = config.get(
-            'exchange.content_agreement_message', None
-        )
-
-        self.exchange_data_dir = config.get('exchange.component_staging')
-        self.exchange_top_category_generation = asbool(
-            config.get('exchange.top_category_generation', True)
-        )
-        self.exchange_send_notifications = asbool(
-            config.get('exchange.send_notifications', True)
-        )
-
         # is openid enabled
         self.openid_enabled = asbool(config.get('openid.enabled', False))
 
@@ -281,7 +268,7 @@ class ForgeAppGlobals(object):
             return h.urlquote('/'.join((
                 artifact.project.shortname,
                 artifact.app_config.options.mount_point,
-                artifact.shorthand_id())) + '#')
+                artifact.s3_key_prefix())) + '#')
         else:
             return ''
 
@@ -443,14 +430,17 @@ class ForgeAppGlobals(object):
 
     def forge_markdown(self, **kwargs):
         """return a markdown.Markdown object on which you can call convert"""
-        return markdown.Markdown(
-            extensions=[
-                #'toc',
-                'codehilite',
-                ForgeExtension(**kwargs),
-                'tables',
-            ],
-            output_format='html4')
+        extensions = [
+            'codehilite',
+            ForgeExtension(**kwargs),
+            'tables',
+        ]
+        extension_configs = {}
+        if kwargs.get('wiki', False):
+            extensions.append(ForgeWikiExtension())
+        return markdown.Markdown(extensions=extensions,
+                                 extension_configs=extension_configs,
+                                 output_format='html4')
 
     @property
     def markdown(self):

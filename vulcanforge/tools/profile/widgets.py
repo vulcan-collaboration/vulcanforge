@@ -7,6 +7,7 @@ from tg import config
 from ew import jinja2_ew
 
 from vulcanforge.common.widgets.forms import ForgeForm
+from vulcanforge.common.validators import HTMLEscapeValidator
 
 LOG = logging.getLogger(__name__)
 
@@ -46,25 +47,25 @@ class EditProfileForm(ForgeForm):
                     jinja2_ew.TextField(
                         label="Display Name",
                         name="display_name",
-                        validators=validators.UnicodeString(max=255)
+                        validator=HTMLEscapeValidator(max=255)
                     ),
                     jinja2_ew.TextArea(
                         label="Your Mission",
                         name="mission",
-                        attrs={'maxlength':37, 'cols': 30, 'rows': 3},
-                        validators=validators.UnicodeString(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
+                        validator=HTMLEscapeValidator(max=255)
                     ),
                     jinja2_ew.TextArea(
                         label="Your Interests",
                         name="interests",
-                        attrs={'maxlength':37, 'cols': 30, 'rows': 3},
-                        validators=validators.UnicodeString(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
+                        validator=HTMLEscapeValidator(max=255)
                     ),
                     jinja2_ew.TextArea(
                         label="Your Expertise",
                         name="expertise",
-                        attrs={'maxlength':37, 'cols': 30, 'rows': 3},
-                        validators=validators.UnicodeString(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
+                        validator=HTMLEscapeValidator(max=255)
                     )
                 ],
                 wide=True,
@@ -76,12 +77,14 @@ class EditProfileForm(ForgeForm):
                     jinja2_ew.TextArea(
                         label="Marketplace Advertisement",
                         name='user_ad',
-                        note="Add yourself to the marketplace listings. Plain text only.",
+                        note="Add yourself to the marketplace listings. Plain "
+                             "text only.",
                         attrs={
                             'maxlength': 255,
                             'cols': 30,
                             'rows': 10
-                        }
+                        },
+                        validator=HTMLEscapeValidator(max=255)
                     ),
                     jinja2_ew.Checkbox(
                         label="Remove Advertisement",
@@ -98,7 +101,7 @@ class EditProfileForm(ForgeForm):
                         label="Skype Name (for VCDE tool only)",
                         name="skype_name",
                         note="For use in VCDE tool",
-                        validators=validators.UnicodeString(max=255)
+                        validator=HTMLEscapeValidator(max=255)
                     )
                 ],
                 wide=True,
@@ -108,8 +111,6 @@ class EditProfileForm(ForgeForm):
         if not asbool(config.get('all_users_public', 'false')):
             fields.append(
                 jinja2_ew.Checkbox(
-                label="Make Profile Public",
-                name="public"
-                )
+                    label="Make Profile Public", name="public")
             )
         return fields

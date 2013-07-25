@@ -27,7 +27,6 @@ class NeighborhoodHomeApp(Application):
     An app that provides the landing and support pages for a neighborhood.
     """
 
-    installable = False
     tool_label = "Neighborhood"
     static_folder = "Neighborhood"
     default_mount_label = "Home"

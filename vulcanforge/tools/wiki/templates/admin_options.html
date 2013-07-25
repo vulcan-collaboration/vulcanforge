@@ -26,13 +26,13 @@
             {% endif %}
         </div>
         <div class="vf-field">
-            <label for="content_agreement">Content agreement message:</label>
+            <label for="show_table_of_contents">Show Table of Contents:</label>
             {% if allow_config %}
-            <textarea style="width: 685px; height:140px;" name="content_agreement" id="content_agreement">{% if app.content_agreement %}{{app.content_agreement}}{% endif %}</textarea>
+            <input type="checkbox" name="'" id="show_table_of_contents"{% if app.show_table_of_contents %} checked="checked"{% endif %}/>
             {% else %}
-            {% if app.content_agreement %}{{app.content_agreement}}{% endif %}
+            <span>{{app.show_table_of_contents}}</span>
             {% endif %}
-            If content agreement message is set, you may mark certain pages to be viewable only after a user has agreed to the content agreement.
+            <p>Display Table of Contents automatically for pages in this wiki. When disabled, the table of contents can still be included manually with the <code>{Table of Contents}</code> statement.</p>
         </div>
     </div>
     {% if allow_config %}

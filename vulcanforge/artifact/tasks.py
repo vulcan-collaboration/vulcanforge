@@ -50,11 +50,13 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True):
                 artifact = ref.artifact
                 if update_solr:
                     s = solarize(artifact)
-                    if s is not None:
+                    if s:
                         allura_docs.append(s)
                         parent = artifact.index_parent()
                         if parent:
-                            allura_docs.append(solarize(parent))
+                            parent_doc = solarize(parent)
+                            if parent_doc:
+                                allura_docs.append(solarize(parent))
                     else:
                         LOG.info('no solarization found for %s', str(ref_id))
                 if update_refs:

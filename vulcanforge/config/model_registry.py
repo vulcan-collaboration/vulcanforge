@@ -1,6 +1,7 @@
 from vulcanforge.common.model import (
     GlobalObjectReference,
     File,
+    FileReference,
     Stats,
     ForgeGlobals
 )
@@ -68,6 +69,7 @@ from vulcanforge.project.model import (
     ProjectCategory,
     ProjectFile,
     AppConfig,
+    ProjectRole
 )
 from vulcanforge.taskd.model import MonQTask
 from vulcanforge.visualize.model import Visualizer

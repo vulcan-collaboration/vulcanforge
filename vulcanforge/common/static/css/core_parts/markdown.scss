@@ -56,6 +56,13 @@
     ol, ul {
         padding-left: 2.4rem;
     }
+    ol ol,
+    ol ul,
+    ul ol,
+    ul ul {
+        margin: 0;
+        padding-left: 1.2rem;
+    }
 
     hr {
         margin: 2.4rem 0;
@@ -89,10 +96,11 @@
         }
     }
 
-    .codehilite {
-        pre {
-            padding: 1.2rem;
-        }
+    pre {
+        padding: 1.2rem;
+        background-color: #eee;
+        color: #333;
+        border: 1px solid #e0e0e0;
     }
 
     .toc {
@@ -108,6 +116,14 @@
         ul ul {
             padding-left: 1rem;
         }
+    }
+    .toctitle {
+        display: block;
+        margin: 0 0 1em 0;
+        color: #aaa;
+    }
+    .toclink {
+        color: inherit;
     }
 }
 
@@ -138,17 +154,22 @@
     @extend .bbs;
 }
 
-body[data-pagetype="WIKI"] .markdown-edit textarea {
+.markdown-edit.wiki-markdown textarea {
     height: 400px;
 }
 
 .markdown-preview {
-    border: 1px solid $border-color;
+    border: 2px dotted $border-color;
     padding: 0;
     margin: 10px 0;
     background-color: #fff;
     border-radius: 8px;
-    display: none;
+    height: 100%;
+    overflow: visible;
+}
+
+.post-markdown .markdown-preview {
+    margin-top: 0;
 }
 
 .icon.close {
@@ -171,11 +192,8 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
 
 .markdown-preview,
 .markdown-add-attachment {
-    border: 1px solid $border-color !important;
     padding: 0;
-    margin: 0;
     width: 100%;
-    background-color: #fff !important;
     border-radius: 2*$pu;
     border-top-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -197,4 +215,142 @@ body[data-pagetype="WIKI"] .markdown-edit textarea {
     position: absolute;
     top: 0.6rem;
     right: 0.6rem;
+}
+
+/* pagedown */
+.wmd-panel
+{
+	margin-left: 25%;
+	margin-right: 25%;
+	width: 50%;
+	min-width: 500px;
+}
+
+.wmd-button-bar
+{
+	width: 100%;
+	background-color: Silver;
+}
+
+.wmd-input
+{
+	height: 300px;
+	width: 100%;
+	background-color: Gainsboro;
+	border: 1px solid DarkGray;
+}
+
+.wmd-button-row
+{
+	position: relative;
+	padding-bottom: 5px;
+	padding-top: 5px;
+    margin: 0 0 1px;
+    background-color: #fff;
+	height: 20px;
+    width: 340px;
+}
+
+.post-markdown .wmd-button-row {
+    border: 1px solid #ccc;
+}
+
+.wmd-spacer
+{
+	width: 1px;
+	height: 20px;
+	margin-left: 14px;
+	position: absolute;
+	background-color: Silver;
+	display: inline-block;
+	list-style: none;
+}
+
+.wmd-button {
+    width: 20px;
+    height: 20px;
+    padding-left: 2px;
+    padding-right: 3px;
+    position: absolute;
+    display: inline-block;
+    list-style: none;
+    cursor: pointer;
+}
+
+.wmd-button > span {
+    background-image: url(../images/wmd-buttons.png);
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+.wmd-spacer1
+{
+    left: 50px;
+}
+.wmd-spacer2
+{
+    left: 175px;
+}
+.wmd-spacer3
+{
+    left: 300px;
+}
+
+.wmd-prompt-background
+{
+	background-color: Black;
+}
+
+.wmd-prompt-dialog
+{
+	border: 1px solid #999999;
+	background-color: #F5F5F5;
+}
+
+.wmd-prompt-dialog > div {
+	font-size: 0.8em;
+	font-family: arial, helvetica, sans-serif;
+}
+
+
+.wmd-prompt-dialog > form > input[type="text"] {
+	border: 1px solid #999999;
+	color: black;
+}
+
+.wmd-prompt-dialog > form > input[type="button"]{
+	border: 1px solid #888888;
+	font-family: trebuchet MS, helvetica, sans-serif;
+	font-size: 0.8em;
+	font-weight: bold;
+}
+
+.markdown-img-add-btn-row {
+    margin: 12px 0 0;
+    padding: 0;
+}
+
+
+.markdownPlaceholder {
+    @include linearGradient2(top, #999, #555);
+    height: 200px;
+    color: #fff;
+    padding: 2px 15px;
+}
+
+.markdownPlaceholder p {
+    max-width: none;
+}
+
+.markdownPlaceholder a {
+    text-decoration: underline;
+    color: #fff;
+}
+
+.markdownPlaceholder.oembedPlaceholder {
+    width: 459px;
+    height: 344px;
 }

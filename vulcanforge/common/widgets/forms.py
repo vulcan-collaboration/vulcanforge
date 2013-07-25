@@ -58,8 +58,9 @@ class ForgeForm(ew.SimpleForm):
             ctx['rendered_name'] = g.antispam.enc(ctx['name'])
         return ctx
 
-    def display_field(self, field, ignore_errors=False):
+    def display_field(self, field, ignore_errors=False, **kw):
         ctx = self.context_for(field)
+        ctx.update(kw)
         display = field.display(**ctx)
         if ctx['errors'] and field.show_errors and not ignore_errors:
             display = "%s<div class='error'>%s</div>" % (

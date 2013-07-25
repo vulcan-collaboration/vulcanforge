@@ -48,6 +48,9 @@ class PageHistory(Snapshot):
     def shorthand_id(self):
         return '%s#%s' % (self.original().shorthand_id(), self.version)
 
+    def s3_key_prefix(self):
+        return str(self.original()._id)
+
     def url(self):
         return self.original().url() + '?version=%d' % self.version
 
@@ -93,6 +96,7 @@ class Page(VersionedArtifact):
     deleter_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     type_s = 'Wiki'
     content_agreement_protected = FieldProperty(bool, if_missing=False)
+    hide_attachments = FieldProperty(bool, if_missing=False)
 
     def commit(self):
         self.autosubscribe()
@@ -212,11 +216,6 @@ class Page(VersionedArtifact):
         return '.'.join((
             str(self.app_config_id), str(self.version), str(self._id)))
 
-    @property
-    def html_text(self):
-        """A markdown processed version of the page text"""
-        return g.markdown_wiki.convert(self.text)
-
     def authors(self):
         """All the users that have edited this page"""
         def uniq(users):
@@ -226,6 +225,10 @@ class Page(VersionedArtifact):
             return t.values()
         user_ids = uniq([r.author for r in self.history().all()])
         return User.query.find({'_id': {'$in': user_ids}}).all()
+
+    def get_rendered_html(self):
+        md = self.app.get_markdown()
+        return md.convert(self.text)
 
 
 class WikiAttachment(BaseAttachment):

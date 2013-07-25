@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pylons import tmpl_context as c
+
 from vulcanforge.common.widgets.util import LightboxWidget
 from vulcanforge.resources.widgets import JSScript
 
@@ -11,6 +13,7 @@ class CreatePageWidget(LightboxWidget):
         yield JSScript('''$(function () {
             var validPageName = false,
                 $form = $('#lightbox_create_wiki_page form'),
+                $nameField = $('#newPageFormName'),
                 $submit = $('#newPageFormSubmit'),
                 $invalidMessage = $('<p>This is a reserved name</p>').
                     hide().
@@ -33,12 +36,29 @@ class CreatePageWidget(LightboxWidget):
                     }
                 }).
                 submit(function(e){
+                    var pageTitle;
                     if (!validPageName) {
                         e.preventDefault();
                         e.stopPropagation();
                         return false;
                     }
-                    location.href=$('#sidebar a.add_wiki_page').attr('href')+encodeURIComponent($('input[name=name]', $(this)).val())+'/edit';
+                    pageTitle = encodeURIComponent($('input[name=name]', $(this)).val()).replace('%2F', '/');
+                    location.href=$('#sidebar a.add_wiki_page').attr('href')+pageTitle+'/edit';
                     return false;
                 });
+            $nameField.autocomplete({
+                source: function(request, callback) {
+                    $.ajax({
+                        url: "''' + c.app.url + '''/title_autocomplete",
+                        data: {q: request.term},
+                        success: function (data, status, request) {
+                            var i;
+                            for (i = 0; i < data.results.length; ++i) {
+                                data.results[i] += '/';
+                            }
+                            callback(data.results);
+                        }
+                    });
+                }
+            });
         });''')

@@ -24,8 +24,11 @@ from bson import ObjectId
 import pymongo
 from ming import schema as S
 from ming.odm import (
-    FieldProperty, ForeignIdProperty, RelationProperty, session
-    )
+    FieldProperty,
+    ForeignIdProperty,
+    RelationProperty,
+    session
+)
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 from paste.deploy.converters import asbool
@@ -243,9 +246,10 @@ class Notification(SOLRIndexed):
             if post.parent_id and not subject.lower().startswith('re:'):
                 subject = u'Re: '+subject
             author = post.author()
-            post_text = post.text
             if safe_notifications:
                 post_text = safe_text or "commented or modified"
+            else:
+                post_text = post.text
             if author is not None:
                 text = u"{}: {}".format(author.display_name, post_text)
             else:
@@ -317,12 +321,9 @@ class Notification(SOLRIndexed):
         if until is not None:
             query['pubdate']['$lte'] = until
         cur = cls.query.find(query)
-        cur = cur.sort('pubdate', pymongo.DESCENDING)
-        if limit is None:
-            limit = 10
-        query = cur.limit(limit)
-        if offset is not None:
-            query = cur.offset(offset)
+        cur.sort('pubdate', pymongo.DESCENDING)
+        cur.limit(limit or 10)
+        cur.skip(offset or 0)
         for r in cur:
             feed.add_item(
                 title=r.subject,
@@ -339,7 +340,7 @@ class Notification(SOLRIndexed):
         context = {
             'notification': self,
             'prefix': config.get('forgemail.url', 'https://vehicleforge.net'),
-            'safe_text': safe_notifications,
+            'safe_notifications': safe_notifications,
             'forge_name': config.get('forge_name', 'Forge')
         }
         context.update(kwargs)
@@ -352,7 +353,7 @@ class Notification(SOLRIndexed):
             try:
                 template = self.view.get_template(
                     'mail/{}.txt'.format(artifact.type_s))
-                text += template.render(self.get_context(ticket=artifact))
+                text += template.render(self.get_context(artifact=artifact))
             except Exception, e:
                 LOG.debug('Error rendering notification template '
                           '%s: %s' % (artifact.type_s, e))
@@ -452,7 +453,8 @@ class Mailbox(MappedClass):
         indexes = [('project_id', 'artifact_index_id')]
 
     _id = FieldProperty(S.ObjectId)
-    user_id = ForeignIdProperty('User', if_missing=lambda: c.user._id)
+    user_id = ForeignIdProperty(User, if_missing=lambda: c.user._id)
+    user = RelationProperty(User, via="user_id")
     project_id = ForeignIdProperty('Project', if_missing=lambda: c.project._id)
     app_config_id = ForeignIdProperty(
         'AppConfig',
@@ -676,11 +678,12 @@ class Mailbox(MappedClass):
             'topic': {'$in': [None, topic]}
         }
         for mbox in cls.query.find(d):
-            mbox.query.update(
-                {'$push': dict(queue=nid),
-                 '$set': dict(last_modified=datetime.utcnow())})
-            # Make sure the mbox doesn't stick around to be flush()ed
-            session(mbox).expunge(mbox)
+            if mbox.user and mbox.user.active():
+                mbox.query.update(
+                    {'$push': dict(queue=nid),
+                     '$set': dict(last_modified=datetime.utcnow())})
+                # Make sure the mbox doesn't stick around to be flush()ed
+                session(mbox).expunge(mbox)
 
     @classmethod
     def fire_ready(cls):

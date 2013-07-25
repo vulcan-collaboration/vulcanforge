@@ -27,38 +27,32 @@
         requery();
     });
 
-    $('.ticketRow:has(.ticketLink), .ticketRow:has(.artifact-link-container)')
-            .css('cursor', 'pointer')
-            .bind('click', function (e) {
-                var $target = $(e.target),
-                    $row = $target.closest('.ticketRow'),
-                    $checkbox = $('input[type="checkbox"]', $row),
-                    $link, linkHref, linkTarget;
-                if ($checkbox.length > 0) {
-                    if (!$target.is('input[type="checkbox"]')) {
-                        $checkbox.prop('checked', !$checkbox.prop('checked'));
-                    }
-                } else if (!$target.is('a, input, button')) {
-                    $link = $('.ticketLink, a', $(this));
-                    linkHref = $link.prop('href');
-                    linkTarget = $link.prop('target');
-                    if (e.which === 1) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (typeof linkTarget === 'undefined') {
-                            window.location.href = linkHref;
-                        }
-                        else {
-                            window.open(linkHref, linkTarget);
-                        }
-                    }
-                    else if (e.which === 2) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.open(linkHref, '_blank');
-                    }
+    $('.ticketRow:has(input[type="checkbox"]), .ticketRow:has(.artifact-link-container)').
+        css('cursor', 'pointer').
+        on('click', function (e) {
+            var $row = $(this),
+                $target = $(e.target),
+                $checkbox = $row.find('input[type="checkbox"]'),
+                $link = $row.find('a'),
+                linkTarget = $link.attr('target');
+            if ($target.is('a, input, button')) {
+                /* pass */
+            } else if ($checkbox.length > 0) {
+                if (!$target.is('input[type="checkbox"]')) {
+                    $checkbox.prop('checked', !$checkbox.prop('checked'));
                 }
-            });
+            } else if ($link.length > 0) {
+                switch (e.which) {
+                case 2:
+                    linkTarget = '_blank';
+                    break;
+                default:
+                    linkTarget = '_self';
+                    break;
+                }
+                window.open($link.attr('href'), linkTarget);
+            }
+        });
 
     $('#lightbox_col_list').append($('#col_list_form'));
     $('#col_list_form').show();

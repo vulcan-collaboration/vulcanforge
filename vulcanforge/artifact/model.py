@@ -84,6 +84,9 @@ class ArtifactApiMixin(object):
         """
         raise NotImplementedError('shorthand_id')
 
+    def s3_key_prefix(self):
+        return self.shorthand_id()
+
     def link_text(self):
         """
         The link text that will be used when a shortlink to this artifact
@@ -317,6 +320,9 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     def shorthand_id(self):
         return str(self._id)  # pragma no cover
 
+    def s3_key_prefix(self):
+        return str(self._id)
+
     def related_artifacts(self):
         related_artifacts = []
         for ref_id in self.refs + self.backrefs:
@@ -530,11 +536,12 @@ class Snapshot(Artifact):
     artifact_id = FieldProperty(S.ObjectId)
     artifact_class = FieldProperty(str)
     version = FieldProperty(S.Int, if_missing=0)
-    author = FieldProperty(dict(
-            id=S.ObjectId,
-            username=str,
-            display_name=str,
-            logged_ip=str))
+    author = FieldProperty({
+        'id': S.ObjectId,
+        'username': str,
+        'display_name': str,
+        'logged_ip': str
+    })
     timestamp = FieldProperty(datetime)
     data = FieldProperty(None)
 
@@ -653,10 +660,8 @@ class VersionedArtifact(Artifact):
             n = self.version + n + 1
         ss = self.__mongometa__.history_class.query.get(
             artifact_id=self._id,
-            artifact_class='%s.%s' % (
-                self.__class__.__module__,
-                self.__class__.__name__),
-            version=n)
+            version=n
+        )
         if ss is None:
             raise IndexError(n)
         return ss
@@ -866,7 +871,7 @@ class Feed(MappedClass):
             limit = 10
         query = cur.limit(limit)
         if offset is not None:
-            query = cur.offset(offset)
+            query = cur.skip(offset)
         for r in query:
             feed.add_item(title=r.title,
                           link=absurl(r.link.encode('utf-8')),
@@ -936,9 +941,8 @@ class BaseAttachment(File):
                 return [orig, thumbnail]
         else:
             return [
-                cls.from_stream(filename, fp, content_type=content_type,
-                    **original_meta)
-            ]
+                cls.from_stream(
+                    filename, fp, content_type=content_type, **original_meta)]
 
 
 class ArtifactProcessor(object):

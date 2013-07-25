@@ -175,7 +175,7 @@ class MessagesController(BaseMessagesController):
 
     @expose()
     @require_post()
-    @validate_form("start_conversation", error_handler=start_conversation)
+    @validate_form("start_conversation_form", error_handler=start_conversation)
     def do_start_conversation(self, recipients=None, subject=None, text=None,
                               **kwargs):
         conversation = Conversation()

@@ -11,7 +11,25 @@
 
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}}{% endblock %}
 
-{% block header %}{{page.title}}
+{% block header %}
+    {% for item in hierarchy_items %}
+        <div class="wiki-titlebar-item{% if item.child_count > 0 %} wiki-titlebar-item-with-popup{% endif %}{% if loop.last %} wiki-titlebar-item-main{% else %} wiki-titlebar-item-small{% endif %}">
+            <span class="wiki-titlebar-item-label"><a href="{{ item.href }}">{{ item.label }}</a></span>
+            {% if item.child_count > 0 %}
+            <div class="wiki-titlebar-item-popup">
+                <ul class="wiki-titlebar-item-list">
+                {% for child in item.children %}
+                    <li><a href="{{ child.url() }}">{{ child.title.split('/')[-1] }}</a></li>
+                {% endfor %}
+                {% if item.child_count > item.children|length %}
+                    <li><em><a href="{{ item.more_href }}">more...</a></em></li>
+                {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
     {% if page['deleted'] %}<span> [deleted {% if page['deleted_time'] %}{{abbr_date(page['deleted_time'])}}{% endif %}]</span>{% endif %}
     {% if not page.is_current() and version%} <span>[version {{version}}]</span>{% endif %}
     {% if show_meta %}
@@ -37,13 +55,13 @@
 {% endblock %}
 
 {% block wiki_content %}
-{{page.html_text}}
-{% if page.attachments %}
-    {{c.attachment_list.display(value=page)}}
-{% endif %}
-{% if page.labels %}
-    {{ c.label_list.display(artifact=page) }}
-{% endif %}
+    {{ page_html }}
+    {% if not page.hide_attachments and page.attachments %}
+        {{c.attachment_list.display(value=page)}}
+    {% endif %}
+    {% if page.labels %}
+        {{ c.label_list.display(artifact=page) }}
+    {% endif %}
 {% endblock %}
 
 {% block relatedArtifacts %}

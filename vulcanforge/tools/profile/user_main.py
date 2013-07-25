@@ -22,7 +22,7 @@ from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config, nonce
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.app import Application
-from vulcanforge.common.validators import DateTimeConverter
+from vulcanforge.common.validators import DateTimeConverter, HTMLEscapeValidator
 from vulcanforge.auth.schema import ACE
 from vulcanforge.auth.model import WorkspaceTab
 from vulcanforge.artifact.model import ArtifactReference
@@ -45,7 +45,6 @@ TEMPLATE_DIR = 'jinja:vulcanforge.tools.profile:templates/'
 
 
 class UserProfileApp(Application):
-    installable = False
 
     def __init__(self, user_project, config):
         Application.__init__(self, user_project, config)
@@ -101,29 +100,40 @@ class WorkspaceTabController(RestController):
 
     # Create
     @expose('json')
-    def post(self, **kwargs):
+    @validate({
+        "href": HTMLEscapeValidator(),
+        "title": HTMLEscapeValidator(),
+        "type": HTMLEscapeValidator(if_empty=None),
+        "order": validators.Int(if_empty=0),
+        "state": HTMLEscapeValidator(if_empty=None)
+    })
+    def post(self, href=None, title=None, type=None, order=0, state=None,
+             **kw):
         g.security.require_access(c.project, 'create')
-        if 'href' not in kwargs or 'title' not in kwargs:
+        if href is None or title is None:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
 
-        if WorkspaceTab.query.get(user_id=c.user._id, href=kwargs["href"]):
+        if WorkspaceTab.query.get(user_id=c.user._id, href=href):
             raise exceptions.AJAXMethodNotAllowed(
                 'Tab duplication is not allowed')
 
         new_tab = WorkspaceTab(
             user_id=c.user._id,
-            title=kwargs["title"],
-            type=kwargs["type"],
-            href=kwargs["href"],
-            order=int(kwargs["order"]),
-            state=kwargs["state"] if 'state' in kwargs else None
+            title=title,
+            type=type,
+            href=href,
+            order=order,
+            state=state
         )
 
         return new_tab.__json__()
 
     # Update
     @expose()
+    @validate({
+        "value": HTMLEscapeValidator()
+    })
     def put(self, object_id, operation, value, **kwargs):
         g.security.require_access(c.project, 'create')
         tab = WorkspaceTab.query.get(

@@ -55,6 +55,7 @@ from vulcanforge.project.widgets import ProjectUserSelect
 from vulcanforge.resources import Icon
 from . import model as TM
 from . import version
+from vulcanforge.tools.tickets.util import changelog
 from vulcanforge.tools.tickets.widgets.forms import TicketCustomField
 from .widgets import (
     TrackerTicketForm,
@@ -255,16 +256,18 @@ class ForgeTrackerApp(Application):
                 ui_icon='ico-moderate',
                 small=pending_mod_count))
         if ticket:
-            if ticket.next_ticket:
+            next_ticket = ticket.get_next_accessible_for()
+            if next_ticket:
                 links.append(SitemapEntry(
                     'Next',
-                    ticket.next_ticket.url(),
+                    next_ticket.url(),
                     ui_icon=Icon('', 'ico-next')
                 ))
-            if ticket.prev_ticket:
+            prev_ticket = ticket.get_prev_accessible_for()
+            if prev_ticket:
                 links.append(SitemapEntry(
                     'Previous',
-                    ticket.prev_ticket.url(),
+                    prev_ticket.url(),
                     ui_icon=Icon('', 'ico-previous')
                 ))
             if ticket.super_id:
@@ -560,7 +563,8 @@ class TrackerSearchController(BaseController):
                 'assigned_to_s_mv',
                 'reported_by_s',
                 'labels_t'
-            ]
+            ],
+            'facet.mincount': 1
             #'facet.date': [
             #    'last_updated_dt',
             #    'created_date_dt'
@@ -796,10 +800,12 @@ class RootController(BaseTrackerController):
 
     @without_trailing_slash
     @expose()
-    @validate({'since': V.DateTimeConverter(if_empty=None, if_invalid=None),
-               'until': V.DateTimeConverter(if_empty=None, if_invalid=None),
-               'offset': validators.Int(if_empty=None),
-               'limit': validators.Int(if_empty=None)})
+    @validate({
+        'since': V.DateTimeConverter(if_empty=None, if_invalid=None),
+        'until': V.DateTimeConverter(if_empty=None, if_invalid=None),
+        'offset': validators.Int(if_empty=None),
+        'limit': validators.Int(if_empty=None)
+    })
     def feed(self, since=None, until=None, offset=None, limit=None):
         if request.environ['PATH_INFO'].endswith('.atom'):
             feed_type = 'atom'
@@ -880,15 +886,15 @@ class RootController(BaseTrackerController):
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'stats.html')
     def stats(self):
-        globals = c.app.globals
+        tglobals = c.app.globals
         total = TM.Ticket.query.find(dict(
             app_config_id=c.app.config._id)).count()
         open = TM.Ticket.query.find(dict(
             app_config_id=c.app.config._id,
-            status={'$in': list(globals.set_of_open_status_names)})).count()
+            status={'$in': list(tglobals.set_of_open_status_names)})).count()
         closed = TM.Ticket.query.find(dict(
             app_config_id=c.app.config._id,
-            status={'$in': list(globals.set_of_closed_status_names)})).count()
+            status={'$in': list(tglobals.set_of_closed_status_names)})).count()
         now = datetime.utcnow()
         week = timedelta(weeks=1)
         fortnight = timedelta(weeks=2)
@@ -904,22 +910,23 @@ class RootController(BaseTrackerController):
         fortnight_comments = self.ticket_comments_since(fortnight_ago)
         month_comments = self.ticket_comments_since(month_ago)
         c.user_select = ProjectUserSelect()
-        return dict(
-                now=str(now),
-                week_ago=str(week_ago),
-                fortnight_ago=str(fortnight_ago),
-                month_ago=str(month_ago),
-                week_tickets=week_tickets,
-                fortnight_tickets=fortnight_tickets,
-                month_tickets=month_tickets,
-                comments=comments,
-                week_comments=week_comments,
-                fortnight_comments=fortnight_comments,
-                month_comments=month_comments,
-                total=total,
-                open=open,
-                closed=closed,
-                globals=globals)
+        return {
+            'now': str(now),
+            'week_ago': str(week_ago),
+            'fortnight_ago': str(fortnight_ago),
+            'month_ago': str(month_ago),
+            'week_tickets': week_tickets,
+            'fortnight_tickets': fortnight_tickets,
+            'month_tickets': month_tickets,
+            'comments': comments,
+            'week_comments': week_comments,
+            'fortnight_comments': fortnight_comments,
+            'month_comments': month_comments,
+            'total': total,
+            'open': open,
+            'closed': closed,
+            'globals': tglobals
+        }
 
     @expose()
     @validate_form("subscribe_form")
@@ -990,10 +997,10 @@ class BinController(BaseController):
     @expose()
     @require_post()
     @validate(validators=dict(bin=V.MingValidator(TM.Bin)))
-    def delbin(self, bin=None):
-        g.security.require(lambda: bin.app_config_id == self.app.config._id)
+    def delbin(self, tbin=None):
+        g.security.require(lambda: tbin.app_config_id == self.app.config._id)
         self.app.globals.invalidate_bin_counts()
-        bin.delete()
+        tbin.delete()
         redirect(request.referer or 'index')  # TODO: check
 
     @without_trailing_slash
@@ -1003,74 +1010,21 @@ class BinController(BaseController):
     def update_bins(self, bins=None, **kw):
         g.security.require_access(self.app, 'save_searches')
         for bin_form in bins:
-            bin = None
+            tbin = None
             if bin_form['id']:
-                bin = TM.Bin.query.find(dict(
+                tbin = TM.Bin.query.find(dict(
                     app_config_id=self.app.config._id,
                     _id=ObjectId(bin_form['id']))).first()
             elif bin_form['summary'] and bin_form['terms']:
-                bin = TM.Bin(app_config_id=self.app.config._id, summary='')
-            if bin:
+                tbin = TM.Bin(app_config_id=self.app.config._id, summary='')
+            if tbin:
                 if bin_form['delete'] == 'True':
-                    bin.delete()
+                    tbin.delete()
                 else:
-                    bin.summary = bin_form['summary']
-                    bin.terms = bin_form['terms']
+                    tbin.summary = bin_form['summary']
+                    tbin.terms = bin_form['terms']
         self.app.globals.invalidate_bin_counts()
         redirect('.')
-
-
-class changelog(object):
-    """
-    A dict-like object which keeps log about what keys have been changed.
-
-    >>> c = changelog()
-    >>> c['foo'] = 'bar'
-    >>> c['bar'] = 'baraban'
-    >>> c.get_changed()
-    []
-    >>> c['bar'] = 'drums'
-    >>> c.get_changed()
-    [('bar', ('baraban', 'drums'))]
-
-    The .get_changed() lists key in the same order they were added to the
-    changelog:
-
-    >>> c['foo'] = 'quux'
-    >>> c.get_changed()
-    [('foo', ('bar', 'quux')), ('bar', ('baraban', 'drums'))]
-
-    When the key is set multiple times it still compares to the value that was
-    set first.
-    If changed value equals to the value set first time it is not included.
-
-    >>> c['foo'] = 'bar'
-    >>> c['bar'] = 'koleso'
-    >>> c.get_changed()
-    [('bar', ('baraban', 'koleso'))]
-    """
-
-    def __init__(self):
-        self.keys = []  # to track insertion order
-        self.originals = {}
-        self.data = {}
-
-    def __setitem__(self, key, value):
-        if key not in self.keys:
-            self.keys.append(key)
-        if key not in self.originals:
-            self.originals[key] = value
-        self.data[key] = value
-
-    def get_changed(self):
-        t = []
-        for key in self.keys:
-            if key in self.originals:
-                orig_value = self.originals[key]
-                curr_value = self.data[key]
-                if not orig_value == curr_value:
-                    t.append((key, (orig_value, curr_value)))
-        return t
 
 
 class TicketController(BaseTrackerController):
@@ -1091,8 +1045,8 @@ class TicketController(BaseTrackerController):
     def __init__(self, ticket_num=None):
         if ticket_num is not None:
             self.ticket_num = int(ticket_num)
-            self.ticket = TM.Ticket.query.get(app_config_id=c.app.config._id,
-                                                    ticket_num=self.ticket_num)
+            self.ticket = TM.Ticket.query.get(
+                app_config_id=c.app.config._id, ticket_num=self.ticket_num)
             self.attachment = TrackerAttachmentsController(self.ticket)
             # self.comments = CommentController(self.ticket)
         setattr(self, 'feed.atom', self.feed)
@@ -1139,17 +1093,20 @@ class TicketController(BaseTrackerController):
         c.attachment_list = self.Widgets.attachment_list
         c.ticket_update_form = self.Forms.ticket_update_form
         c.related_artifacts_widget = self.Widgets.related_artifacts
+        attachment_context_id = str(self.ticket._id)
         return {
-            'ticket': self.ticket
+            'ticket': self.ticket,
+            'attachment_context_id': attachment_context_id
         }
 
     @without_trailing_slash
     @expose()
-    @validate(dict(
-            since=V.DateTimeConverter(if_empty=None, if_invalid=None),
-            until=V.DateTimeConverter(if_empty=None, if_invalid=None),
-            offset=validators.Int(if_empty=None),
-            limit=validators.Int(if_empty=None)))
+    @validate({
+        'since': V.DateTimeConverter(if_empty=None, if_invalid=None),
+        'until': V.DateTimeConverter(if_empty=None, if_invalid=None),
+        'offset': validators.Int(if_empty=None),
+        'limit': validators.Int(if_empty=None)
+    })
     def feed(self, since=None, until=None, offset=None, limit=None):
         if request.environ['PATH_INFO'].endswith('.atom'):
             feed_type = 'atom'
@@ -1398,8 +1355,8 @@ class RootRestController(BaseController):
         ])
 
     @expose()
-    @vardec
     @require_post()
+    @vardec
     @validate_form("ticket_form", error_handler=h.json_validation_error)
     def new(self, ticket_form=None, **post_data):
         """

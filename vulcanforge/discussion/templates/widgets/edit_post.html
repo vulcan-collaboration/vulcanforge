@@ -4,7 +4,7 @@
         {% if show_subject %}
         <input name="subject" value="{{value and (value.subject or '(no subject)')}}"/>
         {% endif %}
-        {{widget.display_field(widget.fields.text)}}
+        {{widget.display_field(widget.fields.text, attachment_context_id=attachment_context_id)}}
         <label>Attach Files:</label>
         {{widget.display_field(widget.fields.new_attachments)}}
         <input type="hidden" class="original_value" value="{{value.text}}">

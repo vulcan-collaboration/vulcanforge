@@ -86,9 +86,8 @@ class Attachment(Widget):
     $(document).ready(function(){
         $('#more-{{value._id}}').visualizerOptions({
             visualizerLinks: {{visualizer_links|safe}},
-            linksAlign: "left top",
-            targetAlign: "left bottom",
-            offset: "0 -6"
+            linksAlign: "left top-6",
+            targetAlign: "left bottom"
         });
     });'''
     defaults = dict(
@@ -125,7 +124,8 @@ class AttachmentList(ew_core.Widget):
     template = TEMPLATE_DIR + 'attachment_list.html'
     defaults = dict(
         ew_core.Widget.defaults,
-        attachments=None
+        attachments=None,
+        context_id=None
     )
 
     widgets = dict(
@@ -223,30 +223,41 @@ class MarkdownEdit(ew.TextArea):
         value=None,
         show_label=True,
         markdown_project=None,
-        markdown_app=None
+        markdown_app=None,
+        class_name='markdown-edit',
+        attachment_context_id=None
     )
 
     def from_python(self, value, state=None):
         return value
 
     def prepare_context(self, *args, **kw):
-        c = super(MarkdownEdit, self).prepare_context(*args, **kw)
-        c['context_id'] = ''.join(random.sample(string.ascii_uppercase, 8))
+        context = super(MarkdownEdit, self).prepare_context(*args, **kw)
+        context['context_id'] = ''.join(random.sample(string.ascii_uppercase, 8))
         try:
-            c['markdown_project'] = c.project.shortname
+            context['markdown_neighborhood'] = c.project.neighborhood.name
         except AttributeError:
             pass
         try:
-            c['markdown_app'] = c.app.config.options.mount_point
+            context['markdown_project'] = c.project.shortname
         except AttributeError:
             pass
-        return c
+        try:
+            context['markdown_app'] = c.app.config.options.mount_point
+        except AttributeError:
+            pass
+        return context
 
     def resources(self):
         for r in super(MarkdownEdit, self).resources():
             yield r
         yield JSLink('js/lib/jquery/jquery.lightbox_me.js')
         yield JSLink('js/lib/jquery/jquery.textarea.js')
+        yield CSSLink('js/lib/google-code-prettify/prettify.css')
+        yield JSLink('js/lib/google-code-prettify/prettify.js')
+        yield JSLink('js/lib/pagedown/Markdown.Converter.js')
+        yield JSLink('js/lib/pagedown/Markdown.Sanitizer.js')
+        yield JSLink('js/lib/pagedown/Markdown.Editor.js')
         yield JSLink('assets/markdown/markdown_edit.js')
 
 

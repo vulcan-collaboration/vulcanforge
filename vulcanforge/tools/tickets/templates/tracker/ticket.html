@@ -116,7 +116,7 @@
                 <span class="value">{{ 'Private' if ticket.private else 'Public' }}</span>
             </li>
             {% for field in c.app.globals.custom_fields %}
-                {% if field.name != '_milestone' %}
+                {% if field.name != '_milestone' and field.type != 'markdown' %}
                     <li>
                         <span class="label">{{ field.label }}:</span>
                         <span class="value">{{ ticket.custom_fields[field.name] or '--' }}</span>

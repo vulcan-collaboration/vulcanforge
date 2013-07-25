@@ -80,53 +80,53 @@ class ArtifactReferenceController(BaseController):
             raise AJAXNotFound("Reference doesn't yet exist")
         g.context_manager.set(app_config_id=artifact.app_config_id)
         try:
+            g.security.require_access(artifact.project.neighborhood, 'read')
             g.security.require_access(artifact, 'read')
         except exc.HTTPClientError:
             raise AJAXForbidden('Read access required')
 
         reference_dict = {}
-        if g.security.has_access(c.project, 'read'):
-            # get default tools
-            for ac in c.project.app_configs:
-                if ac.reference_opts.get('can_create'):
-                    app_ref = self._make_app_reference(
-                        ac, c.project, artifact=artifact)
-                    if app_ref:
-                        reference_dict[app_ref['label']] = app_ref
+        # get default tools
+        for ac in c.project.app_configs:
+            if ac.reference_opts.get('can_create'):
+                app_ref = self._make_app_reference(
+                    ac, c.project, artifact=artifact)
+                if app_ref:
+                    reference_dict[app_ref['label']] = app_ref
 
-            # get relations
-            seen_ids = set()
-            for relation in artifact.relations():
-                related = relation['artifact']
-                if related.index_id() in seen_ids:
-                    continue
-                seen_ids.add(related.index_id())
+        # get relations
+        seen_ids = set()
+        for relation in artifact.relations():
+            related = relation['artifact']
+            if related.index_id() in seen_ids:
+                continue
+            seen_ids.add(related.index_id())
 
-                # add tool if necessary
-                label = related.ref_category()
-                if not label in reference_dict:
-                    reference_dict[label] = self._make_app_reference(
-                        related.app_config,
-                        c.project,
-                        label,
-                        artifact=artifact
-                    )
+            # add tool if necessary
+            label = related.ref_category()
+            if not label in reference_dict:
+                reference_dict[label] = self._make_app_reference(
+                    related.app_config,
+                    c.project,
+                    label,
+                    artifact=artifact
+                )
 
-                # update instances and relations count
-                if reference_dict[label]:
-                    instances = reference_dict[label]['instances']
-                    if not limit or len(instances) < limit:
-                        if embedded:
-                            data = short_artifact_link_data(related)
-                        else:
-                            data = (related.link_text_short(), related.url())
-                        instances.append(data)
-                    reference_dict[label]['count'] += 1
+            # update instances and relations count
+            if reference_dict[label]:
+                instances = reference_dict[label]['instances']
+                if not limit or len(instances) < limit:
+                    if embedded:
+                        data = short_artifact_link_data(related)
+                    else:
+                        data = (related.link_text_short(), related.url())
+                    instances.append(data)
+                reference_dict[label]['count'] += 1
 
         # artifact shortlink
         data = dict(
             relations=sorted(filter(None, reference_dict.values()),
-                key=lambda a: a['ordinal']),
+                             key=lambda a: a['ordinal']),
             shortLink=Shortlink.from_artifact(artifact).render_link()
         )
 
@@ -169,7 +169,7 @@ class BaseArtifactRest(object):
         self.index_only = index_only
 
     def _from_shortlink(self, shortlink):
-        full_shortlink = '[{}:{}:{}]'.format(
+        full_shortlink = u'[{}:{}:{}]'.format(
             c.project.shortname,
             c.app.config.options.mount_point,
             shortlink
@@ -189,10 +189,10 @@ class BaseArtifactRest(object):
                 urllib.unquote(request.params['shortlink']))
         if not self.artifact and 'index_id' in request.params:
             self.artifact = self._from_index_id(
-                urllib.unquote(request.params['index_id']))
+                urllib.unquote(request.params['index_id']).decode('utf8'))
         if not self.artifact:
             raise AJAXNotFound
-        g.security.require_access(self.artifact, 'read')
+        g.security.require_access(self.artifact.project.neighborhood, 'read')
 
 
 class BaseAlternateRestController(RestController):
@@ -200,6 +200,7 @@ class BaseAlternateRestController(RestController):
 
     @expose('json')
     def get_one(self, context='visualizer', **kw):
+        g.security.require_access(self.artifact, 'read')
         response = {'url': None}
         if self.artifact.alt_loading:
             response['status'] = 'loading'
@@ -243,6 +244,7 @@ class AlternateRestController(BaseAlternateRestController, BaseArtifactRest):
     @expose('json')
     def post(self, processor=None, context='visualizer', **kw):
         """Queues a processesing operation"""
+        g.security.require_access(self.artifact, 'read')
         self._assert_can_process(context)
         process_artifact.post(processor, context, self.artifact.index_id())
         self.artifact.alt_loading = True
@@ -288,6 +290,7 @@ class ArtifactRestController(BaseArtifactRest):
 
         @rtype: JSON document
         """
+        g.security.require_access(self.artifact, 'read')
         thread = self.artifact.discussion_thread
         return dict(posts=thread.posts)
 
@@ -320,6 +323,7 @@ class ArtifactRestController(BaseArtifactRest):
 
         @rtype: JSON document
         """
+        g.security.require_access(self.artifact, 'read')
         thread = self.artifact.discussion_thread
         if reply_to:
             parent = Post.query.get(slug=reply_to, thread_id=thread._id)

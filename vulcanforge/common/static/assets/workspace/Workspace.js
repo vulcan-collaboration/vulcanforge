@@ -1042,7 +1042,8 @@ var $ws = $ws || {};
                 maxElements: 0,
                 callout: true,
                 autoPosition: true,
-                bufferLen: 10
+                bufferLen: 10,
+                heightSource: $(window)
             };
 
         $.extend(config, defaults, options);
@@ -1080,7 +1081,7 @@ var $ws = $ws || {};
             if (config.orientation === 'horizontal'){
                 $.each(activeElements, function(i, el){
                     if (i === 0){
-                        offset0 = $(el).offset().left;
+                        offset0 = $(el).position().left;
                     }
                     lastLength = $(el).outerWidth();
                     lengthSum += lastLength;
@@ -1089,7 +1090,7 @@ var $ws = $ws || {};
             } else {
                 $.each(activeElements, function(i, el){
                     if (i === 0){
-                        offset0 = $(el).offset().top;
+                        offset0 = $(el).position().top;
                     }
                     lastLength = $(el).outerHeight();
                     lengthSum += lastLength;
@@ -1238,12 +1239,12 @@ var $ws = $ws || {};
         }
 
         function checkWidth() {
-            var windowLen = $(window).width();
+            var windowLen = config.heightSource.width();
             _checkLength(windowLen, checkWidth);
         }
 
         function checkHeight() {
-            var windowLen = $(window).height();
+            var windowLen = config.heightSource.height();
             _checkLength(windowLen, checkHeight);
         }
 

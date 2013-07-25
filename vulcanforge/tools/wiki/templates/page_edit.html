@@ -2,7 +2,7 @@
 {% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}} / Edit{% endblock %}
 
-{% block header %}Edit <i>"{{page.title}}"</i>{% endblock %}
+{% block header %}Edit <em>"{{page.title}}"</em>{% endblock %}
 
 {% block extra_css %}
 <style type="text/css">
@@ -20,24 +20,33 @@
 <form method="POST" class="can-retry" action="update" id="page_edit_form" enctype="multipart/form-data">
     <ul class="field-list padded">
         <li>
-            <label>Name:</label>
-            <input class="long" maxlength="40" type="text" name="title" id="title" value="{{page.title}}" placeholder="Page name" required="required" autofocus="autofocus"/>
+            <fieldset class="vf-fieldset">
+                <label>Name:</label>
+                <input class="long" maxlength="40" type="text" name="title" id="title" value="{{page.title}}" placeholder="Page name" required="required" autofocus="autofocus"/>
+                <p>Pages can be organized using slashes like parts of a URL. example: MainTopic/SubTopic</p>
+                <div id="rename_descendants_field">
+                    <fieldset class="vf-fieldset">
+                        {{ c.rename_descendants.display(value=True) }}
+                        <p>If renaming a page, also rename all of it's sub-pages.</p>
+                    </fieldset>
+                </div>
+            </fieldset>
         </li>
         <li>
             <label>Labels:</label>
             {{c.label_edit.display(id='labels', name='labels', value=page.labels)}}
         </li>
-        {% if c.app.content_agreement %}
-        <li>
-            <label>Protected by Content Agreement:</label>
-            <input type="checkbox" name="content_agreement_protected" id="content_agreement_protected" {% if page.content_agreement_protected %} checked {% endif %}/>
-        </li>
-        {% endif %}
         <li>
             <label>Content:</label>
             <div>
-                {{c.markdown_editor.display(id='text', name='text',value=page.text)}}
+                {{c.markdown_editor.display(id='text', name='text', value=page.text, attachment_context_id=attachment_context_id, class_name="markdown-edit wiki-markdown")}}
             </div>
+        </li>
+        <li>
+            <fieldset class="vf-fieldset">
+                {{ c.hide_attachments_field.display(value=page.hide_attachments) }}
+                <p>When selected, attachments will not be shown below page contents but will still be accessible for embedding in pages.</p>
+            </fieldset>
         </li>
         {% if not page_exists or g.security.has_access(page, 'edit') %}
         <li>
@@ -46,25 +55,52 @@
         </li>
         {% endif %}
     </ul>
+    {% if page_exists %}
+        {{c.attachment_list.display(value=page, context_id=attachment_context_id)}}
+    {% endif %}
     <div class="form-controls">
         <input type="submit" value="Save" title="Save">
         <input type="reset" value="Cancel" title="Cancel">
     </div>
 </form>
-    {% if page_exists %}
-        {{c.attachment_list.display(value=page)}}
-    {% endif %}
 {% endblock %}
 
 {% block wiki_extra_js %}
-{{ super() }}
-<script type="text/javascript">
-  $('#page_edit_form input[type=reset]').click(function(){
-    {% if page_exists %}
-      window.location.href = "{{page.url()}}";
-    {% else %}
-      window.location.href = "{{c.app.url}}";
-    {% endif %}
-  });
-</script>
+    {{ super() }}
+    <script type="text/javascript">
+        $(function () {
+            var original_title = $('#title').val();
+            $('#page_edit_form input[type=reset]').click(function () {
+                {% if page_exists %}
+                    window.location.href = "{{page.url()}}";
+                {% else %}
+                    window.location.href = "{{c.app.url}}";
+                {% endif %}
+            });
+            $('#title').
+                bind('change keyup', function () {
+                    if ($(this).val() !== original_title) {
+                        $('#rename_descendants_field').show();
+                    } else {
+                        $('#rename_descendants_field').hide();
+                    }
+                }).
+                autocomplete({
+                    source: function (request, callback) {
+                        $.ajax({
+                            url: "{{ c.app.url }}title_autocomplete",
+                            data: {q: request.term},
+                            success: function (data) {
+                                var i;
+                                for (i = 0; i < data.results.length; ++i) {
+                                    data.results[i] += '/';
+                                }
+                                callback(data.results);
+                            }
+                        })
+                    }
+                });
+            $('#rename_descendants_field').hide();
+        });
+    </script>
 {% endblock %}

@@ -2,6 +2,7 @@
 #-*- python -*-
 import logging
 from pprint import pformat
+import re
 from urllib import unquote, quote
 from datetime import datetime
 import types
@@ -16,6 +17,8 @@ from formencode.variabledecode import variable_decode
 from webob import exc
 import pymongo
 from ming.odm import session
+import ew as ew_core
+import ew.jinja2_ew as ew
 
 from vulcanforge.auth.model import User
 from vulcanforge.common.app import (
@@ -205,6 +208,15 @@ class ForgeWikiApp(Application):
 
     show_right_bar = property(_get_show_right_bar, _set_show_right_bar)
 
+    def _get_show_table_of_contents(self):
+        return self.config.options.get('show_table_of_contents', True)
+
+    def _set_show_table_of_contents(self, show):
+        self.config.options['show_table_of_contents'] = bool(show)
+
+    show_table_of_contents = property(_get_show_table_of_contents,
+                                      _set_show_table_of_contents)
+
     def main_menu(self):
         """
         Apps should provide their entries to be added to the main nav
@@ -212,6 +224,9 @@ class ForgeWikiApp(Application):
 
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
+
+    def get_markdown(self):
+        return g.markdown_wiki
 
     @property
     @exceptionless([], LOG)
@@ -523,6 +538,21 @@ class RootController(WikiContentBaseController):
         response.content_type = 'application/xml'
         return feed.writeString('utf-8')
 
+    @expose('json')
+    def title_autocomplete(self, q=None):
+        if q is None:
+            q = ''
+        query_params = {
+            'app_config_id': c.app.config._id,
+            'title': {'$regex': q, '$options': 'i'},
+            'deleted': False
+        }
+        query_cursor = Page.query.find(query_params)
+        query_cursor.sort('title', pymongo.ASCENDING)
+        return {
+            'results': [p.title for p in query_cursor]
+        }
+
 
 class PageController(WikiContentBaseController):
 
@@ -536,6 +566,10 @@ class PageController(WikiContentBaseController):
         page_attachment = Attachment()
         related_artifacts = RelatedArtifactsWidget()
         attachments_field = RepeatedAttachmentField(label="Attach Files")
+        hide_attachments_field = ew.Checkbox(name="hide_attachments",
+                                             label="Hide Attachments")
+        rename_descendants_field = ew.Checkbox(name="rename_descendants",
+                                               label="Rename Subpages")
 
     def __init__(self, title):
         self.title = unquote(really_unicode(title))
@@ -612,6 +646,8 @@ class PageController(WikiContentBaseController):
         next_ = cur + 1
         hide_sidebar = not (c.app.show_left_bar or
                             g.security.has_access(self.page, 'edit'))
+        page_html = self.page.get_rendered_html()
+        hierarchy_items = self.get_hierarchy_items()
         return dict(
             page=page,
             cur=cur,
@@ -620,7 +656,9 @@ class PageController(WikiContentBaseController):
             subscribed=Mailbox.subscribed(artifact=page),
             hide_sidebar=hide_sidebar,
             show_meta=c.app.show_right_bar,
-            version=version
+            version=version,
+            page_html=page_html,
+            hierarchy_items=hierarchy_items,
         )
 
     @without_trailing_slash
@@ -630,15 +668,23 @@ class PageController(WikiContentBaseController):
         if page_exists:
             g.security.require_access(self.page, 'edit')
             page = self.page
+            attachment_context_id = str(page._id)
         else:
             page = self.fake_page()
             page['text'] = unquote(default_content)
+            attachment_context_id = None
         c.markdown_editor = self.Widgets.markdown_editor
         c.attachment_list = self.Widgets.attachment_list
         c.label_edit = self.Widgets.label_edit
         c.subscribe_form = self.Forms.page_subscribe_form
         c.attachments_field = self.Widgets.attachments_field
-        return dict(page=page, page_exists=page_exists)
+        c.hide_attachments_field = self.Widgets.hide_attachments_field
+        c.rename_descendants = self.Widgets.rename_descendants_field
+        return {
+            'page': page,
+            'page_exists': page_exists,
+            'attachment_context_id': attachment_context_id
+        }
 
     @without_trailing_slash
     @expose('json')
@@ -768,12 +814,45 @@ class PageController(WikiContentBaseController):
         self.page.commit()
         return dict(location='.')
 
+    def _rename_page(self, title, descendants=True):
+        name_conflict = Page.query.find(dict(
+            app_config_id=c.app.config._id,
+            title=title,
+            deleted=False
+        )).first()
+        if name_conflict:
+            flash('There is already a page named "%s".' % title, 'error')
+            return False
+        if self.page.title == c.app.root_page_name:
+            Globals.query.get(
+                app_config_id=c.app.config._id).root = title
+        old_title = self.page.title
+        self.page.title = title
+        if descendants:
+            descendant_query_params = {
+                'app_config_id': self.page.app_config_id,
+                'title': {'$regex': r'^{}/'.format(old_title)},
+                'deleted': False
+            }
+            descendant_cursor = Page.query.find(descendant_query_params)
+            pattern = r'^{}'.format(old_title)
+            replacement = title
+            for page in descendant_cursor:
+                page.title = re.sub(pattern, replacement, page.title)
+
     @without_trailing_slash
     @vardec
     @expose()
     @require_post()
+    @validate(validators={
+        'hide_attachments': validators.StringBool(if_empty=False,
+                                                  if_missing=False),
+        'rename_descendants': validators.StringBool(if_empty=False,
+                                                    if_missing=False)
+    })
     def update(self, title=None, text=None, labels=None, viewable_by=None,
-               new_viewable_by=None, **kw):
+               new_viewable_by=None, hide_attachments=False,
+               rename_descendants=True, **kw):
         if not title:
             flash('You must provide a title for the page.', 'error')
             redirect('edit')
@@ -785,18 +864,7 @@ class PageController(WikiContentBaseController):
             g.security.require_access(self.page, 'edit')
         name_conflict = None
         if self.page.title != title:
-            name_conflict = Page.query.find(dict(
-                app_config_id=c.app.config._id,
-                title=title,
-                deleted=False
-            )).first()
-            if name_conflict:
-                flash('There is already a page named "%s".' % title, 'error')
-            else:
-                if self.page.title == c.app.root_page_name:
-                    Globals.query.get(
-                        app_config_id=c.app.config._id).root = title
-                self.page.title = title
+            name_conflict = self._rename_page(title, rename_descendants)
         self.page.text = text
         if labels:
             self.page.labels = labels.split(',')
@@ -830,9 +898,11 @@ class PageController(WikiContentBaseController):
                         if user:
                             self.page.viewable_by.remove(user.username)
 
+        self.page.hide_attachments = hide_attachments
+
         redirect(
-            c.app.url + really_unicode(self.page.title).encode('utf-8') + \
-                 ('/' if not name_conflict else '/edit')
+            c.app.url + really_unicode(self.page.title).encode('utf-8') +
+            ('/' if not name_conflict else '/edit')
         )
 
     @expose()
@@ -845,6 +915,51 @@ class PageController(WikiContentBaseController):
         elif unsubscribe:
             self.page.unsubscribe()
         redirect(request.referer or 'index')
+
+    def get_hierarchy_items(self, limit=10):
+        # get hierarchically related pages for navigation
+        hierarchy_items = []
+
+        # get roots
+        root_cursor = Page.query.find({
+            'app_config_id': self.page.app_config_id,
+            'title': {'$regex': '^[^/]*$'},
+            'deleted': False
+        })
+        root_cursor.sort('title', pymongo.ASCENDING)
+        root_cursor.limit(limit)
+        hierarchy_items.append({
+            'label': c.app.config.options.mount_label,
+            'prefix': '',
+            'href': c.app.url,
+            'children': root_cursor.all(),
+            'child_count': root_cursor.count(),
+            'more_href': c.app.url + 'browse_pages'
+        })
+
+        # get children along path
+        title_segments = self.page.title.split('/')
+        for i in range(0, len(title_segments)):
+            end_title = title_segments[i]
+            title_prefix = '/'.join(title_segments[:i + 1])
+            child_regex = r'^{}/[^/]+$'.format(title_prefix)
+            child_cursor = Page.query.find({
+                'app_config_id': self.page.app_config_id,
+                'title': {'$regex': child_regex},
+                'deleted': False
+            })
+            child_cursor.sort('title', pymongo.ASCENDING)
+            child_cursor.limit(limit)
+            hierarchy_items.append({
+                'label': end_title,
+                'prefix': title_prefix,
+                'href': '{}{}'.format(c.app.url, title_prefix),
+                'children': child_cursor.all(),
+                'child_count': child_cursor.count(),
+                'more_href': "{}search/search/?tool_q=title_s:*'{}'".format(
+                    c.app.url, title_prefix)
+            })
+        return hierarchy_items
 
 
 class WikiAttachmentController(AttachmentController):
@@ -952,11 +1067,16 @@ class WikiAdminController(DefaultAdminController):
     @without_trailing_slash
     @expose()
     @require_post()
+    @validate(validators={
+        'show_table_of_contents': validators.StringBool(if_empty=False,
+                                                        if_missing=False)
+    })
     def set_options(self, show_discussion=False, show_left_bar=False,
-                    show_right_bar=False):
+                    show_right_bar=False, show_table_of_contents=False):
         self.app.show_discussion = show_discussion
         self.app.show_left_bar = show_left_bar
         self.app.show_right_bar = show_right_bar
+        self.app.show_table_of_contents = show_table_of_contents
         flash('Wiki options updated')
         redirect(c.project.url() + 'admin/tools')
 

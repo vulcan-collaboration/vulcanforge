@@ -51,6 +51,10 @@ class ResourceManager(ew.ResourceManager):
         if not os.path.exists(self.build_dir):
             os.makedirs(self.build_dir)
 
+    @property
+    def resources(self):
+        return widget_context.resources
+
     def init_resource_context(self):
         widget_context.resources = {
             'js': defaultdict(list),
@@ -281,7 +285,9 @@ class ResourceManager(ew.ResourceManager):
                             content = scss_compiler.compile(content)
 
                         resource_urls = re.findall(RESOURCE_URL, content)
-                        for resource_url in resource_urls:
+                        # Just in case the same url is listed twice
+                        resource_urls_set = set(resource_urls)
+                        for resource_url in resource_urls_set:
                             if SPRITE_MAP_PREFIX in resource_url:
                                 continue
                             namespaced_resource_url = os.path.abspath(os.path.join(css_url_dir, resource_url))

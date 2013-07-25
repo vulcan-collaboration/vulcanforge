@@ -84,7 +84,7 @@ class ForgeExtension(OEmbedExtension):
 
         md.inlinePatterns['autolink_1'] = AutolinkPattern(
             r'(http(?:s?)://[a-zA-Z0-9./\-_0%?&=+#;~:]+)')
-        md.postprocessors['rewrite_relative_links'] = RelativeLinkRewriter(
+        md.postprocessors['rewrite_relative_links'] = RelativeLinkRewriter(md,
             make_absolute=self._is_email)
         # Put a class around markdown content for custom css
         md.postprocessors['add_custom_class'] = AddCustomClass()
@@ -246,6 +246,8 @@ class ForgeProcessor(object):
         return "[{}]".format(link)
 
     def _expand_link(self, link):
+        if link.startswith('#'):
+            return
         reference = self.alinks.get(link)
         if not reference:
             return 'notfound'
@@ -313,8 +315,8 @@ class AddCustomClass(markdown.postprocessors.Postprocessor):
 
 class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
 
-    # TODO: tanner: fix call to superclass
-    def __init__(self, make_absolute=False):
+    def __init__(self, md, make_absolute=False):
+        super(RelativeLinkRewriter, self).__init__(markdown_instance=md)
         self._make_absolute = make_absolute
 
     def run(self, text):
@@ -351,16 +353,16 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
                 tag[attr] = '/nf/redirect/?path=%s' % quote(val)
                 tag['rel'] = 'nofollow'
                 return
-        if val.startswith('/'):
-            return
-        if val.startswith('.'):
+        if val.startswith('/') or val.startswith('.') or val.startswith('#'):
             return
         tag[attr] = '../' + val
 
     def _rewrite_abs(self, tag, attr):
         self._rewrite(tag, attr)
         val = tag.get(attr)
-        val = urljoin(config.get('base_url', 'http://vehicleforge.net/'), val)
+        base_url = config.get('base_url')
+        if base_url:
+            val = urljoin(base_url, val)
         tag[attr] = val
 
 
@@ -442,11 +444,11 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
         if m:
             before = block[:start]
             self.parser.parseBlocks(parent, [before])
-            block ='\n'.join([self.clean(line)for line in
+            block = '\n'.join([self.clean(line)for line in
                               block[start:].split('\n')])
         sibling = self.lastChild(parent)
         if sibling and sibling.tag == "div" \
-        and sibling.attrib.get('class', None) == self.css_class:
+                and sibling.attrib.get('class', None) == self.css_class:
             element = sibling
         else:
             element = markdown.util.etree.SubElement(parent, 'div')
