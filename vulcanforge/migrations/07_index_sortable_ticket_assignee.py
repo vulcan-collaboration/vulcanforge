@@ -11,7 +11,7 @@ class IndexSortableTicketAssignee(BaseMigration):
         page = 0
         while result is None or page * self.PAGE_SIZE < result.hits:
             result = g.search(
-                'type_s:Ticket AND NOT assigned_to_name_s',
+                'type_s:Ticket AND -assigned_to_name_s:[* TO *]',
                 rows=self.PAGE_SIZE,
                 page=page)
             ref_ids = [d['id'] for d in result.docs]

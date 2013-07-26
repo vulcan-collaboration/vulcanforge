@@ -157,13 +157,13 @@ class BaseAuthenticationProvider(object):
 
     def upload_sshkey(self, username, pubkey):
         """
-        Upload an SSH Key.  Providers do not necessarily need to implement
-        this.
+        Upload an SSH Key.  This is saved in mongo either way, so providers do
+        not necessarily need to implement this.
 
         :rtype: None
         :raises: AssertionError with user message, upon any error
         """
-        raise NotImplementedError('upload_sshkey')
+        pass
 
 
 class LocalAuthenticationProvider(BaseAuthenticationProvider):
