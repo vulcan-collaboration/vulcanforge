@@ -8,6 +8,7 @@ forms
 @author: U{tannern<tannern@gmail.com>}
 """
 import logging
+import shlex
 
 import formencode.validators as fev
 from pylons import tmpl_context as c
@@ -50,7 +51,7 @@ class TicketCustomField(object):
     @staticmethod
     def _select(field):
         options = []
-        for opt in field.options.split():
+        for opt in shlex.split(field.options):
             selected = False
             if opt.startswith('*'):
                 opt = opt[1:]

@@ -1,5 +1,7 @@
+import shlex
 import ew as ew_core
 import ew.jinja2_ew as ew
+from formencode import Invalid
 
 from vulcanforge.common.widgets import form_fields, forms
 from vulcanforge.resources.widgets import JSLink, CSSScript
@@ -89,6 +91,15 @@ class CustomFieldAdmin(ew.CompoundField):
             show_label=True,
             suppress_label=True),
         CustomFieldAdminDetail()]
+
+    def to_python(self, value, state=None):
+        value = super(CustomFieldAdmin, self).to_python(value, state)
+        if value.get('type') == 'select':
+            try:
+                shlex.split(value.get('options', ''))
+            except ValueError, e:
+                raise Invalid(str(e), value, state)
+        return value
 
 
 class TrackerFieldAdmin(forms.ForgeForm):
