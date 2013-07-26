@@ -14,7 +14,8 @@ from vulcanforge.tools.wiki.model import WikiAttachment, PageHistory
 class MigrateWikiAttachmentS3Keys(BaseMigration):
 
     def is_needed(self):
-        cursor = WikiAttachment.query.find({})
+        cursor = WikiAttachment.query.find({
+            'attachment_type': 'WikiAttachment'})
         cursor.sort('_id', pymongo.ASCENDING)
         cursor.limit(1)
         wiki_attachment = cursor.first()

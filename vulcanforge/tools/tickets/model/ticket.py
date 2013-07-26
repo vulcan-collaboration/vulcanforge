@@ -299,6 +299,7 @@ class Ticket(VersionedArtifact):
                 raise
 
     def index(self, **kw):
+        assigned_to_name_s = ','.join(sorted(self.assigned_to_names))
         params = dict(
             title_s='Ticket %s' % self.ticket_num,
             version_i=self.version,
@@ -314,6 +315,7 @@ class Ticket(VersionedArtifact):
             reported_by_name_s=self.reported_by_name,
             assigned_to_s_mv=self.assigned_to_usernames,
             assigned_to_name_s_mv=self.assigned_to_names,
+            assigned_to_name_s=assigned_to_name_s,
             last_updated_dt=self.last_updated,
             created_date_dt=self.created_date,
             text_objects=[
@@ -323,7 +325,7 @@ class Ticket(VersionedArtifact):
                 self.status,
                 self.reported_by_name,
                 self.reported_by_username,
-                ','.join(self.assigned_to_names),
+                assigned_to_name_s,
                 ','.join(self.assigned_to_usernames)
             ]
         )

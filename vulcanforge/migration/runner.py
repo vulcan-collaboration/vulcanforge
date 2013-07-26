@@ -68,6 +68,10 @@ class MigrationRunner(object):
             return False
         return True
 
+    def run_migration(self, mig):
+        LOG.info('Running %s', str(mig.get_name()))
+        mig.full_run()
+
     def run_migrations(self, module_names=None, all_migrations=False,
                        erroneous=True, continue_on_error=False):
         for mig_cls in self.load_migrations(module_names):
@@ -77,9 +81,8 @@ class MigrationRunner(object):
 
             mig = mig_cls()
             if mig.is_needed():
-                LOG.info('Running %s', str(mig.get_name()))
                 try:
-                    mig.full_run()
+                    self.run_migration(mig)
                 except Exception:
                     if continue_on_error:
                         LOG.exception('Error running %s', mig)
