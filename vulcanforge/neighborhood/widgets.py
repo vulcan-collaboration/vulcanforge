@@ -18,7 +18,6 @@ TEMPLATE_DIR = 'jinja:vulcanforge:neighborhood/templates/widgets/'
 
 class NeighborhoodAddProjectForm(ForgeForm):
     template = TEMPLATE_DIR + 'add_project.html'
-    antispam = True
     defaults = dict(
         ForgeForm.defaults,
         method='post',
@@ -32,7 +31,7 @@ class NeighborhoodAddProjectForm(ForgeForm):
 
     @property
     def fields(self):
-        return [
+        return ew_core.NameList([
             ew.HiddenField(
                 label='Public Description', name='project_description'),
             ew.Checkbox(
@@ -52,11 +51,15 @@ class NeighborhoodAddProjectForm(ForgeForm):
             ew.Checkbox(
                 name='Wiki', label="Docs", attrs={'class': 'unlabeled'}),
             ew.Checkbox(
-                name='Git', label="Git", attrs={'class': 'labeled scm'}),
-            ew.Checkbox(
-                name='SVN',
-                label="Subversion",
-                attrs={'class': 'labeled scm'}),
+                name='Repository', label="Repository",
+                attrs={'class': 'unlabeled repositoryCheckbox'}),
+            ew.SingleSelectField(
+                name='RepositoryKind',
+                label="",
+                options=["Git", "Subversion"],
+                attrs={
+                    'class': 'repositoryKindSelect'
+                }),
             ew.Checkbox(
                 name='Tickets', label="Manage", attrs={'class': 'unlabeled'}),
             ew.Checkbox(
@@ -67,7 +70,7 @@ class NeighborhoodAddProjectForm(ForgeForm):
                 name='Discussion',
                 label="Forums",
                 attrs={'class': 'unlabeled'})
-        ]
+        ])
 
     @property
     def fields_dict(self):

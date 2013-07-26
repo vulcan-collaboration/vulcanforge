@@ -260,7 +260,6 @@ class NeighborhoodController(BaseTGController):
 
     @vardec
     @expose()
-    @AntiSpam.validate('Spambot protection engaged')
     @validate_form('add_project', error_handler=add_project)
     @require_post()
     def register(self, **form_data):
@@ -286,9 +285,19 @@ class NeighborhoodController(BaseTGController):
             'Wiki': 'Docs',
             'Discussion': 'Forums'
         }
-        for repo in ('Git', 'SVN', 'Hg'):
-            tool_info[repo] = 'Repository'
-        for i, tool in enumerate(form_data):
+        repo_kind_map = {
+            'Git': 'Git',
+            'Subversion': 'SVN'
+        }
+        has_repo = form_data.pop('Repository', False)
+        repo_kind_value = form_data.pop('RepositoryKind', None)
+        if has_repo:
+            repo_kind = repo_kind_map.get(repo_kind_value, None)
+            if repo_kind:
+                tool_info[repo_kind] = 'Repository'
+                form_data[repo_kind] = True
+
+        for tool in form_data.keys():
             if tool in tool_info:
                 label, mp = tool_info[tool], tool_info[tool].lower()
             else:

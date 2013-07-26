@@ -74,7 +74,7 @@
                 <img src="{{g.tool_icon_url('Git', 48)}}"
                      alt="Repositories">
             </div>
-            <h1>Repositories</h1>
+            <h1>{{widget.display_field(widget.fields_dict.Repository)}}</h1>
 
             <p>
                 Keep track of changes to your project artifacts with version
@@ -82,8 +82,7 @@
             </p>
 
             <p>
-                {{widget.display_field(widget.fields_dict.Git)}}
-                {{widget.display_field(widget.fields_dict.SVN)}}
+                {{widget.display_field(widget.fields_dict.RepositoryKind)}}
             </p>
         </div>
         <div id="start" class="tool">

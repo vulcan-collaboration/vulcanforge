@@ -102,6 +102,11 @@ textarea, select,
 
 }
 
+input[disabled], select[disabled], textarea[disabled] {
+    color: #999;
+    border-color: #ccc;
+}
+
 textarea#key {
     width: 600px;
     border-radius: 0;
