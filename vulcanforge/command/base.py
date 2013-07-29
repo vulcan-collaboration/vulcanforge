@@ -4,7 +4,7 @@ import logging
 from ming.utils import LazyProperty
 
 from paste.script import command
-from paste.deploy import appconfig
+from paste.deploy import loadapp
 from paste.registry import Registry
 import pylons
 from tg import config
@@ -13,9 +13,7 @@ from vulcanforge.auth import credentials
 from vulcanforge.auth.model import User
 from vulcanforge.auth.security_manager import Credentials
 from vulcanforge.common.util.model import close_all_mongo_connections
-from vulcanforge.config.ming_config import ming_replicant_configure
 
-from isisforge.config.environment import load_environment
 
 log = None
 
@@ -47,31 +45,27 @@ class Command(command.Command):
     def basic_setup(self):
         global log
         if self.args:
-            # Probably being called from the command line - load the config
-            # file
-            self.config = conf = appconfig('config:%s' % self.args[0],
-                                           relative_to=os.getcwd())
             # Configure logging
-            try:
-                # ... logging does not understand section#subsection syntax
-                logging_config = self.args[0].split('#')[0]
-                logging.config.fileConfig(logging_config,
-                                          disable_existing_loggers=False)
-            except Exception:  # pragma no cover
-                print >> sys.stderr, (
-                    'Could not configure logging with config file %s' %
-                    self.args[0])
-            log = logging.getLogger(__name__)
-            log.info('Initialize command with config %r', self.args[0])
-            load_environment(conf.global_conf, conf.local_conf)
-            self.setup_globals()
-
-            ming_replicant_configure(**conf)
-            pylons.tmpl_context.user = User.anonymous()
+            config_file = self.args[0]
         else:
-            # Probably being called from another script (websetup, perhaps?)
-            log = logging.getLogger('isisforge.command')
-            conf = pylons.config
+            config_file = os.environ.get('config', 'development.ini')
+        config_name = 'config:' + config_file
+        here_dir = os.getcwd()
+        sys.path.insert(0, here_dir)
+        try:
+            # ... logging does not understand section#subsection syntax
+            logging.config.fileConfig(
+                config_file.split('#')[0], disable_existing_loggers=False)
+        except Exception:  # pragma no cover
+            print >> sys.stderr, (
+                'Could not configure logging with config file %s' %
+                self.args[0])
+        log = logging.getLogger(__name__)
+        log.info('Initialize command with config %r', self.args[0])
+        wsgiapp = loadapp(config_name, relative_to=here_dir)
+        self.setup_globals()
+
+        pylons.tmpl_context.user = User.anonymous()
 
     def setup_globals(self):
         self.registry.prepare()

@@ -74,15 +74,19 @@ setup(
         "hiredis"
     ],
     setup_requires=["PasteScript >= 1.7"],
-    paster_plugins=[
-        'PasteScript', 'Pylons', 'TurboGears2', 'tg.devtools', 'Ming'],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=[
-        'WebTest >= 1.2', 'BeautifulSoup < 4.0', 'pytidylib', 'poster', 'nose'],
+        'WebTest >= 1.2',
+        'BeautifulSoup < 4.0',
+        'pytidylib',
+        'poster',
+        'nose'
+    ],
     package_data={
-        'vulcanforge': ['i18n/*/LC_MESSAGES/*.mo', 'templates/*/*', 'public/*/*']
+        'vulcanforge': [
+            'i18n/*/LC_MESSAGES/*.mo', 'templates/*/*', 'public/*/*']
     },
     message_extractors={
         'vulcanforge': [
@@ -95,19 +99,20 @@ setup(
     [paste.paster_command]
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand
+    run_migrations = isisforge.command.migration:MigrationCommand
     models = vulcanforge.command:ShowModelsCommand
     reindex = vulcanforge.command:ReindexCommand
     reindex_globals = vulcanforge.command:ReindexGlobalsCommand
     reindex_notifications = vulcanforge.command:ReindexNotifications
     ensure_index = vulcanforge.command:EnsureIndexCommand
+    ensure-project-creation = vulcanforge.command:EnsureProjectCreationCommand
     script = vulcanforge.command:ScriptCommand
     set-tool-access = vulcanforge.command:SetToolAccessCommand
-    smtp_server=vulcanforge.command:SMTPServerCommand
+    smtp_server = vulcanforge.command:SMTPServerCommand
     create-neighborhood = vulcanforge.command:CreateNeighborhoodCommand
     create-default-visualizers = vulcanforge.command:CreateDefaultVisualizersCommand
     forgeadmin-tools = vulcanforge.command:ForgeAdminToolsCommand
     createuser = vulcanforge.command.user:CreateUserCommand
-    create-forgecloud-tool = vulcanforge.command:CreateForgeCloudCommand
     stage-static-resources = vulcanforge.command.resources:StageStaticResources
     expire-passwords = vulcanforge.command.user:ExpirePasswordsCommand
     reset-password-history = vulcanforge.command.user:ResetPasswordHistoryCommand
@@ -115,10 +120,9 @@ setup(
     enable-user = vulcanforge.command.user:EnableUserCommand
     disable-user = vulcanforge.command.user:DisableUserCommand
     refresh-users = vulcanforge.command.user:RefreshUsersCommand
-    export-ip-filter = vulcanforge.command.user:ExportIPFilter
     project-disable-notification-emails = vulcanforge.command.project:DisableNotificationEmailsCommand
     project-enable-notification-emails = vulcanforge.command.project:EnableNotificationEmailsCommand
-    vshell = vulcanforge.command.util:VehicleForgeShellCommand
+    vshell = vulcanforge.command.util:VulcanForgeShellCommand
     install_tool = vulcanforge.command.project:InstallTool
 
     [easy_widgets.engines]

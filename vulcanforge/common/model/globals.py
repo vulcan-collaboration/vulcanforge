@@ -15,6 +15,11 @@ class ForgeGlobals(BaseMappedClass):
 
     _id = FieldProperty(S.ObjectId)
     user_counter = FieldProperty(int, if_missing=1)
+    taskd_tester = FieldProperty(S.Object({
+        'counter': S.Int(if_missing=0),
+        'args': [],
+        'kwargs': None
+    }))
 
     @classmethod
     def inc_user_counter(cls):
