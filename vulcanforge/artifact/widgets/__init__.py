@@ -83,25 +83,23 @@ class RelatedArtifactsWidget(Widget):
     """Unordered List of all artifacts relating to an artifact"""
     template = TEMPLATE_DIR + 'relatedartifacts.html'
     js_template = '''
-    $(document).ready(function(){
-        $('#sidebar_search_submit').hide();
+    $('#sidebar_search_submit').hide();
 
-        $vf.afterInit(function() {
+    $vf.afterInit(function() {
 
-            var infoPanel = new $vf.ArtifactInfoPanel({
-                parentClickURL: '',
-                infoURL: '/artifact_ref/get_references/',
-                refId: '{{ref_id}}',
+        var infoPanel = new $vf.ArtifactInfoPanel({
+            parentClickURL: '',
+            infoURL: '/artifact_ref/get_references/',
+            refId: '{{ref_id}}',
             {% if hiding %}
-                infoTriggerE: $("#{{id_prefix}}giantInfoButtonE")
-                {% else %}
-                containerE: $('#{{id_prefix}}relatedArtifactsPanelHolder'),
-                        embedded: true
-                {% endif %}
-            });
+            infoTriggerE: $("#{{id_prefix}}giantInfoButtonE")
+            {% else %}
+            containerE: $('#{{id_prefix}}relatedArtifactsPanelHolder'),
+                    embedded: true
+            {% endif %}
+        });
 
-        }, []);
-    });
+    }, []);
     '''
     defaults = dict(
         ew.Widget.defaults,
