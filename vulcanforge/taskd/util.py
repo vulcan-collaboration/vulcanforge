@@ -26,7 +26,7 @@ def test_running_taskd(timeout=2):
         if time.time() > t0 + timeout:
             raise TestTaskTimeout('Timeout waiting for test task to finish')
         fg_doc = coll.find({})[0]
-        counter1 = fg_doc['taskd_tester']['counter']
+        counter1 = fg_doc.get('taskd_tester', {}).get('counter', counter0)
     assert counter1 == counter0 + 1
     assert fg_doc['taskd_tester']['args'] == args
     assert fg_doc['taskd_tester']['kwargs'] == kwargs
