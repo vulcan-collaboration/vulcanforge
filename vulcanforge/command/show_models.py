@@ -195,6 +195,9 @@ class EnsureIndexCommand(base.Command):
 
     def command(self):
         self.basic_setup()
+        self.collect_and_update()
+
+    def collect_and_update(self):
         # Collect indexes by collection name
         main_indexes = defaultdict(list)
         project_indexes = defaultdict(list)

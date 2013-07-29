@@ -47,25 +47,26 @@ class Command(command.Command):
         if self.args:
             # Configure logging
             config_file = self.args[0]
-        else:
-            config_file = os.environ.get('config', 'development.ini')
-        config_name = 'config:' + config_file
-        here_dir = os.getcwd()
-        sys.path.insert(0, here_dir)
-        try:
-            # ... logging does not understand section#subsection syntax
-            logging.config.fileConfig(
-                config_file.split('#')[0], disable_existing_loggers=False)
-        except Exception:  # pragma no cover
-            print >> sys.stderr, (
-                'Could not configure logging with config file %s' %
-                self.args[0])
-        log = logging.getLogger(__name__)
-        log.info('Initialize command with config %r', self.args[0])
-        wsgiapp = loadapp(config_name, relative_to=here_dir)
-        self.setup_globals()
 
-        pylons.tmpl_context.user = User.anonymous()
+            config_name = 'config:' + config_file
+            here_dir = os.getcwd()
+            sys.path.insert(0, here_dir)
+            try:
+                # ... logging does not understand section#subsection syntax
+                logging.config.fileConfig(
+                    config_file.split('#')[0], disable_existing_loggers=False)
+            except Exception:  # pragma no cover
+                print >> sys.stderr, (
+                    'Could not configure logging with config file %s' %
+                    self.args[0])
+            log = logging.getLogger(__name__)
+            log.info('Initialize command with config %r', self.args[0])
+            wsgiapp = loadapp(config_name, relative_to=here_dir)
+            self.setup_globals()
+
+            pylons.tmpl_context.user = User.anonymous()
+        else:
+            log = logging.getLogger('allura.command')
 
     def setup_globals(self):
         self.registry.prepare()
