@@ -53,10 +53,8 @@ class ReindexGlobalsCommand(base.Command):
         self.basic_setup()
 
         # remove global object references to
-        base.log.info('Deleting isisforge related global obj refs')
-        GlobalObjectReference.query.remove({
-            '_id': {'$regex': '^isisforge/model'}
-        })
+        base.log.info('Deleting global obj refs')
+        GlobalObjectReference.query.remove({})
 
         base.log.info('Removing and then rebuilding SOLR index')
         for m in Mapper.all_mappers():
@@ -359,7 +357,7 @@ class ReindexNotifications(base.Command):
         self.basic_setup()
 
         # remove global object references to notifications
-        base.log.info('Deleting isisforge related global obj refs')
+        base.log.info('Deleting global obj refs')
         GlobalObjectReference.query.remove({
             '_id': {'$regex': '^vulcanforge/notification/model/Notification'},
         })

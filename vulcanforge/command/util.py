@@ -3,9 +3,6 @@ import IPython
 
 from base import Command
 
-DEFAULT_CONFIG = \
-    '/home/ubuntu/forge/resources/configs/deployment.ini#isisforge'
-
 
 class VulcanForgeShellCommand(Command):
 
@@ -18,7 +15,7 @@ class VulcanForgeShellCommand(Command):
 
     def command(self):
         if not self.args:
-            self.args = [DEFAULT_CONFIG]
+            raise RuntimeError("Must specify a config file")
         self.basic_setup()
         locs = {'__name__': 'vshell'}
         exec 'from pylons import tmpl_context as c, app_globals as g' in locs

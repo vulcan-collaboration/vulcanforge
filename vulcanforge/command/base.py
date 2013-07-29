@@ -26,7 +26,7 @@ class Command(command.Command):
     min_args = 0
     max_args = 1
     usage = '[<ini file>]'
-    group_name = 'ISISForge'
+    group_name = 'VulcanForge'
 
     @LazyProperty
     def registry(self):
