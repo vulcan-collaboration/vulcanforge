@@ -1017,7 +1017,8 @@ class Project(SOLRIndexed):
 
     @property
     def registration_datetime(self):
-        return self._id.generation_time
+        gt = self._id.generation_time
+        return datetime.utcfromtimestamp(time.mktime(gt.timetuple()))
 
     def delete_project(self, user=None):
         from vulcanforge.neighborhood.marketplace.model import (
