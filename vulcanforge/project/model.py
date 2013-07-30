@@ -717,7 +717,8 @@ class Project(SOLRIndexed):
 
     @LazyProperty
     def home_ac(self):
-        home_tools = {'home', 'neighborhood_home', 'competition_home'}
+        home_tools = {'home', 'team_home', 'neighborhood_home',
+                      'competition_home'}
         for ac in self.app_configs:
             if ac.tool_name in home_tools:
                 return ac
