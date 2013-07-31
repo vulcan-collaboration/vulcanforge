@@ -717,7 +717,8 @@ class Project(SOLRIndexed):
 
     @LazyProperty
     def home_ac(self):
-        home_tools = {'home', 'neighborhood_home', 'competition_home'}
+        home_tools = {'home', 'team_home', 'neighborhood_home',
+                      'competition_home'}
         for ac in self.app_configs:
             if ac.tool_name in home_tools:
                 return ac
@@ -1017,7 +1018,7 @@ class Project(SOLRIndexed):
     @property
     def registration_datetime(self):
         gt = self._id.generation_time
-        return datetime.utcfromtimestamp(time.mktime(gt.timetuple()))
+        return datetime.utcfromtimestamp(time.mktime(gt.utctimetuple()))
 
     def delete_project(self, user=None):
         from vulcanforge.neighborhood.marketplace.model import (
