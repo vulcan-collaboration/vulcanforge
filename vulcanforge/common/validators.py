@@ -163,7 +163,8 @@ class MountPointValidator(fev.Regex):
     regex = r'^[a-z][-a-z0-9]{2,}$'
     messages = dict(
         fev.Regex._messages,
-        invalid='Please use 3-15 letters, numbers, or dashes.',
+        invalid='Please use at least 3 lowercase letters and numbers '
+                'beginning with a letter',
         bad='Invalid value. Please choose another.',
         taken='That url is already taken, please choose another.'
     )
