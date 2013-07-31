@@ -99,7 +99,7 @@ setup(
     [paste.paster_command]
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand
-    run_migrations = isisforge.command.migration:MigrationCommand
+    run_migrations = vulcanforge.command.migration:MigrationCommand
     models = vulcanforge.command:ShowModelsCommand
     reindex = vulcanforge.command:ReindexCommand
     reindex_globals = vulcanforge.command:ReindexGlobalsCommand
