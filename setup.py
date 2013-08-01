@@ -8,7 +8,7 @@ except ImportError:
 
 from vulcanforge import __version__
 
-PROJECT_DESCRIPTION='''
+PROJECT_DESCRIPTION = '''
 VulcanForge is an open source "Forge Framework", where a forge is a web site
 that manages artifact repositories, bug reports, discussions, mailing
 lists, wiki pages, blogs and more for any number of individual projects.
@@ -132,4 +132,3 @@ setup(
     nagios = vulcanforge.sanitytests.plugin:NagiosPlugin
     """,
 )
-

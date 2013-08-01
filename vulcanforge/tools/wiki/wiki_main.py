@@ -409,6 +409,7 @@ class RootController(WikiContentBaseController):
         self._discuss = AppDiscussionController()
         self.new_with_reference = ReferenceController()
         self.search = WikiSearchController()
+        self.page_controller_cls = PageController
 
     def _check_security(self):
         g.security.require_access(c.app, 'read')
@@ -425,7 +426,7 @@ class RootController(WikiContentBaseController):
         # a dotted wiki page name if it matches a known file extension. Here,
         # we reassemble the original page name.
         pname, remainder = get_page_title_from_request()
-        return PageController(pname), remainder
+        return self.page_controller_cls(pname), remainder
 
     @expose()
     def new_page(self, title):
