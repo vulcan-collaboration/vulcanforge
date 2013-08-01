@@ -22,7 +22,6 @@ from vulcanforge.common import helpers as h
 from vulcanforge.common.controllers.rest import ProjectRestController
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import re_path_portion
-from vulcanforge.common.util.antispam import AntiSpam
 from vulcanforge.common.widgets.util import PageSize, PageList
 from vulcanforge.auth.model import User
 from vulcanforge.auth.tasks import remove_workspacetabs
