@@ -41,7 +41,7 @@
               {% elif col['name'] == 'assigned_to' %}
                 <td>{% if t.assigned_to_ids %}{{t.assigned_to_names | join(', ')}}{% endif %}</td>
               {% elif col['name'] == 'last_updated' %}
-                  <td>{{ h.ago(t.last_updated) }}</td>
+                  <td>{{ h.ago(t.mod_date) }}</td>
               {% else %}
                 <td>{{t.custom_fields.get(col['name'])}}</td>
               {% endif %}
