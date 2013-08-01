@@ -445,7 +445,10 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
             thread = self.get_discussion_thread(generate_if_missing=False)
             if thread:
                 for post in thread.query_posts():
-                    text_objects.append(post.text)
+                    author = post.author()
+                    text_objects.append("{} {} {}".format(author.display_name,
+                                                          author.username,
+                                                          post.text))
 
         # append these objects to the text
         index['text'] = index.get('text', '') + " ".join(str(
