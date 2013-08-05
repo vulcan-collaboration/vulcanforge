@@ -26,8 +26,6 @@ class CreateDefaultVisualizersCommand(base.Command):
         self.upsert_image_visualizer()
         self.upsert_syntax_visualizer()
         self.upsert_pdf_visualizer()
-        self.upsert_cad_visualizer()
-        self.upsert_design_space_visualizer()
         session(Visualizer).flush()
 
     def upsert_image_visualizer(self):

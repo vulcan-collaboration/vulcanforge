@@ -316,7 +316,7 @@ class Ticket(VersionedArtifact):
             assigned_to_s_mv=self.assigned_to_usernames,
             assigned_to_name_s_mv=self.assigned_to_names,
             assigned_to_name_s=assigned_to_name_s,
-            last_updated_dt=self.last_updated,
+            last_updated_dt=self.mod_date,
             created_date_dt=self.created_date,
             text_objects=[
                 self.ticket_num,
