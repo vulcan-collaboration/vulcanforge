@@ -435,7 +435,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
 
         # no text, generate a sensible default
         if 'text' not in index and not text_objects:
-            index['text'] = " ".join(
+            index['text'] = u" ".join(
                 str(pformat(v)) for k, v in index.iteritems()
                 if k in g.index_default_text_fields
             )
@@ -446,9 +446,11 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
             if thread:
                 for post in thread.query_posts():
                     author = post.author()
-                    text_objects.append("{} {} {}".format(author.display_name,
-                                                          author.username,
-                                                          post.text))
+                    text_objects.append(
+                        u"{} {} {}".format(author.display_name,
+                                           author.username,
+                                           post.text)
+                    )
 
         # append these objects to the text
         index['text'] = index.get('text', '') + " ".join(str(
