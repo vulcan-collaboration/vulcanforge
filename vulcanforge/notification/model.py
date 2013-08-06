@@ -757,7 +757,6 @@ class Mailbox(MappedClass):
                     Notification.send_digest(
                         self.user_id,
                         from_address,
-                        subject,
                         ns,
                         reply_to_address
                     )
