@@ -44,7 +44,9 @@ class ResourceManager(ew.ResourceManager):
         self.build_key = config.get('build_key', 'default')
 
         self.debug_mode = asbool(config.get('debug', 'true'))
-        self.use_cache = self.use_cssmin = self.use_jsmin = not self.debug_mode
+        minify = asbool(config.get('minify_static', not self.debug_mode))
+        self.use_cssmin = self.use_jsmin = minify
+        self.use_cache = not self.debug_mode
 
         self.build_dir = os.path.join(
             self.static_resources_dir, self.build_key)

@@ -97,7 +97,7 @@ def sendmail(fromaddr, destinations, text, reply_to, subject, message_id,
         if not user:
             LOG.warning('Cannot find user with ID %s', fromaddr)
             # TODO: forgemail reference follows
-            fromaddr = 'noreply@in.vehicleforge.net'
+            fromaddr = 'noreply@in.vulcanforge.org'
         else:
             fromaddr = user.email_address_header()
     # Divide addresses based on preferred email formats

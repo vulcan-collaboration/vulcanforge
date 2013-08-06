@@ -926,7 +926,7 @@ class PreferencesController(BaseController):
 
 
 class UserDiscoverController(BaseController):
-    """Controller to search and browse the users of VehicleFORGE"""
+    """Controller to search and browse the users of the forge"""
 
     hide_sidebar = True
     user_title = "Designers"

@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-    <title>VehicleFORGE Registration</title>
+    <title>{{ config.get('forge_name', 'Forge') }} Registration</title>
     {% for blob in g.resource_manager.emit('css') %}
         {{ blob }}
     {% endfor %}
@@ -44,11 +44,11 @@
             <div id="content-columns">
                 <div id="main-column" class="main-column">
                     <div id="main-column-header">
-                        <h2>VehicleFORGE Registration</h2>
+                        <h2>{{ config.get('forge_name', 'Forge') }} Registration</h2>
                     </div>
                     <div id="browserSupportErrorHolder"></div>
                     <noscript>
-                        <div class="message error" id="noScriptErrorHolder">VehicleFORGE relies on JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
+                        <div class="message error" id="noScriptErrorHolder">{{ config.get('forge_name', 'The forge') }} relies on JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
                     </noscript>
                     <div id="main-content">
                         <ul class="process-list">

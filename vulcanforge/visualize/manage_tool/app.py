@@ -27,7 +27,7 @@ TEMPLATE_DIR = 'jinja:vulcanforge.visualize.manage_tool:templates/'
 
 
 class ForgeVisualizeApp(Application):
-    """The definitive Visualize App for VehicleForge"""
+    """The definitive Visualize App for VulcanForge"""
     __version__ = "0.1"
     searchable = False
     permissions = ['read', 'edit', 'admin']

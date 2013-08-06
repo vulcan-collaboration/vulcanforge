@@ -8,8 +8,8 @@
     <div class="padded">
         <p>Your primary email address has been reverted.</p>
         <p>The former email address is still registered with your account
-            (although it is not directly used by VehicleFORGE).</p>
+            (although it is not directly used by {{ config.get('forge_name', 'the forge') }}).</p>
         <p>If you wish to remove it entirely, go to
-            <a href="/auth/prefs">your VehicleFORGE preferences page</a></p>
+            <a href="/auth/prefs">your {{ config.get('forge_name', '') }} preferences page</a></p>
     </div>
 {% endblock %}

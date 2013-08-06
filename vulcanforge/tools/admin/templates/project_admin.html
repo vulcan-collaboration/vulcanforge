@@ -14,9 +14,9 @@
 {% block content %}
     <div class="padded">
         <div id="tutorialHolder"></div>
-        <p>VehicleFORGE projects come with a number of Tools, which can be
-           configured and adjusted to your needs.  Add more tools using the
-           <em>Tools</em> menu available in the sidebar.</p>
+        <p>{{ config.get('forge_name', 'Forge') }} projects come with a number
+           of Tools, which can be configured and adjusted to your needs.  Add
+            more tools using the <em>Tools</em> menu available in the sidebar.</p>
         <div class="project-admin-tools">
             {% for tool_setup in tool_setups %}
             <div class="admin-section-setup">

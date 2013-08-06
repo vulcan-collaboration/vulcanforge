@@ -1,6 +1,6 @@
 Hello {username},
 
-Your primary email address was recently modified on VehicleFORGE, from {old_email} to {new_email}.
+Your primary email address was recently modified on {forge_name}, from {old_email} to {new_email}.
 
 If this action was performed by you and is agreeable to you, you may disregard this email.
 
@@ -11,4 +11,4 @@ If this action is disagreeable to you in any way, click the following link to re
 This link will expire in 48 hours.
 
 Kind Regards,
-The VehicleFORGE Team
+The {forge_name} Team

@@ -260,7 +260,7 @@ class Notification(SOLRIndexed):
                 # TODO: forgemail reference follows
                 reply_to_address=u'"%s" <%s>' % (
                     subject_prefix, getattr(artifact, 'email_address',
-                                            'noreply@in.vehicleforge.net')),
+                                            'noreply@in.vulcanforge.org')),
                 subject=subject_prefix+subject,
                 text=text,
                 in_reply_to=post.parent_id,
@@ -339,7 +339,7 @@ class Notification(SOLRIndexed):
         safe_notifications = asbool(config.get('safe_notifications', 'false'))
         context = {
             'notification': self,
-            'prefix': config.get('forgemail.url', 'https://vehicleforge.net'),
+            'prefix': config.get('forgemail.url', 'https://vulcanforge.org'),
             'safe_notifications': safe_notifications,
             'forge_name': config.get('forge_name', 'Forge')
         }

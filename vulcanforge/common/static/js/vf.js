@@ -1,5 +1,5 @@
 /**
- * Base VehicleForge application architecture.
+ * Base VulcanForge application architecture.
  *
  * @module $vf
  *

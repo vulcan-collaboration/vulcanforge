@@ -6,7 +6,7 @@
 {% do g.resource_manager.register_js('visualize/visualizer.js') %}
 {% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
 
-{% block title %}Vehicle Forge {{page.title}}{% endblock %}
+{% block title %}{{ config.get("forge_name", "Forge") }} {{page.title}}{% endblock %}
 
 {% block header %}{{page.title}}{% endblock %}
 
