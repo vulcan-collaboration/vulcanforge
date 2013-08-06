@@ -89,7 +89,7 @@
 
         /* change status */
         $('#status-select').change(function(){
-            var status = $(this).value();
+            var status = $(this).val();
             if (status !== "{{ status }}"){
                 window.location = "{{ base_url }}registration?status=" + status;
             }
