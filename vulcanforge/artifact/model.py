@@ -999,7 +999,7 @@ class ArtifactProcessor(object):
 # Ephemeral Functions for ArtifactReference
 REPO_SHORTLINK_RE = re.compile(r'^\((?P<commit>[a-z0-9]+)\)(?P<path>/.*)')
 REPO_INDEX_ID_RE = re.compile(r'^Repo\.')
-SHORTLINK_RE = re.compile(r'(?<![\[])\[(((.*?):)?((.*?):)?(.+))\]')
+SHORTLINK_RE = re.compile(r'(?<![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]')
 
 
 def repo_get_by_index_id(index_id, match=None):
