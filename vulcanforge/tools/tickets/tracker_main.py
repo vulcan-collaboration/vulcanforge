@@ -482,8 +482,8 @@ class TrackerSearchController(BaseController):
     @validate(validators=search_validators)
     def search(self, query=None, columns=None, limit=None, page=0,
                sort="ticket_num_i desc", tool_q=None, **kw):
-        q = kw.pop('q', '*:*')  # temp
-        q = tool_q or query or q
+        q = kw.pop('q', None)  # temp
+        q = tool_q or query or q or '*:*'
         c.bin_form = self.Forms.bin_form
         c.ticket_search_results = self.Forms.ticket_search_results
         c.artifact_link = self.Widgets.artifact_link
