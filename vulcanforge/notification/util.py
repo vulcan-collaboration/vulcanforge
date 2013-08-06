@@ -32,7 +32,7 @@ def gen_message_id():
         addr = '%s.%s' % (nonce(40), c.app.config.options['mount_point'])
     else:
         addr = nonce(40)
-    base_addr = tg.config.get('forgemail.domain', ".vehicleforge.net")
+    base_addr = tg.config.get('forgemail.domain', ".vulcanforge.org")
     return '%s@%s%s' % (addr, '.'.join(reversed(parts)), base_addr)
 
 
@@ -148,7 +148,7 @@ def _parse_smtp_addr(addr):
     if addrs and addrs[0]: return addrs[0]
     if '@' in addr: return addr
     # TODO: forgemail reference follows
-    return 'noreply@in.vehicleforge.net'
+    return 'noreply@in.vulcanforge.org'
 
 def isvalid(addr):
     """

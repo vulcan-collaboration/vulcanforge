@@ -1,9 +1,7 @@
-{%- macro header(username, userid, name, login_url, logout_url) %}
+{%- macro header(username, userid, name, login_url, logout_url, forge_name=None) %}
 <header id="site-header">
     <div class="wrapper">
-        <a class="logo" href="/">
-            <h1>VehicleForge</h1>
-        </a>
+        <a class="logo" href="/">{% if forge_name %}{{ forge_name }}{% endif %}</a>
         <nav>
           {% if userid %}
             <a href="/auth/prefs/">Account</a>
@@ -21,7 +19,7 @@
 {%- macro footer(year) %}
 <footer id="site-footer">
   <nav>
-	  This project is powered by <a href="http://policyforge.net/">VehicleForge</a>.
+	  This project is powered by <a href="{{ config.get('base_url', '/') }}">{{config.get('forge_name', '')}}</a>.
 	</nav>
 </footer>
 {%- endmacro %}

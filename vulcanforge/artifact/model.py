@@ -379,8 +379,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     @property
     def email_address(self):
         return tg.config.get(
-            'forgemail.return_path', 'noreply@vehicleforge.net'
-        )
+            'forgemail.return_path', 'noreply@vulcanforge.org')
 
     @LazyProperty
     def app(self):

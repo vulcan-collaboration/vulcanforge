@@ -7,7 +7,7 @@ U{REST<http://en.wikipedia.org/wiki/Representational_state_transfer>}
 interface.
 
 To access this interface use
-https://B{<vehicleforge_address>}/rest/
+https://B{<domain>}/rest/
 
 @undocumented
 """

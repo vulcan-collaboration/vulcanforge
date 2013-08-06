@@ -1,8 +1,8 @@
 You are receiving this email because you have requested permission to join
-VehicleForge. If this is not the case, please disregard this email.
+{forge_name}. If this is not the case, please disregard this email.
 
 We are very excited that you are interested in joining our community.
-Unfortunately, VehicleForge is currently in alpha mode and is not open to the
+Unfortunately, {forge_name} is currently in alpha mode and is not open to the
 public. However, we have placed your email on a mailing list and will inform
 you when this changes.
 

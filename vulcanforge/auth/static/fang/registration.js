@@ -15,7 +15,7 @@ var fragmentShader,
     var NOT_SUPPORTED_AT_ALL_MSG = '<p><b>Sorry. You are using %%Browser%% which is not supported!</b></p>';
     var ANCIENT_VERSION = ', which is an old version of %%Browser%% and not supported.<br/>Please upgrade your browser.';
     var UNKNOWN_BROWSER = 'an unsupported browser. Please check back again with a supported browser! ';
-    var NO_COOKIES_MSG = 'Cookies are disabled in your browser. To log in to VehicleFORGE please enable them!';
+    var NO_COOKIES_MSG = 'Cookies are disabled in your browser. Please enable them in order to log in!';
     var CHROME_FRAME_MSG = '<p>If you do not have sufficient privileges to install another browser on your computer,</br> we recommend you use <a href="" onclick="$(\'#browserSupportErrorHolder\').hide(); CFInstall.check({ mode: \'overlay\', destination: document.location }); return false">Google Chrome Frame</a>, a convenient way to browse safely.';
 
     var browserRequirements = {

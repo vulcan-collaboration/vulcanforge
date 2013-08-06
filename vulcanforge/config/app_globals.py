@@ -210,7 +210,7 @@ class ForgeAppGlobals(object):
 
         # forgemail
         self.forgemail_return_path = config.get('forgemail.return_path',
-                                                'noreply@vehicleforge.org')
+                                                'noreply@vulcanforge.org')
 
         # Templates
         tmpl_master = 'vulcanforge.common:templates/jinja_master/'

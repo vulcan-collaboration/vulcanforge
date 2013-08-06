@@ -2,7 +2,7 @@
 
 {% block title %}Browse {{ user_title }}{% endblock %}
 
-{% block header %}VehicleFORGE {{ user_title }}{% endblock %}
+{% block header %}{{ config.get('forge_name', 'Forge') }} {{ user_title }}{% endblock %}
 
 {% block actions %}
 <div id="user-search">

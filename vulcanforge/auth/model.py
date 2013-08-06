@@ -43,40 +43,6 @@ from vulcanforge.notification.util import gen_message_id
 
 LOG = logging.getLogger(__name__)
 
-USER_REGISTRATION_TEMPLATE = """
-Hello {},
-
-Welcome to VehicleFORGE.  Thank you for asking to register with our site.  In order for you to complete your registration you must click on the following link:
-
-{}
-
-Once you have completed your registration you will be able to start and join projects, collaborate with teammates, explore and create cyber-physical vehicle designs, and interact with your own secure file repositories.
-
-Thank you and enjoy VehicleFORGE.
-Sincerely,
-
-The VehicleFORGE Team
-"""
-
-PASSWORD_RESET_TEMPLATE = """
-Hello {username},
-
-Your current username is: {username}
-
-Follow the link below to change your password.
-
-{url}
-
-This link will expire in 2 hours. If you do not click on the link in this period, your password will not be reset and will retain its current value.
-
-You are receiving this email because you or someone claiming to be you has requested to reset the password on your account. If you did not request this change you may delete this message.
-
-Thank you and enjoy VehicleFORGE.
-Sincerely,
-
-The VehicleFORGE Team
-"""
-
 
 def smart_str(s, encoding='utf-8', strings_only=False, errors='strict'):
     """
@@ -733,7 +699,7 @@ class User(SOLRIndexed):
                     default="identicon")
         else:
             icon_url = g.gravatar(
-                "{}@vehicleforge.net".format(self.username),
+                "{}@vulcanforge.org".format(self.username),
                 default="identicon")
         return icon_url
 
@@ -1129,16 +1095,20 @@ class PasswordResetToken(BaseMappedClass):
             return False
         LOG.info('Sending password reset link to %s (%s)',
                  self.user.username, self.email)
-        text = PASSWORD_RESET_TEMPLATE.format(
-            username=self.user.username,
-            url=self.reset_url()
-        )
+        template = g.jinja2_env.get_template(
+            'vulcanforge.auth:templates/mail/password_reset.txt')
+        text = template.render({
+            'username': self.user.username,
+            'url': self.reset_url(),
+            'forge_name': config.get('forge_name')
+        })
         LOG.info('Password reset email:\n%s', text)
         mail_tasks.sendmail.post(
             destinations=[self.email],
             fromaddr=g.forgemail_return_path,
             reply_to='',
-            subject='Reset your VehicleForge password',
+            subject='Reset your {} password'.format(
+                config.get('forge_name', 'forge')),
             message_id=gen_message_id(),
             text=text)
         return True
@@ -1165,7 +1135,10 @@ class UserRegistrationToken(BaseMappedClass):
     # adds user to project on registration
     project_id = FieldProperty(S.ObjectId, if_missing=None)
 
-    email_subject = "VehicleFORGE User Registration"
+    @property
+    def email_subject(self):
+        return "{} User Registration".format(
+            config.get('forge_name', 'Forge'))
 
     @property
     def is_valid(self):
@@ -1186,11 +1159,14 @@ class UserRegistrationToken(BaseMappedClass):
 
     @property
     def email_text(self):
+        template = g.jinja2_env.get_template(
+            'vulcanforge.auth:templates/mail/user_registration.txt')
         base_url = self.registration_url or '/auth/register'
-        return USER_REGISTRATION_TEMPLATE.format(
-            self.name,
-            g.url(base_url, token=self.nonce)
-        )
+        return template.render({
+            'url': g.url(base_url, token=self.nonce),
+            'name': self.name,
+            'forge_name': config.get('forge_name')
+        })
 
     @LazyProperty
     def project(self):
@@ -1249,14 +1225,16 @@ class EmailChangeToken(BaseMappedClass):
                 username=self.user.username,
                 old_email=self.old_email,
                 new_email=self.new_email,
-                url=self.reset_url()
+                url=self.reset_url(),
+                forge_name=config.get('forge_name', "Forge")
             )
         LOG.info('Email change email:\n%s', text)
         mail_tasks.sendmail.post(
             destinations=[self.old_email],
             fromaddr=g.forgemail_return_path,
             reply_to='',
-            subject='VehicleForge Email Modification',
+            subject='{} Email Modification'.format(
+                config.get('forge_name', 'Forge')),
             message_id=gen_message_id(),
             text=text)
         return True
