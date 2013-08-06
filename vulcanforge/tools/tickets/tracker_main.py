@@ -482,14 +482,14 @@ class TrackerSearchController(BaseController):
     @validate(validators=search_validators)
     def search(self, query=None, columns=None, limit=None, page=0,
                sort="ticket_num_i desc", tool_q=None, **kw):
-        q = kw.pop('q', None)  # temp
+        q = kw.pop('q', '*:*')  # temp
         q = tool_q or query or q
         c.bin_form = self.Forms.bin_form
         c.ticket_search_results = self.Forms.ticket_search_results
         c.artifact_link = self.Widgets.artifact_link
-        bin = None
+        bin_ = None
         if q:
-            bin = TM.Bin.query.find(dict(
+            bin_ = TM.Bin.query.find(dict(
                 app_config_id=c.app.config._id,
                 terms=q
             )).first()
@@ -497,7 +497,7 @@ class TrackerSearchController(BaseController):
             q, limit=limit, page=page, sort=sort, columns=columns, **kw
         )
         result['allow_edit'] = g.security.has_access(c.app, 'write')
-        result['bin'] = bin
+        result['bin'] = bin_
         return result
 
     @expose(content_type="text/csv")
