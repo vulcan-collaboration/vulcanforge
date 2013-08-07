@@ -429,8 +429,8 @@ class BaseTrackerController(BaseController):
                 values[k] = v
         if c.app.globals.can_edit_field('assigned_to'):
             assigned_to = post_data.get('assigned_to')
-            values['assigned_to_ids'] = []
             if assigned_to and assigned_to.strip('-'):
+                values['assigned_to_ids'] = []
                 for username in assigned_to.split(','):
                     username = username.strip()
                     if username:
