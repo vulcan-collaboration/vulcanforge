@@ -69,7 +69,6 @@ class MigrationRunner(object):
         return True
 
     def run_migration(self, mig):
-        LOG.info('Running %s', str(mig.get_name()))
         mig.full_run()
 
     def run_migrations(self, module_names=None, all_migrations=False,

@@ -50,6 +50,7 @@ class BaseMigration(object):
         purposes, overriding the run method should be sufficient.
 
         """
+        self.log.info('Running %s', str(self.get_name()))
         try:
             self.run()
         except Exception as err:

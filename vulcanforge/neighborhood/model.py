@@ -152,6 +152,10 @@ class Neighborhood(MappedClass):
         return Project
 
     @property
+    def neighborhood_project_cls(self):
+        return self.project_cls
+
+    @property
     def user_cls(self):
         from vulcanforge.auth.model import User
         return User
@@ -288,8 +292,9 @@ class Neighborhood(MappedClass):
         if p:
             raise ProjectConflict()
         name = 'Home Project for %s' % self.name
-        database_uri = self.project_cls.default_database_uri(shortname)
-        p = self.project_cls(
+        database_uri = self.neighborhood_project_cls.default_database_uri(
+            shortname)
+        p = self.neighborhood_project_cls(
             neighborhood_id=self._id,
             shortname=shortname,
             name=name,
