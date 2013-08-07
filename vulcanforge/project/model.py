@@ -781,6 +781,8 @@ class Project(SOLRIndexed):
 
         if user is None and username is not None:
             user = User.by_username(username)
+        if user is None:
+            return None
         named_roles = g.security.credentials.project_roles(
             project_id=self.root_project._id).named
         for r in named_roles.roles_that_reach:
