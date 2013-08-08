@@ -230,7 +230,7 @@ class Visualizer(MappedClass):
 
         # get extension(s)
         extensions = []
-        base = base_path = urlparse.urlsplit(resource_url).path
+        base = base_path = urlparse.urlsplit(resource_url).path.lower()
         remainder = ''
         ext = ''
         while True:
