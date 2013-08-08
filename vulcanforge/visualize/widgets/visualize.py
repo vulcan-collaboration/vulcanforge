@@ -7,10 +7,13 @@ import os
 import random
 import string
 import re
+from formencode.variabledecode import variable_decode
 
 from pylons import request, response, app_globals as g
+import tg
 from vulcanforge.common.helpers import urlquote
 from vulcanforge.common.util.diff import unified_diff
+from vulcanforge.common.util.filesystem import import_object
 
 from vulcanforge.resources.widgets import Widget, CSSLink, JSLink, JSScript
 from vulcanforge.visualize.model import Visualizer
@@ -404,6 +407,14 @@ class ContentVisualizer(DispatchWidget):
         default=S3Content(),
         design_space=DesignSpace()
     )
+
+    def __init__(self, **kw):
+        super(ContentVisualizer, self).__init__(**kw)
+        config = variable_decode(tg.config)
+        content_widgets = config.get('visualize', {}).get('widgets', {})
+        for key, path in content_widgets.items():
+            widget_cls = import_object(path)
+            self.widgets[key] = widget_cls()
 
     def get_url(self, value):
         return value
