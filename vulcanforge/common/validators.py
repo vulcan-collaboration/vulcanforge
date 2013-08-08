@@ -8,8 +8,9 @@ from datetime import datetime
 from dateutil.parser import parse
 from bson import ObjectId
 from bson.errors import InvalidId
-from formencode import Invalid, ForEach, validators as fev
+from formencode import Invalid, ForEach, validators as fev, Schema
 from formencode.api import NoDefault
+from tg import request
 
 from vulcanforge.common import helpers as h
 
@@ -76,12 +77,45 @@ class JSONValidator(fev.String):
         return value
 
 
+class JSONSchema(Schema):
+    """
+    Take the request body, parse it as json, and place that in the params
+    for further validation
+
+    """
+    # these two fields make it work like a normal tg validator
+    ignore_key_missing = True
+    allow_extra_fields = True
+
+    messages = {
+        'invalid': 'Invalid JSON'
+    }
+
+    def is_empty(self, value):
+        return False
+
+    def validate_other(self, params, state):
+        if not request.content_type == 'application/json':
+            LOG.debug('Invalid content type')
+            raise fev.Invalid(self.message('invalid', state), params, state)
+
+    def _to_python(self, value_dict, state):
+        try:
+            payload = json.loads(request.body)
+        except ValueError:
+            LOG.debug('Error parsing JSON: %s with params', request.body)
+            raise fev.Invalid(
+                self.message('invalid', state), value_dict, state)
+        value_dict.update(Schema._to_python(self, payload, state))
+        return value_dict
+
+
 class NullValidator(fev.Validator):
 
-    def to_python(self, value, state):
+    def to_python(self, value, state=None):
         return value
 
-    def from_python(self, value, state):
+    def from_python(self, value, state=None):
         return value
 
     def validate(self, value, state):
@@ -98,13 +132,13 @@ class MaxBytesValidator(fev.FancyValidator):
                              "long!" % self.max, value, state)
         return value
 
-    def from_python(self, value, state):
+    def from_python(self, value, state=None):
         return h.really_unicode(value or '')
 
 
 class EmailValidator(fev.UnicodeString):
 
-    def to_python(self, value, state):
+    def to_python(self, value, state=None):
         value = h.really_unicode(value or '').encode('utf-8')
         if not value or not re.match(EMAIL_RE, value):
             raise Invalid("Please enter a valid email address!",
