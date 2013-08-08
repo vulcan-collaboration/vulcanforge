@@ -127,8 +127,6 @@ setup(
 
     [easy_widgets.engines]
     jinja = vulcanforge.config.app_cfg:JinjaEngine
-
-    [nose.plugins.0.10]
-    nagios = vulcanforge.sanitytests.plugin:NagiosPlugin
     """,
+    dependency_links=["http://tg.gy/current/"]
 )

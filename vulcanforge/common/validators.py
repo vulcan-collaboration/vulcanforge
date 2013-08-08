@@ -55,7 +55,7 @@ class DateTimeConverter(fev.FancyValidator):
 class CommaSeparatedEach(ForEach):
 
     def _convert_to_list(self, value):
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, basestring):
             return value.split(',')
         return super(CommaSeparatedEach, self)._convert_to_list(value)
 
@@ -126,16 +126,17 @@ class ObjectIdValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(msg, value, state)
 
-        try:
-            value = ObjectId(value)
-        except InvalidId:
-            raise invalid("'{}' is not a valid id".format(value))
-        if self.mapped_class is not None:
-            instance = self.mapped_class.query.get(_id=value)
-            if instance is None:
-                raise invalid(
-                    "no instance found with the id '{}'".format(value))
-            return instance
+        if value:
+            try:
+                value = ObjectId(value)
+            except InvalidId:
+                raise invalid("'{}' is not a valid id".format(value))
+            if self.mapped_class is not None:
+                instance = self.mapped_class.query.get(_id=value)
+                if instance is None:
+                    raise invalid(
+                        "no instance found with the id '{}'".format(value))
+                return instance
         return value
 
 
@@ -184,3 +185,9 @@ class HTMLEscapeValidator(fev.String):
     def _to_python(self, value, state):
         value = super(HTMLEscapeValidator, self)._to_python(value, state)
         return cgi.escape(value)
+
+
+class HexValidator(fev.Regex):
+    regex = r'^[0-9A-F]+$'
+    regexOps = ('I',)
+
