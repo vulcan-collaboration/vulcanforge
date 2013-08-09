@@ -25,7 +25,7 @@ class MigrationCommand(base.Command):
         '--skip_erroneous', action='store_false', dest='erroneous',
         default=True, help='Skip previous erroneous scripts')
     parser.add_option(
-        '--all', action='store_true', dest='all_migrations',
+        '--force', '-f', action='store_true', dest='all_migrations',
         help='Run all migrations [Instead of only new]')
 
     def _convert_paths(self, paths):

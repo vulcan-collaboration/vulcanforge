@@ -92,7 +92,7 @@ class Visualizer(MappedClass):
         re.compile('__MACOSX/'),
         re.compile('\.DS_Store'),
         re.compile('^/'),
-        re.compile('^\.\.'),
+        re.compile('\.\.'),
     ]
     # attrs editable by manifest file
     _editable_attrs = (
@@ -159,10 +159,11 @@ class Visualizer(MappedClass):
         for key in g.get_s3_keys(self.key_prefix):
             g.delete_s3_key(key)
 
+    def can_upload(self, path):
+        return not any(r.search(path) for r in self.no_upload_extensions)
+
     def _iter_zip(self, zip_handle):
-        return itertools.ifilter(
-            lambda n: not any(r.search(n) for r in self.no_upload_extensions),
-            zip_handle.namelist())
+        return itertools.ifilter(self.can_upload, zip_handle.namelist())
 
     def update_from_archive(self, archive_fp):
         with zipfile.ZipFile(archive_fp) as zip_handle:
