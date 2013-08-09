@@ -152,7 +152,7 @@ class Visualizer(MappedClass):
         return self.icon
 
     def get_s3_key(self, key_postfix, **kw):
-        key_name = self.key_prefix + urlquote(key_postfix)
+        key_name = self.key_prefix + key_postfix
         return g.get_s3_key(key_name, **kw)
 
     def delete_s3_keys(self):
