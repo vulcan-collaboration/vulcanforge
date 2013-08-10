@@ -138,7 +138,7 @@ class Visualizer(MappedClass):
 
     @LazyProperty
     def key_prefix(self):
-        return urlquote(VISUALIZER_PREFIX + str(self._id) + '#')
+        return VISUALIZER_PREFIX + str(self._id) + '#'
 
     @LazyProperty
     def icon_url(self):
@@ -156,7 +156,7 @@ class Visualizer(MappedClass):
         return g.get_s3_key(key_name, **kw)
 
     def delete_s3_keys(self):
-        for key in g.get_s3_keys(self.key_prefix):
+        for key in g.get_s3_keys(urlquote(self.key_prefix)):
             g.delete_s3_key(key)
 
     def can_upload(self, path):

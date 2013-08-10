@@ -334,7 +334,7 @@ class S3Content(BaseContentWidget):
         if not key:
             key = visualizer.entry_point
 
-        key = visualizer.key_prefix + key
+        key = urlquote(visualizer.key_prefix) + key
         #        else:
         #            uri, ext = os.path.splitext(request.path)
         #            value += ext
