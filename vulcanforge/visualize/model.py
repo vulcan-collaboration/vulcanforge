@@ -151,12 +151,15 @@ class Visualizer(MappedClass):
             pass
         return self.icon
 
-    def get_s3_key(self, key_postfix, **kw):
-        key_name = self.key_prefix + key_postfix
+    def get_s3_key(self, path, **kw):
+        key_name = self.key_prefix + path
         return g.get_s3_key(key_name, **kw)
 
+    def delete_s3_key(self, path):
+        g.delete_s3_key(self.key_prefix + path)
+
     def delete_s3_keys(self):
-        for key in g.get_s3_keys(urlquote(self.key_prefix)):
+        for key in g.get_s3_keys(self.key_prefix):
             g.delete_s3_key(key)
 
     def can_upload(self, path):
