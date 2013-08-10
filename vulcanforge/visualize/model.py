@@ -74,7 +74,7 @@ class Visualizer(MappedClass):
     active = FieldProperty(bool, if_missing=False)
     priority = FieldProperty(int, if_missing=0)
     # see vulcanforge.visualize.widgets for widget name options
-    widget = FieldProperty(str, if_missing='iframe')
+    widget = FieldProperty(str, if_missing='s3')
     thumb = FieldProperty(str, if_missing='')
 
     name = FieldProperty(str)

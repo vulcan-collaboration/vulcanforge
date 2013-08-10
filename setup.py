@@ -78,7 +78,7 @@ setup(
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=[
-        'WebTest >= 1.2',
+        'WebTest < 2',
         'BeautifulSoup < 4.0',
         'pytidylib',
         'poster',
