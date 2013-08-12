@@ -37,6 +37,20 @@ class DatetimeValidator(fev.FancyValidator):
         return value
 
 
+class TimestampValidator(fev.Number):
+    messages = {
+        'invalid': 'This does not appear to be a valid timestamp'
+    }
+
+    def _to_python(self, value, state):
+        value = super(TimestampValidator, self)._to_python(value, state)
+        try:
+            value = datetime.fromtimestamp(value)
+        except ValueError:
+            raise fev.Invalid(self.message('invalid', state), value, state)
+        return value
+
+
 class DateTimeConverter(fev.FancyValidator):
     """Duplicate functionality to above, let's decide which is cooler"""
 

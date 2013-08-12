@@ -1,6 +1,8 @@
 #-*- python -*-
+import cgi
 import logging
 import re
+import time
 from datetime import datetime, timedelta
 import urllib
 import itertools
@@ -11,7 +13,7 @@ import pkg_resources
 from tg import expose, validate, redirect, flash, url
 from tg.decorators import with_trailing_slash, without_trailing_slash
 from pylons import tmpl_context as c, app_globals as g, request, response
-from formencode import validators
+from formencode import validators, ForEach
 from formencode.variabledecode import variable_decode
 from bson import ObjectId
 from webhelpers import feedgenerator as FG
@@ -34,6 +36,7 @@ from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
+from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.artifact.controllers import (
     ArtifactRestController,
     AttachmentController,
@@ -57,6 +60,7 @@ from . import model as TM
 from . import version
 from vulcanforge.tools.tickets.util import changelog
 from vulcanforge.tools.tickets.widgets.forms import TicketCustomField
+from .validators import MilestoneSchema
 from .widgets import (
     TrackerTicketForm,
     BinForm,
@@ -392,6 +396,34 @@ class ForgeTrackerApp(Application):
         return TM.Bin.query.find(dict(
             app_config_id=self.config._id)).sort('summary').all()
 
+    def get_calendar_events(self, date_start, date_end):
+        milestones = self.globals.get_milestones_between(date_start, date_end)
+        milestone_counts = self.globals.get_milestone_counts(
+            _milestone_s='" OR "'.join([m["name"] for m in milestones]))
+        events = []
+        for milestone in milestones:
+            due_date = datetime.strptime(milestone["due_date"], '%m/%d/%Y')
+            due_date = int(time.mktime(due_date.timetuple()))
+            title = "{app_label} Milestone {milestone_name} ({num})".format(
+                app_label=self.config.options.mount_label,
+                milestone_name=milestone["name"],
+                num=milestone_counts.get(milestone["name"], 0)
+            )
+            events.append({
+                "id": "{app_config_id}.{milestone_name}".format(
+                    app_config_id=self.config._id,
+                    milestone_name=milestone["name"]
+                ),
+                "title": title,
+                "allDay": True,
+                "start": due_date,
+                "url": '{app_url}milestone/{milestone_name}/'.format(
+                    app_url=self.url,
+                    milestone_name=milestone["name"]),
+                "className": "ticket-milestone-event"
+            })
+        return events
+
 
 class BaseTrackerController(BaseController):
 
@@ -666,6 +698,10 @@ class RootController(BaseTrackerController):
     @vardec
     @expose()
     @require_post()
+    @validate({
+        "field_name": HTMLEscapeValidator(),
+        "milestones": ForEach(MilestoneSchema())
+    })
     def update_milestones(self, field_name=None, milestones=None, **kw):
         g.security.require_access(c.app, 'configure')
         update_counts = False
@@ -678,7 +714,7 @@ class RootController(BaseTrackerController):
                             if new['new_name'] == '':
                                 flash('You must name the milestone.', 'error')
                             else:
-                                m.name = new['new_name'].replace('/', '-')
+                                m.name = new['new_name']
                                 m.description = new['description']
                                 m.complete = new['complete'] == 'Closed'
                                 if new['old_name'] != m.name:
@@ -710,7 +746,7 @@ class RootController(BaseTrackerController):
                                         add_artifacts.post(ids)
                     if new['old_name'] == '' and new['new_name'] != '':
                         fld.milestones.append(dict(
-                            name=new['new_name'].replace('/', '-'),
+                            name=new['new_name'],
                             description=new['description'],
                             due_date=new['due_date'],
                             complete=new['complete'] == 'Closed'))

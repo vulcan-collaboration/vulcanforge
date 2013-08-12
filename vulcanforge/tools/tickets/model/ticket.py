@@ -117,6 +117,22 @@ class Globals(MappedClass):
         return [fld for fld in self.custom_fields \
                 if fld.get('type') == 'milestone']
 
+    def get_milestones_between(self, date_start, date_end):
+        for fld in self.custom_fields:
+            if fld["name"] == '_milestone':
+                break
+        else:
+            return []
+
+        date_fmt = '%m/%d/%Y'
+        milestones = []
+        for milestone in fld["milestones"]:
+            if milestone.get("due_date"):
+                m_date = datetime.strptime(milestone["due_date"], date_fmt)
+                if date_start <= m_date <= date_end:
+                    milestones.append(milestone)
+        return milestones
+
     def get_milestone_counts(self, **kw):
         params = {
             "facet": "on",
@@ -125,7 +141,7 @@ class Globals(MappedClass):
         }
         params.update(kw)
         q = ' AND '.join((
-            'app_config_id_s:{}'.format(c.app.config._id),
+            'app_config_id_s:{}'.format(self.app_config_id),
             'type_s:"{}"'.format(Ticket.type_s),
             'is_history_b:False'
         ))

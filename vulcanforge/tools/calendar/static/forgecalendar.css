@@ -1,0 +1,15 @@
+#vulcancalendar {
+    margin-top: 8px;
+}
+
+.fc-header-title h2 {
+    border-bottom: none;
+    padding: 3px;
+}
+
+a.fc-event {
+    color: #fff;
+    text-transform: none;
+    font-size: 1.05em;
+    padding: 2px 1px;
+}

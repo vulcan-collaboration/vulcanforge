@@ -318,3 +318,7 @@ class Application(object):
         @return: an instance of markdown ready to use for conversion
         """
         return g.markdown
+
+    def get_calendar_events(self, date_start, date_end):
+        """Apps can provide events to the Calendar App"""
+        return []
