@@ -208,18 +208,18 @@ class AuthController(BaseController):
     def send_password_reset_email(self, email=None, return_to="/", **kw):
         LOG.debug("send_password_reset_email %s", email)
         user = User.by_email_address(email)
-        token = PasswordResetToken.query.get(user_id=user._id)
-        if not token:
-            token = PasswordResetToken()
-            token.user_id = user._id
-        token.email = email
-        token.nonce = hashlib.sha256(os.urandom(10)).hexdigest()
-        token.expiry_date = datetime.utcnow() + timedelta(hours=2)
-        token.send_email()
+        if user:
+            token = PasswordResetToken.query.get(user_id=user._id)
+            if not token:
+                token = PasswordResetToken()
+                token.user_id = user._id
+            token.email = email
+            token.nonce = hashlib.sha256(os.urandom(10)).hexdigest()
+            token.expiry_date = datetime.utcnow() + timedelta(hours=2)
+            token.send_email()
         flash(
             "Please check your email for instructions to reset your password.",
-            status='confirm'
-        )
+            status='confirm')
         redirect('/auth/?return_to={}'.format(return_to))
 
     @expose()

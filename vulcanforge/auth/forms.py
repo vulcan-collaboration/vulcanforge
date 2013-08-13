@@ -161,20 +161,16 @@ class PasswordResetEmailForm(ForgeForm):
     def validate(self, value, state=None):
         super(PasswordResetEmailForm, self).validate(value, state)
         user = User.by_email_address(value['email'])
-        if not user:
-            raise Invalid(
-                "This email address has not been claimed by any user.",
-                dict(token=value['email']), None
-            )
-        min_hours = int(tg.config.get('auth.pw.min_lifetime.hours', 24))
-        if user.password_set_at is None:
-            now = datetime.utcnow()
-            user.password_set_at = now - timedelta(hours=min_hours)
-        age = datetime.utcnow() - user.password_set_at
-        if age < timedelta(hours=min_hours):
-            raise Invalid("Passwords may only be changed once "
-                          "every {} hours".format(min_hours),
-                          value, state)
+        if user:
+            min_hours = int(tg.config.get('auth.pw.min_lifetime.hours', 24))
+            if user.password_set_at is None:
+                now = datetime.utcnow()
+                user.password_set_at = now - timedelta(hours=min_hours)
+            age = datetime.utcnow() - user.password_set_at
+            if age < timedelta(hours=min_hours):
+                raise Invalid("Passwords may only be changed once "
+                              "every {} hours".format(min_hours),
+                              value, state)
         return value
 
 
