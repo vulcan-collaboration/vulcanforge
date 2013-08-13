@@ -7,6 +7,7 @@
 {% do g.resource_manager.register_css('auth/registration/registration.scss') %}
 {% do g.resource_manager.register_css('theme/css/theme.scss') %}
 
+{% do g.resource_manager.register_js('js/lib/CFInstall.min.js') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.10.3.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.cookie.js', scope='forge') %}
@@ -33,8 +34,6 @@
 
     <style>.{{ g.antispam.honey_class }} { display:none } </style>
 
-    <script type="text/javascript"
-            src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
 </head>
 <body>
     <div id="header-wrapper"></div>

@@ -150,8 +150,7 @@ class WebGLCADContent(BaseContentWidget):
     def resources(self):
         yield CSSLink(
             'visualize/threed/cad_visualizer.css')
-        yield JSLink("http://ajax.googleapis.com/"
-                     "ajax/libs/chrome-frame/1/CFInstall.min.js")
+        yield JSLink("js/lib/CFInstall.min.js")
         yield JSLink('js/lib/jquery/jquery.cookie.js')
         yield JSLink('visualize/threed/Three.js')
         yield JSLink('visualize/threed/plane.js')
