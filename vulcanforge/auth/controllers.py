@@ -107,15 +107,23 @@ class AuthController(BaseController):
         else:
             return_to = '/'
         c.form = self.Forms.login_form
-        return dict(msg=_msg, msgClass=msgClass, oid_providers=OID_PROVIDERS,
-                    return_to=return_to, form_values={'return_to': return_to},
-                    can_register=g.show_register_on_login)
+        return {
+            'msg': _msg,
+            'msgClass': msgClass,
+            'oid_providers': OID_PROVIDERS,
+            'return_to': return_to,
+            'form_values': {'return_to': return_to},
+            'can_register': g.show_register_on_login,
+            'autocomplete': not g.production_mode
+        }
 
     @expose(TEMPLATE_DIR + 'login.html')
     @without_trailing_slash
     def login(self, *args, **kwargs):
         c.form = self.Forms.login_form
-        return {}
+        return {
+            'autocomplet': not g.production_mode
+        }
 
     @expose()
     def send_verification_link(self, a):

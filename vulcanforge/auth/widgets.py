@@ -27,20 +27,19 @@ TEMPLATE_DIR = 'jinja:vulcanforge:auth/templates/widgets/'
 class LoginForm(ForgeForm):
     submit_text = 'Login'
     style = 'wide'
+    defaults = dict(ForgeForm.defaults, autocomplete=True)
 
     class fields(ew_core.NameList):
-        username = ew.TextField(label='Username',
-                                attrs=dict(autofocus='autofocus'),
-                                wide=True)
-        password = ew.PasswordField(label='Password',
-                                    wide=True)
+        username = ew.TextField(
+            label='Username', attrs=dict(autofocus='autofocus'), wide=True)
+        password = ew.PasswordField(label='Password', wide=True)
         return_to = ew.HiddenField()
 
-    def prepare_context(self, context):
-        context = super(ForgeForm, self).prepare_context(context)
-        context['autocomplete'] = 'off' if g.production_mode else 'on'
-
-        return context
+    def context_for(self, field):
+        ctx = super(LoginForm, self).context_for(field)
+        if True or not self.autocomplete:
+            ctx.setdefault("attrs", {})['autocomplete'] = 'off'
+        return ctx
 
     @validator
     def validate(self, value, state=None):
