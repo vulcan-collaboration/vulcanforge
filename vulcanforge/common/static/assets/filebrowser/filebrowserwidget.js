@@ -375,7 +375,7 @@
                         that.unhighlightAllDropTargets();
 
                         $.each( e.dataTransfer.files, function(i, file){
-                            that._uploadFileToPath(file, path, function () {
+                            that.uploadFileToPath(file, path, function () {
                                 that.refreshActivePath();
                             }, function () {
                                 alert('There was an error while uploading ' + file.name);
@@ -768,7 +768,7 @@
             return pathData;
         },
 
-        _uploadFileToPath: function (file, path, success, failure) {
+        uploadFileToPath: function (file, path, success, failure) {
             var that = this,
                 url = this.options.getUploadURLForFileAndPath(file, path),
                 formData = this.options.getUploadFormDataForFileAndPath(file, path),
@@ -827,7 +827,9 @@
                         attr('value', 1);
                     $loadingLabel.
                         text('Uploaded ' + file.name);
-                    success();
+                    if (typeof success !== 'undefined') {
+                        success();
+                    }
                     $vf.webflash();
                 },
                 'error' : function () {
@@ -836,7 +838,9 @@
                         attr('value', 0);
                     $loadingLabel.
                         text('Could not upload ' + file.name);
-                    failure();
+                    if (typeof failure !== 'undefined') {
+                        failure();
+                    }
                 },
                 'complete': function () {
                     $(window).

@@ -29,7 +29,7 @@ from .version import VERSION
 class ForgeDownloadsApp(Application):
     __version__ = VERSION
     permissions = ['read', 'write', 'configure']
-    status = 'alpha'
+    status = 'production'
     tool_label = 'Downloads'
     default_mount_label = 'Downloads'
     default_mount_point = 'downloads'
