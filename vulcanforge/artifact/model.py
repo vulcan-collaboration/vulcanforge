@@ -961,12 +961,12 @@ class ArtifactProcessor(object):
     processor_map = {}
 
     @classmethod
-    def process(cls, name, artifact, context, verbose=False):
+    def process(cls, name, artifact, context, verbose=True):
         if name == 'cad':
-            # this is temporary until we make file processors pluggable
+            # this is a temporary hack until [#1128]
             if 'cad' not in cls.processor_map:
                 try:
-                    from forgeevent.fileprocess import CADProcessor
+                    from vehicleforge.cad.processors import CADProcessor
                 except ImportError:
                     CADProcessor = None
                 if CADProcessor:
