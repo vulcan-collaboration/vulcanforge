@@ -33,7 +33,7 @@
           <tr class="{{loop.index0%2 and 'even' or ''}} ticketRow" title="Click to view ticket">
             {% for col in columns if col['active'] %}
               {% if col['name'] == 'ticket_num' %}
-                <td>{{ c.artifact_link.display(t, label=t[col['name']]) }}</td>
+                <td>{{ artifact_link_widget.display(t, label=t[col['name']]) }}</td>
               {% elif col['name'] == 'summary' %}
                 <td>{{t[col['name']]}}</td>
               {% elif col['name'] == 'status' %}
