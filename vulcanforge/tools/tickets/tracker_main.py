@@ -648,7 +648,7 @@ class RootController(BaseTrackerController):
     @with_trailing_slash
     @vardec
     @expose(TEMPLATE_DIR + 'aggregated.html')
-    def aggregated(self, limit=500, header_field='_affected_subsystem_s',
+    def aggregated(self, header_field='status_s', limit=500,
                    sort='_priority_s asc', **kw):
         q = c.app.globals.not_closed_query
         results = dict()
@@ -658,15 +658,19 @@ class RootController(BaseTrackerController):
             'rows': 0
         }
         facet_search = g.search.search_artifact(TM.Ticket, q, **facet_params)
-        agger_iter = iter(facet_search.facets['facet_fields'][header_field])
-        for header, count in itertools.izip(*[agger_iter] * 2):
+        facet_iter = iter(facet_search.facets['facet_fields'][header_field])
+        for value, count in zip(facet_iter, facet_iter):
+            header = "{}: {} ({})".format(header_field, value, count)
             results[header] = dict(
                 result=TM.Ticket.paged_solr_query(
                     q, limit=limit, fq_dict={header_field: header}, sort=sort),
                 count=count
             )
         c.search_results_widget = self.Forms.ticket_search_results
-        return dict(results=results, limit=limit, q=q, sort=sort)
+        del c.csv_url
+        del c.aggregate_url
+        return dict(field_name=header_field, results=results, limit=limit,
+                    q=q, sort=sort)
 
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'milestones.html')
