@@ -482,9 +482,10 @@ class IFrame(Widget):
     )
 
     def get_query_params(self, extra_params=None):
-        if extra_params is not None:
-            return urllib.urlencode(extra_params)
-        return ''
+        if extra_params is None:
+            extra_params = {}
+        extra_params.setdefault('env', 'vf')
+        return urllib.urlencode(extra_params)
 
     def display(self, value=None, visualizer=None, extra_params=None,
                 new_window_button=False, fs_url=None, **kw):
