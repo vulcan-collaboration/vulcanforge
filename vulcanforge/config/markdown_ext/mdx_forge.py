@@ -50,7 +50,7 @@ class ForgeExtension(OEmbedExtension):
         md.treeprocessors['br'] = LineOrientedTreeProcessor(md)
 
         # Sanitize HTML
-        md.postprocessors['sanitize_html'] = HTMLSanitizer()
+        md.postprocessors['sanitize_html'] = SanitizeHTMLProcessor()
 
         # shortlinks, relative urls, etc
         self.forge_processor = ForgeProcessor(
@@ -366,16 +366,26 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
         tag[attr] = val
 
 
-class HTMLSanitizer(markdown.postprocessors.Postprocessor):
+class ForgeHTMLSanitizer(feedparser._HTMLSanitizer):
+    acceptable_elements = feedparser._HTMLSanitizer.acceptable_elements.difference(
+        {'form', 'noscript', 'sound'})
+
+    acceptable_attributes = feedparser._HTMLSanitizer.acceptable_attributes.difference(
+        {'action', 'method'})
+
+    def __init__(self, encoding, _type=''):
+        try:
+            feedparser._HTMLSanitizer.__init__(self, encoding)
+        except TypeError:
+            feedparser._HTMLSanitizer.__init__(self, encoding, _type)
+
+
+class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):
 
     def run(self, text):
-        try:
-            p = feedparser._HTMLSanitizer('utf-8')
-        except TypeError:  # $@%## pre-released versions from SOG
-            p = feedparser._HTMLSanitizer('utf-8', '')
-
-        p.feed(text.encode('utf-8'))
-        return unicode(p.output(), 'utf-8')
+        sanitizer = ForgeHTMLSanitizer('utf-8')
+        sanitizer.feed(text.encode('utf-8'))
+        return unicode(sanitizer.output(), 'utf-8')
 
 
 class LineOrientedTreeProcessor(markdown.treeprocessors.Treeprocessor):
