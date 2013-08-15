@@ -83,14 +83,6 @@ def pretty_print_file_size(size_in_bytes):
     return size_str
 
 
-def find_executable(exe_name):
-    """Find the abspath of a given executable (which must be on the PATH)"""
-    for dirname in os.environ['PATH'].split(os.pathsep):
-        path = os.path.join(dirname, exe_name)
-        if os.access(path, os.X_OK):
-            return path
-
-
 def get_neighborhoods_by_ids(ids):
     from vulcanforge.neighborhood.model import Neighborhood
     return Neighborhood.query.find({

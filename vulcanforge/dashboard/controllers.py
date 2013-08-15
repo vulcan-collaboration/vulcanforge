@@ -11,6 +11,7 @@ from datetime import datetime
 import logging
 
 import bson
+from markupsafe import Markup
 import pymongo
 from webob.exc import HTTPNotFound, HTTPBadRequest
 from pylons import tmpl_context as c, app_globals as g, response
@@ -418,7 +419,7 @@ class ActivityFeedController(BaseDashboardController):
             i += 1
         json += '],"more":{}'.format(has_more)
         json += '}'
-        return json
+        return Markup(json)
 
     def _set_app_config(self, _id_s, value):
         try:

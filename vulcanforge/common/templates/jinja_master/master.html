@@ -182,8 +182,8 @@
         {% for n in h.pop_user_notifications() %}
             $('#messages').notify("{{ n.text }}");
             {% endfor %}
-            referenceBinConfig = {{c.user.get_workspace_references()|safe}};
-        workspaceTabs = {{c.user.get_workspace_tabs()|safe}};
+            referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
+        workspaceTabs = {{c.user.workspace_tabs | jsonify}};
     userURL = '{{c.user.url()}}';
     {% else %}
     $vf.logged_in_as = null;

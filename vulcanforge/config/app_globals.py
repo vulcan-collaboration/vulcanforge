@@ -5,7 +5,6 @@ import cgi
 import json
 import datetime
 import os
-import re
 import requests
 import urllib
 import time
@@ -21,7 +20,6 @@ from pylons import tmpl_context as c, request
 from tg import config, session
 from pypeline.markup import markup as pypeline_markup
 from boto.s3.key import Key
-from ming.utils import LazyProperty
 
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
@@ -32,7 +30,7 @@ from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
 from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
-from vulcanforge.config.markdown_ext.mdx_forge import ForgeExtension
+from vulcanforge.config.render.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
 from vulcanforge.project.model import Project

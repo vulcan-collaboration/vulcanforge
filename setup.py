@@ -36,6 +36,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     install_requires=[
+        'simplejson >= 3',
         'FormEncode == 1.2.4',
         'ipython',
         "docutils < 0.10",

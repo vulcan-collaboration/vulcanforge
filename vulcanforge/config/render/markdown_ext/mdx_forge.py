@@ -15,12 +15,12 @@ from mdx_oembed import OEmbedExtension
 from mdx_oembed.inlinepatterns import OEMBED_LINK_RE, OEmbedLinkPattern
 from webhelpers import html
 import webhelpers
-from vulcanforge.config.markdown_ext import markdown_macro
 
 from vulcanforge.project.model import Project
 from vulcanforge.artifact.model import Shortlink, ArtifactReference
 from vulcanforge.artifact.widgets import ArtifactLink
 
+from . import markdown_macro
 from .mdx_visualizer import StashProcessor, VisualizerPattern, StashPattern
 
 

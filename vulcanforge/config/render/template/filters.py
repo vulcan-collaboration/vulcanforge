@@ -4,14 +4,13 @@ import datetime
 from babel.util import LocalTimezone
 from jinja2 import evalcontextfilter
 from markupsafe import Markup
+from pylons import app_globals as g
 
 
 @evalcontextfilter
 def jsonify(eval_ctx, value):
-    result = json.dumps(value)
-    if eval_ctx.autoescape:
-        result = Markup(result)
-    return result
+    content = g.json_renderer.encode(value)
+    return Markup(content)
 
 
 def ungettext(a, b, count):
