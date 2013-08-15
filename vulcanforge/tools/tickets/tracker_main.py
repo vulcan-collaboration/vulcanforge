@@ -586,27 +586,29 @@ class TrackerSearchController(BaseController):
 
     @expose('json')
     def aggregate(self, q, **kwargs):
+        fields = {
+            'status_s': "Status",
+            'open_b': "Open",
+            'assigned_to_s_mv': "Assignee",
+            'reported_by_s': "Reporter",
+            'labels_t': "Labels"
+        }
+        for custom_field in c.app.globals.custom_fields:
+            if not custom_field.get('show_in_search'):
+                continue
+            if custom_field.get('type') == 'markdown':
+                continue
+            fields['{}_s'.format(custom_field.name)] = custom_field.label
         facet_query = {
             'facet': 'true',
-            'facet.field': [
-                'status_s',
-                'open_b',
-                'milestone_s',
-                'assigned_to_s_mv',
-                'reported_by_s',
-                'labels_t'
-            ],
+            'facet.field': fields.keys(),
             'facet.mincount': 1
-            #'facet.date': [
-            #    'last_updated_dt',
-            #    'created_date_dt'
-            #],
-            #'facet.date.start': 'NOW/DAY-30DAYS',
-            #'facet.date.end': 'NOW/DAY+1DAY',
-            #'facet.date.gap': '+1DAY'
         }
         solr_result = g.search.search_artifact(TM.Ticket, q, **facet_query)
-        return solr_result.facets
+        return {
+            'fields': fields,
+            'facets': solr_result.facets
+        }
 
 
 class RootController(BaseTrackerController):

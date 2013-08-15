@@ -17,22 +17,7 @@
     <div class="padded top-spaced">
     {% if c.aggregate_url %}
         <div id="stats-container">
-            <div class="inline-stats-group">
-                <h3>Status</h3>
-                <div id="stats-status"></div>
-            </div>
-            <div class="inline-stats-group">
-                <h3>Assignment</h3>
-                <div id="stats-assignment"></div>
-            </div>
-            <div class="inline-stats-group">
-                <h3>Milestone</h3>
-                <div id="stats-milestone"></div>
-            </div>
-            <div class="inline-stats-group">
-                <h3>Reported By</h3>
-                <div id="stats-reporter"></div>
-            </div>
+            <div id="inline-stats-groups"></div>
             <div class="top-spaced">
                 <button id="detailed-stats-button">Detailed Stats</button>
             </div>
@@ -47,8 +32,8 @@
     <script>
         {% if c.aggregate_url %}
             $(function () {
-                var facetData = null,
-                        $statsContainer = $('#stats-container'),
+                var $statsContainer = $('#stats-container'),
+                        $inlineGroups = $('#inline-stats-groups'),
                         $detailedStatsContainer = $('#detailed-stats-container'),
                         makeTable = function (label, dataset) {
                             var $container = $('<div/>').
@@ -80,32 +65,34 @@
                 $.ajax({
                     url: '{{ c.aggregate_url }}',
                     success: function (data) {
-                        facetData = data;
-                        $('#stats-status').
-                            vfStatsWidget({
-                                graphType: 'facet-pie',
-                                dataset: data.facet_fields.status_s
-                            });
-                        $('#stats-assignment').
-                            vfStatsWidget({
-                                graphType: 'facet-pie',
-                                dataset: data.facet_fields.assigned_to_s_mv
-                            });
-                        $('#stats-milestone').
-                            vfStatsWidget({
-                                graphType: 'facet-pie',
-                                dataset: data.facet_fields.milestone_s
-                            });
-                        $('#stats-reporter').
-                            vfStatsWidget({
-                                graphType: 'facet-pie',
-                                dataset: data.facet_fields.reported_by_s
-                            });
-                        $statsContainer.show();
-                        makeTable("Status", data.facet_fields.status_s).appendTo($detailedStatsContainer);
-                        makeTable("Assignment", data.facet_fields.assigned_to_s_mv).appendTo($detailedStatsContainer);
-                        makeTable("Milestone", data.facet_fields.milestone_s).appendTo($detailedStatsContainer);
-                        makeTable("Reported By", data.facet_fields.reported_by_s).appendTo($detailedStatsContainer);
+                        var dataToShow = false,
+                                fields = data['fields'],
+                                facets = data['facets'];
+                        $.each(fields, function (name, label) {
+                            var fieldData =  facets.facet_fields[name], $group;
+                            if (fieldData.length > 2) {
+                                $group = $("<div/>").
+                                        addClass('inline-stats-group').
+                                        appendTo($inlineGroups);
+                                $('<h3/>').
+                                        text(label).
+                                        appendTo($group);
+                                $('<div/>').
+                                        appendTo($group).
+                                        vfStatsWidget({
+                                            graphType: 'facet-pie',
+                                            dataset: fieldData
+                                        });
+                                dataToShow = true;
+                            }
+                            if (fieldData.length > 0) {
+                                makeTable(label, fieldData).appendTo($detailedStatsContainer);
+                                dataToShow = true;
+                            }
+                        });
+                        if (dataToShow) {
+                            $statsContainer.show();
+                        }
                     }
                 });
             });
