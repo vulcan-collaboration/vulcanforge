@@ -29,21 +29,22 @@ from vulcanforge.common.util.json_util import JSONSafe
 class SanitizeEncode(GenericJSON):
     """Taken from simplejson.encode.JSONEncoderForHTML"""
 
-    def encode(self, o):
+    def encode(self, o, sanitize=None):
         # Override JSONEncoder.encode because it has hacks for
         # performance that make things more complicated.
-        sanitize = not isinstance(o, JSONSafe)
+        if sanitize is None:
+            sanitize = not isinstance(o, JSONSafe)
         chunks = self.iterencode(o, True, sanitize)
         if self.ensure_ascii:
             return ''.join(chunks)
         else:
             return u''.join(chunks)
 
-    def _sanitize_encode(self, encoder):
+    def _sanitize_encode(self, encoder, sanitize=True):
         def sanitize_encoder(o):
             if isinstance(o, Markup):
                 o = str(o)
-            else:
+            elif sanitize:
                 o = o.replace('&', '\\u0026')\
                      .replace('<', '\\u003c')\
                      .replace('>', '\\u003e')
@@ -90,8 +91,7 @@ class SanitizeEncode(GenericJSON):
             return text
 
         key_memo = {}
-        if sanitize:
-            _encoder = self._sanitize_encode(_encoder)
+        _encoder = self._sanitize_encode(_encoder, sanitize)
 
         if (_one_shot and c_make_encoder is not None
                 and self.indent is None):
@@ -128,9 +128,9 @@ class JSONRenderer(object):
     def __init__(self, **kw):
         self.encoder = SanitizeEncode(**kw)
 
-    def encode(self, obj):
+    def encode(self, obj, sanitize=None):
         if isinstance(obj, basestring):
-            return self.encoder.encode(obj)
+            return self.encoder.encode(obj, sanitize=sanitize)
         try:
             value = obj['test']
         except TypeError:
@@ -138,8 +138,8 @@ class JSONRenderer(object):
                 raise TypeError('Your Encoded object must be dict-like.')
         except:
             pass
-        return self.encoder.encode(obj)
+        return self.encoder.encode(obj, sanitize=sanitize)
 
-    def render_json(self, template, template_vars, **kw):
+    def render_json(self, template, template_vars, sanitize=None, **kw):
         """Return a JSON string representation of a Python object."""
-        return self.encode(template_vars)
+        return self.encode(template_vars, sanitize=sanitize)
