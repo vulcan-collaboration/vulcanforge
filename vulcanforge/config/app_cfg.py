@@ -23,9 +23,6 @@ import jinja2
 import pylons
 from routes import Mapper
 from tg.configuration import AppConfig, config
-from tg.render import render_json
-from webhelpers.html import literal
-import ew
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.exception import S3CreateError
 
@@ -44,8 +41,10 @@ from vulcanforge.common.util.debug import (
 from vulcanforge import resources
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.util.model import close_all_mongo_connections
+from vulcanforge.config.render.jinja import PackagePathLoader, JinjaEngine
+from vulcanforge.config.render.jsonify import JSONRenderer
+from vulcanforge.config.render.template.filters import jsonify, timesince
 from .tool_manager import ToolManager
-from .template.filters import jsonify, timesince
 from .context_manager import ContextManager
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
@@ -323,37 +322,12 @@ class ForgeConfig(AppConfig):
         self.render_functions.jinja = tg.render.render_jinja
 
     def setup_json_renderer(self):
-        self.render_functions.json = render_json
+        json_renderer = JSONRenderer(
+            allow_nan=not asbool(config.get('json.strict', False)),
+            sort_keys=asbool(config.get('json.sort_keys', False)),
+            indent=int(config['json.indent'])
+                if 'json.indent' in config else None
+        )
 
-
-class JinjaEngine(ew.TemplateEngine):
-
-    @property
-    def _environ(self):
-        return config['pylons.app_globals'].jinja2_env
-
-    def load(self, template_name):
-        try:
-            return self._environ.get_template(template_name)
-        except jinja2.TemplateNotFound:
-            raise ew.errors.TemplateNotFound, '%s not found' % template_name
-
-    def parse(self, template_text, filepath=None):
-        return self._environ.from_string(template_text)
-
-    def render(self, template, context):
-        context = self.context(context)
-        with ew.utils.push_context(ew.widget_context, render_context=context):
-            text = template.render(**context)
-            return literal(text)
-
-
-class PackagePathLoader(jinja2.BaseLoader):
-
-    def __init__(self):
-        self.fs_loader = jinja2.FileSystemLoader(['/'])
-
-    def get_source(self, environment, template):
-        package, path = template.split(':')
-        filename = pkg_resources.resource_filename(package, path)
-        return self.fs_loader.get_source(environment, filename)
+        config['pylons.app_globals'].json_renderer = json_renderer
+        self.render_functions.json = json_renderer.render_json

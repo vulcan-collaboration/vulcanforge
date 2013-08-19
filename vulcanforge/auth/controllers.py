@@ -299,7 +299,7 @@ class AuthController(BaseController):
                 redirect('.')
         return dict(kw, form_values=form_values)
 
-    @expose('json')
+    @expose()
     @require_post()
     @validate_form("user_registration_email_form", error_handler=register)
     def send_user_registration_email(self, email=None, name='', **kw):

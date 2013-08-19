@@ -935,7 +935,7 @@ class User(SOLRIndexed):
             'last_mod': h.stringify_datetime(last_mod)
         }
 
-        return simplejson.dumps(result)
+        return result
 
     def _make_workspace_reference(self, ref_id):
         from vulcanforge.artifact.model import ArtifactReference

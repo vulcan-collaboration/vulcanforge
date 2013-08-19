@@ -20,8 +20,8 @@ from .custom_middleware import (
     WidgetMiddleware,
 )
 from .ming_config import ming_replicant_configure
-from .template import patches
 from vulcanforge.auth.middleware import AuthMiddleware
+from vulcanforge.config.render.template import patches
 
 pylons.c = pylons.tmpl_context
 pylons.g = pylons.app_globals
