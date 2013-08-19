@@ -95,7 +95,7 @@
             $('#messages').notify("{{ n.text }}");
         {% endfor %}
 
-        var referenceBinReferences = {{c.user.get_workspace_references()|safe}};
+        var referenceBinReferences = {{workspace_references|safe}};
 
     $vf.init({% if session['userid'] %}'{{c.user.url()}}'{% else %} null {% endif %}, {{c.user.get_workspace_tabs()|safe}}, referenceBinReferences);
 

@@ -2,9 +2,11 @@ import logging
 import os
 import urllib
 import urlparse
+import json
 
 from bson import ObjectId
 from webob import exc
+from pylons import tmpl_context as c
 from tg import config
 from tg.decorators import expose
 
@@ -79,5 +81,6 @@ class VisualizerController(BaseController):
             query_str=urllib.urlencode(query_params, doseq=True),
             base_query=urllib.urlencode(base_query, doseq=True),
             resource_url=resource_url.replace('#', '%23'),
-            context='fullscreen'
+            context='fullscreen',
+            workspace_references=json.dumps(c.user.get_workspace_references())
         )
