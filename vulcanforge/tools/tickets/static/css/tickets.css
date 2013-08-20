@@ -45,6 +45,9 @@ th[data-sort="ticket_num"] {
 .stats-detail-table-container {
     display: inline-block;
     margin: 1em;
-    width: 256px;
     vertical-align: top;
+}
+
+.stats-detail-table-container .vf-table {
+    width: 256px;
 }
