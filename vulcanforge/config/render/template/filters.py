@@ -9,7 +9,7 @@ from pylons import app_globals as g
 
 @evalcontextfilter
 def jsonify(eval_ctx, value):
-    content = g.json_renderer.encode(value)
+    content = g.json_renderer.encode(value, sanitize=eval_ctx.autoescape)
     return Markup(content)
 
 

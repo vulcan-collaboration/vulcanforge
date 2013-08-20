@@ -61,7 +61,7 @@ class Command(command.Command):
                     self.args[0])
             log = logging.getLogger(__name__)
             log.info('Initialize command with config %r', self.args[0])
-            wsgiapp = loadapp(config_name, relative_to=here_dir)
+            self.wsgiapp = loadapp(config_name, relative_to=here_dir)
             self.setup_globals()
 
             pylons.tmpl_context.user = User.anonymous()

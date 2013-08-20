@@ -101,7 +101,6 @@ class WorkspaceTabController(RestController):
     # Create
     @expose('json')
     @validate({
-        "href": HTMLEscapeValidator(),
         "title": HTMLEscapeValidator(),
         "type": HTMLEscapeValidator(if_empty=None),
         "order": validators.Int(if_empty=0),

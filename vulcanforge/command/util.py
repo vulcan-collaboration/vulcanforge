@@ -1,5 +1,6 @@
 
 import IPython
+import tg
 
 from base import Command
 
@@ -22,11 +23,14 @@ class VulcanForgeShellCommand(Command):
         from ming.odm import session, ThreadLocalODMSession
         from datetime import datetime, timedelta
         import bson
+        pkg = tg.config['package']
         locs.update({
             'session': session,
             'ThreadLocalODMSession': ThreadLocalODMSession,
             'datetime': datetime,
             'timedelta': timedelta,
-            'bson': bson
+            'bson': bson,
+            'h': pkg.lib.helpers,
+            'M': pkg.model
         })
         IPython.embed(user_ns=locs)

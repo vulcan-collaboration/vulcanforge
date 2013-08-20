@@ -5,6 +5,7 @@ import logging
 import urllib
 import hmac
 import hashlib
+from markupsafe import Markup
 import simplejson
 import time
 import iso8601
@@ -409,7 +410,7 @@ class WorkspaceTab(BaseMappedClass):
             'user_id': str(self.user_id),
             'title': self.title,
             'type': self.type,
-            'href': self.href,
+            'href': Markup(self.href),
             'order': self.order,
             'state': self.state
         }
