@@ -14,7 +14,7 @@ from vulcanforge.common.widgets.util import onready
 from vulcanforge.resources.widgets import JSLink, CSSLink, Widget
 from vulcanforge.visualize.widgets.visualize import ThumbnailVisualizer, IFrame
 from vulcanforge.visualize.model import Visualizer
-from vulcanforge.visualize.util import render_fs_urls
+from vulcanforge.visualize.util import render_fs_urls, get_fs_items
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/form/'
@@ -111,19 +111,25 @@ class Attachment(Widget):
         return 'thumb'
 
     def display(self, value=None, **kw):
-        visualizer_links = render_fs_urls(
+        visualizer_link_items = get_fs_items(
             value.url(), dl_too=True, size=value.length)
         thumb = value.get_thumb()
         if thumb is not None:
             thumb_url = thumb.url()
         else:
             thumb_url = None
+        absolute_url = value.url(absolute=True)
+        try:
+            link_url = visualizer_link_items[0]['url']
+        except IndexError:
+            link_url = absolute_url
         return super(Attachment, self).display(
             value=value,
-            visualizer_links=visualizer_links,
+            visualizer_links=json.dumps(visualizer_link_items),
             mimetype=value.content_type,
             thumb_url=thumb_url,
-            absolute_url=value.url(absolute=True),
+            absolute_url=absolute_url,
+            link_url=link_url,
             **kw
         )
 

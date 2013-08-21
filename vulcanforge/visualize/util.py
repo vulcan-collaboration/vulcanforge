@@ -1,3 +1,4 @@
+import json
 import logging
 
 from vulcanforge.common.helpers import pretty_print_file_size
@@ -55,26 +56,34 @@ def artifact_iframe_json(artifact, visualizers=None, extra_params=None):
     return '[%s]' % ','.join(items)
 
 
-def render_fs_urls(url, visualizers=None, dl_too=False, size=None):
+def get_fs_items(url, visualizers=None, dl_too=False, size=None):
     if visualizers is None:
         visualizers = Visualizer.get_for_resource(url)
 
-    urls = []
+    fs_items = []
     for visualizer in visualizers:
         escaped_name = visualizer.name.replace('"', '\\"')
-        urls.append(
-            '{{"name": "{name}", "url": "{url}", "title": "{name}"}}'.format(
-                name=escaped_name,
-                url=get_fs_url(url, visualizer).replace('"', '\\"')
-            )
-        )
+        fs_items.append({
+            "name": escaped_name,
+            "url": get_fs_url(url, visualizer),
+            "title": escaped_name
+        })
     if dl_too:
         name = 'Download File...'
         if size is not None:
             name += ' ({})'.format(pretty_print_file_size(size))
-        urls.append('{name: "%s", url: "%s", title: "%s"}' % (
-            name, url.replace('"', '\\"'), 'Download File'))
-    return '[%s]' % ','.join(urls)
+        fs_items.append({
+            "name": name,
+            "url": url,
+            "title": name
+        })
+    return fs_items
+
+
+def render_fs_urls(url, visualizers=None, dl_too=False, size=None):
+    fs_items = get_fs_items(url, visualizers=visualizers, dl_too=dl_too,
+                            size=size)
+    return json.dumps(fs_items)
 
     #REPO_ARTIFACT_RE = re.compile(r"""
     #    /ci/(?P<commit_id>[a-z0-9]+)    # get commit object_id
