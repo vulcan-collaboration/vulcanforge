@@ -33,9 +33,10 @@
         function parseAttachmentList(){
             if ($attachmentList !== undefined && $attachmentList !== null){
                 $attachmentList.find('.attachment').each(function(i){
-                    var filename = $(this).attr('data-filename');
+                    var filename = $(this).attr('data-filename'),
+                        mimetype = $(this).attr('data-mimetype');
                     that.attachments[filename] = {
-                        is_image: $(this).find('.img-thumb').length > 0,
+                        is_image: mimetype.match(/image.*/),
                         $el: $(this)
                     };
                     that.attachments[filename].url = $(this).attr('data-url') ? $(this).attr('data-url') : null;
