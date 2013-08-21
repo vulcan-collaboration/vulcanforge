@@ -130,6 +130,7 @@ class Attachment(Widget):
             thumb_url=thumb_url,
             absolute_url=absolute_url,
             link_url=link_url,
+            extension=value.get_extension() or '',
             **kw
         )
 

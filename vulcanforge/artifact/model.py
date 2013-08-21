@@ -948,6 +948,14 @@ class BaseAttachment(File):
                 cls.from_stream(
                     filename, fp, content_type=content_type, **original_meta)]
 
+    def get_thumb_query_params(self):
+        return {
+            'filename': self.filename,
+            'is_thumb': True,
+            'app_config_id': self.app_config_id,
+            'artifact_id': self.artifact_id
+        }
+
 
 class ArtifactProcessor(object):
     """
