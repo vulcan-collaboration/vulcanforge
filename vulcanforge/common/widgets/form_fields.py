@@ -93,8 +93,8 @@ class Attachment(Widget):
     defaults = dict(
         value=None,
         name=None,
-        thumb_widget=ThumbnailVisualizer(),
         delete_url=None,
+        thumb_src=False
     )
     params = ['value']
 
@@ -113,9 +113,17 @@ class Attachment(Widget):
     def display(self, value=None, **kw):
         visualizer_links = render_fs_urls(
             value.url(), dl_too=True, size=value.length)
+        thumb = value.get_thumb()
+        if thumb is not None:
+            thumb_url = thumb.url()
+        else:
+            thumb_url = None
         return super(Attachment, self).display(
             value=value,
             visualizer_links=visualizer_links,
+            mimetype=value.content_type,
+            thumb_url=thumb_url,
+            absolute_url=value.url(absolute=True),
             **kw
         )
 

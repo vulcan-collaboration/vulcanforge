@@ -82,6 +82,21 @@ class File(MappedClass):
         for fobj in cls.query.find(spec):
             fobj.delete()
 
+    def get_thumb(self):
+        """
+        Fugly lookup because of fugly data model... THANKS ALLURA!
+        """
+        if self.is_thumb:
+            return None
+        thumb_query_params = {
+            'filename': self.filename,
+            'is_thumb': True
+        }
+        for attr_name in ('app_config_id', 'artifact_id',):
+            if hasattr(self, attr_name):
+                thumb_query_params[attr_name] = getattr(self, attr_name)
+        return self.__class__.query.get(**thumb_query_params)
+
     @property
     def _s3_headers(self):
         return {'content_type': self.content_type}

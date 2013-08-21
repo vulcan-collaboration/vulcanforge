@@ -397,6 +397,12 @@ form.fix-controls .form-controls {
     text-align: center;
 }
 
+.attachment .attachment-thumb {
+    float: left;
+    height: 2.4em;
+    margin: 0 1ex 0 0;
+}
+
 a.attachment-actions {
     display: inline-block;
 }

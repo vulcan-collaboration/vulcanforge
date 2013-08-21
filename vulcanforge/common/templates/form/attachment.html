@@ -1,15 +1,18 @@
 <div class="attachment" data-filename="{{ value.filename }}" data-url="{{ value.url(absolute=True) }}">
-    {{widget.thumb_widget.display(value=value)}}
-    {{g.icon_button_widget.display('More options', 'more-' ~ value._id, 'attachment-actions more-btn', 'ico-more_options', None)}}
-    {% if value.length %}
-    <em class="attachment-note attachment-note-size">{{ h.pretty_print_file_size(value.length) }}</em>
-    {% endif %}
-    {% if delete_url %}
-        {{g.icon_button_widget.display(
-            label='Delete attachment',
-            css='delete-attachment-button attachment-actions',
-            elementId=None,
-            icon='ico-delete',
-            href=delete_url)}}
-    {% endif %}
+    <a class="attachment-thumb-link" href="{{ absolute_url }}" data-mimetype="{{ value.mimetype }}">{% if thumb_url %}<img class="attachment-thumb" src="{{ thumb_url }}"/>{% endif %}</a>
+    <a class="attachment-link" href="{{ absolute_url }}">{{ value.filename }}</a>
+    <div class="attachment-details">
+        {{g.icon_button_widget.display('More options', 'more-' ~ value._id, 'attachment-actions more-btn', 'ico-more_options', None)}}
+        {% if value.length %}
+        <em class="attachment-note attachment-note-size">{{ h.pretty_print_file_size(value.length) }}</em>
+        {% endif %}
+        {% if delete_url %}
+            {{g.icon_button_widget.display(
+                label='Delete attachment',
+                css='delete-attachment-button attachment-actions',
+                elementId=None,
+                icon='ico-delete',
+                href=delete_url)}}
+        {% endif %}
+    </div>
 </div>
