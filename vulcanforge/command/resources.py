@@ -4,7 +4,7 @@ import shutil
 import datetime
 
 from pylons import app_globals as g
-
+from vulcanforge.common.util.filesystem import mkdir_p
 from vulcanforge.resources.manager import RECIPE_FILE
 
 from base import Command
@@ -88,6 +88,6 @@ class StageStaticResources(Command):
                 res_file_path = os.path.join(root, res_file)
                 destination_dir2 = os.path.join(destination_dir, source_tail)
                 if not os.path.exists(destination_dir2):
-                    os.makedirs(destination_dir2)
+                    mkdir_p(destination_dir2)
 
                 shutil.copy2(res_file_path, destination_dir2)

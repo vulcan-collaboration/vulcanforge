@@ -14,6 +14,7 @@ from webhelpers.html import literal
 
 import ew
 from ew.core import widget_context
+from vulcanforge.common.util.filesystem import mkdir_p
 
 from .widgets import Resource, CSSLink, JSLink, JSScript
 
@@ -51,7 +52,7 @@ class ResourceManager(ew.ResourceManager):
         self.build_dir = os.path.join(
             self.static_resources_dir, self.build_key)
         if not os.path.exists(self.build_dir):
-            os.makedirs(self.build_dir)
+            mkdir_p(self.build_dir)
 
     @property
     def resources(self):
