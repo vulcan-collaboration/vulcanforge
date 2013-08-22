@@ -383,7 +383,8 @@ class ForgeConfig(AppConfig):
             auto_reload=self.auto_reload_templates,
             autoescape=True,
             extensions=['jinja2.ext.do', 'jinja2.ext.i18n'],
-            trim_blocks=True
+            trim_blocks=True,
+            cache_size=asint(config.get('jinja.cache_size', 100))
         )
         jinja2_env.install_gettext_translations(pylons.i18n)
         jinja2_env.filters.update({
