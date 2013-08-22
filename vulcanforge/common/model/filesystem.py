@@ -163,6 +163,8 @@ class File(MappedClass):
             url = self.local_url()
             if absolute:
                 url = g.url(url)
+            if self.is_thumb:
+                url += '/thumb'
             return url
         else:
             return self.remote_url()

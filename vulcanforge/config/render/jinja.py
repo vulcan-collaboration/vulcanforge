@@ -1,3 +1,4 @@
+from jinja2.exceptions import TemplateNotFound
 import pkg_resources
 
 from webhelpers.html import literal
@@ -34,6 +35,8 @@ class PackagePathLoader(jinja2.BaseLoader):
         self.fs_loader = jinja2.FileSystemLoader(['/'])
 
     def get_source(self, environment, template):
+        if ':' not in template:
+            raise TemplateNotFound(template)
         package, path = template.split(':')
         filename = pkg_resources.resource_filename(package, path)
         return self.fs_loader.get_source(environment, filename)

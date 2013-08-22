@@ -48,6 +48,7 @@ class Application(object):
     root = None  # root controller
     api_root = None  # root rest controller
     static_dir = 'static'
+    template_dir = 'templates'
     permissions = []
     sitemap = []
     searchable = False
@@ -88,16 +89,25 @@ class Application(object):
         self.url = self.config.url()
 
     @classmethod
+    def _iter_path_spec(cls, attr):
+        for cls_ in filter(lambda _c: issubclass(_c, Application), cls.mro()):
+            path = getattr(cls_, attr, None)
+            if path and not path.startswith('/'):  # relative path
+                parent_module = '.'.join(cls_.__module__.rsplit('.', 1)[:-1])
+                path = pkg_resources.resource_filename(parent_module, path)
+            if os.path.exists(path):
+                yield path
+
+    @classmethod
     def static_directories(cls):
         folders = []
-        for cls_ in filter(lambda _c: issubclass(_c, Application), cls.mro()):
-            folder = cls_.static_dir
-            if not folder.startswith('/'):  # relative path
-                parent_module = '.'.join(cls_.__module__.rsplit('.', 1)[:-1])
-                folder = pkg_resources.resource_filename(parent_module, folder)
-            if os.path.exists(folder):
-                folders.insert(0, folder)
+        for folder in cls._iter_path_spec('static_dir'):
+            folders.insert(0, folder)
         return folders
+
+    @classmethod
+    def template_directories(cls):
+        return list(cls._iter_path_spec('template_dir'))
 
     @classmethod
     def can_create(cls, artifact):

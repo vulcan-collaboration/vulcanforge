@@ -20,6 +20,7 @@ from paste.deploy.converters import asbool, asint
 import pysolr
 import tg
 import jinja2
+from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 import pylons
 from routes import Mapper
 from tg.configuration import AppConfig, config
@@ -65,6 +66,17 @@ class ForgeConfig(AppConfig):
         'notification': ['vulcanforge:notification/static'],
         'project': ['vulcanforge:project/static'],
         'visualize': ['vulcanforge:visualize/static']
+    }
+    template_dirs = ['vulcanforge:common/templates']
+    namespaced_template_dirs = {
+        'artifact': ['vulcanforge:artifact/templates'],
+        'auth': ['vulcanforge:auth/templates'],
+        'dashboard': ['vulcanforge:dashboard/templates'],
+        'discussion': ['vulcanforge:discussion/templates'],
+        'neighborhood': ['vulcanforge:neighborhood/templates'],
+        'notification': ['vulcanforge:notification/templates'],
+        'project': ['vulcanforge:project/templates'],
+        'visualize': ['vulcanforge:visualize/templates']
     }
     vulcan_packages = ['vulcanforge']
 
@@ -304,9 +316,70 @@ class ForgeConfig(AppConfig):
                     action='routes_placeholder')
         config['routes.map'] = map
 
+    def setup_template_loader(self):
+        """Setup the template loader, responsible for finding the templates
+        on the filesystem associated with a given path.
+
+        One can override this by specifying the template_loader config
+        parameter, but do this carefully so as not to break the default
+        functionality. It may be easier to override this method instead.
+
+        The default loader uses the jinja2.loaders.ChoiceLoader cls to
+        achieve the following functionality:
+
+        if a ":" is in the path, the left side of the path is treated as a
+        package and the right as a relative path within that package to the
+        template:
+            g.jinja2_env.get_template('vulcanforge.auth:templates/login.html')
+            >> <Template 'vulcanforge.auth:templates/login.html'>
+
+        Otherwise, it will look for the given path in the directories specified
+        on self.template_dirs, which defaults to vulcanforge/common/templates
+        and the templates directory in the app.
+
+        Finally, if the first part of the path matches a tool entry point or a
+        namespace registered on self.namespaced_template_dirs, it looks for the
+        file in the directories specified in that namespace.
+
+        """
+        if config.get('template_loader'):
+            loader = import_object(config['template_loader'])
+        else:
+            loaders = [PackagePathLoader()]
+
+            fs_paths = []
+            # static directories have priority
+            for tmpl_entry in self.template_dirs:
+                module, dir_path = tmpl_entry.split(':')
+                os_folder = pkg_resources.resource_filename(module, dir_path)
+                if os.path.exists(os_folder):
+                    fs_paths.append(os_folder)
+            loaders.append(FileSystemLoader(fs_paths))
+
+            # tool directory paths
+            namespaces = {}
+            tool_manager = config['pylons.app_globals'].tool_manager
+            for tool_name, tool in tool_manager.tools.items():
+                namespaces.setdefault(tool_name, []).extend(
+                    tool['app'].template_directories())
+            # explicit namespaced directories next
+            for namespace, tmpl_dirs in self.namespaced_template_dirs.items():
+                for tmpl_entry in tmpl_dirs:
+                    module, dir_path = tmpl_entry.split(':')
+                    os_folder = pkg_resources.resource_filename(
+                        module, dir_path)
+                    if os.path.exists(os_folder):
+                        namespaces.setdefault(namespace, []).append(os_folder)
+            # create namespaced loader
+            spec = {k: FileSystemLoader(v) for k, v in namespaces.items()}
+            loaders.append(PrefixLoader(spec))
+
+            loader = ChoiceLoader(loaders)
+        return loader
+
     def setup_jinja_renderer(self):
         jinja2_env = jinja2.Environment(
-            loader=PackagePathLoader(),
+            loader=self.setup_template_loader(),
             auto_reload=self.auto_reload_templates,
             autoescape=True,
             extensions=['jinja2.ext.do', 'jinja2.ext.i18n'],

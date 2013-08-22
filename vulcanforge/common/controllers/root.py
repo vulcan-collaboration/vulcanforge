@@ -109,7 +109,7 @@ class ForgeRootController(WsgiDispatchController):
     def _cleanup_request(self):
         pass
 
-    @expose(TEMPLATE_DIR + 'front.html')
+    @expose('jinja:front.html')
     @with_trailing_slash
     def index(self, **kw):
         """Handle the front-page.

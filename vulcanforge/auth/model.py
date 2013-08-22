@@ -1096,8 +1096,7 @@ class PasswordResetToken(BaseMappedClass):
             return False
         LOG.info('Sending password reset link to %s (%s)',
                  self.user.username, self.email)
-        template = g.jinja2_env.get_template(
-            'vulcanforge.auth:templates/mail/password_reset.txt')
+        template = g.jinja2_env.get_template('auth/mail/password_reset.txt')
         text = template.render({
             'username': self.user.username,
             'url': self.reset_url(),
@@ -1160,8 +1159,7 @@ class UserRegistrationToken(BaseMappedClass):
 
     @property
     def email_text(self):
-        template = g.jinja2_env.get_template(
-            'vulcanforge.auth:templates/mail/user_registration.txt')
+        template = g.jinja2_env.get_template('auth/mail/user_registration.txt')
         base_url = self.registration_url or '/auth/register'
         return template.render({
             'url': g.url(base_url, token=self.nonce),
@@ -1201,16 +1199,6 @@ class EmailChangeToken(BaseMappedClass):
         expired = self.expiry_date < datetime.utcnow()
         return not expired and self.nonce and self.user
 
-    @property
-    def email_fp(self):
-        path = os.path.join(
-            os.path.dirname(__file__),
-            'templates',
-            'mail',
-            'email_change_reversion.txt'
-        )
-        return open(path, 'r')
-
     def reset_url(self):
         return g.url('/auth/cancel_email_modification', token=self.nonce)
 
@@ -1220,15 +1208,16 @@ class EmailChangeToken(BaseMappedClass):
             self.delete()
             return False
         LOG.info('Sending email change reversion link to %s (%s)',
-            self.user.username, self.old_email)
-        with self.email_fp as template_fp:
-            text = template_fp.read().format(
-                username=self.user.username,
-                old_email=self.old_email,
-                new_email=self.new_email,
-                url=self.reset_url(),
-                forge_name=config.get('forge_name', "Forge")
-            )
+                 self.user.username, self.old_email)
+        template = g.jinja2_env.get_template(
+            'auth/mail/email_change_reversion.txt')
+        text = template.render({
+            'username': self.user.username,
+            'old_email': self.old_email,
+            'new_email': self.new_email,
+            'url': self.reset_url(),
+            'forge_name': config.get('forge_name', "Forge")
+        })
         LOG.info('Email change email:\n%s', text)
         mail_tasks.sendmail.post(
             destinations=[self.old_email],
