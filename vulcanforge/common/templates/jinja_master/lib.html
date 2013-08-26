@@ -121,6 +121,8 @@
     <li><a href="#md_ex_moreheaders{{id}}">More Headers</a></li>
     <li><a href="#md_ex_code{{id}}">Code Highlighting</a></li>
     <li><a href="#md_ex_includes{{id}}">Includes</a></li>
+    <li><a href="#md_ex_page_tree{{id}}">Page Tree</a></li>
+    <li><a href="#md_ex_table_of_contents{{id}}">Table of Contents</a></li>
     <li><a href="#md_ex_thanks{{id}}">Thanks</a></li>
 </ul>
 
@@ -446,6 +448,21 @@ you should escape &amp;lt;unknown&amp;gt; tags
 <p>You can embed another wiki page directly:</p>
 <div class="codehilite"><pre>
 [[include ref="Sample Page"]]
+</pre></div>
+
+<h2 id="md_ex_page_tree{{id}}" class="markdownguideHeader">Page Tree <em>(only available in Wiki tools)</em></h2>
+<p>Inserts nested UL elements with links to wiki pages along a tree specified. Page heirarchy is determined by page names; e.g. - "My Topic" is the parent page of "My Topic/My Subtopic".</p>
+<p>full tree starting at wiki root:</p>
+<div class="codehilite"><pre>{PageTree}</pre></div>
+<p>full tree starting at "My Page":</p>
+<div class="codehilite"><pre>{PageTree My Page}</pre></div>
+<p>2 level tree starting at "My Page":</p>
+<div class="codehilite"><pre>{PageTree:2 My Page}</pre></div>
+
+<h2 id="md_ex_table_of_contents{{id}}" class="markdownguideHeader">Table of Contents <em>(only available in Wiki tools)</em></h2>
+<p>Creates a table of contents from the headers used in the page.</p>
+<div class="codehilite"><pre>
+{Table of Contents}
 </pre></div>
 
 <h2 id="md_ex_thanks{{id}}" class="markdownguideHeader">Thanks</h2>
