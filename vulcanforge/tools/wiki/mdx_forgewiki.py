@@ -72,7 +72,7 @@ class WikiPageTreeBlockProcessor(markdown.blockprocessors.BlockProcessor):
         new_block = ""
         for node in tree_index:
             depth = node.depth0 - root_depth
-            if tree_depth is not None and depth >= tree_depth:
+            if tree_depth is not None and depth >= tree_depth or depth < 0:
                 continue
             new_block += "{}- [{}]({})\n".format(depth * "    ", node.label,
                                                  node.url)

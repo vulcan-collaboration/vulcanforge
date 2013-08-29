@@ -31,28 +31,6 @@
             </div>
             {% endif %}
             {{widgets.attachment_list.display(value=value, extraCSS='post-attachments', context_id=attachment_context_id)}}
-            {% if g.security.has_access(value.thread, 'post') %}
-            <div class="reply_post_form hidden">
-                <div class="posts-holder reply">
-                    <div class="post reply">
-                        <div class="post-avatar">
-                            {{g.avatar.display(user = c.user, size=32)}}
-                        </div>
-                        <div class="post-body">
-                            {{widgets.edit_post.display(
-                                submit_text='Post reply',
-                                action=value.absolute_url()+'reply',
-                                value=dict(
-                                    text='',
-                                    subject=value.reply_subject()
-                                ),
-                                embedded=True
-                            )}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
         {% if c.user != c.user.anonymous() %}
         <ul class="post-options">

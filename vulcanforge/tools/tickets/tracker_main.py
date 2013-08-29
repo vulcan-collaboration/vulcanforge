@@ -798,10 +798,14 @@ class RootController(BaseTrackerController):
         if arg.isdigit():
             return TicketController(arg), remainder
         elif remainder:
-            milestone = request.url.split('milestone/')[1].split('/')[0]
-            controller = MilestoneController(
-                self, arg, urllib.unquote(milestone))
-            return controller, remainder[1:]
+            for field in c.app.globals.milestone_fields:
+                if arg != field['name'][1:]:
+                    continue
+                milestone = request.url.split(arg+'/', 1)[1].split('/')[0]
+                controller = MilestoneController(self, arg,
+                                                 urllib.unquote(milestone))
+                return controller, remainder[1:]
+            raise exc.HTTPNotFound
         else:
             raise exc.HTTPNotFound
 
@@ -1561,7 +1565,8 @@ class MilestoneController(BaseTrackerController):
 
     def __init__(self, root, field, milestone):
         for fld in c.app.globals.milestone_fields:
-            if fld.name[1:] == field: break
+            if fld.name[1:] == field:
+                break
         else:
             raise exc.HTTPNotFound()
         for m in fld.milestones:
@@ -1572,7 +1577,7 @@ class MilestoneController(BaseTrackerController):
         self.root = root
         self.field = fld
         self.milestone = m
-        self.query = 'milestone_s:"{}"'.format(m.name)
+        self.query = '{}_s:"{}"'.format(fld.name, m.name)
         self.mongo_query = {'custom_fields.{}'.format(fld.name): m.name}
 
     def _before(self, *args, **kwargs):
