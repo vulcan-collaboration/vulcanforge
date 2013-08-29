@@ -26,6 +26,7 @@ from vulcanforge.artifact.model import (
 )
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACE, ALL_PERMISSIONS, DENY_ALL
+from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.discussion.model import Thread
 from vulcanforge.notification.model import Notification
 from vulcanforge.project.model import ProjectRole
@@ -378,29 +379,9 @@ class Ticket(VersionedArtifact):
 
     @classmethod
     def get_label_info(cls):
-        ## this wont work and im not sure why
-        #js = """function() {
-        #map = function() {
-        #    this.labels.forEach( function(l) {
-        #        emit( {label:l}, {count:1} );
-        #    } );
-        #};
-        #reduce = function(key, values) {
-        #    var count=0;
-        #    values.forEach( function(v) {
-        #        count += v['count'];
-        #    } );
-        #    return {count:count};
-        #};
-        #mr = db.%s.mapReduce(map, reduce, { out : { inline : 1 } } );
-        #return db[mr.result].find();
-        #}""" % cls.__mongometa__.name
-        # so we use the simpler
-        js = "db.%s.distinct('labels', {app_config_id:ObjectId(\"%s\")})" % (
-            cls.__mongometa__.name,
-            c.app.config._id
-            )
-        output = cls.query.session.impl.db.eval(js)
+        db, coll = pymongo_db_collection(cls)
+        cur = coll.find({"app_config_id": c.app.config._id})
+        output = filter(None, cur.distinct('labels'))
         return output
 
     @property
