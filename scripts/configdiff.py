@@ -24,7 +24,7 @@ OPT_PARSER.add_option('-o', '--outfile',
                       help="Write output to this file if --write is true. "
                            "Defaults to overwrite destination file.")
 OPT_PARSER.add_option('-s', '--skip',
-                      action="append", dest="skiplist",
+                      action="append", dest="skiplist", default=[],
                       help="Skip options by name. May be specified multiple"
                            "times.")
 
@@ -42,6 +42,7 @@ def _raw_input_as_bool(prompt=None):
         return input_val.lower()[0] in 'ty'
     except IndexError:
         return False
+
 
 if __name__ == "__main__":
     parsed_args = OPT_PARSER.parse_args()
