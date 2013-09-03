@@ -697,7 +697,7 @@ class User(SOLRIndexed):
             icon_url = '/u/' + self.username.replace('_', '-') + '/user_icon'
         elif self.preferences.email_address:
             icon_url = g.gravatar(self.preferences.email_address,
-                    default="identicon")
+                                  default="identicon")
         else:
             icon_url = g.gravatar(
                 "{}@vulcanforge.org".format(self.username),
@@ -981,7 +981,8 @@ class User(SOLRIndexed):
             "expertise": self.expertise,
             "skypeName": self.skype_name,
             "userSince": h.ago_ts(self.registration_time),
-            "projects": [p.shortname for p in self.my_projects() if p.is_real()]
+            "projects": [p.shortname for p in self.my_projects()
+                         if p.is_real()]
         }
 
     def delete_account(self):
