@@ -46,6 +46,12 @@ table th, table td, table caption {
     background: none;
     text-align: center;
 }
+.vf-table.vf-table-spacious td,
+.vf-table.vf-table-spacious th,
+.vf-table.vf-table-spacious thead td,
+.vf-table.vf-table-spacious thead th {
+    padding: 1em;
+}
 .vf-table thead {
     background: rgba(0,0,0,0.125);
 }
@@ -66,6 +72,10 @@ table th, table td, table caption {
 }
 .vf-table tbody tr.no-hover {
   background-color: transparent;
+}
+
+.vf-table .vf-table tbody tr:hover {
+    background: rgba(255,255,255,0.4);
 }
 
 
