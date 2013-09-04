@@ -444,6 +444,7 @@
                                     label: label,
                                     entry: entry
                                 });
+                                return false;
                         });
                     }
                     $('<td/>').

@@ -66,7 +66,7 @@ class Command(command.Command):
 
             pylons.tmpl_context.user = User.anonymous()
         else:
-            log = logging.getLogger('allura.command')
+            log = logging.getLogger('vulcanforge.command')
 
     def setup_globals(self):
         self.registry.prepare()

@@ -1,5 +1,6 @@
 .vfStatsWidget {
     margin: 2rem 1rem;
+    min-height: 300px;
 }
 
 .vfStatsWidgetTooltip {

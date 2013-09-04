@@ -10,7 +10,6 @@ from vulcanforge.common.validators import EmailValidator
 from vulcanforge.auth.model import User
 
 
-
 class UsernameFormatValidator(fev.UnicodeString):
     min = 3
     max = 32
@@ -19,15 +18,17 @@ class UsernameFormatValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(msg, value, state)
 
-        if not value == value.lower():
-            raise invalid("Usernames must be all lowercase!")
-        if not re.match(r'^[a-z]', value):
-            raise invalid("Usernames must begin with a letter!")
-        if value == 'user':
-            raise invalid("Invalid username")
-        if not re.match(re_path_portion, value):
-            raise invalid("Usernames may only contain letters, numbers, "
-                          "and dashes (-)!")
+        value = super(UsernameFormatValidator, self).to_python(value, state)
+        if value:
+            if not value == value.lower():
+                raise invalid("Usernames must be all lowercase!")
+            if not re.match(r'^[a-z]', value):
+                raise invalid("Usernames must begin with a letter!")
+            if value == 'user':
+                raise invalid("Invalid username")
+            if not re.match(re_path_portion, value):
+                raise invalid("Usernames may only contain letters, numbers, "
+                              "and dashes (-)!")
         return value
 
 

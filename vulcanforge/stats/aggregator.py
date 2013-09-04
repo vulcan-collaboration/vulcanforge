@@ -46,8 +46,19 @@ class StatsQuerySchema(Schema):
 
 class BaseStatsAggregator(object):
     """
-    Object for outputting statistics for artifacts with timestamps and
-    project context
+    Utility object for generating and executing mongo aggregation queries for
+    collections with timestamps and/or project context
+
+    :param date_start   datetime.datetime   filter parameter
+    :param date_end     datetime.datetime   filter parameter
+    :param user         str|ObjectId        filter parameter
+    :param project      str|ObjectId        filter parameter
+    :param extra_query  dict                additional filter parameters
+    :param bins         list                aggregation bins
+
+    usage:
+    aggregator = BaseStatsAggregator()
+    aggregator.run()
 
     """
     project_field = None
@@ -149,7 +160,7 @@ class BaseStatsAggregator(object):
             if self.label in self.group_spec['_id']:
                 lbl = '$_id.' + self.label
             else:
-                lbl = self.label
+                lbl = '$' + self.label
             d = {
                 'label': lbl
             }

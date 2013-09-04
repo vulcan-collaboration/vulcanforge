@@ -89,6 +89,7 @@ def get_neighborhoods_by_ids(ids):
         '_id': {'$in': list(ids)}
     })
 
+
 def get_projects_by_ids(ids):
     from vulcanforge.project.model import Project
     return Project.query.find({
@@ -122,7 +123,6 @@ def encode_keys(d):
 
     """
     return dict((k.encode('utf-8'), v) for k, v in d.iteritems())
-
 
 
 def ago(start_time, round=True):

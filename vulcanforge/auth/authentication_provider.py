@@ -22,7 +22,7 @@ from vulcanforge.auth.model import User, AuthGlobals
 from vulcanforge.auth.tasks import (
     register_ldap,
     upload_ssh_ldap
-    )
+)
 from vulcanforge.auth.exceptions import PasswordAlreadyUsedError
 
 LOG = logging.getLogger(__name__)

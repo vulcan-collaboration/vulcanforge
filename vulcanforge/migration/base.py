@@ -36,7 +36,7 @@ class BaseMigration(object):
         """Appends the message to the log objects output array"""
         self.miglog.output.append(msg)
         if loglevel:
-            logfunc = getattr(self.log, loglevel, None)
+            logfunc = getattr(self.log, loglevel.lower(), None)
             if logfunc:
                 logfunc(msg)
 

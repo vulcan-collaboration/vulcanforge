@@ -119,13 +119,14 @@ class Visualizer(MappedClass):
     def __init__(self, extensions=['*'], **kwargs):
         super(Visualizer, self).__init__(extensions=extensions, **kwargs)
 
-    def guess_type(self, name):
+    @classmethod
+    def guess_type(cls, name):
         """Guess the mime type and encoding of a given filename"""
         content_type, encoding = mimetypes.guess_type(name)
         if content_type is None or not content_type.startswith('text/'):
             fn, ext = os.path.splitext(name)
             ext = ext or fn
-            if ext in self._additional_text_extensions:
+            if ext in cls._additional_text_extensions:
                 content_type, encoding = 'text/plain', None
             if content_type is None:
                 content_type, encoding = 'application/octet-stream', None
@@ -253,7 +254,7 @@ class Visualizer(MappedClass):
             extensions.append(ext + remainder)
             remainder = ext + remainder
 
-        # see if ext is cached (CHANGE IF USING MORE THAN EXTENSION)
+        # see if ext is cached
         if cache and ext in cls.cache:
             return cls.cache.accessitem(ext)
 
@@ -277,8 +278,8 @@ class Visualizer(MappedClass):
             # couldnt determine mime type, see if we can match an explicit
             # attachment (no * allowed)
             visualizers = [
-            v for v in results
-            if any(ext in v.extensions for ext in extensions)
+                v for v in results
+                if any(ext in v.extensions for ext in extensions)
             ]
         else:
             # match mimetype
