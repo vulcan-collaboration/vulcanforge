@@ -48,6 +48,8 @@ class ProjectFile(File):
     category = FieldProperty(str)
     caption = FieldProperty(str)
 
+    THUMB_URL_POSTFIX = ''
+
     @property
     def project(self):
         return Project.query.get(_id=self.project_id)
@@ -387,10 +389,6 @@ class Project(SOLRIndexed):
 
     def best_download_url(self):
         return None
-
-    def get_screenshots(self):
-        return ProjectFile.query.find(dict(
-            project_id=self._id, category='screenshot')).all()
 
     @property
     def icon(self):

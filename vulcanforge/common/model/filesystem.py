@@ -44,6 +44,8 @@ class File(MappedClass):
 
     artifact = None  # hack cuz of the way the s3 stuff is set up
 
+    THUMB_URL_POSTFIX = '/thumb'
+
     def __init__(self, **kw):
         super(File, self).__init__(**kw)
         if self.content_type is None:
@@ -163,8 +165,8 @@ class File(MappedClass):
             url = self.local_url()
             if absolute:
                 url = g.url(url)
-            if self.is_thumb:
-                url += '/thumb'
+            if self.is_thumb and self.THUMB_URL_POSTFIX:
+                url += self.THUMB_URL_POSTFIX
             return url
         else:
             return self.remote_url()
