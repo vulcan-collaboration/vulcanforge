@@ -512,7 +512,7 @@ class User(SOLRIndexed):
             'username': self.username,
             'display_name': self.display_name,
             'url': self.url(),
-            'icon_url': self.icon_url(),
+            'icon_url': Markup(self.icon_url()),
             'public': self.public
         }
 
