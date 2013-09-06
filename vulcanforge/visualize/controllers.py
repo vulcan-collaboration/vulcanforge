@@ -5,14 +5,19 @@ import urlparse
 import json
 
 from bson import ObjectId
+from bson.errors import InvalidId
+from formencode import validators
 from webob import exc
 from pylons import tmpl_context as c
 from tg import config
-from tg.decorators import expose
+from tg.decorators import expose, validate
 
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.visualize.model import Visualizer
-from vulcanforge.visualize.widgets.visualize import ContentVisualizer
+from vulcanforge.visualize.widgets.visualize import (
+    ContentVisualizer,
+    UrlEmbedVisualizer
+)
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
@@ -20,10 +25,36 @@ TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
 
 class VisualizerRootController(BaseController):
 
+    class Widgets(BaseController.Widgets):
+        render_visualizers = UrlEmbedVisualizer()
+
+    @expose(TEMPLATE_DIR + 'render_resource.html')
+    @validate({
+        "height": validators.Int()
+    })
+    def render_resource(self, resource_url, iframe_query=None, height=None,
+                        **kw):
+        extra_params = {}
+        if iframe_query:
+            extra_params.update(
+                dict(urlparse.parse_qsl(urllib.unquote(iframe_query)))
+            )
+        return {
+            "widget": self.Widgets.render_visualizers,
+            "resource_url": resource_url,
+            "extra_params": extra_params,
+            "height": height
+        }
+
     @expose()
     def _lookup(self, key, *remainder):
+        try:
+            vis_id = ObjectId(key)
+        except InvalidId:
+            raise exc.HTTPNotFound
+
         # try to find a matching id
-        visualizer = Visualizer.query.get(_id=ObjectId(key))
+        visualizer = Visualizer.query.get(_id=vis_id)
         # try to find a matching mime-type
         if visualizer is None:  # pragma no cover
             visualizer = Visualizer.query.get({
