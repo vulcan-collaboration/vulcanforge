@@ -479,6 +479,7 @@ class User(SOLRIndexed):
         email_format=S.String(if_missing='both'),
         autosubscribe=S.Bool(if_missing=True),
         message_emails=S.Bool(if_missing=True),
+        login_landing_url=S.String()
     ))
 
     user_fields = FieldProperty({str: None})
@@ -705,8 +706,11 @@ class User(SOLRIndexed):
         return icon_url
 
     def landing_url(self):
-        return config.get('login_landing_url_%s' % self.username)\
-            or config.get('login_landing_url', '/')
+        landing_url = self.get_pref('login_landing_url')
+        if not landing_url:
+            landing_url = config.get(
+                'login_landing_url', '/dashboard/activity_feed/')
+        return landing_url
 
     def registration_neighborhood(self):
         from vulcanforge.neighborhood.model import Neighborhood

@@ -80,8 +80,6 @@ class ForgeAppGlobals(object):
         self.site_issues_url = config.get("site_issues_url",
                                           "/projects/forgeadmin/issues/")
         self.site_issues_label = config.get("site_issues_label", "Help Desk")
-        self.site_faq_url = config.get("site_faq_url",
-                                       "/projects/forgeadmin/help/Home")
         self.home_url = config.get("home_url", "/")
         self.browse_home = config.get("browse_home", "/")
         self.show_register_on_login = asbool(config.get(

@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from paste.deploy.converters import asbool
 import tg
-from tg import config
 import ew as ew_core
 from ew.core import validator
 import ew.jinja2_ew as ew
@@ -74,16 +73,6 @@ class UserRegistrationEmailForm(ForgeForm):
                 or not 'email' in value):
             raise Invalid('Missing Value', value, state)
 
-        if asbool(config.get('is_itar', 'false')):
-            if not value.get("verify_citizen"):
-                raise Invalid("You must be a U.S. person to participate",
-                    value, state)
-            if not value.get("itar_agree"):
-                raise Invalid(
-                    ("You must certify that you understand that there may be "
-                     "a potential to come into contact with ITAR controlled "
-                     "data"),
-                    value, state)
         ea = EmailAddress.by_address(value['email'], confirmed=True)
         if ea:
             value.pop('recaptcha', None)
