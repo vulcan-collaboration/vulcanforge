@@ -568,7 +568,9 @@
 
                 imgE.load(function() {
                     trace( 'img loaded - redrawing');
-                    config.infoTriggerE.qtip('reposition');
+                    if (config.infoTriggerE) {
+                        config.infoTriggerE.qtip('reposition');
+                    }
                 });
 
                 imgE.attr('src', data.preview);
