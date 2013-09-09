@@ -249,6 +249,6 @@
         zIndex: 999,
         centered: false,
         modalCSS: {top: '40px'},
-        overlayCSS: {background: 'black', opacity: .3}
+        overlayCSS: {background: 'black', opacity: .7}
     }
 })(jQuery);
