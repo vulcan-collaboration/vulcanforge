@@ -124,7 +124,17 @@ blockquote {
 
 
 
+ul ul {
+    list-style-type: disc;
+}
 
+li > ul {
+    list-style-type: circle;
+}
+
+li > ul > li > ul {
+    list-style-type: square;
+}
 
 
 

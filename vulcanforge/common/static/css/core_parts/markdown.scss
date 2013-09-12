@@ -56,10 +56,8 @@
     ol, ul {
         padding-left: 2.4rem;
     }
-    ol ol,
-    ol ul,
-    ul ol,
-    ul ul {
+    li > ol,
+    li > ul {
         margin: 0;
         padding-left: 1.2rem;
     }
@@ -76,6 +74,7 @@
         overflow: auto;
         border: none;
         padding: 0 1.2rem;
+        margin: 0 0 0 1.2rem;
         background: #f0f0f0;
     }
 
@@ -113,7 +112,7 @@
             padding: 0;
             list-style: none;
         }
-        ul ul {
+        li > ul {
             padding-left: 1rem;
         }
     }
@@ -124,6 +123,10 @@
     }
     .toclink {
         color: inherit;
+    }
+
+    img {
+        max-width: 100%;
     }
 }
 
