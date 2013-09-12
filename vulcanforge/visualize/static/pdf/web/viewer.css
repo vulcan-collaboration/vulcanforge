@@ -445,15 +445,21 @@ html[dir='ltr'] .doorHangerRight:before {
   background-color: rgb(255, 137, 153);
 }
 
-html[dir='ltr'] #toolbarViewerLeft {
-  margin-left: -1px;
+#toolbarViewerLeft {
   min-width: 400px;
 }
-html[dir='rtl'] #toolbarViewerRight {
+
+html[dir='ltr'] #toolbarViewerLeft {
   margin-left: -1px;
+}
+
+#toolbarViewerRight {
   min-width: 120px;
 }
 
+html[dir='rtl'] #toolbarViewerRight {
+  margin-left: -1px;
+}
 
 html[dir='ltr'] #toolbarViewerLeft,
 html[dir='rtl'] #toolbarViewerRight {
