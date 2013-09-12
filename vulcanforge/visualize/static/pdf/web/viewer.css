@@ -451,6 +451,7 @@ html[dir='ltr'] #toolbarViewerLeft {
 }
 html[dir='rtl'] #toolbarViewerRight {
   margin-left: -1px;
+  min-width: 120px;
 }
 
 
