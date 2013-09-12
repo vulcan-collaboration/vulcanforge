@@ -73,6 +73,10 @@ class WSGIAJAXException(WSGIHTTPException):
                 start_response)
 
 
+class AJAXBadRequest(WSGIAJAXException, exc.HTTPBadRequest):
+    pass
+
+
 class AJAXUnauthorized(WSGIAJAXException, exc.HTTPUnauthorized):
     pass
 
