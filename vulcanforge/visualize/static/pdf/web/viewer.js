@@ -3809,7 +3809,7 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
 
   var params = PDFView.parseQueryString(document.location.search.substring(1));
   var file = params.resource_url || document.location.pathname;
-  file = encodeURI(decodeURI(file));
+  file = encodeURI(decodeURI(file)).replace(/#/, "%23");
 
   var fileInput = document.createElement('input');
   fileInput.id = 'fileInput';
