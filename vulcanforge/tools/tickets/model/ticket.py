@@ -283,6 +283,7 @@ class Ticket(VersionedArtifact):
     type_s = 'Ticket'
     _id = FieldProperty(schema.ObjectId)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
+    closed_date = FieldProperty(datetime, if_missing=None)
 
     super_id = FieldProperty(schema.ObjectId, if_missing=None)
     sub_ids = FieldProperty([schema.ObjectId], if_missing=[])
@@ -337,6 +338,7 @@ class Ticket(VersionedArtifact):
             assigned_to_name_s=assigned_to_name_s,
             last_updated_dt=self.mod_date,
             created_date_dt=self.created_date,
+            closed_date_dt=self.closed_date,
             text_objects=[
                 self.ticket_num,
                 self.summary,
@@ -469,6 +471,10 @@ class Ticket(VersionedArtifact):
     private = property(_get_private, _set_private)
 
     def commit(self):
+        if self.is_open():
+            self.closed_date = None
+        elif self.closed_date is None:
+            self.closed_date = datetime.utcnow()
         VersionedArtifact.commit(self)
         if self.version > 1:
             hist = TicketHistory.query.get(
@@ -725,6 +731,7 @@ class Ticket(VersionedArtifact):
         return dict(
             _id=str(self._id),
             created_date=self.created_date,
+            closed_date=self.closed_date,
             mod_date=self.mod_date,
             super_id=str(self.super_id),
             sub_ids=[str(id) for id in self.sub_ids],
@@ -787,7 +794,9 @@ class Ticket(VersionedArtifact):
                 dict(name='assigned_to', sort_name='assigned_to_name_s',
                      label=c.app.globals.assigned_to_label, active=True),
                 dict(name='last_updated', sort_name='last_updated',
-                     label='Last Updated', active=True)
+                     label='Last Updated', active=True),
+                {'name': 'closed_date', 'sort_name': 'closed_date_dt',
+                 'label': 'Date Closed', 'active': True}
             ]
             for field in sortable_custom_fields:
                 columns.append(
@@ -873,7 +882,9 @@ class Ticket(VersionedArtifact):
                 {'name': 'assigned_to', 'sort_name': 'assigned_to_name_s',
                  'label': c.app.globals.assigned_to_label, 'active': True},
                 {'name': 'last_updated', 'sort_name': 'last_updated_dt',
-                 'label': 'Last Updated', 'active': True}
+                 'label': 'Last Updated', 'active': True},
+                {'name': 'closed_date', 'sort_name': 'closed_date_dt',
+                 'label': 'Date Closed', 'active': True}
             ]
             for field in sortable_custom_fields:
                 columns.append(dict(name=field['name'],

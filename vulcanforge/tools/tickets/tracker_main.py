@@ -548,6 +548,7 @@ class TrackerSearchController(BaseController):
             ('status_s', 'Status'),
             ('open_b', 'Open'),
             ('last_updated_dt', 'Last Updated'),
+            ('closed_date_dt', 'Date Closed'),
             ('assigned_to_s_mv', 'Assigned To'),
             ('reported_by_s', 'Reported By')
         ] + [
