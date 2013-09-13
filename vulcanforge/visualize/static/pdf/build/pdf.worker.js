@@ -3125,9 +3125,8 @@ var NetworkManager = (function NetworkManagerClosure() {
         xhr: xhr
       };
  
-      xhr.withCredentials = true;
-
       xhr.open('GET', this.url);
+      xhr.withCredentials = true;
       for (var property in this.httpHeaders) {
         var value = this.httpHeaders[property];
         if (typeof value === 'undefined') {
