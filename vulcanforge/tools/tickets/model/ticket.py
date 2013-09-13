@@ -115,7 +115,7 @@ class Globals(MappedClass):
 
     @property
     def milestone_fields(self):
-        return [fld for fld in self.custom_fields \
+        return [fld for fld in self.custom_fields
                 if fld.get('type') == 'milestone']
 
     def get_milestones_between(self, date_start, date_end):
@@ -135,9 +135,10 @@ class Globals(MappedClass):
         return milestones
 
     def get_milestone_counts(self, **kw):
+        fields = {'{}_s'.format(f.name): f.name for f in self.milestone_fields}
         params = {
             "facet": "on",
-            "facet.field": "_milestone_s",
+            "facet.field": fields.keys(),
             "rows": 0
         }
         params.update(kw)
@@ -147,11 +148,12 @@ class Globals(MappedClass):
             'is_history_b:False'
         ))
         m_result = g.search(q, **params)
-        milestone_counts = {}
+        milestone_counts = {f: {} for f in fields.values()}
         if m_result is not None:
-            res_iter = iter(m_result.facets['facet_fields']['_milestone_s'])
-            for milestone, count in itertools.izip(*[res_iter] * 2):
-                milestone_counts[milestone] = count
+            for name, facets in m_result.facets['facet_fields'].items():
+                res_iter = iter(facets)
+                for milestone, count in itertools.izip(*[res_iter] * 2):
+                    milestone_counts[fields[name]][milestone] = count
         return milestone_counts
 
     @LazyProperty

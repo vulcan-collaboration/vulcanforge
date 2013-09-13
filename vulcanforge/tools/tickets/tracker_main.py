@@ -215,13 +215,14 @@ class ForgeTrackerApp(Application):
                     dt = datetime.strptime(m['due_date'], '%m/%d/%Y')
                 else:
                     dt = datetime.min
+                count = milestone_counts.get(fld.name, {}).get(m.name, 0)
                 sub_milestones.append((
                     dt,
                     SitemapEntry(
                         h.truncate(m.name, 72),
                         self.url + fld.name[1:] + '/' + m.name + '/',
                         className='nav_child',
-                        small=str(milestone_counts.get(m.name, 0)))
+                        small=str(count))
                 ))
             milestones.extend([
                 m[1] for m in sorted(sub_milestones, key=lambda sm: sm[0])
