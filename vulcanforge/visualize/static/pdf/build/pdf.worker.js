@@ -21,7 +21,7 @@ if (typeof PDFJS === 'undefined') {
 }
 
 PDFJS.version = '0.8.1';
-PDFJS.build = 'fatal: Not a git repository (or any of the parent directories): .git';
+PDFJS.build = 'VehicleFORGE Visualizer Build 2.0 (PDF.js 0.8.1)';
 
 (function pdfjsWrapper() {
   // Use strict in our context only - users might not want it
