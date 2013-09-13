@@ -3808,7 +3808,12 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
   PDFView.initialize();
 
   var params = PDFView.parseQueryString(document.location.search.substring(1));
-  var file = encodeURI(params.resource_url || document.location.pathname);
+  var file = params.resource_url || document.location.pathname;
+  log('Raw PDF URI: ' + file);
+  file = decodeURI(file);
+  log('Decoded PDF URI: ' + file);
+  file = encodeURI(file);
+  log('Encoded PDF URI: ' + file);
 
   var fileInput = document.createElement('input');
   fileInput.id = 'fileInput';
