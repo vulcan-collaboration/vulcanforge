@@ -3124,6 +3124,8 @@ var NetworkManager = (function NetworkManagerClosure() {
       var pendingRequest = this.pendingRequests[xhrId] = {
         xhr: xhr
       };
+ 
+      xhr.withCredentials = true;
 
       xhr.open('GET', this.url);
       for (var property in this.httpHeaders) {
