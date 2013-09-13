@@ -49,7 +49,6 @@ var FindStates = {
 
 PDFJS.imageResourcesPath = './images/';
 //PDFJS.workerSrc = '../build/pdf.worker.js';
-PDFJS.disableWorker = true;
 
 var mozL10n = document.mozL10n || document.webL10n;
 
