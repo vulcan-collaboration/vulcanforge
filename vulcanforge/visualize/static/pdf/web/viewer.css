@@ -860,6 +860,10 @@ html[dir="rtl"] .secondaryToolbarButton.print::before {
   right: 3px;
 }
 
+#openFile {
+  display: none !important;
+}
+
 .toolbarButton.openFile::before,
 .secondaryToolbarButton.openFile::before {
   display: none !important;
