@@ -181,10 +181,10 @@
         $vf.logged_in_as = "{{c.user.username}}";
         {% for n in h.pop_user_notifications() %}
             $('#messages').notify("{{ n.text }}");
-            {% endfor %}
-            referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
+        {% endfor %}
+        referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
         workspaceTabs = {{c.user.workspace_tabs | jsonify}};
-    userURL = '{{c.user.url()}}';
+        userURL = '{{c.user.url()}}';
     {% else %}
     $vf.logged_in_as = null;
     {% endif %}
