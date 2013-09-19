@@ -31,6 +31,22 @@ class UserRegistrationEmailForm(ForgeForm):
     style = 'wide'
 
     def __init__(self, affiliate=False, ignore_key_missing=False, **kwargs):
+        self.fields = []
+        self.affiliate = affiliate
+        if self.affiliate:
+            name = tg.config.get('forge_name', 'this site')
+            err_msg = "Please specify your affiliation with {}".format(name)
+            self.fields.append(
+                ew.TextArea(
+                    label="Affiliation with {}".format(name),
+                    name="affiliation",
+                    min=2,
+                    max=255,
+                    messages={'empty': err_msg, 'missing': err_msg},
+                    wide=True
+                )
+            )
+
         self.fields = [
             ew.TextField(
                 label="Name",

@@ -1,6 +1,6 @@
 Hello {{name}},
 
-Welcome{% if forge_name %}to {{forge_name}}{% endif %}.  Thank you for asking to register with our site.  In order for you to complete your registration you must click on the following link:
+Welcome{% if forge_name %} to {{forge_name}}{% endif %}.  Thank you for asking to register with our site.  In order for you to complete your registration you must click on the following link:
 
 {{url}}
 

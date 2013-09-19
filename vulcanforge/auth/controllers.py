@@ -12,7 +12,7 @@ from formencode import validators
 from formencode.api import Invalid
 from webob import exc as wexc, exc
 from pylons import tmpl_context as c, app_globals as g
-from tg import expose, session, flash, redirect, validate, config, request
+from tg import expose, session, flash, redirect, validate, config, request, override_template
 import tg
 from tg.decorators import with_trailing_slash, without_trailing_slash
 
@@ -21,16 +21,6 @@ from vulcanforge.auth.exceptions import PasswordAlreadyUsedError
 from vulcanforge.auth.oauth.forms import OAuthRevocationForm
 from vulcanforge.auth.oauth.model import OAuthAccessToken
 from vulcanforge.auth.validators import UsernameFormatValidator
-from vulcanforge.common.controllers import BaseController
-from vulcanforge.common.controllers.decorators import (
-    require_post,
-    require_anonymous,
-    validate_form,
-    vardec
-)
-from vulcanforge.common.types import SitemapEntry
-from vulcanforge.common.util import get_client_ip, cryptographic_nonce
-from vulcanforge.common.validators import NullValidator
 from vulcanforge.auth.model import (
     EmailAddress,
     PasswordResetToken,
@@ -48,13 +38,24 @@ from vulcanforge.auth.forms import (
     PasswordResetEmailForm,
     PasswordResetForm
 )
+from vulcanforge.common.controllers import BaseController
+from vulcanforge.common.controllers.decorators import (
+    require_post,
+    require_anonymous,
+    validate_form,
+    vardec
+)
+from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.util import get_client_ip, cryptographic_nonce
 from vulcanforge.common.widgets.forms import PasswordChangeForm, UploadKeyForm
+from vulcanforge.config.custom_middleware import VisibilityModeMiddleware
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.model import Mailbox
 from vulcanforge.notification.tasks import sendmail
 from vulcanforge.notification.util import gen_message_id
 from vulcanforge.project.model import Project, AppConfig
 from vulcanforge.project.exceptions import NoSuchProjectError
+from vulcanforge.tools.admin.model import RegistrationRequest
 
 
 LOG = logging.getLogger(__name__)
@@ -74,14 +75,17 @@ OID_PROVIDERS = [
     ('AOL', 'http://openid.aol.com/${username}/')
 ]
 TEMPLATE_DIR = 'jinja:vulcanforge:auth/templates/'
+REGISTRATION_ACTION = '/auth/send_user_registration_email'
 
 
-class AuthController(BaseController):
+class _AuthController(BaseController):
+
 
     class Forms(BaseController.Forms):
         login_form = LoginForm()
         user_registration_email_form = UserRegistrationEmailForm(
-            action='/auth/send_user_registration_email')
+            affiliate=False,
+            action=REGISTRATION_ACTION)
         user_registration_form = UserRegistrationForm(
             action='/auth/do_user_registration')
         password_reset_email_form = PasswordResetEmailForm(
@@ -95,7 +99,7 @@ class AuthController(BaseController):
     @expose(TEMPLATE_DIR + 'login.html')
     @require_anonymous
     @with_trailing_slash
-    def index(self, _msg='', **kwargs):
+    def index(self, **kwargs):
         msgClass = ''
         orig_request = request.environ.get('pylons.original_request', None)
         if 'return_to' in kwargs:
@@ -106,9 +110,12 @@ class AuthController(BaseController):
             return_to = urlsplit(request.referer).path
         else:
             return_to = '/'
+        if config.get('login_template'):
+            override_template(self.index, config.get('login_template'))
+
         c.form = self.Forms.login_form
         return {
-            'msg': _msg,
+            'msg': '',
             'msgClass': msgClass,
             'oid_providers': OID_PROVIDERS,
             'return_to': return_to,
@@ -122,7 +129,7 @@ class AuthController(BaseController):
     def login(self, *args, **kwargs):
         c.form = self.Forms.login_form
         return {
-            'autocomplet': not g.production_mode
+            'autocomplete': not g.production_mode
         }
 
     @expose()
@@ -426,6 +433,60 @@ class AuthController(BaseController):
 
         return dict(available=True,
                     status="The name `{}` is available.".format(username))
+
+
+class _ModeratedAuthController(_AuthController):
+    """
+    Auth controller override for moderated registration situations
+
+    """
+    class Forms(_AuthController.Forms):
+        user_registration_email_form = UserRegistrationEmailForm(
+            affiliate=True,
+            action=REGISTRATION_ACTION)
+
+    @expose(TEMPLATE_DIR + 'login_cool.html')
+    @require_anonymous
+    @with_trailing_slash
+    def index(self, **kwargs):
+        result = super(_ModeratedAuthController, self).index(**kwargs)
+        result["msg"] = "Use your VF Access ID to sign in."
+        return result
+
+    @expose(TEMPLATE_DIR + 'registration.html')
+    @require_anonymous
+    @with_trailing_slash
+    def register(self, **kw):
+        """This is necessary because the error_handler argument of tg.validate
+        will not allow accessing subclass attributes.
+
+        TODO: fix this...somehow...
+        """
+        return super(_ModeratedAuthController, self).register(**kw)
+
+    @expose()
+    @require_post()
+    @validate_form("user_registration_email_form", error_handler=register)
+    def send_user_registration_email(self, email=None, name='', **kw):
+        with g.context_manager.push(g.site_admin_project, 'admin'):
+            req = RegistrationRequest(
+                email=email,
+                name=name,
+                user_fields=kw,
+                project_id=c.project._id
+            )
+            session(RegistrationRequest).flush(req)
+            req.notify()
+        redirect('moderate_thanks')
+
+    @expose(TEMPLATE_DIR + 'moderate_thanks.html')
+    def moderate_thanks(self):
+        return dict()
+
+
+_visibility_mode = config.get('visibility_mode', 'default')
+AuthController = _ModeratedAuthController \
+    if VisibilityModeMiddleware.MODES[_visibility_mode] else _AuthController
 
 
 class UserStatePreferencesRESTController(object):
