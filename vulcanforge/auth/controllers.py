@@ -7,12 +7,20 @@ from urlparse import urlsplit
 
 import bson
 from bson.objectid import ObjectId
-from ming.odm.odmsession import ThreadLocalODMSession
+from ming.odm.odmsession import ThreadLocalODMSession, session
 from formencode import validators
 from formencode.api import Invalid
 from webob import exc as wexc, exc
 from pylons import tmpl_context as c, app_globals as g
-from tg import expose, session, flash, redirect, validate, config, request, override_template
+from tg import (
+    expose,
+    flash,
+    redirect,
+    validate,
+    config,
+    request,
+    override_template
+)
 import tg
 from tg.decorators import with_trailing_slash, without_trailing_slash
 
