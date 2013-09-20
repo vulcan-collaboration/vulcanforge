@@ -18,6 +18,7 @@ from .custom_middleware import (
     LoginRedirectMiddleware,
     LogErrorMiddleware,
     WidgetMiddleware,
+    VisibilityModeMiddleware
 )
 from .ming_config import ming_replicant_configure
 from vulcanforge.auth.middleware import AuthMiddleware
@@ -48,6 +49,9 @@ def make_wsgi_app(base_config, global_conf, app_conf, get_template_vars):
 
 
 def add_forge_middleware(app, base_config, global_conf, app_conf):
+    # For Closed Registrations
+    app = VisibilityModeMiddleware(app)
+
     # Setup resource manager, widget context SOP
     app = WidgetMiddleware(app)
     # Required for pylons
