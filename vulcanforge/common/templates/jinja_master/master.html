@@ -57,7 +57,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-    <title>{% block title %}Your title goes here{% endblock %}{{ g.title_postfix }}</title>
+    <title>{% block title %}{% endblock %}{{ g.title_postfix }}</title>
 
     <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}" />
 

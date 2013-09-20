@@ -20,7 +20,7 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 
-    <title>VehicleForge.MIL :: Landing</title>
+    <title>Forge :: Landing</title>
     
     <!-- Favicon -->
     <link rel="icon" href="{{ g.resource_manager.absurl('favicon.ico') }}" />
@@ -38,7 +38,7 @@
 <!-- VF Logo-->
 <div id="loginContainer">
     <div id="logoHolder">
-        <img id="logoImage" src="{{ g.resource_manager.absurl('images/vf_logo.png') }}"/>
+        <img id="logoImage" src="{{ g.resource_manager.absurl('theme/images/vf_logo.png') }}"/>
     </div>
     <form id="loginForm" method="post" action="./do_login" name="loginForm">
         <input type="hidden" name="return_to" value="{{return_to}}"/>
@@ -77,14 +77,14 @@
                href="{{ g.url('/auth/password_reset/') }}">Reset Password</a>
         </div>
         <div id="registerMessage" class="message">
-            <span>Registration currently restricted to affiliates of AVM and invited previewers.</span>
+            <span>Registration currently restricted to invited previewers.</span>
         </div>
     </div>
-    <div class="error" id="browserSupportErrorHolder">%%MessagePrefix%%. <br/>VehicleForge.mil features and promotes cutting-edge web technologies. For a smooth user-experience, safe browsing and to keep up with the evolution of the web we encourage you to always use the HTML5-compatible, latest release of the major browser families, such as Google Chrome, Mozzila Firefox, Internet Explorer 9, Safari and Opera. For full functionality and to enjoy the 3D experience please use a <a href="http://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" target="_blank">WebGL enabled platform</a>.</div>
+    <div class="error" id="browserSupportErrorHolder">%%MessagePrefix%%. <br/>{{ config.get('forge_name', 'This site') }} employs cutting-edge web technologies. For a smooth user-experience, safe browsing and to keep up with the evolution of the web we encourage you to always use the HTML5-compatible, latest release of the major browser families, such as Google Chrome, Mozzila Firefox, Internet Explorer 9, Safari and Opera. For full functionality and to enjoy the 3D experience please use a <a href="http://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" target="_blank">WebGL enabled platform</a>.</div>
 
     <!-- If scripts are disabled -->
     <noscript>
-        <div class="error" id="noScriptErrorHolder">VehicleForge.mil uses JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
+        <div class="error" id="noScriptErrorHolder">{{ config.get('forge_name', 'This site') }} uses JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
     </noscript>
 
 </div>
