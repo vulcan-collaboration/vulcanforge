@@ -61,7 +61,7 @@ setup(
         "chardet == 1.0.1",
         "feedparser >= 5.0.1",
         "oauth2 == 1.2.0",
-        "jsmin",
+        "jsmin == 2.0.3",
         "cssmin",
         "pycrypto",
         "pyScss",

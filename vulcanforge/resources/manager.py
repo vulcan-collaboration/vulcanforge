@@ -43,6 +43,7 @@ class ResourceManager(ew.ResourceManager):
             config.get('combine_static_resources', 'false'))
         self.static_resources_dir = config.get('static_resources_dir', None)
         self.build_key = config.get('build_key', 'default')
+        self.separator = config.get('resource_separator', ';')
 
         self.debug_mode = asbool(config.get('debug', 'true'))
         minify = asbool(config.get('minify_static', not self.debug_mode))
@@ -248,13 +249,16 @@ class ResourceManager(ew.ResourceManager):
 
         return []
 
-    def write_slim_file(self, file_type, rel_resource_paths):
+    def write_slim_file(self, file_type, rel_resource_paths,
+                        destination_dir=None):
         """
         Write files with concat+minify+gzip
         """
-        joined_list = ';'.join(rel_resource_paths)
+        if destination_dir is None:
+            destination_dir = self.build_dir
+        joined_list = self.separator.join(rel_resource_paths)
         file_hash = str(abs(hash(joined_list))) + '.' + file_type
-        build_file_path = os.path.join(self.build_dir, file_hash)
+        build_file_path = os.path.join(destination_dir, file_hash)
         if not os.path.exists(build_file_path):
             if file_type == 'js' and self.use_jsmin:
                 content = '\n'.join(
