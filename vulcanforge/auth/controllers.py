@@ -88,7 +88,6 @@ REGISTRATION_ACTION = '/auth/send_user_registration_email'
 
 class _AuthController(BaseController):
 
-
     class Forms(BaseController.Forms):
         login_form = LoginForm()
         user_registration_email_form = UserRegistrationEmailForm(
@@ -242,8 +241,6 @@ class _AuthController(BaseController):
     @validate_form("password_reset_form", error_handler=password_reset)
     def do_password_reset(self, token=None, password=None, return_to=None,
                           **kw):
-        if return_to is None:
-            return_to = config.get('home_url', '/')
         LOG.debug("do_password_reset token: %s", token)
         token_object = PasswordResetToken.query.get(nonce=token)
         user = token_object.user
@@ -258,6 +255,8 @@ class _AuthController(BaseController):
         token_object.delete()
         g.auth_provider.login(user)
         flash("Your password has been updated.", status="confirm")
+        if return_to is None:
+            return_to = config.get('home_url', '/')
         return redirect(return_to)
 
     @expose(TEMPLATE_DIR + 'auth_cancel_email_mod.html')

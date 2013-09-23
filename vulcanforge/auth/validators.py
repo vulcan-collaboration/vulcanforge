@@ -89,6 +89,7 @@ class UsernameListValidator(fev.UnicodeString):
 
 class PasswordValidator(fev.UnicodeString):
     min = int(tg.config.get('auth.pw.min_length', 10))
+    max = int(tg.config.get('auth.pw.max_length', 512))
     messages = {
         'tooShort': "Password should be at least {} characters "
                     "long!".format(min),
