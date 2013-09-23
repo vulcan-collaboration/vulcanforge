@@ -224,10 +224,7 @@ class NeighborhoodController(BaseTGController):
         if not self.neighborhood.user_can_register():
             flash("You are already a member of a team", "error")
             redirect(self.neighborhood.url())
-        if self.neighborhood.kind == "competition":
-            title = "Form a Team"
-        else:
-            title = "Create a Project"
+        title = "Create a Project"
         c.add_project = self.Forms.add_project
         for checkbox in ['Wiki', 'Tickets', 'Discussion', 'Components']:
             form_data.setdefault(checkbox, True)

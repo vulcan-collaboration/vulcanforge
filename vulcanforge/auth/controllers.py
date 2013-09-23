@@ -453,7 +453,7 @@ class _ModeratedAuthController(_AuthController):
             affiliate=True,
             action=REGISTRATION_ACTION)
 
-    @expose(TEMPLATE_DIR + 'login_cool.html')
+    @expose('auth/login_cool.html')
     @require_anonymous
     @with_trailing_slash
     def index(self, **kwargs):
