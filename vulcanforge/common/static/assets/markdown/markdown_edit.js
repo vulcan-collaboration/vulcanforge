@@ -267,7 +267,6 @@
                 });
             });
 
-
             /* fenced code */
             this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
                 var rePattern = /^ {0,3}~T~T~T~T *\n((?:.*?\n)+?) {0,3}~T~T~T~T *$/gm;
@@ -285,6 +284,16 @@
                 return text.replace(rePattern, function(whole, inner){
                      return '<div class="md-read-more">' + runBlockGamut(inner) + '</div>';
                 });
+            });
+
+            /* comments */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /\/\*.*?\*\//g;
+                return text.replace(rePattern, '');
+            });
+            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /\/\*(?:.*?\n?)*?\*\//gm;
+                return text.replace(rePattern, '');
             });
 
             /* tables */

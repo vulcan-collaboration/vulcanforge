@@ -44,6 +44,7 @@ class ForgeExtension(OEmbedExtension):
     def extendMarkdown(self, md, md_globals):
         md.registerExtension(self)
         md.preprocessors['fenced-code'] = FencedCodeProcessor()
+        md.preprocessors['comments'] = CommentProcessor()
         md.parser.blockprocessors.add('readmore',
                                       ReadMoreProcessor(md.parser),
                                       '<paragraph')
@@ -84,6 +85,7 @@ class ForgeExtension(OEmbedExtension):
 
         md.inlinePatterns['autolink_1'] = AutolinkPattern(
             r'(http(?:s?)://[a-zA-Z0-9./\-_0%?&=+#;~:]+)')
+
         md.postprocessors['rewrite_relative_links'] = RelativeLinkRewriter(md,
             make_absolute=self._is_email)
         # Put a class around markdown content for custom css
@@ -473,3 +475,23 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
             return m.group(2)
         else:
             return line
+
+
+class CommentProcessor(markdown.preprocessors.Preprocessor):
+    RE = re.compile(r'/\*.*?\*/', re.DOTALL)
+
+    def run(self, lines):
+        block = ''
+        new_lines = []
+        for line in lines:
+            if line.startswith('    '):
+                if block:
+                    new_lines.extend(self.RE.sub('', block).split('\n'))
+                    block = ''
+                new_lines.append(line)
+            else:
+                block += line + '\n'
+        if block:
+            new_lines.extend(self.RE.sub('', block).split('\n'))
+
+        return new_lines
