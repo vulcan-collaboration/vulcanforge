@@ -3,18 +3,18 @@
 /* Layout background-images */
 
 body.front {
-    background: #000 url("../images/vf_starry_sky.jpg");
+    background: #000 url("/theme/images/vf_starry_sky.jpg");
 }
 
 body.front #bottom-bg-container {
-    background-image: url(../images/clouds_for_bottom.png);
+    background-image: url(/theme/images/clouds_for_bottom.png);
 }
 
 
 /* Search result-icon images */
 
 #global-search-field.empty {
-    background-image: url(../images/search_icon_smaller.png);
+    background-image: url(/theme/images/search_icon_smaller.png);
 
 }
 
