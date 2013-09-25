@@ -1015,7 +1015,7 @@ class UserDiscoverController(BaseController):
             'type_s:User',
             'public_b:true',
             'disabled_b:false'
-            ))
+        ))
 
     @expose(TEMPLATE_DIR + 'user_browse.html')
     @validate(dict(
