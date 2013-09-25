@@ -44,7 +44,7 @@ class BaseAuthenticationProvider(object):
     auth_provider = path/to/provider:MyAuthProvider
 
     """
-    PWRE = re.compile(r'^(?P<method>\{SSHA(?:32)?\}).*')
+    PWRE = re.compile(r'^(?P<method>\{SSHA(?P<saltlen>\d+)?\}).*')
 
     def __init__(self):
         self.saltlen = asint(config.get('auth.saltlength', 32))
@@ -154,17 +154,14 @@ class BaseAuthenticationProvider(object):
         elif len(salt) == 4:
             method = "{SSHA}"
         if method is None:
-            method = '{SSHA32}'
+            method = '{SSHA%d}' % len(salt)
         h = sha1(password)
         h.update(salt)
         return method + b64encode(h.digest() + salt)
 
     def get_salt(self, encoded):
         parsed = self.PWRE.match(encoded).groupdict()
-        if parsed["method"] == '{SSHA}':
-            saltlen = 4
-        else:
-            saltlen = self.saltlen
+        saltlen = int(parsed.get("saltlen") or 4)
         decoded = b64decode(encoded[len(parsed["method"]):])
         return decoded[-saltlen:]
 

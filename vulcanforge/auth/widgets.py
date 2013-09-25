@@ -55,8 +55,9 @@ class LoginForm(ForgeForm):
             msg = msg.format(config.get('login_lock.interval', 'a couple'))
             raise Invalid(msg, value, state)
         try:
+            value = super(LoginForm, self).validate(value, state)
             value['username'] = g.auth_provider.login()
-        except HTTPUnauthorized:
+        except (Invalid, HTTPUnauthorized):
             # if user needs a password reset
             targeted_user = User.query.get(username=value['username'])
             if targeted_user and targeted_user.disabled:

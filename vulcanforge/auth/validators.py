@@ -93,6 +93,8 @@ class PasswordValidator(fev.UnicodeString):
     messages = {
         'tooShort': "Password should be at least {} characters "
                     "long!".format(min),
+        'tooLong': "Password should be no longer than {} characters".format(
+            max),
         'missingLower': "Password must contain at least one lowercase "
                         "letter",
         'missingUpper': "Password must contain at least one uppercase "
@@ -106,8 +108,7 @@ class PasswordValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(self.message(msg, state), value, state)
         value = really_unicode(value or '').encode('utf-8')
-        if len(value) < self.min:
-            raise invalid('tooShort')
+        value = super(PasswordValidator, self).to_python(value, state)
         if not re.match(r'(?=.*[a-z])', value):
             raise invalid('missingLower')
         if not re.match(r'(?=.*[A-Z])', value):
