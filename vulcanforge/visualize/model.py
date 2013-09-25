@@ -220,7 +220,7 @@ class Visualizer(MappedClass):
     def download_to_archive(self, archive_fp):
         for filename in self.bundle_content:
             key = self.get_s3_key(filename)
-            archive_fp.writestr(filename, key.get_contents_to_string())
+            archive_fp.writestr(filename, key.get_contents_as_string())
 
     @staticmethod
     def strip_name(name):
