@@ -2,7 +2,7 @@ import logging
 import os.path
 
 from ming.odm.odmsession import ThreadLocalODMSession
-from pylons import app_globals as g
+from pylons import app_globals as g, tmpl_context as c
 from vulcanforge.project.model import Project
 from vulcanforge.tools.wiki.model import Page
 
@@ -19,38 +19,31 @@ class ForgeAdminToolsCommand(base.Command):
     def command(self):
         self.basic_setup()
         log.info('Ensuring that ForgeAdmin specific tools are installed...')
-        site_admin_project_shortname = g.site_admin_project
-        site_admin_project = Project.query.get(
-            shortname=site_admin_project_shortname
-        )
+        c.project = Project.query.get(shortname=g.site_admin_project)
 
-        def _ensure_installed(ep_name, mount_point, mount_label=None):
-            log.info('...checking for %s at %s/%s...', ep_name,
-                     site_admin_project_shortname, mount_point)
-            already_there = True
-            app_instance = site_admin_project.app_instance(mount_point)
-            if app_instance is None:
-                log.info('...installing %s at %s/%s.', ep_name,
-                         site_admin_project_shortname, mount_point)
-                site_admin_project.install_app(
-                    ep_name, mount_point, mount_label)
-                already_there = False
-            else:
-                log.info('...found %s at %s/%s.', ep_name,
-                         site_admin_project_shortname, mount_point)
-            return already_there
-
-        _ensure_installed(u'Visualize', u'visualize', u'Visualizers')
-        already_there = _ensure_installed(u'Wiki', u'static', u'VF Pages')
+        self._ensure_installed('Visualize', 'visualize', 'Visualizers')
+        already_there = self._ensure_installed('Wiki', 'static', 'VF Pages')
         if not already_there:
-            with g.context_manager.push(
-                    site_admin_project_shortname, u'static'):
+            with g.context_manager.push(g.site_admin_project, 'static'):
                 self._create_static_manager(
-                    site_admin_project,
-                    site_admin_project.app_instance(u'static')
-                )
+                    c.project,
+                    c.project.app_instance('static'))
         ThreadLocalODMSession.flush_all()
-        ThreadLocalODMSession.close_all()
+
+    def _ensure_installed(self, ep_name, mount_point, mount_label=None):
+        log.info('...checking for %s at %s/%s...', ep_name,
+                 g.site_admin_project, mount_point)
+        already_there = True
+        app_instance = c.project.app_instance(mount_point)
+        if app_instance is None:
+            log.info('...installing %s at %s/%s.', ep_name,
+                     g.site_admin_project, mount_point)
+            c.project.install_app(ep_name, mount_point, mount_label)
+            already_there = False
+        else:
+            log.info('...found %s at %s/%s.', ep_name, g.site_admin_project,
+                     mount_point)
+        return already_there
 
     def _create_static_manager(self, project, app):
         # title, static file
