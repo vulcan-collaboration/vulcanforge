@@ -79,9 +79,10 @@ class ExportWikiPages(Command):
                         'content_type': attachment.content_type
                     })
                     try:
-                        zip.writestr(exp_path, attachment.read())
-                    except Exception as e:
-                        print attachment.filename, " >> ", page.title
+                        zip_handle.writestr(exp_path, attachment.read())
+                    except Exception:
+                        LOG.exception("Error writing attachment %S >> %s",
+                                      attachment.filename, page.title)
 
                 if self.options.replace_urls:
                     page_text = self.update_relative_urls(page)
