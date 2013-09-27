@@ -77,9 +77,6 @@ class ForgeAppGlobals(object):
         # other special urls
         self.user_register_url = config.get("user_register_url",
                                             "/auth/register/")
-        self.site_issues_url = config.get("site_issues_url",
-                                          "/projects/forgeadmin/issues/")
-        self.site_issues_label = config.get("site_issues_label", "Help Desk")
         self.home_url = config.get("home_url", "/")
         self.browse_home = config.get("browse_home", "/")
         self.show_register_on_login = asbool(config.get(
