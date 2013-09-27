@@ -348,9 +348,15 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             })
             scss_data = open(fs_path).read()
             compiled_data = scss_compiler.compile(scss_data)
+            compiled_data = mgr.expand_css_urls(compiled_data)
 
             app = fileapp.DataApp(
                 compiled_data, [('Content-Type', 'text/css')])
+        elif res_path.endswith('.css'):
+            content = open(fs_path).read()
+            content = mgr.expand_css_urls(content)
+            app = fileapp.DataApp(content, [('Content-Type', 'text/css')])
+            app.cache_control(public=True, max_age=mgr.cache_max_age)
         else:
             app = fileapp.FileApp(fs_path, headers=self.extra_headers)
             app.cache_control(public=True, max_age=mgr.cache_max_age)

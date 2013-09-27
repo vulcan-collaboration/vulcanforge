@@ -67,7 +67,7 @@ def guess_mime_type(filename):
 
 def import_object(path):
     """e.g. path.to.module:Classname"""
-    modulename, classname = path.rsplit(':', 1)
+    modulename, classname = str(path).rsplit(':', 1)
     module = __import__(modulename, fromlist=[classname])
     return getattr(module, classname)
 

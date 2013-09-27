@@ -146,6 +146,8 @@ class ForumFile(File):
 
     forum_id = FieldProperty(schema.ObjectId)
 
+    THUMB_URL_POSTFIX = ''
+
     @property
     def artifact(self):
         return Forum.query.get(_id=self.forum_id)
