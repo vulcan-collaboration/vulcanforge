@@ -1202,7 +1202,6 @@ var $vf = $vf || {
         }
     });
 
-
     /**
      * forgemarkdown extras
      */
@@ -1346,5 +1345,11 @@ var $vf = $vf || {
         updateMethod();
     };
 
+    $vf.xmlEscape = function (content) {
+        return content.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    };
 
 }(window));
