@@ -539,7 +539,7 @@ class ProjectAdminController(BaseController):
         invite.delete()
         return dict(success=True)
 
-    @expose(TEMPLATE_DIR + 'user_registration.html')
+    @expose('admin/user_registration.html')
     def registration(self, status='tbd', **kw):
         if not c.project.can_register_users:
             raise exc.HTTPNotFound
