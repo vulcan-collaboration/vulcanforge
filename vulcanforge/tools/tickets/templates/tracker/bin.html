@@ -16,6 +16,14 @@
 <div class="padded top-spaced">
   <form id="tracker_bins_form" action="{{c.app.url}}bins/update_bins"
         method="post" class="update_bins">
+
+     <fieldset class="vf-fieldset">
+         <legend>{{ app.config.options.mount_label }} Default View Query*</legend>
+         <label for="default_query">Search Query</label>
+         <input type="text" name="default_query" id="default_query" value="{{ default_query }}">
+         <p><em>* Leave this field blank to show all <strong>open</strong> tickets.</em></p>
+     </fieldset>
+
     <table class="content-table">
       <thead>
         <tr>
@@ -41,13 +49,14 @@
                 <div class="view">{{bin.terms}}</div>
                 <div class="edit">
                     <input type="text" name="bins-{{loop.index0}}.terms"
-                           class="long"
+                           class="long bin-terms"
                            value="{{bin.terms}}">
                 </div>
             </td>
             <td>
-              {{ g.icon_button_widget.display(icon="ico-delete", css="del_bin") }}
-              {{ g.icon_button_widget.display(icon="ico-edit", css="edit_bin") }}
+              {{ g.icon_button_widget.display("Delete this Bin", icon="ico-delete", css="del_bin") }}
+              {{ g.icon_button_widget.display("Modify this Bin", icon="ico-edit", css="edit_bin") }}
+              {{ g.icon_button_widget.display("Copy this bin to the default view query", icon="ico-arrow_up_alt1", css="make_default_bin") }}
               <input type="hidden" name="bins-{{loop.index0}}.id" value="{{bin._id | string}}">
               <input type="hidden" name="bins-{{loop.index0}}.delete" value="False" class="delete_flag">
             </td>
@@ -72,12 +81,9 @@
       </tbody>
     </table>
       <div class="form-controls top-spaced">
-          <a href="#" class="btn add_bin">Add Bin</a>
-
-          <div class="save_controls" style="display:none">
-              <input type="submit" value="Save">
-              <a href="#" class="btn link cancel_edit">Cancel</a>
-          </div>
+          <input type="submit" value="Save Changes">
+          <input type="reset" value="Undo Changes" class="cancel_edit">
+          <a href="#" class="btn add_bin ico-plus">Add Bin</a>
       </div>
   </form>
 </div>
@@ -89,11 +95,9 @@
             $('form.update_bins').each(function () {
                 var $form = $(this),
                     $new_row = $('tr.new_bin', $form),
-                    $add_button = $('a.add_bin', $form),
-                    $save_controls = $('div.save_controls', $form).hide();
+                    $add_button = $('a.add_bin', $form);
                 $('.edit', $form).hide();
                 $add_button.click(function () {
-                    $save_controls.show();
                     $add_button.hide();
                     $new_row.show();
                 });
@@ -101,7 +105,6 @@
                     var $row = $(this).closest('.bin-list-item');
                     $('.view', $row).hide();
                     $('.edit', $row).show();
-                    $save_controls.show();
                     $add_button.hide();
                     $(this).css({opacity: 0.5});
                 });
@@ -110,16 +113,31 @@
                     $('input.delete_flag', $row).val('True');
                     $form.submit();
                 });
-                $('a.cancel_edit', $form).click(function () {
+                $('.cancel_edit', $form).click(function () {
                     $('.view', $form).show();
                     $('.edit', $form).hide();
-                    $save_controls.hide();
                     $add_button.show();
                     $new_row.hide();
                     $('input', $new_row).val('');
                     $('a.edit_bin', $form).css({opacity: 1});
                 });
+                $('a.make_default_bin', $form).bind('click', function () {
+                    var query = $(this).
+                            closest('tr').
+                            find('.bin-terms').
+                            val();
+                    $('#default_query').val(query);
+                });
             });
+
+            $('<button/>').
+                    text('clear').
+                    bind('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        $('#default_query').val('');
+                    }).
+                    insertAfter('#default_query');
         });
     </script>
     {{ super() }}

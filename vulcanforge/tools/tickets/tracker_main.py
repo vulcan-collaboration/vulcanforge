@@ -640,7 +640,7 @@ class RootController(BaseTrackerController):
         kw.pop('q', None)
         kw.pop('query', None)
         result = self.search.search(
-            query=c.app.globals.not_closed_query,
+            query=c.app.globals.get_default_view_query(),
             sort=sort or c.app.globals.default_ticket_sort,
             columns=columns,
             page=page,
@@ -1005,13 +1005,12 @@ class BinController(BaseController):
     @expose(TEMPLATE_DIR + 'bin.html')
     def index(self, **kw):
         count = len(self.app.bins)
-        return dict(bins=self.app.bins, count=count, app=self.app)
-
-    @with_trailing_slash
-    @expose(TEMPLATE_DIR + 'bin.html')
-    def bins(self):
-        count = len(self.app.bins)
-        return dict(bins=self.app.bins, count=count, app=self.app)
+        return {
+            'default_query': self.app.globals.default_view_query or '',
+            'bins': self.app.bins,
+            'count': count,
+            'app': self.app
+        }
 
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'new_bin.html')
@@ -1056,7 +1055,7 @@ class BinController(BaseController):
     @vardec
     @expose()
     @require_post()
-    def update_bins(self, bins=None, **kw):
+    def update_bins(self, bins=None, default_query=None, **kw):
         g.security.require_access(self.app, 'save_searches')
         for bin_form in bins:
             tbin = None
@@ -1072,6 +1071,8 @@ class BinController(BaseController):
                 else:
                     tbin.summary = bin_form['summary']
                     tbin.terms = bin_form['terms']
+        self.app.globals.default_view_query = default_query
+        self.app.globals.query.session.flush(self.app.globals)
         self.app.globals.invalidate_bin_counts()
         redirect('.')
 
