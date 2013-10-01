@@ -53,6 +53,14 @@
         margin-top: 1.76rem;
     }
 
+    h1[id]::before, h2[id]::before, h3[id]::before, h4[id]::before,
+    h5[id]::before, h6[id]::before {
+        content: "";
+        display: block;
+        height: 156px;
+        margin-top: -156px;
+    }
+
     ol, ul {
         padding-left: 2.4rem;
     }
