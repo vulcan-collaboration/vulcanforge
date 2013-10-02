@@ -50,6 +50,7 @@ class Globals(MappedClass):
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
     last_ticket_num = FieldProperty(int)
+    default_view_query = FieldProperty(str, if_missing=None)
     status_names = FieldProperty(str)
     open_status_names = FieldProperty(str)
     closed_status_names = FieldProperty(str)
@@ -117,6 +118,11 @@ class Globals(MappedClass):
     def milestone_fields(self):
         return [fld for fld in self.custom_fields
                 if fld.get('type') == 'milestone']
+
+    def get_default_view_query(self):
+        if self.default_view_query:
+            return self.default_view_query
+        return self.not_closed_query
 
     def get_milestones_between(self, date_start, date_end):
         for fld in self.custom_fields:

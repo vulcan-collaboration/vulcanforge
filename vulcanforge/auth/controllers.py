@@ -10,6 +10,7 @@ from bson.objectid import ObjectId
 from ming.odm.odmsession import ThreadLocalODMSession, session
 from formencode import validators
 from formencode.api import Invalid
+from paste.deploy.converters import asbool
 from webob import exc as wexc, exc
 from pylons import tmpl_context as c, app_globals as g
 from tg import (
@@ -491,9 +492,12 @@ class _ModeratedAuthController(_AuthController):
         return dict()
 
 
+# determine whether to moderate general registrations
+#   Use visibility mode settings unless explicitly defined
 _visibility_mode = config.get('visibility_mode', 'default')
-AuthController = _ModeratedAuthController \
-    if VisibilityModeMiddleware.MODES[_visibility_mode] else _AuthController
+_moderate = asbool(config.get('moderate_registration',
+                              VisibilityModeMiddleware.MODES[_visibility_mode]))
+AuthController = _ModeratedAuthController if _moderate else _AuthController
 
 
 class UserStatePreferencesRESTController(object):
