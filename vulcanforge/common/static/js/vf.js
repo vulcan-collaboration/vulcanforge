@@ -1352,4 +1352,32 @@ var $vf = $vf || {
             .replace(/"/g, "&quot;");
     };
 
+    /**
+     * icon title tooltips
+     */
+    $vf.afterInit(function () {
+        $('body').on('mouseenter', '.toolbar-icon[title], .icon[title]', function (e) {
+            $(this).qtip({
+                overwrite: false,
+                show: {
+                    event: e.type,
+                    ready: true
+                },
+                content: {
+                    text: false
+                },
+                style: {
+                    classes: 'vf-title-tip'
+                },
+                position: {
+                    /*target: 'mouse',
+                    adjust: { x: 10, y: 0 },*/
+                    viewport: $(window),
+                    at: 'bottom middle',
+                    my: 'top right'
+                }
+            });
+        })
+    }, null);
+
 }(window));
