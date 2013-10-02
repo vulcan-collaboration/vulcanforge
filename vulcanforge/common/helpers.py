@@ -125,7 +125,7 @@ def encode_keys(d):
     return dict((k.encode('utf-8'), v) for k, v in d.iteritems())
 
 
-def ago(start_time, round=True):
+def ago(start_time, round=True, cutoff=True):
     """
     Return time since starting time as a rounded, human readable string.
     E.g., "3 hours ago"
@@ -136,7 +136,7 @@ def ago(start_time, round=True):
     granularities = ['century', 'decade', 'year', 'month', 'day', 'hour',
                      'minute']
     end_time = datetime.utcnow()
-    if end_time - start_time > timedelta(days=7):
+    if cutoff and (end_time - start_time > timedelta(days=7)):
         return start_time.strftime('%Y-%m-%d')
 
     while True:
