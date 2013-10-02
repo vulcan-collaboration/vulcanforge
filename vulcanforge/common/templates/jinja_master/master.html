@@ -188,26 +188,27 @@
         $vf.idle_logout_minutes = {{ g.idle_logout_minutes }};
         $vf.idle_logout_countdown_seconds = {{ g.idle_logout_countdown_seconds }};
         $vf.vf_guidebook_location = {% if g.vf_guidebook_location %} '{{ g.vf_guidebook_location }}' {% else %} null {% endif %};
+        $vf.trustforge_enabled = {% if g.trustforge_enabled %}true{% else %}false{% endif %};
 
-    {% if session['userid'] %}
-        $vf.logged_in_as = "{{c.user.username}}";
-        {% for n in h.pop_user_notifications() %}
-            $('#messages').notify("{{ n.text }}");
-        {% endfor %}
-        referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
-        workspaceTabs = {{c.user.workspace_tabs | jsonify}};
-        userURL = '{{c.user.url()}}';
-    {% else %}
-    $vf.logged_in_as = null;
-    {% endif %}
-    $vf.init(userURL, workspaceTabs, referenceBinConfig);
-    $('#project-toolbar > ul.links').intelliMore({
-        orientation: 'vertical',
-        triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
-        hiddenClass: 'project-toolbar-hidden',
-        neverHide: '.selected,.no-more-hide',
-        heightSource: $('#left-toolbar')
-    });
+        {% if session['userid'] %}
+            $vf.logged_in_as = "{{c.user.username}}";
+            {% for n in h.pop_user_notifications() %}
+                $('#messages').notify("{{ n.text }}");
+            {% endfor %}
+            referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
+            workspaceTabs = {{c.user.workspace_tabs | jsonify}};
+            userURL = '{{c.user.url()}}';
+        {% else %}
+        $vf.logged_in_as = null;
+        {% endif %}
+        $vf.init(userURL, workspaceTabs, referenceBinConfig);
+        $('#project-toolbar > ul.links').intelliMore({
+            orientation: 'vertical',
+            triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
+            hiddenClass: 'project-toolbar-hidden',
+            neverHide: '.selected,.no-more-hide',
+            heightSource: $('#left-toolbar')
+        });
     });
 </script>
 {% if not hide_header %}

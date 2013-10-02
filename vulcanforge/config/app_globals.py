@@ -193,6 +193,9 @@ class ForgeAppGlobals(object):
         # Title postfix
         self.title_postfix = config.get('title_postfix', ' - VF')
 
+        # TrustForge
+        self.trustforge_enabled = asbool(
+            config.get('trustforge.enabled', False))
         self.trustforge_url = config.get('trustforge.url', '')
         self.trustforge_token = config.get('trustforge.auth_token', '')
 
