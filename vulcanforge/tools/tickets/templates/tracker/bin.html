@@ -56,7 +56,7 @@
             <td>
               {{ g.icon_button_widget.display("Delete this Bin", icon="ico-delete", css="del_bin") }}
               {{ g.icon_button_widget.display("Modify this Bin", icon="ico-edit", css="edit_bin") }}
-              {{ g.icon_button_widget.display("Copy this bin to the default view query", icon="ico-arrow_up_alt1", css="make_default_bin") }}
+              {{ g.icon_button_widget.display("Copy this query to the default view query", icon="ico-arrow_up", css="make_default_bin") }}
               <input type="hidden" name="bins-{{loop.index0}}.id" value="{{bin._id | string}}">
               <input type="hidden" name="bins-{{loop.index0}}.delete" value="False" class="delete_flag">
             </td>
