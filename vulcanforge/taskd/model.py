@@ -81,8 +81,8 @@ class MonQTask(MappedClass):
 
     def __repr__(self):
         project_url = getattr(c, 'project', None) and c.project.url() or None
-        app_mount = getattr(
-            c, 'app', None) and c.app.config.options.mount_point or None
+        app_mount = getattr(c, 'app', None) and \
+                    c.app.config.options.mount_point or None
         username = getattr(c, 'user', None) and c.user.username or None
         return '<%s %s (%s) P:%d %s %s project:%s app:%s user:%s>' % (
             self.__class__.__name__,
