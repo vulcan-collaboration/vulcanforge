@@ -14,8 +14,8 @@ LOG = logging.getLogger(__name__)
 class TicketSessionExtension(ArtifactSessionExtension):
     """Ensures bin counts are updated on flush"""
 
-    def index_new(self, new_ref_ids):
-        add_tickets.post(new_ref_ids)
+    def index_new(self, *args, **kwargs):
+        add_tickets.post(*args, **kwargs)
 
 
 ticket_orm_session = ThreadLocalODMSession(

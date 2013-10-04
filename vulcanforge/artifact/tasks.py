@@ -2,6 +2,7 @@
 
 import logging
 import sys
+from time import sleep
 from pylons import app_globals as g
 
 from vulcanforge.common.exceptions import ForgeError, CompoundError
@@ -27,10 +28,13 @@ def process_artifact(processor_name, context, index_id, verbose=False):
 
 
 @task
-def add_artifacts(ref_ids, update_solr=True, update_refs=True):
+def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None):
     """
     Add the referenced artifacts to SOLR and compute artifact's outgoing
     shortlinks
+
+    Temporary optional keyword argument `mod_dates` is a dictionary of
+    ref_id: mod_date
 
     """
     from vulcanforge.artifact.model import (
@@ -38,9 +42,10 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True):
         find_shortlink_refs
     )
     exceptions = []
-    LOG.info('add artifacts')
+    LOG.info('add artifacts {}'.format(ref_ids))
     with _indexing_disabled(artifact_orm_session._get()):
         allura_docs = []
+        ids_to_repost = []
         for ref_id in ref_ids:
             try:
                 ref = ArtifactReference.query.get(_id=ref_id)
@@ -48,6 +53,13 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True):
                     LOG.info('no reference found for %s' % str(ref_id))
                     continue
                 artifact = ref.artifact
+                if mod_dates:
+                    mod_date = mod_dates.get(ref_id, None)
+                    if mod_date > artifact.mod_date:
+                        LOG.warn("mod_date mismatch for {} expected {} but got "
+                                 "{}".format(ref_id, mod_date,
+                                             artifact.mod_date))
+                        ids_to_repost.append(ref_id)
                 if update_solr:
                     s = solarize(artifact)
                     if s:
@@ -71,6 +83,9 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True):
                 exceptions.append(sys.exc_info())
         if allura_docs:
             g.solr.add(allura_docs)
+        if ids_to_repost:
+            sleep(1)
+            add_artifacts.post(ids_to_repost)
 
     if len(exceptions) == 1:
         raise exceptions[0][0], exceptions[0][1], exceptions[0][2]
