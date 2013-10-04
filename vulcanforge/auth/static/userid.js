@@ -30,121 +30,121 @@
         return color;
 
     }
-
-    $.fn.reputationMe = function ( trustInfo, withHistory, reputationHistoryURL ) {
-        return this.each( function () {
-
-            var $reputationElementContainer = $( this ),
-                $reputationContainer = $( '<div/>', {
-                    "class": "reputation-container",
-                    "text": Math.round( trustInfo.score * 100 )
-                } ),
-                color = getColor( trustInfo.percentile ),
-                $historyGraphContainer,
-                historyPaper,
-                that = this,
-                history;
-
-
-
-            $reputationContainer.css( 'background-color', 'rgb(' + color.join( ',' ) + ')' );
-
-            $reputationContainer.addClass( 'bright' );
-
-            $reputationElementContainer.attr(
-                'title',
-                'Reputation: ' + Math.round( trustInfo.score * 100 ) +
-                    ' (Percentile: ' + Math.round( trustInfo.percentile * 100 ) + '%)' );
-
-
-            $reputationElementContainer.append( $reputationContainer );
-
-            if ( withHistory ) {
-                $historyGraphContainer = $( '<div/>', {
-                    "class": "history-graph-container loading"
-                } );
-
-                $reputationElementContainer.append( $historyGraphContainer );
-
-                $historyGraphContainer.fadeIn();
-
-                if ( !history ) {
-
-                    $.ajax( {
-                        url: reputationHistoryURL,
-                        context: that,
-                        type: 'GET',
-                        data: {
-
-                        },
-                        dataType: 'json'
-                    } ).done( function ( data ) {
-
-                            var duration,
-                                width = $historyGraphContainer.width() + 1,
-                                height = $historyGraphContainer.height(),
-                                minimumTime,
-                                curvePath,
-                                curve,
-                                i,
-                                newX;
-
-                            $historyGraphContainer.removeClass( 'loading' );
-
-                            historyPaper = new Raphael(
-                                $historyGraphContainer[0],
-                                width,
-                                height );
-
-                            history = data.history;
-
-                            if ( history.length ) {
-
-                                minimumTime = history[ 0 ][ 0 ];
-
-                                trace( history );
-
-                                if ( history.length < 2 ) {
-                                    duration = minimumTime;
-                                } else {
-                                    duration = history[ history.length - 1 ][ 0 ] - minimumTime;
+    if ($vf.trustforge_enabled)
+        $.fn.reputationMe = function ( trustInfo, withHistory, reputationHistoryURL ) {
+            return this.each( function () {
+    
+                var $reputationElementContainer = $( this ),
+                    $reputationContainer = $( '<div/>', {
+                        "class": "reputation-container",
+                        "text": Math.round( trustInfo.score * 100 )
+                    } ),
+                    color = getColor( trustInfo.percentile ),
+                    $historyGraphContainer,
+                    historyPaper,
+                    that = this,
+                    history;
+    
+    
+    
+                $reputationContainer.css( 'background-color', 'rgb(' + color.join( ',' ) + ')' );
+    
+                $reputationContainer.addClass( 'bright' );
+    
+                $reputationElementContainer.attr(
+                    'title',
+                    'Reputation: ' + Math.round( trustInfo.score * 100 ) +
+                        ' (Percentile: ' + Math.round( trustInfo.percentile * 100 ) + '%)' );
+    
+    
+                $reputationElementContainer.append( $reputationContainer );
+    
+                if ( withHistory ) {
+                    $historyGraphContainer = $( '<div/>', {
+                        "class": "history-graph-container loading"
+                    } );
+    
+                    $reputationElementContainer.append( $historyGraphContainer );
+    
+                    $historyGraphContainer.fadeIn();
+    
+                    if ( !history ) {
+    
+                        $.ajax( {
+                            url: reputationHistoryURL,
+                            context: that,
+                            type: 'GET',
+                            data: {
+    
+                            },
+                            dataType: 'json'
+                        } ).done( function ( data ) {
+    
+                                var duration,
+                                    width = $historyGraphContainer.width() + 1,
+                                    height = $historyGraphContainer.height(),
+                                    minimumTime,
+                                    curvePath,
+                                    curve,
+                                    i,
+                                    newX;
+    
+                                $historyGraphContainer.removeClass( 'loading' );
+    
+                                historyPaper = new Raphael(
+                                    $historyGraphContainer[0],
+                                    width,
+                                    height );
+    
+                                history = data.history;
+    
+                                if ( history.length ) {
+    
+                                    minimumTime = history[ 0 ][ 0 ];
+    
+                                    trace( history );
+    
+                                    if ( history.length < 2 ) {
+                                        duration = minimumTime;
+                                    } else {
+                                        duration = history[ history.length - 1 ][ 0 ] - minimumTime;
+                                    }
+    
+                                    curvePath = 'M1 ' + height + ' ';
+    
+                                    for ( i = 0; i < history.length; i++ ) {
+                                        newX = Math.round( width / duration * ( history[ i ][ 0 ] - minimumTime ) );
+    
+                                        curvePath += 'L' + newX
+                                            + ' ' + ( 1 - history[ i ][ 1 ] ) * height + ' ';
+                                    }
+    
+                                    curvePath += 'L' + width + ' ' + ( 1 - history[ history.length - 1 ][ 1 ] ) * height + ' ';
+                                    curvePath += 'L' + width + ' ' + height + ' ';
+                                    curvePath += 'L0 ' + height + ' ';
+                                    curvePath += 'Z';
+    
+                                    trace( curvePath );
+    
+    
+                                    curve = historyPaper.path( curvePath );
+    
+                                    curve.attr( {
+                                        stroke: '#fff',
+                                        'stroke-width': 1,
+                                        fill: '#fff'
+                                    } );
+    
+    
                                 }
-
-                                curvePath = 'M1 ' + height + ' ';
-
-                                for ( i = 0; i < history.length; i++ ) {
-                                    newX = Math.round( width / duration * ( history[ i ][ 0 ] - minimumTime ) );
-
-                                    curvePath += 'L' + newX
-                                        + ' ' + ( 1 - history[ i ][ 1 ] ) * height + ' ';
-                                }
-
-                                curvePath += 'L' + width + ' ' + ( 1 - history[ history.length - 1 ][ 1 ] ) * height + ' ';
-                                curvePath += 'L' + width + ' ' + height + ' ';
-                                curvePath += 'L0 ' + height + ' ';
-                                curvePath += 'Z';
-
-                                trace( curvePath );
-
-
-                                curve = historyPaper.path( curvePath );
-
-                                curve.attr( {
-                                    stroke: '#fff',
-                                    'stroke-width': 1,
-                                    fill: '#fff'
-                                } );
-
-
-                            }
-
-                        } );
+    
+                            } );
+                    }
+    
                 }
-
-            }
-
-        } );
-    };
+    
+            } );
+        };
 
     $.fn.userIdMe = function( _options ) {
 
@@ -180,9 +180,9 @@
                     html: data.interests !== '' && ('<h4>Interests</h4>' + data.interests),
                     'class': 'id-interests'
                 }),
-                $reputationElementContainer = $('<div/>', {
+                $reputationElementContainer = ($vf.trustforge_enabled) ? $('<div/>', {
                     'class': 'id-reputation'
-                }),
+                }) : null,
                 $actions = $('<div/>', {
                     'class': 'id-actions'
                 }),
@@ -200,16 +200,16 @@
                     appendTo($actions);
             }
 
-            /* reputation */
-            $reputationElementContainer.reputationMe(
-                data.trustInfo,
-                withReputationHistory,
-                data.userURL+'/profile/get_user_trust_history'
-            );
+            if ($vf.trustforge_enabled)
+                $reputationElementContainer.reputationMe(
+                    data.trustInfo,
+                    withReputationHistory,
+                    data.userURL+'/profile/get_user_trust_history'
+                );
 
             /* dom structure */
             $extraInfo.
-                append($reputationElementContainer).
+                //append($reputationElementContainer).
                 append($actions);
             $innerContents.
                 append($fullName).
