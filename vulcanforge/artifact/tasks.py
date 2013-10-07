@@ -38,7 +38,7 @@ def _convert_value_to_doc(value):
     """
     if isinstance(value, dict):  # walk dictionaries
         for key in value.keys():
-            if key == 'text' or not value[key] and not value[key] is False:
+            if key == 'text' or not value[key] and not (value[key] is False or value[key] == 0):
                 del value[key]
                 continue
             value[key] = _convert_value_to_doc(value[key])
@@ -48,6 +48,8 @@ def _convert_value_to_doc(value):
         value = '{}'.format(value)
     elif isinstance(value, datetime):
         value = value.isoformat()[:23].rstrip('0') + 'Z'
+    elif isinstance(value, basestring):
+        value = value.replace('\r\n', '\n').replace('\r', '\n')
     return value
 
 
