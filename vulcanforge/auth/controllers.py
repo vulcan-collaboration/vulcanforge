@@ -213,7 +213,8 @@ class _AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The password reset token is invalid or has expired. "
+                      "Please request another password reset.", 'error')
                 redirect('.?return_to={}'.format(return_to))
         return dict(token=token, form_values=form_values, **kw)
 
@@ -310,7 +311,8 @@ class _AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The registration token is invalid or has expired. "
+                      "Please register again.", 'error')
                 redirect('.')
         return dict(kw, form_values=form_values)
 

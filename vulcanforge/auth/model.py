@@ -1148,7 +1148,7 @@ class UserRegistrationToken(BaseMappedClass):
     @property
     def is_valid(self):
         expired = self.expiry_date < datetime.utcnow()
-        return not expired and self.nonce
+        return bool(not expired and self.nonce)
 
     def send(self):
         text = self.email_text
