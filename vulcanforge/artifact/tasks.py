@@ -114,7 +114,7 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
                 LOG.error('Error indexing artifact %s', ref_id)
                 exceptions.append(sys.exc_info())
         if solr_docs:
-            g.solr.add(solr_docs, waitFlush=True)
+            g.solr.add(solr_docs, waitFlush=True, waitSearcher=True)
 
         # confirm indexes were received
         for submitted_doc in solr_docs:
