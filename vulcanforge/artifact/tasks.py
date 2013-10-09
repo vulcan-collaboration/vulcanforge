@@ -114,7 +114,8 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
                 LOG.error('Error indexing artifact %s', ref_id)
                 exceptions.append(sys.exc_info())
         if solr_docs:
-            g.solr.add(solr_docs, waitFlush=True)
+            solr_result = g.solr.add(
+                solr_docs, waitFlush=True, waitSearcher=True)
 
         # confirm indexes were received
         for submitted_doc in solr_docs:
@@ -136,7 +137,8 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
                                                                   s_val))
             if len(diffs) > 0:
                 LOG.warn('index mismatch after submission: {};  '
-                         'DIFF:\n\t{}'.format(ref_id, '\n\t'.join(diffs)))
+                         'DIFF:\n\t{};  '.format(ref_id, '\n\t'.join(diffs)) +
+                         '\nResult: {}'.format(solr_result))
                 ids_to_repost.add(ref_id)
 
         # resubmit any artifacts for indexing that failed
