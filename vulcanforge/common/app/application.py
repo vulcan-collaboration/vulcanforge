@@ -137,7 +137,7 @@ class Application(object):
         """
         resource = cls.icons.get(size)
         if resource:
-            return g.resource_manager.absurl('theme/{}'.format(resource))
+            return g.resource_manager.absurl('{}'.format(resource))
         return ''
 
     def has_access(self, user, topic):
