@@ -11,7 +11,7 @@
     {% else %}
     <li class="tool-link-wrapper{% if s.url in request.url %} selected{% endif %}">
         <a id="project-toolbar-button-{{ s.label|slugify }}" href="{{s.url}}" title="{{s.label}}" class="tool-link">
-            <img src="{{g.resource_manager.absurl('images/transparent.gif')}}" class="ui-icon-tool ui-icon-{{s.ui_icon or 'admin'}}">
+            <img src="{{s.icon_url}}" class="ui-icon-tool ui-icon-{{s.ui_icon or 'admin'}}">
             <div class="tool-label">{{s.label}}</div>
         </a>
     </li>

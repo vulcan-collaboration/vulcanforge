@@ -534,6 +534,8 @@ class Project(SOLRIndexed):
                 entry = SitemapEntry(ac.options.mount_label)
                 entry.url = ac.url()
                 entry.ui_icon = 'tool-%s' % ac.tool_name.lower()
+                entry.icon_url = ac.icon_url(32)
+
                 ordinal = ac.options.get('ordinal', 0)
                 entries.append({'ordinal': ordinal, 'entry': entry})
         entries = sorted(entries, key=lambda e: e['ordinal'])
@@ -1102,8 +1104,12 @@ class AppConfig(MappedClass):
 
     acl = FieldProperty(ACL())
 
+    @LazyProperty
+    def app(self):
+        return self.load()
+
     def __json__(self):
-        app = self.load()
+        app = self.app
         return {
             '_id': str(self._id),
             'project_id': str(self.project_id),
@@ -1125,6 +1131,9 @@ class AppConfig(MappedClass):
     @LazyProperty
     def discussion(self):
         return self.discussion_cls.query.get(_id=self.discussion_id)
+
+    def icon_url(self, size):
+        return self.app.icon_url(size)
 
     def parent_security_context(self):
         """ACL processing should terminate at the AppConfig"""

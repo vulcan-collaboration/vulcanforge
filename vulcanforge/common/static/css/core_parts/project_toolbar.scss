@@ -155,3 +155,12 @@ div.project-toolbar-hidden > ul > li.tool-link-wrapper {
 .tool-link.ui-no-icon:hover  img {
     box-shadow: 0 0 3px white;
 }
+
+#project-toolbar .ui-icon-tool {
+    opacity: 1;
+}
+
+#project-toolbar .tool-link-wrapper:hover .ui-icon-tool {
+    filter: url(../assets/svg_filters/filters.svg#brighter);
+    -webkit-filter: brightness(1.7) contrast(120%);
+}
