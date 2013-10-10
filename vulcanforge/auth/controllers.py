@@ -463,7 +463,7 @@ class _ModeratedAuthController(_AuthController):
         result["msg"] = "Use your VF Access ID to sign in."
         return result
 
-    @expose(TEMPLATE_DIR + 'registration.html')
+    @expose('auth/registration.html')
     @require_anonymous
     @with_trailing_slash
     def register(self, **kw):

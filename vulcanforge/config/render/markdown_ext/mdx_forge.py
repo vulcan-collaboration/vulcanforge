@@ -48,7 +48,6 @@ class ForgeExtension(OEmbedExtension):
         md.parser.blockprocessors.add('readmore',
                                       ReadMoreProcessor(md.parser),
                                       '<paragraph')
-        md.treeprocessors['br'] = LineOrientedTreeProcessor(md)
 
         # Sanitize HTML
         md.postprocessors['sanitize_html'] = SanitizeHTMLProcessor()
@@ -388,47 +387,6 @@ class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):
         sanitizer = ForgeHTMLSanitizer('utf-8')
         sanitizer.feed(text.encode('utf-8'))
         return unicode(sanitizer.output(), 'utf-8')
-
-
-class LineOrientedTreeProcessor(markdown.treeprocessors.Treeprocessor):
-    """Once MD is satisfied with the etree, this runs to replace \n with <br/>
-    within <p>s.
-    """
-
-    # TODO: tanner: fix call to superclass
-    def __init__(self, md):
-        self._markdown = md
-
-    def run(self, root):
-        for node in root.getiterator('p'):
-            if not node.text:
-                continue
-            if '\n' not in node.text:
-                continue
-            text = self._markdown.serializer(node)
-            text = self._markdown.postprocessors['raw_html'].run(text)
-            text = text.strip().encode('utf-8')
-            if '\n' not in text:
-                continue
-            new_text = (text
-                        .replace('<br>', '<br/>')
-                        .replace('\n', '<br/>'))
-            new_node = None
-            try:
-                new_node = etree.fromstring(new_text)
-            except SyntaxError:
-                try:
-                    new_node = etree.fromstring(
-                        unicode(BeautifulSoup(new_text)))
-                except Exception:
-                    #log.exception(
-                    #    'Error adding <br> tags: new text is %s', new_text)
-                    pass
-            if new_node:
-                node.clear()
-                node.text = new_node.text
-                node[:] = list(new_node)
-        return root
 
 
 class AutolinkPattern(markdown.inlinepatterns.LinkPattern):
