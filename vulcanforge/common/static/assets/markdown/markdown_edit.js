@@ -291,7 +291,7 @@
                 var rePattern = /\/\*.*?\*\//g;
                 return text.replace(rePattern, '');
             });
-            this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
+            this.converter.hooks.chain("postBlockGamut", function(text, runBlockGamut) {
                 var rePattern = /\/\*(?:.*?\n?)*?\*\//gm;
                 return text.replace(rePattern, '');
             });
