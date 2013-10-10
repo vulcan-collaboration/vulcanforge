@@ -13,13 +13,12 @@ class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
         split_content = content.replace('\r\n', '\n').split('\n')
         new_split = []
         max_i = len(split_content) - 1
-        if 'Here is a line' in split_content:
-            import ipdb; ipdb.set_trace()
         for i, line in enumerate(split_content):
             if line.startswith('~~~~'):
                 game_on = not game_on
             new_split.append(line)
-            if game_on and not line.startswith('    ') and line:
+            if game_on and not line.startswith('    ') and \
+                    not line.lstrip().startswith('- ') and line:
                 if i != max_i and split_content[i + 1]:  # not double break
                     new_split.append('')
 
