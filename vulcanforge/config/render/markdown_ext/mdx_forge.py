@@ -44,10 +44,10 @@ class ForgeExtension(OEmbedExtension):
     def extendMarkdown(self, md, md_globals):
         md.registerExtension(self)
         md.preprocessors['fenced-code'] = FencedCodeProcessor()
+        md.preprocessors['comments'] = CommentProcessor()
         md.parser.blockprocessors.add('readmore',
                                       ReadMoreProcessor(md.parser),
                                       '<paragraph')
-        md.treeprocessors['br'] = LineOrientedTreeProcessor(md)
 
         # Sanitize HTML
         md.postprocessors['sanitize_html'] = SanitizeHTMLProcessor()
@@ -84,6 +84,7 @@ class ForgeExtension(OEmbedExtension):
 
         md.inlinePatterns['autolink_1'] = AutolinkPattern(
             r'(http(?:s?)://[a-zA-Z0-9./\-_0%?&=+#;~:]+)')
+
         md.postprocessors['rewrite_relative_links'] = RelativeLinkRewriter(md,
             make_absolute=self._is_email)
         # Put a class around markdown content for custom css
@@ -388,47 +389,6 @@ class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):
         return unicode(sanitizer.output(), 'utf-8')
 
 
-class LineOrientedTreeProcessor(markdown.treeprocessors.Treeprocessor):
-    """Once MD is satisfied with the etree, this runs to replace \n with <br/>
-    within <p>s.
-    """
-
-    # TODO: tanner: fix call to superclass
-    def __init__(self, md):
-        self._markdown = md
-
-    def run(self, root):
-        for node in root.getiterator('p'):
-            if not node.text:
-                continue
-            if '\n' not in node.text:
-                continue
-            text = self._markdown.serializer(node)
-            text = self._markdown.postprocessors['raw_html'].run(text)
-            text = text.strip().encode('utf-8')
-            if '\n' not in text:
-                continue
-            new_text = (text
-                        .replace('<br>', '<br/>')
-                        .replace('\n', '<br/>'))
-            new_node = None
-            try:
-                new_node = etree.fromstring(new_text)
-            except SyntaxError:
-                try:
-                    new_node = etree.fromstring(
-                        unicode(BeautifulSoup(new_text)))
-                except Exception:
-                    #log.exception(
-                    #    'Error adding <br> tags: new text is %s', new_text)
-                    pass
-            if new_node:
-                node.clear()
-                node.text = new_node.text
-                node[:] = list(new_node)
-        return root
-
-
 class AutolinkPattern(markdown.inlinepatterns.LinkPattern):
     def handleMatch(self, mo):
         old_link = mo.group(2)
@@ -473,3 +433,23 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
             return m.group(2)
         else:
             return line
+
+
+class CommentProcessor(markdown.preprocessors.Preprocessor):
+    RE = re.compile(r'/\*.*?\*/', re.DOTALL)
+
+    def run(self, lines):
+        block = ''
+        new_lines = []
+        for line in lines:
+            if line.startswith('    '):
+                if block:
+                    new_lines.extend(self.RE.sub('', block).split('\n'))
+                    block = ''
+                new_lines.append(line)
+            else:
+                block += line + '\n'
+        if block:
+            new_lines.extend(self.RE.sub('', block).split('\n'))
+
+        return new_lines

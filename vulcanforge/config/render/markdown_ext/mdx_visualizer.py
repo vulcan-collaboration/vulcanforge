@@ -18,7 +18,8 @@ VISUALIZER_RE = r'\^v' + r'\(([^\)]*)\)' + r'(?:\(([^\)]*)\))?'
 class StashPattern(markdown.inlinepatterns.Pattern):
     """
     Used to insert a placeholder for a pattern, then sub another value in after
-    the rest of the dumb patterns have been run
+    the rest of the patterns have been run. The purpose of this is to prevent
+    corruption by other patterns or processors in the markdown stack.
 
     """
 
