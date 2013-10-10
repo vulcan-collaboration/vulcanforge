@@ -43,10 +43,10 @@ class ArtifactSessionExtension(SessionExtension):
         from vulcanforge.artifact.tasks import del_artifacts
         del_artifacts.post(deleted_specs)
 
-    def index_new(self, new_ref_ids):
+    def index_new(self, new_ref_ids, mod_dates=None):
         """Added or modified"""
         from vulcanforge.artifact.tasks import add_artifacts
-        add_artifacts.post(new_ref_ids)
+        add_artifacts.post(new_ref_ids, mod_dates=mod_dates)
 
     def after_flush(self, obj=None):
         """Update artifact references, and add/update this artifact to solr"""
@@ -58,11 +58,13 @@ class ArtifactSessionExtension(SessionExtension):
 
             # Upsert artifact references & shortlinks exist for new objects
             new_ref_ids = []
+            mod_dates = {}
             for obj in self.objects_added + self.objects_modified:
                 app_configs.add(obj.app_config)
                 aref = ArtifactReference.from_artifact(obj)
                 new_ref_ids.append(aref._id)
                 Shortlink.from_artifact(obj)
+                mod_dates[aref._id] = obj.mod_date
 
             # Flush shortlinks
             session(ArtifactReference).flush()
@@ -82,7 +84,7 @@ class ArtifactSessionExtension(SessionExtension):
                     })
                 self.index_deleted(delete_specs)
             if new_ref_ids:
-                self.index_new(new_ref_ids)
+                self.index_new(new_ref_ids, mod_dates=mod_dates)
 
             # store events
             for obj in self.objects_added:

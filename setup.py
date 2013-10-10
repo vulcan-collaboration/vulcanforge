@@ -125,6 +125,8 @@ setup(
     project-enable-notification-emails = vulcanforge.command.project:EnableNotificationEmailsCommand
     vshell = vulcanforge.command.util:VulcanForgeShellCommand
     install_tool = vulcanforge.command.project:InstallTool
+    wiki-export = vulcanforge.command.wiki_tool:ExportWikiPages
+    wiki-import = vulcanforge.command.wiki_tool:ImportWikiPages
 
     [easy_widgets.engines]
     jinja = vulcanforge.config.app_cfg:JinjaEngine

@@ -647,7 +647,7 @@ class PageController(WikiContentBaseController):
         next_ = cur + 1
         hide_sidebar = not (c.app.show_left_bar or
                             g.security.has_access(self.page, 'edit'))
-        page_html = self.page.get_rendered_html()
+        page_html = page.get_rendered_html()
         hierarchy_items = self.get_hierarchy_items()
         return dict(
             page=page,

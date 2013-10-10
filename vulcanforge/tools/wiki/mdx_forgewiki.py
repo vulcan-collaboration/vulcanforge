@@ -202,7 +202,7 @@ class ForgeWikiExtension(markdown.Extension):
             'marker': '{Table of Contents}',
             'slugify': markdown.extensions.headerid.slugify,
             'title': 'Table of Contents',
-            'anchorlink': 1
+            'anchorlink': False
         }
         table_of_contents_tree_processor = TableOfContentsTreeProcessor(md)
         table_of_contents_tree_processor.config = table_of_contents_config

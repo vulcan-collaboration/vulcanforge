@@ -77,9 +77,6 @@ class ForgeAppGlobals(object):
         # other special urls
         self.user_register_url = config.get("user_register_url",
                                             "/auth/register/")
-        self.site_issues_url = config.get("site_issues_url",
-                                          "/projects/forgeadmin/issues/")
-        self.site_issues_label = config.get("site_issues_label", "Help Desk")
         self.home_url = config.get("home_url", "/")
         self.browse_home = config.get("browse_home", "/")
         self.show_register_on_login = asbool(config.get(
@@ -196,6 +193,9 @@ class ForgeAppGlobals(object):
         # Title postfix
         self.title_postfix = config.get('title_postfix', ' - VF')
 
+        # TrustForge
+        self.trustforge_enabled = asbool(
+            config.get('trustforge.enabled', False))
         self.trustforge_url = config.get('trustforge.url', '')
         self.trustforge_token = config.get('trustforge.auth_token', '')
 

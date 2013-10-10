@@ -10,6 +10,7 @@ from bson.objectid import ObjectId
 from ming.odm.odmsession import ThreadLocalODMSession, session
 from formencode import validators
 from formencode.api import Invalid
+from paste.deploy.converters import asbool
 from webob import exc as wexc, exc
 from pylons import tmpl_context as c, app_globals as g
 from tg import (
@@ -87,7 +88,6 @@ REGISTRATION_ACTION = '/auth/send_user_registration_email'
 
 
 class _AuthController(BaseController):
-
 
     class Forms(BaseController.Forms):
         login_form = LoginForm()
@@ -213,7 +213,8 @@ class _AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The password reset token is invalid or has expired. "
+                      "Please request another password reset.", 'error')
                 redirect('.?return_to={}'.format(return_to))
         return dict(token=token, form_values=form_values, **kw)
 
@@ -242,8 +243,6 @@ class _AuthController(BaseController):
     @validate_form("password_reset_form", error_handler=password_reset)
     def do_password_reset(self, token=None, password=None, return_to=None,
                           **kw):
-        if return_to is None:
-            return_to = config.get('home_url', '/')
         LOG.debug("do_password_reset token: %s", token)
         token_object = PasswordResetToken.query.get(nonce=token)
         user = token_object.user
@@ -258,6 +257,8 @@ class _AuthController(BaseController):
         token_object.delete()
         g.auth_provider.login(user)
         flash("Your password has been updated.", status="confirm")
+        if return_to is None:
+            return_to = config.get('home_url', '/')
         return redirect(return_to)
 
     @expose(TEMPLATE_DIR + 'auth_cancel_email_mod.html')
@@ -310,7 +311,8 @@ class _AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The registration token is invalid or has expired. "
+                      "Please register again.", 'error')
                 redirect('.')
         return dict(kw, form_values=form_values)
 
@@ -492,9 +494,12 @@ class _ModeratedAuthController(_AuthController):
         return dict()
 
 
+# determine whether to moderate general registrations
+#   Use visibility mode settings unless explicitly defined
 _visibility_mode = config.get('visibility_mode', 'default')
-AuthController = _ModeratedAuthController \
-    if VisibilityModeMiddleware.MODES[_visibility_mode] else _AuthController
+_moderate = asbool(config.get('moderate_registration',
+                              VisibilityModeMiddleware.MODES[_visibility_mode]))
+AuthController = _ModeratedAuthController if _moderate else _AuthController
 
 
 class UserStatePreferencesRESTController(object):
@@ -1016,7 +1021,7 @@ class UserDiscoverController(BaseController):
             'type_s:User',
             'public_b:true',
             'disabled_b:false'
-            ))
+        ))
 
     @expose(TEMPLATE_DIR + 'user_browse.html')
     @validate(dict(

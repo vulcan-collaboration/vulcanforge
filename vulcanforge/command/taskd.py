@@ -99,8 +99,8 @@ class TaskCommand(base.Command):
 
     def _test(self):
         """Run a test task with optional timeout"""
-        base.log.info('Run a test task and ensure its proper completion')
         test_running_taskd(self.options.timeout)
+        print "Taskd completed dummy task without incident"
 
     def _commit(self):
         """Schedule a SOLR commit"""

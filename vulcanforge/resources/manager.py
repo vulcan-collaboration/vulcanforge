@@ -21,6 +21,7 @@ from .widgets import Resource, CSSLink, JSLink, JSScript
 LOG = logging.getLogger(__name__)
 
 RESOURCE_URL = re.compile(r"url\([\'\"]?([^\"\'\)]+)[\'\"]?\)")
+ROOTRELATIVE_URL = re.compile(r"url\([\'\"]?/([^\"\'\)]+)[\'\"]?\)")
 RECIPE_FILE = 'static_recipes.txt'
 SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
 
@@ -248,6 +249,17 @@ class ResourceManager(ew.ResourceManager):
                         continue
 
         return []
+
+    def expand_css_urls(self, content):
+        resource_urls = re.findall(ROOTRELATIVE_URL, content)
+        # Just in case the same url is listed twice
+        resource_urls_set = set(resource_urls)
+        for resource_url in resource_urls_set:
+            if SPRITE_MAP_PREFIX in resource_url:
+                continue
+            expanded_url = self.absurl(resource_url)
+            content = content.replace('/' + resource_url, expanded_url)
+        return content
 
     def write_slim_file(self, file_type, rel_resource_paths,
                         destination_dir=None):

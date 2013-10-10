@@ -156,11 +156,14 @@ class Visualizer(MappedClass):
         key_name = self.key_prefix + path
         return g.get_s3_key(key_name, **kw)
 
+    def get_s3_keys(self):
+        return g.get_s3_keys(self.key_prefix)
+
     def delete_s3_key(self, path):
         g.delete_s3_key(self.key_prefix + path)
 
     def delete_s3_keys(self):
-        for key in g.get_s3_keys(self.key_prefix):
+        for key in self.get_s3_keys():
             g.delete_s3_key(key)
 
     def can_upload(self, path):
@@ -184,9 +187,10 @@ class Visualizer(MappedClass):
                 self.update_from_manifest_file(manifest_fp)
 
             # append files
-            for filename in itertools.ifilter(
+            file_iter = itertools.ifilter(
                 lambda f: f.startswith(root + '/') if root else True,
-                self._iter_zip(zip_handle)):
+                self._iter_zip(zip_handle))
+            for filename in file_iter:
                 relative_path = os.path.relpath(filename, root)
                 if relative_path != '.':
                     self.bundle_content.append(relative_path)
@@ -212,6 +216,11 @@ class Visualizer(MappedClass):
         if self.shortname is None:
             self.shortname = self.strip_name(self.name)
         self.cache.clear()
+
+    def download_to_archive(self, archive_fp):
+        for filename in self.bundle_content:
+            key = self.get_s3_key(filename)
+            archive_fp.writestr(filename, key.get_contents_as_string())
 
     @staticmethod
     def strip_name(name):

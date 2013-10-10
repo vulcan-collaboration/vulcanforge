@@ -69,4 +69,4 @@ class MassEditForm(ew_core.Widget):
         sort=None)
 
     def resources(self):
-        yield JSLink('tracker_js/mass-edit.js')
+        yield JSLink('tickets/js/mass-edit.js')

@@ -1,11 +1,12 @@
-$(function(){
+$(function () {
     $('#assigned_to').val('');
-    $('#select_all').click(function(){
-        if(this.checked){
-            $('.ticket-list input[type=checkbox]').attr('checked', 'checked');
-        }
-        else{
-            $('.ticket-list input[type=checkbox]').removeAttr('checked');
-        }
-    });
+
+    $('#tracker_mass_edit_form').
+        on('change', '.ticketRow :checkbox', function (eventObject) {
+            var allChecked = $('.ticketRow :checkbox:not(:checked)').length === 0;
+            $('#select_all').prop('checked', allChecked);
+        }).
+        on('change', '#select_all', function (eventObject) {
+            $('.ticketRow :checkbox').prop('checked', $(this).prop('checked'));
+        });
 });

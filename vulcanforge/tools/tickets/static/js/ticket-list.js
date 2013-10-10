@@ -37,7 +37,9 @@
                 linkTarget = $link.attr('target');
             if (!$target.is('a, input, button, a *')) {
                 if ($checkbox.length > 0) {
-                    $checkbox.prop('checked', !$checkbox.prop('checked'));
+                    $checkbox.
+                        prop('checked', !$checkbox.prop('checked')).
+                        trigger("change");;
                 } else if ($link.length > 0) {
                     switch (e.which) {
                     case 2:

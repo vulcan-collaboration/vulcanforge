@@ -148,9 +148,21 @@
 <div style="position: absolute; left: -10000px;"><iframe name="invisiframe" src="{{ c.user.swift_cookie_url() | safe}}"></iframe></div>
 {% endif %}
 </div>
+{% block footer %}
 <div id="footer">
-    {{theme_macros.footer(g.year())}}
+    <ul class="links">
+        <li><a href="/forge_global/Terms/" title="Terms">Terms</a></li>
+        <li><a href="/forge_global/Contact/" title="Contact">Contact</a></li>
+        <li><a href="/forge_global/About/" title="About">About</a></li>
+        <li><a href="/forge_global/Technology/" title="Technology">Technology</a></li>
+        <li><a href="/forge_global/VF-Team/" title="VF-Team">VF-Team</a></li>
+    </ul>
+    <div id="copyRight" class="links">
+        &copy; {{ g.year() }}. Sponsored by <a href="http://www.darpa.mil/" title="DARPA" target="_blank">DARPA</a>.
+        Developed at <a href="http://www.isis.vanderbilt.edu/" title="ISIS" target="_blank">ISIS</a>.
+    </div>
 </div>
+{% endblock %}
 <div id="bottom-bg-container"></div>
 <div id="messages"></div>
 {% if not g.production_mode %}
@@ -176,26 +188,27 @@
         $vf.idle_logout_minutes = {{ g.idle_logout_minutes }};
         $vf.idle_logout_countdown_seconds = {{ g.idle_logout_countdown_seconds }};
         $vf.vf_guidebook_location = {% if g.vf_guidebook_location %} '{{ g.vf_guidebook_location }}' {% else %} null {% endif %};
+        $vf.trustforge_enabled = {% if g.trustforge_enabled %}true{% else %}false{% endif %};
 
-    {% if session['userid'] %}
-        $vf.logged_in_as = "{{c.user.username}}";
-        {% for n in h.pop_user_notifications() %}
-            $('#messages').notify("{{ n.text }}");
-        {% endfor %}
-        referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
-        workspaceTabs = {{c.user.workspace_tabs | jsonify}};
-        userURL = '{{c.user.url()}}';
-    {% else %}
-    $vf.logged_in_as = null;
-    {% endif %}
-    $vf.init(userURL, workspaceTabs, referenceBinConfig);
-    $('#project-toolbar > ul.links').intelliMore({
-        orientation: 'vertical',
-        triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
-        hiddenClass: 'project-toolbar-hidden',
-        neverHide: '.selected,.no-more-hide',
-        heightSource: $('#left-toolbar')
-    });
+        {% if session['userid'] %}
+            $vf.logged_in_as = "{{c.user.username}}";
+            {% for n in h.pop_user_notifications() %}
+                $('#messages').notify("{{ n.text }}");
+            {% endfor %}
+            referenceBinConfig = {{c.user.get_workspace_references() | jsonify}};
+            workspaceTabs = {{c.user.workspace_tabs | jsonify}};
+            userURL = '{{c.user.url()}}';
+        {% else %}
+        $vf.logged_in_as = null;
+        {% endif %}
+        $vf.init(userURL, workspaceTabs, referenceBinConfig);
+        $('#project-toolbar > ul.links').intelliMore({
+            orientation: 'vertical',
+            triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
+            hiddenClass: 'project-toolbar-hidden',
+            neverHide: '.selected,.no-more-hide',
+            heightSource: $('#left-toolbar')
+        });
     });
 </script>
 {% if not hide_header %}

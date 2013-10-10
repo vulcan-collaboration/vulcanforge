@@ -227,6 +227,10 @@ $user-id-width: 320px;
         background: rgba(0,0,0,0.1);
     }
 
+    .id-actions:empty {
+        display: none;
+    }
+
     .id-actions a,
     .id-actions a:link
     {

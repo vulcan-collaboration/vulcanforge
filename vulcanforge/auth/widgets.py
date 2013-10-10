@@ -8,7 +8,7 @@ from formencode.validators import FormValidator
 from pylons import tmpl_context as c, app_globals as g, request
 import tg
 from tg import config
-from formencode import Invalid
+from formencode import Invalid, validators
 import ew as ew_core
 from ew.core import validator
 from ew.render import Snippet
@@ -19,6 +19,7 @@ from vulcanforge.common import helpers as h
 from vulcanforge.common.helpers import get_site_protocol
 from vulcanforge.common.widgets.forms import ForgeForm
 from vulcanforge.auth.model import FailedLogin, User
+from vulcanforge.auth.validators import PasswordValidator
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:auth/templates/widgets/'
@@ -32,7 +33,11 @@ class LoginForm(ForgeForm):
     class fields(ew_core.NameList):
         username = ew.TextField(
             label='Username', attrs=dict(autofocus='autofocus'), wide=True)
-        password = ew.PasswordField(label='Password', wide=True)
+        password = ew.PasswordField(
+            label='Password',
+            wide=True,
+            validator=PasswordValidator()
+        )
         return_to = ew.HiddenField()
 
     def context_for(self, field):
@@ -50,8 +55,9 @@ class LoginForm(ForgeForm):
             msg = msg.format(config.get('login_lock.interval', 'a couple'))
             raise Invalid(msg, value, state)
         try:
+            value = super(LoginForm, self).validate(value, state)
             value['username'] = g.auth_provider.login()
-        except HTTPUnauthorized:
+        except (Invalid, HTTPUnauthorized):
             # if user needs a password reset
             targeted_user = User.query.get(username=value['username'])
             if targeted_user and targeted_user.disabled:

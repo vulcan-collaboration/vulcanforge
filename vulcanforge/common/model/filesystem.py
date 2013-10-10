@@ -53,6 +53,10 @@ class File(MappedClass):
         if self.keyname is None:
             self.keyname = self.default_keyname
 
+    @LazyProperty
+    def size(self):
+        return self.key.size
+
     @property
     def default_keyname(self):
         keyname = self.filename

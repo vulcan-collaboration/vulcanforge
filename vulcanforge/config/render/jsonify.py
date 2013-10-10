@@ -43,7 +43,10 @@ class SanitizeEncode(GenericJSON):
     def _sanitize_encode(self, encoder, sanitize=True):
         def sanitize_encoder(o):
             if isinstance(o, Markup):
-                o = str(o)
+                try:
+                    o = str(o)
+                except UnicodeEncodeError:
+                    o = unicode(o)
             elif sanitize:
                 o = o.replace('&', '\\u0026')\
                      .replace('<', '\\u003c')\

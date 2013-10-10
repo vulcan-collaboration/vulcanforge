@@ -1,10 +1,12 @@
 import os
+import re
 import urllib
 import logging
 from datetime import datetime
 from random import randint
 from hashlib import sha1, sha256
 from base64 import b64encode, b64decode
+from paste.deploy.converters import asint
 
 from webob import exc
 from tg import config, response, request
@@ -28,6 +30,11 @@ from vulcanforge.auth.exceptions import PasswordAlreadyUsedError
 LOG = logging.getLogger(__name__)
 
 
+class PasswordLengthError(Exception):
+    """Password too long"""
+    pass
+
+
 class BaseAuthenticationProvider(object):
     """
     An interface to provide authentication services for VulcanForge.
@@ -37,6 +44,12 @@ class BaseAuthenticationProvider(object):
     auth_provider = path/to/provider:MyAuthProvider
 
     """
+    PWRE = re.compile(r'^(?P<method>\{SSHA(?P<saltlen>\d+)?\}).*')
+
+    def __init__(self):
+        self.saltlen = asint(config.get('auth.saltlength', 32))
+        self.maxpwlen = asint(config.get('auth.pw.max_length', 512))
+
     @property
     def session(self):
         return request.environ['beaker.session']
@@ -135,16 +148,22 @@ class BaseAuthenticationProvider(object):
         """
         raise NotImplementedError('set_password')
 
-    def _encode_password(self, password, salt=None):
+    def _encode_password(self, password, salt=None, method=None):
         if salt is None:
-            salt = os.urandom(4)
+            salt = os.urandom(self.saltlen)
+        elif len(salt) == 4:
+            method = "{SSHA}"
+        if method is None:
+            method = '{SSHA%d}' % len(salt)
         h = sha1(password)
         h.update(salt)
-        return "{SSHA}" + b64encode(h.digest() + salt)
+        return method + b64encode(h.digest() + salt)
 
     def get_salt(self, encoded):
-        decoded = b64decode(encoded[len('{SSHA}'):])
-        return decoded[-4:]
+        parsed = self.PWRE.match(encoded).groupdict()
+        saltlen = int(parsed.get("saltlen") or 4)
+        decoded = b64decode(encoded[len(parsed["method"]):])
+        return decoded[-saltlen:]
 
     def assert_password_unused(self, password, user):
         for old_pw in user.old_password_hashes:

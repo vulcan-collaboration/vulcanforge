@@ -50,6 +50,7 @@ class Globals(MappedClass):
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
     last_ticket_num = FieldProperty(int)
+    default_view_query = FieldProperty(str, if_missing=None)
     status_names = FieldProperty(str)
     open_status_names = FieldProperty(str)
     closed_status_names = FieldProperty(str)
@@ -117,6 +118,11 @@ class Globals(MappedClass):
     def milestone_fields(self):
         return [fld for fld in self.custom_fields
                 if fld.get('type') == 'milestone']
+
+    def get_default_view_query(self):
+        if self.default_view_query:
+            return self.default_view_query
+        return self.not_closed_query
 
     def get_milestones_between(self, date_start, date_end):
         for fld in self.custom_fields:
@@ -748,73 +754,7 @@ class Ticket(VersionedArtifact):
             custom_fields=self.custom_fields)
 
     @classmethod
-    def paged_query(cls, q, mongo=False, **kw):
-        """
-        Query tickets, default search with SOLR but allow Mongo queries
-        """
-        if mongo:
-            return cls.paged_mongo_query(q, **kw)
-        return cls.paged_solr_query(q, **kw)
-
-    @classmethod
-    def paged_mongo_query(cls, query, limit=None, page=0, sort=None,
-                          columns=None, **kw):
-        """Query tickets, sorting and paginating the result."""
-        limit, page, start = g.handle_paging(limit, page, default=25)
-        q = cls.query.find(dict(query, app_config_id=c.app.config._id))
-        q = q.sort('ticket_num')
-        if sort and sort != 'None':
-            for s in sort.split(','):
-                field, direction = s.split()
-                if field.startswith('_'):
-                    field = 'custom_fields.' + field
-                direction = dict(
-                    asc=pymongo.ASCENDING,
-                    desc=pymongo.DESCENDING)[direction]
-                q = q.sort(field, direction)
-        q = q.skip(start)
-        q = q.limit(limit)
-        tickets = []
-        count = q.count()
-        for t in q:
-            if g.security.has_access(t, 'read'):
-                tickets.append(t)
-            else:
-                count -= 1
-        sortable_custom_fields = \
-            c.app.globals.sortable_custom_fields_shown_in_search()
-        if not columns:
-            columns = [
-                dict(name='ticket_num', sort_name='ticket_num',
-                     label='Ticket Number', active=True),
-                dict(name='summary', sort_name='summary',
-                     label='Summary', active=True),
-                dict(name='status', sort_name='status',
-                     label='Status', active=True),
-                dict(name='assigned_to', sort_name='assigned_to_name_s',
-                     label=c.app.globals.assigned_to_label, active=True),
-                dict(name='last_updated', sort_name='last_updated',
-                     label='Last Updated', active=True),
-                {'name': 'closed_date', 'sort_name': 'closed_date_dt',
-                 'label': 'Date Closed', 'active': True}
-            ]
-            for field in sortable_custom_fields:
-                columns.append(
-                    dict(name=field['name'], sort_name=field['name'],
-                         label=field['label'], active=True))
-        return dict(
-            tickets=tickets,
-            sortable_custom_fields=sortable_custom_fields,
-            columns=columns,
-            count=count,
-            q=json.dumps(query),
-            limit=limit,
-            page=page,
-            sort=sort,
-            **kw)
-
-    @classmethod
-    def paged_solr_query(cls, q, limit=None, page=0, sort=None,
+    def paged_query(cls, q, limit=None, page=0, sort=None,
                          columns=None, **kw):
         """Query tickets, sorting and paginating the result.
 

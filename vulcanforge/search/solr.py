@@ -13,8 +13,6 @@ def solarize(obj):
     if obj is None:
         return None
     doc = obj.index()
-    if doc is None:
-        return None
     return doc
 
 
