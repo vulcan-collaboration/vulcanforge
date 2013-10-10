@@ -37,9 +37,9 @@ class ForgeVisualizeApp(Application):
     default_mount_point = "visualize"
     default_root_page_name = u"Home"
     icons = {
-        24: 'images/admin_24.png',
-        32: 'images/admin_32.png',
-        48: 'images/admin_48.png'
+        24: 'images/visualizers-icon_24.png',
+        32: 'images/visualizers-icon_32.png',
+        48: 'images/visualizers-icon_48.png'
     }
     default_acl = {
         'Admin': permissions,
