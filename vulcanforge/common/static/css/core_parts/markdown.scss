@@ -137,8 +137,12 @@
     p,
     ul, ol,
     hr,
-    blockquote, img, center {
+    blockquote, center {
         max-width: 1000px;
+    }
+
+    img {
+        max-width: 100%;
     }
 }
 
