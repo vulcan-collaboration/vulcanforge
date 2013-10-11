@@ -348,6 +348,13 @@
     padding: 0;
 }
 
+.markdown-attachment-img-thumbnail {
+    display: inline-block;
+    vertical-align: middle;
+    max-height: 2em;
+}
+
+
 
 .markdownPlaceholder {
     @include linearGradient2(top, #999, #555);

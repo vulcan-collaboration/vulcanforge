@@ -410,7 +410,7 @@ class AttachmentController(BaseController):
                 except exc.HTTPNotFound:
                     pass
             redirect(request.referer or self.artifact.url())
-        if 'embed_vis' in kw:
+        elif 'embed_vis' in kw:
             visualizer = None
             if visualizer_id:
                 visualizer = Visualizer.query.get(_id=visualizer_id)
@@ -421,7 +421,10 @@ class AttachmentController(BaseController):
                 filename=self.attachment.filename,
                 context="embed"
             )
-        return self.attachment.serve(embed)
+        elif g.s3_serve_local:
+            return self.attachment.serve(embed)
+        else:
+            return redirect(self.attachment.remote_url())
 
     @expose()
     def thumb(self, embed=True):

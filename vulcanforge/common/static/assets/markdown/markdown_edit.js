@@ -37,9 +37,10 @@
                         mimetype = $(this).attr('data-mimetype');
                     that.attachments[filename] = {
                         is_image: mimetype.match(/image.*/),
-                        $el: $(this)
+                        $el: $(this),
+                        url: $(this).attr('data-url') ? $(this).attr('data-url') : null,
+                        thumbURL: $(this).attr('data-thumb-url') ? $(this).attr('data-thumb-url') : null,
                     };
-                    that.attachments[filename].url = $(this).attr('data-url') ? $(this).attr('data-url') : null;
                 });
             }
         }
@@ -72,6 +73,9 @@
                 previewUrl = windowURL.createObjectURL(att.$el.files[0]);
             } else if (this.attachments.hasOwnProperty(filename) && this.attachments[filename].url){
                 previewUrl = this.attachments[filename].url;
+            } else if (filename.search(/^\.{0,2}\//) !== -1) {
+                // Use the filename as the URL if it is a relative or absolute path
+                previewUrl = filename;
             } else {
                 previewUrl = './attachment/' + filename;
             }
@@ -83,7 +87,8 @@
                 if (this.attachments.hasOwnProperty(fname) && this.attachments[fname]['is_image']){
                     available.push({
                         filename: fname,
-                        url: this.attachments[fname].url
+                        url: this.attachments[fname].url,
+                        thumbURL: this.attachments[fname].thumbURL
                     });
                 }
             }
@@ -435,18 +440,24 @@
                 $attachmentsUL = $('<ul/>', {
                     "class": "markdown-attachment-img-list-insert"
                 });
-                $.each(availableImages, function(i, el){
-                    $attachmentsUL
-                        .append($('<li/>')
-                            .append($('<a/>', {
-                                "class": 'close',
-                                "text": el.filename,
-                                "href": "#",
-                                "click": function() {
-                                    callback('attachment:' + el.url);
-                                    return true;
-                                }
-                        })));
+                $.each(availableImages, function (i, imgInfo) {
+                    var $link = $('<a/>', {
+                        "class": 'close',
+                        "text": imgInfo.filename,
+                        "href": "#",
+                        "click": function () {
+                            callback('attachment:' + imgInfo.url);
+                            return true;
+                        }
+                    }).
+                        appendTo($('<li/>').appendTo($attachmentsUL));
+                    if (imgInfo.thumbURL) {
+                        $link.prepend(' ');
+                        $('<img/>').
+                            addClass('markdown-attachment-img-thumbnail').
+                            attr('src', imgInfo.thumbURL).
+                            prependTo($link);
+                    }
                 });
                 $form
                     .append($('<p/>', {
