@@ -15,7 +15,7 @@
           <span class="text-centered installable_tool">
             <a class="install_trig" data-tool="{{ tool['name'] }}">
               <div class="tool-title">{{ tool['app'].tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
-              <img src="{{ tool['app'].icon_url(32) or 'unk.png' }}" alt="">
+              <img src="{{ tool.icon_url }}" alt="">
             </a>
           </span>
         {% endfor %}
@@ -50,7 +50,7 @@
                     <ul class="deck">
                         <li class="text-centered">
                             <div class="tool-title">{{ label }}</div>
-                            <img src="{{ app.icon_url(48) }}" alt="">
+                            <img src="{{ mount['ac'].icon_url(48) }}" alt="">
                         </li>
                         {% for link in links %}
                         <li>

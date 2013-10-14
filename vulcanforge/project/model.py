@@ -1132,9 +1132,7 @@ class AppConfig(MappedClass):
         return self.discussion_cls.query.get(_id=self.discussion_id)
 
     def icon_url(self, size):
-        resource = self.app.icons.get(size)
-        if resource:
-            return g.resource_manager.absurl(resource.format(ep_name=self.tool_name.lower()))
+        return self.app.icon_url(size, self.tool_name.lower())
 
     def parent_security_context(self):
         """ACL processing should terminate at the AppConfig"""
