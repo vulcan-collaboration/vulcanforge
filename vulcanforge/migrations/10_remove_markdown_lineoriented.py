@@ -8,6 +8,9 @@ from vulcanforge.tools.wiki.model import Page
 class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
     """WARNING: this migration is NOT idempotent. DO NOT RUN TWICE"""
 
+    HEADER_LINE_RE = re.compile(r'^[\-=]+$')
+    OL_LINE_RE = re.compile(r'^\s*\d+\. .+$')
+
     def _convert_markdown(self, content):
         game_on = True
         split_content = content.replace('\r\n', '\n').split('\n')
@@ -17,9 +20,13 @@ class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
             if line.startswith('~~~~'):
                 game_on = not game_on
             new_split.append(line)
-            if game_on and not line.startswith('    ') and \
-                    not line.lstrip().startswith('- ') and line:
-                if i != max_i and split_content[i + 1]:  # not double break
+            if game_on and line and not line.startswith('    ') and \
+                    not line.lstrip().startswith('- ') and \
+                    not line.lstrip().startswith('* ') and \
+                    not line.lstrip().startswith('|') and \
+                    not self.OL_LINE_RE.match(line):
+                if i != max_i and split_content[i + 1] and \
+                        not self.HEADER_LINE_RE.match(split_content[i + 1]):
                     new_split.append('')
 
         return '\r\n'.join(new_split)
