@@ -17,7 +17,7 @@ class ConfigOption(object):
 class SitemapEntry(object):
 
     def __init__(self, label, url=None, children=None, className=None,
-                 ui_icon=None, small=None, icon_url=none):
+                 ui_icon=None, small=None, icon_url=None):
         self.label = label
         self.className = className
         self.url = url

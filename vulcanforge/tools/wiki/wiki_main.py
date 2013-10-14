@@ -102,9 +102,9 @@ class ForgeWikiApp(Application):
     default_mount_point = 'wiki'
     default_root_page_name = u'Wiki Home'
     icons = {
-        24: 'images/wiki_24.png',
-        32: 'images/wiki_32.png',
-        48: 'images/wiki_48.png'
+        24: '{ep_name}/images/wiki_24.png',
+        32: '{ep_name}/images/wiki_32.png',
+        48: '{ep_name}/images/wiki_48.png'
     }
     # whether its artifacts are referenceable from the repo browser
     reference_opts = dict(Application.reference_opts,

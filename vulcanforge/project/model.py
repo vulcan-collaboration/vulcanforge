@@ -1109,7 +1109,6 @@ class AppConfig(MappedClass):
         return self.load()
 
     def __json__(self):
-        app = self.app
         return {
             '_id': str(self._id),
             'project_id': str(self.project_id),
@@ -1117,9 +1116,9 @@ class AppConfig(MappedClass):
             'url': self.url(),
             'options': self.options,
             'icon_urls': {
-                '24': app.icon_url(24),
-                '32': app.icon_url(32),
-                '48': app.icon_url(48),
+                '24': self.icon_url(24),
+                '32': self.icon_url(32),
+                '48': self.icon_url(48),
             }
         }
 
@@ -1133,7 +1132,9 @@ class AppConfig(MappedClass):
         return self.discussion_cls.query.get(_id=self.discussion_id)
 
     def icon_url(self, size):
-        return self.app.icon_url(size)
+        resource = self.app.icons.get(size)
+        if resource:
+            return g.resource_manager.absurl(resource.format(ep_name=self.tool_name.lower()))
 
     def parent_security_context(self):
         """ACL processing should terminate at the AppConfig"""

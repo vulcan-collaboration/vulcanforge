@@ -60,9 +60,9 @@ class Application(object):
     default_mount_label = 'Tool Name'
     default_mount_point = 'tool'
     icons = {
-        24: 'images/admin_24.png',
-        32: 'images/admin_32.png',
-        48: 'images/admin_48.png'
+        24: 'images/default_tool_icons/24.png',
+        32: 'images/default_tool_icons/32.png',
+        48: 'images/default_tool_icons/48.png'
     }
     artifacts = {}
     # admin description
@@ -123,22 +123,6 @@ class Application(object):
     @classmethod
     def status_int(cls):
         return cls.status_map.index(cls.status)
-
-    @classmethod
-    def icon_url(cls, size):
-        """
-        Subclasses (tools) provide their own icons (preferred) or in
-        extraordinary circumstances override this routine to provide
-        the URL to an icon of the requested size specific to that tool.
-
-        Application.icons is simply a default if no more specific icon
-        is available.
-
-        """
-        resource = cls.icons.get(size)
-        if resource:
-            return g.resource_manager.absurl('{}'.format(resource))
-        return ''
 
     def has_access(self, user, topic):
         """Whether the user has access to send email to the given topic"""

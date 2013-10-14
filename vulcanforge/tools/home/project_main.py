@@ -161,7 +161,7 @@ class ProjectHomeController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=app.icon_url(48),
+                            url=ac.icon_url(48),
                             class_name=''
                         ),
                         actions=tool_actions,

@@ -93,10 +93,10 @@ class ForgeTrackerApp(Application):
     static_folder = 'Tickets'
     default_mount_label = 'Tickets'
     default_mount_point = 'tickets'
-    icons = {
-        24: 'images/tickets_24.png',
-        32: 'images/tickets_32.png',
-        48: 'images/tickets_48.png'
+    icons = {admin
+        24: '{ep_name}/images/tickets_24.png',
+        32: '{ep_name}/images/tickets_32.png',
+        48: '{ep_name}/images/tickets_48.png'
     }
     # whether its artifacts are referenceable from the repo browser
     reference_opts = dict(

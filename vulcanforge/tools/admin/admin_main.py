@@ -63,11 +63,6 @@ class AdminApp(Application):
     tool_label = 'admin'
     static_folder = "admin"
     default_mount_label = 'Admin'
-    icons = {
-        24: 'images/admin_24.png',
-        32: 'images/admin_32.png',
-        48: 'images/admin_48.png'
-    }
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
@@ -239,7 +234,7 @@ class ProjectAdminController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=app.icon_url(48),
+                            url=ac.icon_url(48),
                             class_name=''
                         ),
                         actions=dict(
