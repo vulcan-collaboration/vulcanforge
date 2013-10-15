@@ -33,9 +33,9 @@ class ProjectHomeApp(Application):
     static_folder = 'home'
     default_mount_label = 'Project Home'
     icons = {
-        24: 'images/home_24.png',
-        32: 'images/home_32.png',
-        48: 'images/home_48.png'
+        24: '{ep_name}/images/home_24.png',
+        32: '{ep_name}/images/home_32.png',
+        48: '{ep_name}/images/home_48.png'
     }
     permissions = ['read']
     default_acl = {
