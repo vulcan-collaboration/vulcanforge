@@ -165,15 +165,19 @@ class File(MappedClass):
         raise NotImplementedError('local_url')
 
     def url(self, absolute=False):
-        if g.s3_serve_local:
+        try:
             url = self.local_url()
+        except NotImplementedError:
+            url = self.remote_url()
+        else:
             if absolute:
                 url = g.url(url)
-            if self.is_thumb and self.THUMB_URL_POSTFIX:
-                url += self.THUMB_URL_POSTFIX
-            return url
-        else:
-            return self.remote_url()
+        return url
+
+    def get_thumb_url(self):
+        if self.is_thumb:
+            return self.url()
+        return self.get_thumb().url()
 
     def read(self):
         return self.key.read()

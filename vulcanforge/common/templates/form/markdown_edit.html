@@ -1,16 +1,16 @@
 {% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
 <div class="{{ class_name }}" data-context-id="{{ context_id }}" {% if attachment_context_id %}data-attachment-context-id="{{ attachment_context_id }}"{% endif %}>
-  <div class="markdown-help-button-container flash-for-parent">
-      {{g.icon_button_widget.display('Markdown syntax guide', None, 'markdown-help-button', 'ico-help')}}
-  </div>
-  <div id="markdown-edit-{{context_id}}">
-    <div id="wmd-button-bar-{{ context_id }}" class="markdown-button-bar"></div>
-    <textarea id="wmd-input-{{context_id}}" name="{{name}}" class="auto_resize" {{widget.j2_attrs(attrs)}}>{{value or ''}}</textarea>
-  </div>
-  <div id="wmd-preview-{{context_id}}" class="markdown-preview"></div>
-  <input type="hidden" class="markdown_neighborhood" value="{{markdown_neighborhood}}">
-  <input type="hidden" class="markdown_project" value="{{markdown_project}}">
-  <input type="hidden" class="markdown_app" value="{{markdown_app}}">
+    <div class="markdown-edit-editor-container">
+        <div class="markdown-help-button-container flash-for-parent">{{ g.icon_button_widget.display('Markdown syntax guide', None, 'markdown-help-button', 'ico-help') }}</div>
+        <div id="markdown-edit-{{ context_id }}">
+            <div id="wmd-button-bar-{{ context_id }}" class="markdown-button-bar"></div>
+            <textarea id="wmd-input-{{ context_id }}" name="{{ name }}" class="auto_resize" {{ widget.j2_attrs(attrs) }}>{{ value or '' }}</textarea>
+        </div>
+    </div>
+    <div id="wmd-preview-{{ context_id }}" class="markdown-preview"></div>
+    <input type="hidden" class="markdown_neighborhood" value="{{ markdown_neighborhood }}">
+    <input type="hidden" class="markdown_project" value="{{ markdown_project }}">
+    <input type="hidden" class="markdown_app" value="{{ markdown_app }}">
 
-  {{g.button_widget.display(css="exit-preview-button hidden", label="Close Preview", icon="ico-close")}}
+    {{ g.button_widget.display(css="exit-preview-button hidden", label="Close Preview", icon="ico-close") }}
 </div>
