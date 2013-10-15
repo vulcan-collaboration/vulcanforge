@@ -15,19 +15,23 @@ class ToolManager(object):
     default_tools = OrderedDict({
         "discussion": {
             "app_path": TOOLS_DIR + "forum.forum_main:ForgeDiscussionApp",
-            "installable": True
+            "installable": True,
+            "icon_customizable": True
         },
         "downloads": {
             "app_path": TOOLS_DIR + "downloads.app:ForgeDownloadsApp",
-            "installable": True
+            "installable": True,
+            "icon_customizable": True
         },
         "tickets": {
             "app_path": TOOLS_DIR + "tickets.tracker_main:ForgeTrackerApp",
-            "installable": True
+            "installable": True,
+            "icon_customizable": True
         },
         "wiki": {
             "app_path": TOOLS_DIR + "wiki.wiki_main:ForgeWikiApp",
-            "installable": True
+            "installable": True,
+            "icon_customizable": True
         },
         "visualize": {
             "app_path": "vulcanforge.visualize.manage_tool.app:ForgeVisualizeApp",
@@ -102,5 +106,10 @@ class ToolManager(object):
 
     def is_installable(self, ep_name):
         if self.tools.get(ep_name.lower(), {}).get('installable'):
+            return True
+        return False
+
+    def is_icon_customizable(self, ep_name):
+        if self.tools.get(ep_name.lower(), {}).get('icon_customizable'):
             return True
         return False

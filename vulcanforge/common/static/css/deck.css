@@ -21,6 +21,27 @@ ul.deck h3 {
     text-transform: uppercase;
 }
 
+ul.deck li {
+    position: relative;
+}
+
+ul.deck li .change-icon-button {
+    opacity: 0;
+    font-size: 0.7em;
+    line-height: .8em;
+    text-transform: uppercase;
+    background-color: #fff;
+    display: inline-block;
+    padding: 1ex 1em;
+    margin-bottom: 1ex;
+    border-radius: 1em;
+}
+
+ul.deck li:hover .change-icon-button {
+    opacity: .75;
+}
+
+
 ul.deck li:first-child {
     border-top: 1px none !important;
     border-top-left-radius: 4px;
