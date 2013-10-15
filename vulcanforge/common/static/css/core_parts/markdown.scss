@@ -158,13 +158,13 @@
 }
 
 .markdown-edit textarea{
+    display: block;
     min-height: 200px;
     width: 100%;
     max-width: 100%;
     min-width: 100%;
     font-family: Consolas, "Andale Mono", "Lucida Console", monospace;
-    border-top-left-radius: 0;
-    border-bottom-right-radius: 0;
+    border-radius: 1em 1em 0 0;
     margin: 0;
     padding: 5px;
 
@@ -174,21 +174,34 @@
 }
 
 .markdown-edit.wiki-markdown textarea {
-    height: 400px;
+    min-height: 400px;
+}
+
+.markdown-button-bar {
+    position: relative;
 }
 
 .markdown-preview {
+    position: relative;
     border: 2px dotted $border-color;
     padding: 0;
     margin: 10px 0;
     background-color: #fff;
-    border-radius: 8px;
+    border-radius: 0 0 1em 1em;
     height: 100%;
+    min-height: 200px;
     overflow: visible;
+    box-sizing: border-box;
 }
-
-.post-markdown .markdown-preview {
-    margin-top: 0;
+.markdown-preview::before {
+    content: "preview";
+    position: absolute;
+    top: 0;
+    right: 1ex;
+    color: rgba(0,0,0,0.1);
+    font-size: 2em;
+    font-weight: bold;
+    font-style: italic;
 }
 
 .icon.close {
@@ -203,19 +216,16 @@
 }
 
 .markdown-help-button-container {
-    float: right;
+    position: absolute;
+    top: 3px;
+    right: 0;
     padding: 0;
-    margin-right: 0px;
-    margin-top: 3px;
 }
 
 .markdown-preview,
 .markdown-add-attachment {
     padding: 0;
     width: 100%;
-    border-radius: 2*$pu;
-    border-top-left-radius: 0;
-    border-bottom-right-radius: 0;
 }
 
 .md-read-more {
@@ -264,14 +274,10 @@
 	position: relative;
 	padding-bottom: 5px;
 	padding-top: 5px;
-    margin: 0 0 1px;
+    margin: 0;
     background-color: #fff;
 	height: 20px;
     width: 340px;
-}
-
-.post-markdown .wmd-button-row {
-    border: 1px solid #ccc;
 }
 
 .wmd-spacer
@@ -379,4 +385,83 @@
 .markdownPlaceholder.oembedPlaceholder {
     width: 459px;
     height: 344px;
+}
+
+.edit-post {
+    .wmd-button-row {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-bottom: 0;
+    }
+    .markdown-edit textarea {
+        border-radius: 0 1em 0 0;
+    }
+}
+
+
+@media (min-width: 1600px) {
+    .markdown-edit {
+        position: relative;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-flow: row;
+        flex-flow: row;
+    }
+
+    .markdown-edit textarea {
+        display: block;
+        position: absolute;
+        z-index: 1;
+        top: 31px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 400px;
+        border-radius: 1em 0 0 1em;
+        resize: none;
+    }
+
+    .markdown-edit-editor-container {
+        position: relative;
+        box-sizing: border-box;
+        width: 40%;
+        -webkit-box-flex: 1;
+        -webkit-flex: 1 1 40%;
+        flex: 1 1 40%;
+        border: 0px solid transparent;
+        border-right-width: 1em;
+    }
+
+    .markdown-preview {
+        box-sizing: border-box;
+        width: 60%;
+        min-height: 400px;
+        margin: 30px 0 0 0;
+        padding: 1em 1ex;
+        -webkit-box-flex: 1;
+        -webkit-flex: 1 1 60%;
+        flex: 1 1 60%;
+        border-radius: 0 1em 1em 0;
+    }
+
+    .markdown-button-bar {
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+    }
+
+    .post-markdown {
+        .markdown-preview,
+        textarea {
+            min-height: 200px;
+        }
+    }
+
+    .edit-post {
+        .markdown-edit textarea {
+            border-radius: 0 0 0 1em;
+        }
+    }
 }

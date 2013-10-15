@@ -639,21 +639,12 @@ class PageController(WikiContentBaseController):
         elif 'all' not in page.viewable_by and \
                 c.user.username not in page.viewable_by:
             raise exc.HTTPForbidden(detail="You may not view this page.")
-        cur = page.version
-        if cur > 1:
-            prev = cur - 1
-        else:
-            prev = None
-        next_ = cur + 1
         hide_sidebar = not (c.app.show_left_bar or
                             g.security.has_access(self.page, 'edit'))
         page_html = page.get_rendered_html()
         hierarchy_items = self.get_hierarchy_items()
         return dict(
             page=page,
-            cur=cur,
-            prev=prev,
-            next=next_,
             subscribed=Mailbox.subscribed(artifact=page),
             hide_sidebar=hide_sidebar,
             show_meta=c.app.show_right_bar,

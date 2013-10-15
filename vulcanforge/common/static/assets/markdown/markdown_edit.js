@@ -171,8 +171,6 @@
                     this.$textarea.resize();
                 } else if (this.options.previewHeight) {
                     that.$preview.height(this.options.previewHeight);
-                } else {
-                    that.$preview.css('min-height', that.$textarea.height());
                 }
             }
             this.attachmentManager = this.options.attachmentManager;
@@ -527,5 +525,51 @@
         .bind({'help': openHelpPanel});
 
     $('.markdown-tabs').fadeIn('slow');
+
+    $(window).bind('scroll resize', function () {
+        var headerHeight = $('#header-wrapper').height() + $('#main-column-header').height() + 10,
+            footerHeight = $('#footer').height() + 20,
+            windowHeight = $(window).height(),
+            windowScrollTop = $(window).scrollTop();
+        $('.markdown-edit').each(function (i, container) {
+            var $container = $(container),
+                $editContainer = $container.find('.markdown-edit-editor-container'),
+                $toolbar = $container.find('.markdown-button-bar'),
+                $textarea = $editContainer.find('textarea'),
+                containerOffsetTop = $container.offset().top,
+                containerHeight = $container.height(),
+                minHeight = parseInt($textarea.css('min-height')),  //requires a min-height specified in `px` from stylesheet
+                maxHeight = windowHeight - headerHeight - footerHeight - $toolbar.height(),
+                topOffset, textareaHeight, calculatedTextareaHeight;
+
+            // determine if offset is needed, check false first
+            //  container is not flex or box display                                                        container is below the window                          container is above the window
+            if (['flex', 'box', '-webkit-flex', '-webkit-box'].indexOf($container.css('display')) === -1 || containerOffsetTop > windowScrollTop + windowHeight || containerOffsetTop + containerHeight < windowScrollTop) {
+                $editContainer.css({
+                    'border-top-width': 0
+                });
+                $textarea.css({
+                    'height': 'auto'
+                });
+            } else {
+                // determine offset amount and height
+                topOffset = windowScrollTop - containerOffsetTop + headerHeight;
+                topOffset = Math.min(Math.max(0, topOffset), containerHeight - minHeight - $toolbar.height());
+                if (topOffset === 0) {
+                    maxHeight = maxHeight - (containerOffsetTop - windowScrollTop) + headerHeight;
+                }
+                calculatedTextareaHeight = containerHeight - topOffset - $toolbar.height();
+                textareaHeight = Math.min(maxHeight, Math.max(minHeight, calculatedTextareaHeight));
+
+                // apply
+                $editContainer.css({
+                    'border-top-width': topOffset
+                });
+                $textarea.css({
+                    'height': textareaHeight
+                });
+            }
+        });
+    });
 
 }(window));
