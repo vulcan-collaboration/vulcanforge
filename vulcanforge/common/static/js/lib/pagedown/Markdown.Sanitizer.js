@@ -36,7 +36,6 @@
         if (tag.match(basic_tag_whitelist) || tag.match(a_white) || tag.match(img_white))
             return tag;
         else
-            console.warn('sanitized', tag);
             return "";
     }
 

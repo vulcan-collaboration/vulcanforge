@@ -44,8 +44,6 @@ class File(MappedClass):
 
     artifact = None  # hack cuz of the way the s3 stuff is set up
 
-    THUMB_URL_POSTFIX = '/thumb'
-
     def __init__(self, **kw):
         super(File, self).__init__(**kw)
         if self.content_type is None:
@@ -177,7 +175,9 @@ class File(MappedClass):
     def get_thumb_url(self):
         if self.is_thumb:
             return self.url()
-        return self.get_thumb().url()
+        thumb = self.get_thumb()
+        if thumb:
+            return thumb.url()
 
     def read(self):
         return self.key.read()
