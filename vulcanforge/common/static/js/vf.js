@@ -1419,7 +1419,7 @@ var $vf = $vf || {
             return relativeParts.join('/');
         }
     };
-    /*/ test it
+    /* test it
     $vf.test_toRelativeURL = function (absolute, reference, expected) {
         var result = $vf.toRelativeURL(absolute, reference);
         if (expected !== result) {
@@ -1445,6 +1445,6 @@ var $vf = $vf || {
     $vf.test_toRelativeURL('/a/b', '/a/b/c/d', '../..');
     $vf.test_toRelativeURL('/a/b/c/d', '/a/b/e', '../c/d');
     $vf.test_toRelativeURL('/a/b', '/a/b', '.');
-    //*/
+    */
 
 }(window));
