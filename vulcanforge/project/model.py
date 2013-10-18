@@ -63,6 +63,32 @@ class ProjectFile(File):
         return self.project.url() + 'icon'
 
 
+class AppConfigFile(File):
+
+    class __mongometa__:
+        name = 'app_config_file'
+        session = main_orm_session
+        indexes = [('app_config_id', 'category')] + File.__mongometa__.indexes
+
+    app_config_id = FieldProperty(S.ObjectId)
+    category = FieldProperty(str)
+    size = FieldProperty(int)
+
+    THUMB_URL_POSTFIX = ''
+
+    @property
+    def app_config(self):
+        return AppConfig.query.get(_id=self.app_config_id)
+
+    @property
+    def default_keyname(self):
+        keyname = super(AppConfigFile, self).default_keyname
+        return '/'.join(('AppConfigFile', str(self.app_config_id), keyname))
+
+    def local_url(self):
+        return self.app_config.project.url() + 'app_icon/' + self.app_config.options.get('mount_point')
+
+
 class ProjectCategory(MappedClass):
     class __mongometa__:
         session = main_orm_session
@@ -1131,7 +1157,13 @@ class AppConfig(MappedClass):
     def discussion(self):
         return self.discussion_cls.query.get(_id=self.discussion_id)
 
-    def icon_url(self, size):
+    def icon_url(self, size, skip_lookup=False):
+
+        if not skip_lookup:
+            icon = self.get_icon(size)
+            if icon is not None:
+                return self.project.url() + '/app_icon/' + self.options.get('mount_point')
+
         return self.app.icon_url(size, self.tool_name.lower())
 
     def parent_security_context(self):
@@ -1244,6 +1276,14 @@ class AppConfig(MappedClass):
                         if new_ace not in self.acl:
                             self.acl.append(new_ace)
 
+    def get_icon(self, size=None):
+        if size is None:
+            size = 32
+        icon_file = AppConfigFile.query.get(
+            app_config_id=self._id,
+            category='icon',
+            size=size)
+        return icon_file
 
 class ProjectRole(BaseMappedClass):
     """
