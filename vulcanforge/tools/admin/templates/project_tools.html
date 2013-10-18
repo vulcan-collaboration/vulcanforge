@@ -51,7 +51,7 @@
                         <li class="text-centered">
                             <div class="tool-title">{{ label }}</div>
                             <img src="{{ mount['ac'].icon_url(48) }}" alt="">
-                            {% if g.tool_manager.is_icon_customizable(mount['ac'].tool_name) %}<a class="change-icon-button" href="javascript:alert('a');" title="Upload custom icon">Change icon</a>{% endif %}
+                            {% if g.tool_manager.is_icon_customizable(mount['ac'].tool_name) %}<a class="change-icon-button" href="change_tool_icon/{{mount['ac'].tool_name}}" title="Set custom icon">Change icon</a>{% endif %}
                         </li>
                         {% for link in links %}
                         <li>
@@ -89,6 +89,7 @@
     </form>
     {{c.admin_modal.display(content='<h1 id="popup_title"></h1><div id="popup_contents"></div>')}}
     {{c.mount_delete.display(content='<h1>Confirm Delete</h1>')}}
+    {{c.change_tool_icon_modal.display(content='<h1 id="icon_popup_title"></h1><div id="icon_popup_contents"></div>')}}
     <div><!--dummy-->
 </div>
 {% endblock %}

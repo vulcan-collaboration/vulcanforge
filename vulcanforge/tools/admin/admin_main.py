@@ -198,10 +198,13 @@ class ProjectAdminController(BaseController):
                                      trigger='a.admin_modal')
         install_modal = LightboxWidget(
             name='install_modal', trigger='a.install_trig')
+        change_tool_icon_modal = LightboxWidget(
+            name='change_tool_icon_modal', trigger='a.change-icon-button')
 
     class Forms(BaseController.Forms):
         project_overview_form = aw.ProjectOverviewForm()
         member_agreement_form = aw.ProjectMemberAgreementForm()
+        change_tool_icon_form = aw.ChangeToolIconForm()
 
     def _check_security(self):
         g.security.require_access(c.project, 'admin')
@@ -616,8 +619,10 @@ class ProjectAdminController(BaseController):
         c.markdown_editor = self.Widgets.markdown_editor
         c.label_edit = self.Widgets.label_edit
         c.mount_delete = self.Widgets.mount_delete
+        c.change_tool_icon_modal = self.Widgets.change_tool_icon_modal
         c.admin_modal = self.Widgets.admin_modal
         c.install_modal = self.Widgets.install_modal
+
         mounts = c.project.ordered_mounts()
         return dict(
             mounts=mounts,
@@ -626,6 +631,15 @@ class ProjectAdminController(BaseController):
                 project_id=c.project.root_project._id)).sort('_id').all(),
             categories=ProjectCategory.query.find(dict(
                 parent_id=None)).sort('label').all()
+        )
+
+    @without_trailing_slash
+    @expose(TEMPLATE_DIR + 'change_tool_icon.html')
+    def change_tool_icon(self, mount_point, **kw):
+        c.form = self.Forms.change_tool_icon_form
+        c.mount_point = mount_point
+        return dict(
+            mount_point=mount_point
         )
 
     @expose()

@@ -324,3 +324,37 @@ class ProjectMemberAgreementForm(ForgeForm):
         member_agreement_html = ew.HTMLField(wide=True)
         member_agreement = ew.FileField(label="Upload New")
         delete_member_agreement = ew.Checkbox(label="Delete Current Plan")
+
+class ChangeToolIconForm(ForgeForm):
+    defaults = dict(ForgeForm.defaults, enctype='multipart/form-data')
+
+    @property
+    def fields(self):
+        return [
+            ew.HiddenField(
+                name="mount_point"
+            ),
+            ew.FieldSet(
+                label="Tool Icon",
+                fields=[
+                    ToolIconField(
+                        name="icon",
+                        label="Custom Icon",
+                        wide=True
+                    ),
+                    ew.Checkbox(
+                        name="delete_icon",
+                        label="Delete Custom Icon",
+                        wide=True
+                    ),
+                ],
+                wide=True,
+                attrs={
+                    'class': 'vf-fieldset',
+                }
+            )
+        ]
+
+
+class ToolIconField(ew.FileField):
+    template = 'jinja:vulcanforge:common/templates/form/tool-icon-field.html'
