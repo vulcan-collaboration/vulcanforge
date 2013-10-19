@@ -638,6 +638,9 @@ class ProjectAdminController(BaseController):
     def change_tool_icon(self, mount_point, **kw):
         c.form = self.Forms.change_tool_icon_form
         c.mount_point = mount_point
+        ac = c.project.app_config(c.mount_point)
+        c.icon_url = ac.icon_url(32)
+        c.app_label = ac.options['mount_label']
         return dict(
             mount_point=mount_point
         )
