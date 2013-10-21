@@ -350,7 +350,7 @@ class ChangeToolIconForm(ForgeForm):
                 ],
                 wide=True,
                 attrs={
-                    'class': 'vf-fieldset',
+                    'class': 'vf-fieldset tool-icon',
                 }
             )
         ]

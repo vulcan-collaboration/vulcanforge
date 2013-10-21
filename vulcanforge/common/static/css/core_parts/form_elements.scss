@@ -342,6 +342,14 @@ input.label-edit {
     @include form-controls-skin();
 }
 
+.lightbox .form-controls {
+    padding: 1em;
+    background: rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 0 1em rgba(0, 0, 0, 0.35), 0 1px 0px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    border: none;
+}
+
 form.embedded .form-controls {
     border-left: none;
     border-right: none;
@@ -724,3 +732,6 @@ textarea.terms {
     margin-bottom: 1ex;
 }
 
+form.lightbox  fieldset {
+    color: #eee;
+}

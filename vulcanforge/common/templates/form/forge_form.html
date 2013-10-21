@@ -22,7 +22,7 @@
 {% endmacro %}
 
 <div class="forge-form-container">
-    <form class="forge-form"
+    <form class="forge-form {%if is_lightbox %}lightbox{% endif %}"
           method="{{method}}"
           {% if enctype %}enctype="{{enctype}}"{% endif %}
           {% if form_id %}id="{{form_id}}"{% endif %}

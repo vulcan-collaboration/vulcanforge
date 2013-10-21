@@ -26,18 +26,23 @@ ul.deck li {
 }
 
 ul.deck li .change-icon-button {
-    opacity: 0;
+    opacity: 0.5;
     font-size: 0.7em;
-    line-height: .8em;
+    line-height: .7em;
+    height: 1.8em;
     text-transform: uppercase;
-    background-color: #fff;
     display: inline-block;
-    padding: 1ex 1em;
+    padding: 1ex 1ex;
     margin-bottom: 1ex;
     border-radius: 1em;
+    border: 1px solid #555;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
 }
 
-ul.deck li:hover .change-icon-button {
+ul.deck li .change-icon-button:hover {
+    border-color: #555;
+    background-color: #fff;
+    color: #555;
     opacity: .75;
 }
 
