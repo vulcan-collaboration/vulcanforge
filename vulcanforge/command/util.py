@@ -4,6 +4,8 @@ import tg
 
 from base import Command
 
+from vulcanforge.common.util.model import pymongo_db_collection
+
 
 class VulcanForgeShellCommand(Command):
 
@@ -31,6 +33,7 @@ class VulcanForgeShellCommand(Command):
             'timedelta': timedelta,
             'bson': bson,
             'h': pkg.lib.helpers,
-            'M': pkg.model
+            'M': pkg.model,
+            "pymongo_db_collection": pymongo_db_collection
         })
         IPython.embed(user_ns=locs)

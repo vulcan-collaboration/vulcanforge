@@ -121,8 +121,6 @@ setup(
     enable-user = vulcanforge.command.user:EnableUserCommand
     disable-user = vulcanforge.command.user:DisableUserCommand
     refresh-users = vulcanforge.command.user:RefreshUsersCommand
-    project-disable-notification-emails = vulcanforge.command.project:DisableNotificationEmailsCommand
-    project-enable-notification-emails = vulcanforge.command.project:EnableNotificationEmailsCommand
     vshell = vulcanforge.command.util:VulcanForgeShellCommand
     install_tool = vulcanforge.command.project:InstallTool
     wiki-export = vulcanforge.command.wiki_tool:ExportWikiPages

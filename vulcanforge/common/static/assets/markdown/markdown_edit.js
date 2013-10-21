@@ -112,21 +112,7 @@
                         "class": "modal markdown-help"
                     }).append( $closeButton ).css("display", "none")
                         .append(response);
-
-                    oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
-                    contentAreasWrapper.css('position', 'fixed');
-
-                    helpArea.lightbox_me({
-                        centered: true,
-                        overlayCSS: {
-                            position: 'fixed',
-                            background: 'black',
-                            opacity: .3
-                        },
-                        onClose: function () {
-                            contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
-                        }
-                    });
+                    openHelpPanel(evt);
                 }
             });
         } else {
