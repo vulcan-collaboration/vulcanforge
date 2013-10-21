@@ -65,11 +65,11 @@
         });
     })();
 
-    // tool icon popup
+    // customize popup
     (function() {
-        var $popup_title = $('#icon_popup_title');
-        var $popup_contents = $('#icon_popup_contents');
-        $('a.change-icon-button').click(function () {
+        var $popup_title = $('#customize_modal_title');
+        var $popup_contents = $('#customize_modal_contents');
+        $('a.customize-button').click(function () {
             var link = this;
             $popup_title.html('');
             $popup_contents.html('Loading...');

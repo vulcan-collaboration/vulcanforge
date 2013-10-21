@@ -198,13 +198,13 @@ class ProjectAdminController(BaseController):
                                      trigger='a.admin_modal')
         install_modal = LightboxWidget(
             name='install_modal', trigger='a.install_trig')
-        change_tool_icon_modal = LightboxWidget(
-            name='change_tool_icon_modal', trigger='a.change-icon-button')
+        customize_modal = LightboxWidget(
+            name='customize_modal', trigger='a.customize-button')
 
     class Forms(BaseController.Forms):
         project_overview_form = aw.ProjectOverviewForm()
         member_agreement_form = aw.ProjectMemberAgreementForm()
-        change_tool_icon_form = aw.ChangeToolIconForm()
+        customize_tool_form = aw.CustomizeToolForm()
 
     def _check_security(self):
         g.security.require_access(c.project, 'admin')
@@ -619,7 +619,7 @@ class ProjectAdminController(BaseController):
         c.markdown_editor = self.Widgets.markdown_editor
         c.label_edit = self.Widgets.label_edit
         c.mount_delete = self.Widgets.mount_delete
-        c.change_tool_icon_modal = self.Widgets.change_tool_icon_modal
+        c.customize_modal = self.Widgets.customize_modal
         c.admin_modal = self.Widgets.admin_modal
         c.install_modal = self.Widgets.install_modal
 
@@ -634,9 +634,9 @@ class ProjectAdminController(BaseController):
         )
 
     @without_trailing_slash
-    @expose(TEMPLATE_DIR + 'change_tool_icon.html')
-    def change_tool_icon(self, mount_point, **kw):
-        c.form = self.Forms.change_tool_icon_form
+    @expose(TEMPLATE_DIR + 'customize_tool.html')
+    def customize_tool(self, mount_point, **kw):
+        c.form = self.Forms.customize_tool_form
         c.mount_point = mount_point
         c.ac = c.project.app_config(c.mount_point)
         c.icon_url = c.ac.icon_url(32)
@@ -646,10 +646,18 @@ class ProjectAdminController(BaseController):
         )
 
     @expose()
-    def update_tool_icon(self, **kwargs):
+    def update_tool(self, **kwargs):
         ac = c.project.app_config(kwargs.get('mount_point', None))
         icon = kwargs.get('icon', None)
-        if ac is not None:
+        mount_label = kwargs.get('mount_label', None)
+        if ac is not None and g.tool_manager.is_customizable(ac.tool_name):
+            if mount_label is not None and ac.options.mount_label != mount_label:
+                if mount_label != '':
+                    ac.options.mount_label = mount_label
+                    flash("Tool Label uploaded", "success")
+                else:
+                    flash("That would be quite a lame name don't you think!", "error")
+
             old_icon = ac.get_icon()
             if icon is not None and icon != '':
                 if old_icon:

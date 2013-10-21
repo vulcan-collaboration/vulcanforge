@@ -4,7 +4,7 @@ import ew as ew_core
 from ew import jinja2_ew as ew
 
 from vulcanforge.common import validators as V
-from vulcanforge.common.validators import HTMLEscapeValidator
+from vulcanforge.common.validators import HTMLEscapeValidator, MountPointValidator
 from vulcanforge.common.widgets.forms import ForgeForm, AdminForm
 from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.project.model import ProjectRole
@@ -325,33 +325,51 @@ class ProjectMemberAgreementForm(ForgeForm):
         member_agreement = ew.FileField(label="Upload New")
         delete_member_agreement = ew.Checkbox(label="Delete Current Plan")
 
-class ChangeToolIconForm(ForgeForm):
+class CustomizeToolForm(ForgeForm):
     defaults = dict(ForgeForm.defaults, enctype='multipart/form-data')
 
     @property
     def fields(self):
-        field_set_fields = [
+        field_set_fields = []
+        icon = None
+        if hasattr(c, "ac"):
+            icon = c.ac.get_icon()
+        if icon is not None:
+            field_set_fields += [
                 ToolIconField(
                     name="icon",
-                    label="Custom Icon (32x32 pixels)",
+                    label="Uploaded Custom Icon ({})".format(icon.filename),
                     wide=True,
                     attrs= {
                         'accept': 'image/*'
                     }
-                )
-            ]
-        if hasattr(c, "ac") and c.ac.get_icon():
-            field_set_fields.append(
+                ),
                 ew.Checkbox(
                     name="delete_icon",
                     label="Delete Custom Icon",
                     wide=True
+                )
+            ]
+        else:
+            field_set_fields.append(
+                ToolIconField(
+                    name="icon",
+                    label="Default Tool Icon (32x32 pixels)",
+                    wide=True,
+                    attrs= {
+                        'accept': 'image/*'
+                    }
                 )
             )
 
         return  [
             ew.HiddenField(
                 name="mount_point"
+            ),
+            ew.TextField(
+                name="mount_label",
+                label="Tool Label",
+                wide=True
             ),
             ew.FieldSet(
                 label="Tool Icon",
