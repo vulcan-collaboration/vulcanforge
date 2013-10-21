@@ -139,7 +139,9 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
         marker_found = False
         header_count = 0
         for (p, element) in self.iterparent(doc):
-            text = ''.join(itertext(element)).strip()
+            text = ''.join(itertext(element))
+            text = self.markdown.forge_processor.placeholder_re.sub('', text)
+            text = text.strip()
             if not text:
                 continue
 
