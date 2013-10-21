@@ -139,6 +139,7 @@ class ForgeProcessor(object):
     def __init__(self, use_wiki=False, markdown=None, macro_context=None,
                  simple_alinks=False):
         self.markdown = markdown
+        self.markdown.forge_processor = self
         self._use_wiki = use_wiki
         self._macro_context = macro_context
         self._simple_alinks = simple_alinks
