@@ -330,30 +330,40 @@ class ChangeToolIconForm(ForgeForm):
 
     @property
     def fields(self):
-        return [
+        field_set_fields = [
+                ToolIconField(
+                    name="icon",
+                    label="Custom Icon (32x32 pixels)",
+                    wide=True,
+                    attrs= {
+                        'accept': 'image/*'
+                    }
+                )
+            ]
+        if hasattr(c, "ac") and c.ac.get_icon():
+            field_set_fields.append(
+                ew.Checkbox(
+                    name="delete_icon",
+                    label="Delete Custom Icon",
+                    wide=True
+                )
+            )
+
+        return  [
             ew.HiddenField(
                 name="mount_point"
             ),
             ew.FieldSet(
                 label="Tool Icon",
-                fields=[
-                    ToolIconField(
-                        name="icon",
-                        label="Custom Icon",
-                        wide=True
-                    ),
-                    ew.Checkbox(
-                        name="delete_icon",
-                        label="Delete Custom Icon",
-                        wide=True
-                    ),
-                ],
+                fields=field_set_fields,
                 wide=True,
                 attrs={
                     'class': 'vf-fieldset tool-icon',
                 }
             )
+
         ]
+
 
 
 class ToolIconField(ew.FileField):

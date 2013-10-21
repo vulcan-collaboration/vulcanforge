@@ -26,8 +26,9 @@ ul.deck li {
 }
 
 ul.deck li .change-icon-button {
+    font-weight: bold;
     opacity: 0.5;
-    font-size: 0.7em;
+    font-size: 0.6em;
     line-height: .7em;
     height: 1.8em;
     text-transform: uppercase;

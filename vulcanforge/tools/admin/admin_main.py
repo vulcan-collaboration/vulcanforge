@@ -27,7 +27,7 @@ from vulcanforge.auth.validators import UserIdentifierValidator
 from vulcanforge.common.widgets.util import LightboxWidget
 from vulcanforge.common.widgets.form_fields import MarkdownEdit, LabelEdit
 from vulcanforge.project.model import (
-    Project, ProjectFile, ProjectCategory, ProjectRole)
+    Project, ProjectFile, ProjectCategory, ProjectRole, AppConfigFile)
 from vulcanforge.project.tasks import update_project_indexes
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.neighborhood.exceptions import RegistrationError
@@ -638,12 +638,47 @@ class ProjectAdminController(BaseController):
     def change_tool_icon(self, mount_point, **kw):
         c.form = self.Forms.change_tool_icon_form
         c.mount_point = mount_point
-        ac = c.project.app_config(c.mount_point)
-        c.icon_url = ac.icon_url(32)
-        c.app_label = ac.options['mount_label']
+        c.ac = c.project.app_config(c.mount_point)
+        c.icon_url = c.ac.icon_url(32)
+        c.app_label = c.ac.options['mount_label']
         return dict(
             mount_point=mount_point
         )
+
+    @expose()
+    def update_tool_icon(self, **kwargs):
+        ac = c.project.app_config(kwargs.get('mount_point', None))
+        icon = kwargs.get('icon', None)
+        if ac is not None:
+            old_icon = ac.get_icon()
+            if icon is not None and icon != '':
+                if old_icon:
+                    AppConfigFile.remove(dict(
+                        app_config_id=ac._id,
+                        category='icon'
+                    ))
+                AppConfigFile.save_image(
+                    icon.filename,
+                    icon.file,
+                    content_type=icon.type,
+                    square=True,
+                    thumbnail_size=(32, 32),
+                    thumbnail_meta=dict(app_config_id=ac._id, category='icon', size=32))
+                session(AppConfigFile).flush()
+                flash("New icon uploaded", "success")
+
+            if kwargs.get('delete_icon', False):
+                if old_icon:
+                    AppConfigFile.remove(dict(
+                        app_config_id=ac._id,
+                        category='icon'
+                    ))
+                    session(AppConfigFile).flush()
+                    flash("Custom icon deleted", "success")
+                else:
+                    flash("There was no custom icon to delete", "error")
+
+        return redirect('tools')
 
     @expose()
     @require_post()
