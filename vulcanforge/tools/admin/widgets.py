@@ -338,7 +338,7 @@ class CustomizeToolForm(ForgeForm):
             field_set_fields += [
                 ToolIconField(
                     name="icon",
-                    label="Uploaded Custom Icon ({})".format(icon.filename),
+                    label="Uploaded Custom Icon: <i>{}</i>".format(icon.filename),
                     wide=True,
                     attrs= {
                         'accept': 'image/*'
