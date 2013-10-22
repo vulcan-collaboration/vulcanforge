@@ -1,10 +1,7 @@
-import logging
 import datetime
 
 from base import Command
 from vulcanforge.resources.stage import StaticResourceStager
-
-LOG = logging.getLogger(__name__)
 
 
 class StageStaticResources(Command):
@@ -19,13 +16,19 @@ class StageStaticResources(Command):
     def command(self):
         self.basic_setup()
         start = datetime.datetime.now()
-        stager = StaticResourceStager()
+        stager = StaticResourceStager(log=self.log)
 
-        print 'Copying images'
+        self.log.info('Copying images')
         stager.stage_images()
 
-        print 'Combining JS and CSS based on recipes'
+        self.log.info('Combining JS and CSS based on recipes')
         stager.stage_css_js()
 
-        LOG.info('Finished JS and CSS compilation in ' + str(
-            datetime.datetime.now() - start))
+        self.log.info('Staging resources duration: %s',
+                      datetime.datetime.now() - start)
+
+        if stager.exceptions:
+            self.return_code = 1
+            self.log.warn('Finished staging resources with exceptions.')
+        else:
+            self.log.info('Finished staging resources without exception.')

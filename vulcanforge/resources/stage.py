@@ -7,15 +7,15 @@ from pylons import app_globals as g
 from vulcanforge.common.util.filesystem import mkdir_p
 from vulcanforge.resources.manager import RECIPE_FILE
 
-LOG = logging.getLogger(__name__)
-
 
 class StaticResourceStager(object):
 
-    def __init__(self, destination_dir=None):
+    def __init__(self, destination_dir=None, log=None):
         if destination_dir is None:
             destination_dir = g.resource_manager.build_dir
         self.destination_dir = destination_dir
+        self.exceptions = []
+        self.log = log or logging.getLogger(__name__)
 
     def copy_images(self, source_dir, destination_dir):
         if not source_dir.endswith('/'):
@@ -60,6 +60,8 @@ class StaticResourceStager(object):
                     elif resource.endswith('.css'):
                         file_type = 'css'
                         break
+                if file_type is None:
+                    continue
                 yield file_type, resource_list
 
     def stage_css_js(self):
@@ -69,14 +71,15 @@ class StaticResourceStager(object):
                     file_type,
                     resource_list,
                     destination_dir=self.destination_dir)
-            except IOError:
+            except IOError, e:
+                self.exceptions.append(e)
                 missing_files = []
                 for res in resource_list:
                     path = g.resource_manager.get_filename(res)
                     if not os.path.exists(path):
                         missing_files.append(res)
-                LOG.exception(' Skipping recipe: ' +
+                self.log.exception(' Skipping recipe: ' +
                               g.resource_manager.separator.join(resource_list))
-                LOG.exception(
+                self.log.exception(
                     ' The following files do not exist: ' + '; '.join(
                         missing_files))

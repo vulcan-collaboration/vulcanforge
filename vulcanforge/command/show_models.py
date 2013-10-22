@@ -53,22 +53,22 @@ class ReindexGlobalsCommand(base.Command):
         self.basic_setup()
 
         # remove global object references to
-        base.log.info('Deleting global obj refs')
+        self.log.info('Deleting global obj refs')
         GlobalObjectReference.query.remove({})
 
-        base.log.info('Removing and then rebuilding SOLR index')
+        self.log.info('Removing and then rebuilding SOLR index')
         for m in Mapper.all_mappers():
             mgr = m.collection.m
             cname = mgr.collection_name
             cls = m.mapped_class
             if cname is not None and session(cls) is solr_indexed_session:
-                base.log.info('... for class %s', cls)
+                self.log.info('... for class %s', cls)
                 g.solr.delete(q='type_s:"' + cls.type_s + '"')
 
                 for objs in chunked_find(cls, {}):
                     refs = [GlobalObjectReference.from_object(obj)
                             for obj in objs if obj.indexable()]
-                    base.log.info(
+                    self.log.info(
                         'Found %s "%s" objects to index' % (
                             len(refs), cls.type_s)
                     )
@@ -76,7 +76,7 @@ class ReindexGlobalsCommand(base.Command):
                     if refs:
                         add_global_objs.post([ref._id for ref in refs])
 
-        base.log.info('Reindex globals done')
+        self.log.info('Reindex globals done')
 
 
 class ReindexCommand(base.Command):
@@ -106,10 +106,10 @@ class ReindexCommand(base.Command):
                 update_refs=self.options.refs
             )
         except CompoundError, err:
-            base.log.exception('Error indexing artifacts:\n%r', err)
-            base.log.error('%s', err.format_error())
+            self.log.exception('Error indexing artifacts:\n%r', err)
+            self.log.error('%s', err.format_error())
         except Exception, e:
-            base.log.exception('Error indexing artifact:\n%r', e)
+            self.log.exception('Error indexing artifact:\n%r', e)
         main_orm_session.flush()
         main_orm_session.clear()
 
@@ -132,7 +132,7 @@ class ReindexCommand(base.Command):
             for p in projects:
                 ref_ids = []
                 c.project = p
-                base.log.info('Reindex project %s', p.shortname)
+                self.log.info('Reindex project %s', p.shortname)
                 # Clear index for this project
                 if self.options.solr:
                     g.solr.delete(q='project_id_s:%s' % p._id)
@@ -150,23 +150,23 @@ class ReindexCommand(base.Command):
                 # belong to this project
 
                 for a_cls in iter_artifact_classes():
-                    base.log.info('  %s', a_cls)
+                    self.log.info('  %s', a_cls)
 
                     # Create artifact references and shortlinks
                     for a in a_cls.query.find(dict(
                             app_config_id={'$in': app_config_ids})):
                         if self.options.verbose:
-                            base.log.info('      %s', a.shorthand_id())
+                            self.log.info('      %s', a.shorthand_id())
                         if self.options.refs:
                             try:
                                 ArtifactReference.from_artifact(a)
                                 Shortlink.from_artifact(a)
                             except Exception:
-                                base.log.exception(
+                                self.log.exception(
                                     'Making Index Objs from %s', a)
                                 continue
                         ref_ids.append(a.index_id())
-                        base.log.info('adding %s for indexing', a.index_id())
+                        self.log.info('adding %s for indexing', a.index_id())
 
                     # prevent nasty session buildup
                     main_orm_session.flush()
@@ -183,7 +183,7 @@ class ReindexCommand(base.Command):
                         main_orm_session.clear()
                         project_orm_session.clear()
                         solr_indexed_session.clear()
-        base.log.info('Reindex done')
+        self.log.info('Reindex done')
 
 
 class EnsureIndexCommand(base.Command):
@@ -201,7 +201,7 @@ class EnsureIndexCommand(base.Command):
         # Collect indexes by collection name
         main_indexes = defaultdict(list)
         project_indexes = defaultdict(list)
-        base.log.info('Collecting indexes...')
+        self.log.info('Collecting indexes...')
         main_sessions = {main_orm_session, repository_orm_session,
                          solr_indexed_session, artifact_orm_session}
 
@@ -210,19 +210,19 @@ class EnsureIndexCommand(base.Command):
             cname = mgr.collection_name
             cls = m.mapped_class
             if cname is None:
-                base.log.info('... skipping abstract class %s', cls)
+                self.log.info('... skipping abstract class %s', cls)
                 continue
-            base.log.info('... for class %s', cls)
+            self.log.info('... for class %s', cls)
             if session(cls) in main_sessions:
                 idx = main_indexes[cname]
             else:
                 idx = project_indexes[cname]
             idx.extend(mgr.indexes)
-        base.log.info('Updating indexes for main DB')
+        self.log.info('Updating indexes for main DB')
         db = main_doc_session.db
         for name, indexes in main_indexes.iteritems():
             self._update_indexes(db[name], indexes)
-        base.log.info('Updating indexes for project DBs')
+        self.log.info('Updating indexes for project DBs')
         projects = Project.query.find().all()
         configured_dbs = set()
         for p in projects:
@@ -232,7 +232,7 @@ class EnsureIndexCommand(base.Command):
             configured_dbs.add(db)
             c.project = p
             db = project_doc_session.db
-            base.log.info('... DB: %s', db)
+            self.log.info('... DB: %s', db)
             for name, indexes in project_indexes.iteritems():
                 self._update_indexes(db[name], indexes)
 
@@ -255,26 +255,26 @@ class EnsureIndexCommand(base.Command):
                 # Drop obsolete indexes
         for iname, key in prev_indexes.iteritems():
             if key not in rindexes:
-                base.log.info('...... drop index %s:%s', collection.name,
+                self.log.info('...... drop index %s:%s', collection.name,
                               iname)
                 collection.drop_index(iname)
         for iname, key in prev_uindexes.iteritems():
             if key not in uindexes:
-                base.log.info('...... drop index %s:%s', collection.name,
+                self.log.info('...... drop index %s:%s', collection.name,
                               iname)
                 collection.drop_index(iname)
                 # Ensure all indexes
         for name, idx in uindexes.iteritems():
-            base.log.info('...... ensure %s:%s', collection.name, idx)
+            self.log.info('...... ensure %s:%s', collection.name, idx)
             while True:
                 try:
                     collection.ensure_index(idx.index_spec, unique=True)
                     break
                 except DuplicateKeyError, err:
-                    base.log.info('Found dupe key(%s), eliminating dupes', err)
+                    self.log.info('Found dupe key(%s), eliminating dupes', err)
                     self._remove_dupes(collection, idx.index_spec)
         for name, idx in rindexes.iteritems():
-            base.log.info('...... ensure %s:%s', collection.name, idx)
+            self.log.info('...... ensure %s:%s', collection.name, idx)
             collection.ensure_index(idx.index_spec, background=True)
 
     def _remove_dupes(self, collection, spec):
@@ -289,7 +289,7 @@ class EnsureIndexCommand(base.Command):
         for key, doc_iter in groupby(q, key=keyfunc):
             docs = list(doc_iter)
             if len(docs) > 1:
-                base.log.info('Found dupes with %s', key)
+                self.log.info('Found dupes with %s', key)
                 dupes += [doc['_id'] for doc in docs[1:]]
         collection.drop_index(iname)
         collection.remove(dict(_id={'$in': dupes}))
@@ -360,25 +360,25 @@ class ReindexNotifications(base.Command):
         self.basic_setup()
 
         # remove global object references to notifications
-        base.log.info('Deleting global obj refs')
+        self.log.info('Deleting global obj refs')
         GlobalObjectReference.query.remove({
             '_id': {'$regex': '^vulcanforge/notification/model/Notification'},
         })
 
-        base.log.info('Removing and then rebuilding notification index')
+        self.log.info('Removing and then rebuilding notification index')
 
         m = Mapper.by_classname('Notification')
         mgr = m.collection.m
         cname = mgr.collection_name
         cls = m.mapped_class
         if cname is not None and session(cls) is solr_indexed_session:
-            base.log.info('... for class %s', cls)
+            self.log.info('... for class %s', cls)
             g.solr.delete(q='type_s:"' + cls.type_s + '"')
 
             for objs in chunked_find(cls, {}):
                 refs = [GlobalObjectReference.from_object(obj)
                         for obj in objs if obj.indexable()]
-                base.log.info(
+                self.log.info(
                     'Found %s "%s" objects to index' % (
                         len(refs), cls.type_s)
                 )
@@ -386,4 +386,4 @@ class ReindexNotifications(base.Command):
                 if refs:
                     add_global_objs.post([ref._id for ref in refs])
 
-        base.log.info('Reindex notifications done')
+        self.log.info('Reindex notifications done')
