@@ -132,7 +132,7 @@ class Notification(SOLRIndexed):
         })
         if app_config is not None:
             try:
-                ac_icon_url = app_config.load().icon_url(24)
+                ac_icon_url = app_config.icon_url(24)
             except TypeError:
                 ac_icon_url = None
             data['app_config'] = {
