@@ -36,7 +36,7 @@ from vulcanforge.common.helpers import urlquote, really_unicode, diff_text
 from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.types import SitemapEntry
-from vulcanforge.common.validators import DateTimeConverter, HTMLEscapeValidator
+from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.common.widgets.form_fields import (
     AttachmentList,
     MarkdownEdit,
@@ -846,7 +846,6 @@ class PageController(WikiContentBaseController):
     @expose()
     @require_post()
     @validate(validators={
-        'title': HTMLEscapeValidator(),
         'hide_attachments': validators.StringBool(if_empty=False,
                                                   if_missing=False),
         'rename_descendants': validators.StringBool(if_empty=False,

@@ -36,7 +36,6 @@ from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.artifact.controllers import (
     ArtifactRestController,
     AttachmentController,
@@ -708,7 +707,6 @@ class RootController(BaseTrackerController):
     @expose()
     @require_post()
     @validate({
-        "field_name": HTMLEscapeValidator(),
         "milestones": ForEach(MilestoneSchema())
     })
     def update_milestones(self, field_name=None, milestones=None, **kw):

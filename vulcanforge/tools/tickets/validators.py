@@ -3,8 +3,6 @@ from datetime import datetime
 from formencode import Schema, Invalid
 from formencode.validators import OneOf, String
 
-from vulcanforge.common.validators import HTMLEscapeValidator
-
 
 class DueDateValidator(String):
     messages = {"invalid": "Invalid Date"}
@@ -19,7 +17,7 @@ class DueDateValidator(String):
         return value
 
 
-class MilestoneNameValidator(HTMLEscapeValidator):
+class MilestoneNameValidator(String):
     def _to_python(self, value, state):
         value = super(MilestoneNameValidator, self)._to_python(value, state)
         return value.replace('/', '-').replace('"', '')
@@ -28,6 +26,6 @@ class MilestoneNameValidator(HTMLEscapeValidator):
 class MilestoneSchema(Schema):
     new_name = MilestoneNameValidator()
     old_name = MilestoneNameValidator()
-    description = HTMLEscapeValidator()
+    description = String()
     due_date = DueDateValidator()
     complete = OneOf(['Open', 'Closed'])
