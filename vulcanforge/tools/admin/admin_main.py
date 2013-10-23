@@ -1,14 +1,13 @@
 from datetime import datetime
 import logging
 from itertools import ifilter
-import pkg_resources
 
 from bson import ObjectId
 from ming.odm import ThreadLocalODMSession, state, session
 from webob import exc
 from formencode import validators as fev, Invalid
 from pylons import tmpl_context as c, app_globals as g
-from tg import expose, redirect, flash
+from tg import expose, redirect, flash, config
 from tg.decorators import with_trailing_slash, without_trailing_slash
 
 import vulcanforge
@@ -16,22 +15,19 @@ from vulcanforge.common.app import (
     Application,
     DefaultAdminController
 )
-from vulcanforge.common import exceptions as forge_exc
 from vulcanforge.common.exceptions import ToolError
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.controllers.base import BaseController
 from vulcanforge.common.controllers.decorators import (
     validate_form, require_post, vardec)
-from vulcanforge.common.tasks.index import (
-    add_global_objs
-    )
-from vulcanforge.common.util import nonce
+from vulcanforge.common.tasks.index import add_global_objs
 from vulcanforge.auth.model import User, UsersDenied
 from vulcanforge.auth.schema import ACL, ACE
 from vulcanforge.auth.validators import UserIdentifierValidator
 from vulcanforge.common.widgets.util import LightboxWidget
 from vulcanforge.common.widgets.form_fields import MarkdownEdit, LabelEdit
-from vulcanforge.project.model import Project, ProjectFile, ProjectCategory, ProjectRole
+from vulcanforge.project.model import (
+    Project, ProjectFile, ProjectCategory, ProjectRole)
 from vulcanforge.project.tasks import update_project_indexes
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.neighborhood.exceptions import RegistrationError
@@ -52,9 +48,8 @@ LOG = logging.getLogger(__name__)
 PROJECT_ADMIN_DESCRIPTION = """
 The first thing to do to setup your project is to create a solid
 description, so folks coming to your page can figure out what the
-project is all about. You'll then want to input information about
-the project, and we'll make sure all this relevant information
-gets added to the VehicleForge project directory.
+project is all about. You may also want to edit the UserGroups and permissions
+to customize the access control to suit your project's needs.
 """
 TEMPLATE_DIR = 'jinja:vulcanforge.tools.admin:templates/'
 
@@ -88,7 +83,8 @@ class AdminApp(Application):
     def main_menu(self):
         """
         Apps should provide their entries to be added to the main nav
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of
+        :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
 
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
@@ -543,7 +539,7 @@ class ProjectAdminController(BaseController):
         invite.delete()
         return dict(success=True)
 
-    @expose(TEMPLATE_DIR + 'user_registration.html')
+    @expose('admin/user_registration.html')
     def registration(self, status='tbd', **kw):
         if not c.project.can_register_users:
             raise exc.HTTPNotFound
@@ -603,11 +599,14 @@ class ProjectAdminController(BaseController):
                 with open(template_file, 'r') as fp:
                     text = fp.read()
 
+                text = text.format(
+                    forge_name=config.get('forge_name', 'the forge'))
                 mail_tasks.sendmail.post(
                     fromaddr=g.forgemail_return_path,
                     destinations=[req.email],
                     reply_to='',
-                    subject="VehicleFORGE Registration Request",
+                    subject="{} Registration Request".format(
+                        config.get('forge_name', 'Forge')),
                     message_id=gen_message_id(),
                     text=text
                 )

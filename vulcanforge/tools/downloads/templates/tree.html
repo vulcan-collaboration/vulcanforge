@@ -1,5 +1,4 @@
 {% extends g.templates['master'] %}
-{% set has_related_artifacts = True %}
 
 {% do g.resource_manager.register_css('artifact/artifact.scss') %}
 {% do g.resource_manager.register_css('css/hilite.css') %}
@@ -23,7 +22,7 @@
             }
             var go = confirm("Are you certain you want to delete this "+object_type+"?");
             if (go === true) {
-                var fbWidget = $fileBrowser.data('fileBrowser');
+                var fbWidget = $fileBrowser.data('vf-fileBrowser');
                 fbWidget.lockInterface("Working...");
                 $.ajax({
                     url: restServicePath + path,
@@ -47,7 +46,7 @@
         };
 
         $vf.createFolder = function(path, folderName){
-            var fbWidget = $fileBrowser.data('fileBrowser');
+            var fbWidget = $fileBrowser.data('vf-fileBrowser');
             fbWidget.lockInterface("Working...");
             $.ajax({
                 url: restServicePath,
@@ -67,6 +66,15 @@
                     fbWidget.unlockInterface();
                     $vf.ajaxErrorHandler(jqXHR, textStatus, errorThrown);
                 }
+            });
+        };
+
+        $vf.uploadFile = function (file, path) {
+            var fbWidget = $fileBrowser.data('vf-fileBrowser');
+            fbWidget.uploadFileToPath(file, path, function () {
+                fbWidget.refreshActivePath();
+            }, function () {
+                alert('There was an error while uploading ' + file.name);
             });
         };
 
@@ -154,46 +162,92 @@
 
             folderOperations: [
                 function (pathData) {
-                    if (!editable){
+                    var $operationsContainer;
+                    if (!editable) {
                         return false;
                     }
-                    return $('<button>New Folder</button>').
-                            addClass('inline-icon ico-plus').
-                            attr('title', 'New Folder').
+                    $operationsContainer = $('<div/>');
+                    $('<button>Upload File</button>').
+                            appendTo($operationsContainer).
+                            addClass('inline-icon ico-upload').
+                            attr('title', 'Upload File').
                             bind('click', function () {
                                 var modalContainer = $('<div/>', {
-                                    title:'New Folder'
+                                    title: 'Upload File'
                                 });
                                 var form = $('<form/>').appendTo(modalContainer);
-                                $('<label/>', {
-                                    text:'Folder name'
+                                $('<label for="file_field"/>', {
+                                    text: 'Choose File'
                                 }).appendTo(form);
                                 var input_field = $('<input/>', {
-                                    type:'text',
-                                    name:'folder_name',
-                                    'id':'folder_name'
+                                    type: 'file',
+                                    name: 'file',
+                                    'id': 'file_field'
                                 }).appendTo(form);
                                 form.bind('submit', function (e) {
+                                    var file = input_field.prop('files')[0];
                                     modalContainer.dialog("close");
-                                    $vf.createFolder(pathData.path, input_field.val());
+                                    if (typeof file !== 'undefined') {
+                                        $vf.uploadFile(file, pathData.path);
+                                    }
                                     e.preventDefault();
                                 });
 
                                 modalContainer.dialog({
-                                    modal:true,
-                                    buttons:{
-                                        Apply:function () {
+                                    modal: true,
+                                    buttons: {
+                                        Continue: function () {
                                             form.trigger('submit');
                                         },
-                                        Cancel:function () {
+                                        Cancel: function () {
                                             modalContainer.dialog("close");
                                         }
                                     },
-                                    zIndex:10501
+                                    zIndex: 10501
                                 });
 
                                 return false;
                             });
+                    $('<button>New Folder</button>').
+                            appendTo($operationsContainer).
+                            addClass('inline-icon ico-plus').
+                            attr('title', 'New Folder').
+                            bind('click', function () {
+                                var modalContainer = $('<div/>', {
+                                    title: 'New Folder'
+                                });
+                                var form = $('<form/>').appendTo(modalContainer);
+                                $('<label/>', {
+                                    text: 'Folder name'
+                                }).appendTo(form);
+                                var input_field = $('<input/>', {
+                                    type: 'text',
+                                    name: 'folder_name',
+                                    'id': 'folder_name'
+                                }).appendTo(form);
+                                form.bind('submit', function (e) {
+                                    modalContainer.dialog("close");
+                                    $vf.createFolder(pathData.path,
+                                            input_field.val());
+                                    e.preventDefault();
+                                });
+
+                                modalContainer.dialog({
+                                    modal: true,
+                                    buttons: {
+                                        Continue: function () {
+                                            form.trigger('submit');
+                                        },
+                                        Cancel: function () {
+                                            modalContainer.dialog("close");
+                                        }
+                                    },
+                                    zIndex: 10501
+                                });
+
+                                return false;
+                            });
+                    return $operationsContainer;
                 }
             ]
         });
@@ -210,11 +264,7 @@
 Browsing Content
 {% endblock %}
 
-{% block relatedArtifacts %}
-{{c.related_artifacts_widget.display(value=fd_folder)}}
-{% endblock %}
-
 {% block content %}
-<div id="fileBrowserWidget" class="padded top-spaced"></div>
+<div id="fileBrowserWidget"></div>
 {% endblock %}
 

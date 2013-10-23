@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+{% import g.templates['macros'] as theme_macros with context %}
+{# *********************** These are VF CSSs ********************************************** #}
+{% do g.resource_manager.register_css('auth/fancy_login/vf_landing.css') %}
+{% do g.resource_manager.register_css('notification/notify.css', scope='forge') %}
+
+{# *********************** These are VF JS ********************************************** #}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.10.3.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.cookie.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.idletimer.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/allura-plugins.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/allura-base.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/utils.js', scope='forge') %}
+{% do g.resource_manager.register_js('auth/fancy_login/Detector.js') %}
+{% do g.resource_manager.register_js('auth/fancy_login/vf_landing.js') %}
+{% do g.resource_manager.register_js('auth/fancy_login/cloudanimation.js') %}
+
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+
+    <title>Forge :: Landing</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ g.resource_manager.absurl('favicon.ico') }}" />
+    
+    <!-- CSS libraries -->
+    {% for blob in g.resource_manager.emit('css') %}
+        {{ blob }}
+    {% endfor %}
+
+  <script type="text/javascript" 
+   src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+
+</head>
+<body>
+<!-- VF Logo-->
+<div id="loginContainer">
+    <div id="logoHolder">
+        <img id="logoImage" src="{{ g.resource_manager.absurl('theme/images/vf_logo.png') }}"/>
+    </div>
+    <form id="loginForm" method="post" action="./do_login" name="loginForm">
+        <input type="hidden" name="return_to" value="{{return_to}}"/>
+        <div class="controlContainer">
+            <label for="username">User ID</label>
+            <input id="userid" class="field" type="text" value=""
+                   maxlength="128" spellcheck="false" name="username"
+                   {% if not autocomplete %}autocomplete="off"{% endif %}
+                   placeholder="User ID" tabindex="1"/>
+            <label for="password">Password</label>
+            <input id="password" class="field" type="password" value=""
+                   maxlength="128" spellcheck="false" name="password"
+                   placeholder="Password" {% if not autocomplete %}autocomplete="off"{% endif %}tabindex="2"/>
+            <input id="submitButton" class="button" type="submit"
+                   value="Sign In" tabindex="3"/>
+        </div>
+   </form>
+    {% if c.form_errors %}
+        {% set message_class = "warning" %}
+        {% set message = "<br/>".join(c.form_errors.values()) %}
+    {% else %}
+        {% set message = "Use your VF Preview Access ID to sign in." %}
+    {% endif %}
+    <div id="messageHolder" class="message {{message_class}}">
+        <span>{{message}}</span>
+        <br /><br />
+        <span>-- or --</span>
+    </div>
+    <div id="registerContent">
+        <div class="controlContainer">
+            {% if can_register %}
+            <a id="registerLink" class="button" tabindex="4"
+               href="{{ g.user_register_url }}">Register</a>
+            {% endif %}
+            <a id="resetPasswordLink" class="button" tabindex="5"
+               href="{{ g.url('/auth/password_reset/') }}">Reset Password</a>
+        </div>
+        <div id="registerMessage" class="message">
+            <span>Registration currently restricted to invited previewers.</span>
+        </div>
+    </div>
+    <div class="error" id="browserSupportErrorHolder">%%MessagePrefix%%. <br/>{{ config.get('forge_name', 'This site') }} employs cutting-edge web technologies. For a smooth user-experience, safe browsing and to keep up with the evolution of the web we encourage you to always use the HTML5-compatible, latest release of the major browser families, such as Google Chrome, Mozzila Firefox, Internet Explorer 9, Safari and Opera. For full functionality and to enjoy the 3D experience please use a <a href="http://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" target="_blank">WebGL enabled platform</a>.</div>
+
+    <!-- If scripts are disabled -->
+    <noscript>
+        <div class="error" id="noScriptErrorHolder">{{ config.get('forge_name', 'This site') }} uses JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
+    </noscript>
+
+</div>
+
+<!-- MESSAGES -->
+<div id="messages"></div>
+<!-- JS libraries -->
+<script type="text/javascript">
+    var $vf = $vf || {};
+    $vf.resourcePath = "{{ g.resource_manager.absurl('auth/fancy_login/') }}";
+</script>
+{% for blob in g.resource_manager.emit('js') %}
+{{ blob }}
+{% endfor %}
+{% set flash = tg.flash_obj.render('flash', use_js=False) %}
+{% if flash %}
+<script type="text/javascript">{{flash | safe}}</script>
+{% endif %}
+<script type="text/javascript">
+    {% for n in h.pop_user_notifications() %}
+        $('#messages').notify("{{ n.text }}");
+    {% endfor %}
+</script>
+
+</body>
+</html>

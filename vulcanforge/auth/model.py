@@ -5,6 +5,7 @@ import logging
 import urllib
 import hmac
 import hashlib
+from markupsafe import Markup
 import simplejson
 import time
 import iso8601
@@ -42,40 +43,6 @@ from vulcanforge.notification import tasks as mail_tasks
 from vulcanforge.notification.util import gen_message_id
 
 LOG = logging.getLogger(__name__)
-
-USER_REGISTRATION_TEMPLATE = """
-Hello {},
-
-Welcome to VehicleFORGE.  Thank you for asking to register with our site.  In order for you to complete your registration you must click on the following link:
-
-{}
-
-Once you have completed your registration you will be able to start and join projects, collaborate with teammates, explore and create cyber-physical vehicle designs, and interact with your own secure file repositories.
-
-Thank you and enjoy VehicleFORGE.
-Sincerely,
-
-The VehicleFORGE Team
-"""
-
-PASSWORD_RESET_TEMPLATE = """
-Hello {username},
-
-Your current username is: {username}
-
-Follow the link below to change your password.
-
-{url}
-
-This link will expire in 2 hours. If you do not click on the link in this period, your password will not be reset and will retain its current value.
-
-You are receiving this email because you or someone claiming to be you has requested to reset the password on your account. If you did not request this change you may delete this message.
-
-Thank you and enjoy VehicleFORGE.
-Sincerely,
-
-The VehicleFORGE Team
-"""
 
 
 def smart_str(s, encoding='utf-8', strings_only=False, errors='strict'):
@@ -443,7 +410,7 @@ class WorkspaceTab(BaseMappedClass):
             'user_id': str(self.user_id),
             'title': self.title,
             'type': self.type,
-            'href': self.href,
+            'href': Markup(self.href),
             'order': self.order,
             'state': self.state
         }
@@ -512,6 +479,7 @@ class User(SOLRIndexed):
         email_format=S.String(if_missing='both'),
         autosubscribe=S.Bool(if_missing=True),
         message_emails=S.Bool(if_missing=True),
+        login_landing_url=S.String()
     ))
 
     user_fields = FieldProperty({str: None})
@@ -545,7 +513,7 @@ class User(SOLRIndexed):
             'username': self.username,
             'display_name': self.display_name,
             'url': self.url(),
-            'icon_url': self.icon_url(),
+            'icon_url': Markup(self.icon_url()),
             'public': self.public
         }
 
@@ -730,16 +698,19 @@ class User(SOLRIndexed):
             icon_url = '/u/' + self.username.replace('_', '-') + '/user_icon'
         elif self.preferences.email_address:
             icon_url = g.gravatar(self.preferences.email_address,
-                    default="identicon")
+                                  default="identicon")
         else:
             icon_url = g.gravatar(
-                "{}@vehicleforge.net".format(self.username),
+                "{}@vulcanforge.org".format(self.username),
                 default="identicon")
         return icon_url
 
     def landing_url(self):
-        return config.get('login_landing_url_%s' % self.username)\
-            or config.get('login_landing_url', '/')
+        landing_url = self.get_pref('login_landing_url')
+        if not landing_url:
+            landing_url = config.get(
+                'login_landing_url', '/dashboard/activity_feed/')
+        return landing_url
 
     def registration_neighborhood(self):
         from vulcanforge.neighborhood.model import Neighborhood
@@ -969,7 +940,7 @@ class User(SOLRIndexed):
             'last_mod': h.stringify_datetime(last_mod)
         }
 
-        return simplejson.dumps(result)
+        return result
 
     def _make_workspace_reference(self, ref_id):
         from vulcanforge.artifact.model import ArtifactReference
@@ -1014,7 +985,8 @@ class User(SOLRIndexed):
             "expertise": self.expertise,
             "skypeName": self.skype_name,
             "userSince": h.ago_ts(self.registration_time),
-            "projects": [p.shortname for p in self.my_projects() if p.is_real()]
+            "projects": [p.shortname for p in self.my_projects()
+                         if p.is_real()]
         }
 
     def delete_account(self):
@@ -1129,16 +1101,19 @@ class PasswordResetToken(BaseMappedClass):
             return False
         LOG.info('Sending password reset link to %s (%s)',
                  self.user.username, self.email)
-        text = PASSWORD_RESET_TEMPLATE.format(
-            username=self.user.username,
-            url=self.reset_url()
-        )
+        template = g.jinja2_env.get_template('auth/mail/password_reset.txt')
+        text = template.render({
+            'username': self.user.username,
+            'url': self.reset_url(),
+            'forge_name': config.get('forge_name')
+        })
         LOG.info('Password reset email:\n%s', text)
         mail_tasks.sendmail.post(
             destinations=[self.email],
             fromaddr=g.forgemail_return_path,
             reply_to='',
-            subject='Reset your VehicleForge password',
+            subject='Reset your {} password'.format(
+                config.get('forge_name', 'forge')),
             message_id=gen_message_id(),
             text=text)
         return True
@@ -1165,12 +1140,15 @@ class UserRegistrationToken(BaseMappedClass):
     # adds user to project on registration
     project_id = FieldProperty(S.ObjectId, if_missing=None)
 
-    email_subject = "VehicleFORGE User Registration"
+    @property
+    def email_subject(self):
+        return "{} User Registration".format(
+            config.get('forge_name', 'Forge'))
 
     @property
     def is_valid(self):
         expired = self.expiry_date < datetime.utcnow()
-        return not expired and self.nonce
+        return bool(not expired and self.nonce)
 
     def send(self):
         text = self.email_text
@@ -1186,11 +1164,13 @@ class UserRegistrationToken(BaseMappedClass):
 
     @property
     def email_text(self):
+        template = g.jinja2_env.get_template('auth/mail/user_registration.txt')
         base_url = self.registration_url or '/auth/register'
-        return USER_REGISTRATION_TEMPLATE.format(
-            self.name,
-            g.url(base_url, token=self.nonce)
-        )
+        return template.render({
+            'url': g.url(base_url, token=self.nonce),
+            'name': self.name,
+            'forge_name': config.get('forge_name')
+        })
 
     @LazyProperty
     def project(self):
@@ -1224,16 +1204,6 @@ class EmailChangeToken(BaseMappedClass):
         expired = self.expiry_date < datetime.utcnow()
         return not expired and self.nonce and self.user
 
-    @property
-    def email_fp(self):
-        path = os.path.join(
-            os.path.dirname(__file__),
-            'templates',
-            'mail',
-            'email_change_reversion.txt'
-        )
-        return open(path, 'r')
-
     def reset_url(self):
         return g.url('/auth/cancel_email_modification', token=self.nonce)
 
@@ -1243,20 +1213,23 @@ class EmailChangeToken(BaseMappedClass):
             self.delete()
             return False
         LOG.info('Sending email change reversion link to %s (%s)',
-            self.user.username, self.old_email)
-        with self.email_fp as template_fp:
-            text = template_fp.read().format(
-                username=self.user.username,
-                old_email=self.old_email,
-                new_email=self.new_email,
-                url=self.reset_url()
-            )
+                 self.user.username, self.old_email)
+        template = g.jinja2_env.get_template(
+            'auth/mail/email_change_reversion.txt')
+        text = template.render({
+            'username': self.user.username,
+            'old_email': self.old_email,
+            'new_email': self.new_email,
+            'url': self.reset_url(),
+            'forge_name': config.get('forge_name', "Forge")
+        })
         LOG.info('Email change email:\n%s', text)
         mail_tasks.sendmail.post(
             destinations=[self.old_email],
             fromaddr=g.forgemail_return_path,
             reply_to='',
-            subject='VehicleForge Email Modification',
+            subject='{} Email Modification'.format(
+                config.get('forge_name', 'Forge')),
             message_id=gen_message_id(),
             text=text)
         return True

@@ -95,6 +95,9 @@ var $ws = $ws || {};
                 this.tabBarE.sortable({
                     axis: 'x',
                     cancel: '.adder,.intellitrigger',
+                    start: function (e, ui) {
+                        ui.placeholder.width(ui.helper.width());
+                    },
                     update: function ( event, ui ) {
                         host.reSort.call(host);
                     },

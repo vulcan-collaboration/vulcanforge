@@ -83,19 +83,12 @@ def pretty_print_file_size(size_in_bytes):
     return size_str
 
 
-def find_executable(exe_name):
-    """Find the abspath of a given executable (which must be on the PATH)"""
-    for dirname in os.environ['PATH'].split(os.pathsep):
-        path = os.path.join(dirname, exe_name)
-        if os.access(path, os.X_OK):
-            return path
-
-
 def get_neighborhoods_by_ids(ids):
     from vulcanforge.neighborhood.model import Neighborhood
     return Neighborhood.query.find({
         '_id': {'$in': list(ids)}
     })
+
 
 def get_projects_by_ids(ids):
     from vulcanforge.project.model import Project
@@ -132,8 +125,7 @@ def encode_keys(d):
     return dict((k.encode('utf-8'), v) for k, v in d.iteritems())
 
 
-
-def ago(start_time, round=True):
+def ago(start_time, round=True, cutoff=True):
     """
     Return time since starting time as a rounded, human readable string.
     E.g., "3 hours ago"
@@ -144,7 +136,7 @@ def ago(start_time, round=True):
     granularities = ['century', 'decade', 'year', 'month', 'day', 'hour',
                      'minute']
     end_time = datetime.utcnow()
-    if end_time - start_time > timedelta(days=7):
+    if cutoff and (end_time - start_time > timedelta(days=7)):
         return start_time.strftime('%Y-%m-%d')
 
     while True:

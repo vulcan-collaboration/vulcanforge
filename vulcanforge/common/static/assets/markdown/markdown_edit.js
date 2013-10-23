@@ -33,9 +33,10 @@
         function parseAttachmentList(){
             if ($attachmentList !== undefined && $attachmentList !== null){
                 $attachmentList.find('.attachment').each(function(i){
-                    var filename = $(this).attr('data-filename');
+                    var filename = $(this).attr('data-filename'),
+                        mimetype = $(this).attr('data-mimetype');
                     that.attachments[filename] = {
-                        is_image: $(this).find('.img-thumb').length > 0,
+                        is_image: mimetype.match(/image.*/),
                         $el: $(this)
                     };
                     that.attachments[filename].url = $(this).attr('data-url') ? $(this).attr('data-url') : null;
@@ -111,21 +112,7 @@
                         "class": "modal markdown-help"
                     }).append( $closeButton ).css("display", "none")
                         .append(response);
-
-                    oldContentAreaWrapperPosition = contentAreasWrapper.css('position');
-                    contentAreasWrapper.css('position', 'fixed');
-
-                    helpArea.lightbox_me({
-                        centered: true,
-                        overlayCSS: {
-                            position: 'fixed',
-                            background: 'black',
-                            opacity: .3
-                        },
-                        onClose: function () {
-                            contentAreasWrapper.css('position', oldContentAreaWrapperPosition);
-                        }
-                    });
+                    openHelpPanel(evt);
                 }
             });
         } else {
@@ -266,7 +253,6 @@
                 });
             });
 
-
             /* fenced code */
             this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
                 var rePattern = /^ {0,3}~T~T~T~T *\n((?:.*?\n)+?) {0,3}~T~T~T~T *$/gm;
@@ -284,6 +270,16 @@
                 return text.replace(rePattern, function(whole, inner){
                      return '<div class="md-read-more">' + runBlockGamut(inner) + '</div>';
                 });
+            });
+
+            /* comments */
+            this.converter.hooks.chain("preSpanGamut", function(text){
+                var rePattern = /\/\*.*?\*\//g;
+                return text.replace(rePattern, '');
+            });
+            this.converter.hooks.chain("postBlockGamut", function(text, runBlockGamut) {
+                var rePattern = /\/\*(?:.*?\n?)*?\*\//gm;
+                return text.replace(rePattern, '');
             });
 
             /* tables */

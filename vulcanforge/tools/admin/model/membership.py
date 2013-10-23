@@ -362,7 +362,9 @@ class MembershipInvitation(Artifact):
             fromaddr=g.forgemail_return_path,
             destinations=[email],
             reply_to='',
-            subject="You have been invited to join a project on VehicleForge",
+            subject="You have been invited to join a project{}".format(
+                ' on ' + tg.config['forge_name'] if 'forge_name' in tg.config
+                else ''),
             message_id=gen_message_id(),
             text=self.invitation_text
         )
@@ -421,7 +423,7 @@ class MembershipInvitation(Artifact):
             name_tag = u'Name: {}'.format(self.user.display_name)
             profile_tag = u'Profile: {}'.format(
                 os.path.join(
-                    tg.config.get('base_url', 'https://vehicleforge.org'),
+                    tg.config.get('base_url', 'https://vulcanforge.org'),
                     self.user.url() + 'profile'
                 )
             )

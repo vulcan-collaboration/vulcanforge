@@ -32,11 +32,13 @@
             {{ c.form.display() }}
         {% endif %}
         {% if not conversation.is_announcement %}
-            <h3>Members</h3>
-            <div class="avatar-list">
-                {% for user in conversation.get_users() %}
-                    {{ g.avatar.display(user=user, size=24, framed=True) }}
-                {% endfor %}
+            <div class="padded-block">
+                <h3>Participants</h3>
+                <div class="avatar-list">
+                    {% for user in conversation.get_users() %}
+                        {{ g.avatar.display(user=user, size=24, framed=True) }}
+                    {% endfor %}
+                </div>
             </div>
         {% endif %}
     </div>

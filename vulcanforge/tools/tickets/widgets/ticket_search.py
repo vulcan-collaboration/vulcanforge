@@ -3,6 +3,7 @@ import ew as ew_core
 
 from vulcanforge.common.widgets.util import PageSize, PageList, LightboxWidget
 from vulcanforge.resources.widgets import JSLink, CSSLink
+from vulcanforge.artifact.widgets import VFArtifactLink
 
 TEMPLATE_DIR = 'jinja:vulcanforge.tools.tickets:templates/tracker_widgets/'
 
@@ -20,7 +21,8 @@ class TicketSearchResults(ew_core.SimpleForm):
         page=1,
         sort="ticket_num_i desc",
         columns=None,
-        paged=True
+        paged=True,
+        artifact_link_widget=VFArtifactLink()
     )
 
     class fields(ew_core.NameList):
@@ -67,4 +69,4 @@ class MassEditForm(ew_core.Widget):
         sort=None)
 
     def resources(self):
-        yield JSLink('tracker_js/mass-edit.js')
+        yield JSLink('tickets/js/mass-edit.js')

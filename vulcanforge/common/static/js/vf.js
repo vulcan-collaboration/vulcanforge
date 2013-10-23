@@ -1,5 +1,5 @@
 /**
- * Base VehicleForge application architecture.
+ * Base VulcanForge application architecture.
  *
  * @module $vf
  *
@@ -1202,7 +1202,6 @@ var $vf = $vf || {
         }
     });
 
-
     /**
      * forgemarkdown extras
      */
@@ -1346,5 +1345,106 @@ var $vf = $vf || {
         updateMethod();
     };
 
+    $vf.xmlEscape = function (content) {
+        return content.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    };
+
+    /**
+     * icon title tooltips
+     */
+    $vf.afterInit(function () {
+        $('body').on('mouseenter', '.toolbar-icon[title], .icon[title]', function (e) {
+            $(this).qtip({
+                overwrite: false,
+                show: {
+                    event: e.type,
+                    ready: true
+                },
+                content: {
+                    text: false
+                },
+                style: {
+                    classes: 'vf-title-tip'
+                },
+                position: {
+                    /*target: 'mouse',
+                    adjust: { x: 10, y: 0 },*/
+                    viewport: $(window),
+                    at: 'bottom middle',
+                    my: 'top right'
+                }
+            });
+        })
+    }, null);
+
+    /**
+     * to relative url
+     *
+     * get the most relative url from the given absolute url
+     */
+    $vf.toRelativeURL = function (absoluteURL, opt_referenceURL) {
+        var referenceURL = (typeof opt_referenceURL !== 'undefined') ? opt_referenceURL : window.location.pathname,
+            linkParts = absoluteURL.split('/'),
+            referenceParts = referenceURL.split('/'),
+            relativeParts = [],
+            sharedParts = [],
+            iterations, i, linkPart, referencePart;
+
+        iterations = Math.max(linkParts.length, referenceParts.length);
+        for (i=0; i < iterations; ++i) {
+            linkPart = linkParts[i];
+            referencePart = referenceParts[i];
+
+            if (linkPart === referencePart) {
+                sharedParts.push(linkPart);
+            }
+
+            else if (typeof linkPart !== 'undefined') {
+                relativeParts.push(linkPart);
+            }
+        }
+
+        iterations = referenceParts.length - sharedParts.length;
+        for (i=0; i < iterations; ++i) {
+            relativeParts.unshift('..');
+        }
+
+        if (relativeParts.length === 0) {
+            return '.';
+        }
+        else {
+            return relativeParts.join('/');
+        }
+    };
+    /* test it
+    $vf.test_toRelativeURL = function (absolute, reference, expected) {
+        var result = $vf.toRelativeURL(absolute, reference);
+        if (expected !== result) {
+            console.error('toRelativeURL failed test:', {
+                absolute: absolute,
+                reference: reference,
+                expected: expected,
+                result: result
+            });
+        }
+        else {
+            console.log('toRelativeURL passed test:', {
+                absolute: absolute,
+                reference: reference,
+                expected: expected,
+                result: result
+            });
+        }
+    };
+
+    $vf.test_toRelativeURL('/a/b/c/d', '/a/b', 'c/d');
+    $vf.test_toRelativeURL('/a/b/c', '/a/b', 'c');
+    $vf.test_toRelativeURL('/a/b', '/a/b/c/d', '../..');
+    $vf.test_toRelativeURL('/a/b/c/d', '/a/b/e', '../c/d');
+    $vf.test_toRelativeURL('/a/b', '/a/b', '.');
+    */
 
 }(window));

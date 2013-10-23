@@ -379,8 +379,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     @property
     def email_address(self):
         return tg.config.get(
-            'forgemail.return_path', 'noreply@vehicleforge.net'
-        )
+            'forgemail.return_path', 'noreply@vulcanforge.org')
 
     @LazyProperty
     def app(self):
@@ -435,7 +434,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
 
         # no text, generate a sensible default
         if 'text' not in index and not text_objects:
-            index['text'] = " ".join(
+            index['text'] = u" ".join(
                 str(pformat(v)) for k, v in index.iteritems()
                 if k in g.index_default_text_fields
             )
@@ -445,7 +444,12 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
             thread = self.get_discussion_thread(generate_if_missing=False)
             if thread:
                 for post in thread.query_posts():
-                    text_objects.append(post.text)
+                    author = post.author()
+                    text_objects.append(
+                        u"{} {} {}".format(author.display_name,
+                                           author.username,
+                                           post.text)
+                    )
 
         # append these objects to the text
         index['text'] = index.get('text', '') + " ".join(str(
@@ -944,6 +948,14 @@ class BaseAttachment(File):
                 cls.from_stream(
                     filename, fp, content_type=content_type, **original_meta)]
 
+    def get_thumb_query_params(self):
+        return {
+            'filename': self.filename,
+            'is_thumb': True,
+            'app_config_id': self.app_config_id,
+            'artifact_id': self.artifact_id
+        }
+
 
 class ArtifactProcessor(object):
     """
@@ -957,12 +969,12 @@ class ArtifactProcessor(object):
     processor_map = {}
 
     @classmethod
-    def process(cls, name, artifact, context, verbose=False):
+    def process(cls, name, artifact, context, verbose=True):
         if name == 'cad':
-            # this is temporary until we make file processors pluggable
+            # this is a temporary hack until [#1128]
             if 'cad' not in cls.processor_map:
                 try:
-                    from forgeevent.fileprocess import CADProcessor
+                    from vehicleforge.cad.processors import CADProcessor
                 except ImportError:
                     CADProcessor = None
                 if CADProcessor:
@@ -994,7 +1006,7 @@ class ArtifactProcessor(object):
 # Ephemeral Functions for ArtifactReference
 REPO_SHORTLINK_RE = re.compile(r'^\((?P<commit>[a-z0-9]+)\)(?P<path>/.*)')
 REPO_INDEX_ID_RE = re.compile(r'^Repo\.')
-SHORTLINK_RE = re.compile(r'(?<![\[])\[(((.*?):)?((.*?):)?(.+))\]')
+SHORTLINK_RE = re.compile(r'(?<![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]')
 
 
 def repo_get_by_index_id(index_id, match=None):

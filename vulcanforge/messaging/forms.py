@@ -13,6 +13,7 @@ from formencode import validators as fev
 from pylons import tmpl_context as c, app_globals as g
 
 from vulcanforge.common.validators import ObjectIdValidator
+from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.common.widgets.forms import ForgeForm
 from vulcanforge.auth.model import User
 from vulcanforge.auth.validators import UsernameListValidator
@@ -108,7 +109,7 @@ class StartConversationForm(ConversationForm):
                 wide=True,
                 validator=fev.UnicodeString(not_empty=True)
             ),
-            ew.TextArea(
+            MarkdownEdit(
                 label="message",
                 name="text",
                 wide=True,
@@ -150,7 +151,7 @@ class MakeAnnouncementForm(ConversationForm):
                 wide=True,
                 validator=fev.UnicodeString(not_empty=True)
             ),
-            ew.TextArea(
+            MarkdownEdit(
                 label="announcement",
                 name="text",
                 wide=True,
@@ -188,7 +189,7 @@ class AnnounceToAllForm(ConversationForm):
                 wide=True,
                 validator=fev.UnicodeString(not_empty=True)
             ),
-            ew.TextArea(
+            MarkdownEdit(
                 label="announcement",
                 name="text",
                 wide=True,
@@ -213,7 +214,7 @@ class ConversationReplyForm(ForgeForm):
     @property
     def fields(self):
         return ew_core.NameList([
-            ew.TextArea(
+            MarkdownEdit(
                 label="reply",
                 name="text",
                 wide=True,

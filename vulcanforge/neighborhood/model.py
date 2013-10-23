@@ -37,6 +37,8 @@ class NeighborhoodFile(File):
     neighborhood_id = FieldProperty(S.ObjectId)
     category = FieldProperty(str)
 
+    THUMB_URL_POSTFIX = ''
+
     @property
     def neighborhood(self):
         return Neighborhood.query.get(_id=self.neighborhood_id)
@@ -150,6 +152,10 @@ class Neighborhood(MappedClass):
     def project_cls(self):
         from vulcanforge.project.model import Project
         return Project
+
+    @property
+    def neighborhood_project_cls(self):
+        return self.project_cls
 
     @property
     def user_cls(self):
@@ -288,8 +294,9 @@ class Neighborhood(MappedClass):
         if p:
             raise ProjectConflict()
         name = 'Home Project for %s' % self.name
-        database_uri = self.project_cls.default_database_uri(shortname)
-        p = self.project_cls(
+        database_uri = self.neighborhood_project_cls.default_database_uri(
+            shortname)
+        p = self.neighborhood_project_cls(
             neighborhood_id=self._id,
             shortname=shortname,
             name=name,

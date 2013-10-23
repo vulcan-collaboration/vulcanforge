@@ -18,8 +18,7 @@
                 <p>Please use your credentials to login below{% if can_register %} or <a href="register">register here</a> for a new account{% endif %}.</p>
 
                 <h2><span>Password Login</span></h2>
-                {{ c.form.display(action='./do_login', value=dict(return_to=return_to),
-        form_control_box=False) }}
+                {{ c.form.display(action='./do_login', value=dict(return_to=return_to), form_control_box=False, autocomplete=autocomplete) }}
 
                 <p>Forgot your password or username?<br/><a href="{{ g.url('/auth/password_reset/') }}">Click here to reset your password</a> and to retrieve your username.</p>
 

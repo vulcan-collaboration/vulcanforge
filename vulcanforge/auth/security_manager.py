@@ -53,32 +53,6 @@ class SecurityManager(object):
             project = c.project.root_project
         return project
 
-    def role_has_permission(self, role_id, obj, permission, use_parent=True):
-        """
-        :param role_id: id of role
-        :param obj: anything with an acl
-        :param permission: str
-        :return:
-            True -- Role has permission
-            False -- Role is denied permission
-            None -- undetermined
-        """
-        result = None
-        for ace in obj.acl:
-            if ACE.match(ace, role_id, permission):
-                result = ace.access == ACE.ALLOW
-                break
-        if result is None and use_parent and \
-                hasattr(obj, 'parent_security_context') \
-            and obj.parent_security_context():
-            result = self.role_has_permission(
-                role_id,
-                obj.parent_security_context(),
-                permission,
-                use_parent=True
-            )
-        return result
-
     def roles_with_permission(self, obj, permission, project=None):
         """Returns most encompassing roles that have the given permission"""
         if project is None:
@@ -121,14 +95,41 @@ class SecurityManager(object):
 
         return roles
 
+    def role_has_permission(self, role_id, obj, permission, use_parent=True):
+        """
+        :param role_id: id of role
+        :param obj: anything with an acl
+        :param permission: str
+        :return:
+            True -- Role has permission
+            False -- Role is denied permission
+            None -- undetermined
+        """
+        result = None
+        for ace in obj.acl:
+            if ACE.match(ace, role_id, permission):
+                result = ace.access == ACE.ALLOW
+                break
+        if result is None and use_parent and \
+                hasattr(obj, 'parent_security_context') \
+                and obj.parent_security_context():
+            result = self.role_has_permission(
+                role_id,
+                obj.parent_security_context(),
+                permission,
+                use_parent=True
+            )
+        return result
+
     def any_role_has_permission(self, roles, obj, permission, user=None,
                                 project=None):
         """
         determines whether any of the roles have permission
 
-        The advantage of using this rather than just looping role_has_permission is
-        that it performs a breadth-wide search across the roles, rather than
-        climbing the obj's security heirarchy for each role
+        The advantage of using this rather than just looping
+        role_has_permission is that it performs a breadth-wide search across
+        the roles, rather than climbing the obj's security heirarchy for each
+        role
 
         """
         if user is None:
@@ -143,8 +144,8 @@ class SecurityManager(object):
             if result:
                 return result
             elif result is None:
-                # access neither allowed or denied for this role -- may chain to
-                # parent context
+                # access neither allowed or denied for this role -- may chain
+                # to parent context
                 chainable_roles.append(rid)
 
         # try parent obj if possible

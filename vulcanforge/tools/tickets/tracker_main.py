@@ -1,6 +1,8 @@
 #-*- python -*-
+import cgi
 import logging
 import re
+import time
 from datetime import datetime, timedelta
 import urllib
 import itertools
@@ -11,7 +13,7 @@ import pkg_resources
 from tg import expose, validate, redirect, flash, url
 from tg.decorators import with_trailing_slash, without_trailing_slash
 from pylons import tmpl_context as c, app_globals as g, request, response
-from formencode import validators
+from formencode import validators, ForEach
 from formencode.variabledecode import variable_decode
 from bson import ObjectId
 from webhelpers import feedgenerator as FG
@@ -34,6 +36,7 @@ from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
+from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.artifact.controllers import (
     ArtifactRestController,
     AttachmentController,
@@ -57,6 +60,7 @@ from . import model as TM
 from . import version
 from vulcanforge.tools.tickets.util import changelog
 from vulcanforge.tools.tickets.widgets.forms import TicketCustomField
+from .validators import MilestoneSchema
 from .widgets import (
     TrackerTicketForm,
     BinForm,
@@ -211,13 +215,14 @@ class ForgeTrackerApp(Application):
                     dt = datetime.strptime(m['due_date'], '%m/%d/%Y')
                 else:
                     dt = datetime.min
+                count = milestone_counts.get(fld.name, {}).get(m.name, 0)
                 sub_milestones.append((
                     dt,
                     SitemapEntry(
                         h.truncate(m.name, 72),
                         self.url + fld.name[1:] + '/' + m.name + '/',
                         className='nav_child',
-                        small=str(milestone_counts.get(m.name, 0)))
+                        small=str(count))
                 ))
             milestones.extend([
                 m[1] for m in sorted(sub_milestones, key=lambda sm: sm[0])
@@ -392,6 +397,34 @@ class ForgeTrackerApp(Application):
         return TM.Bin.query.find(dict(
             app_config_id=self.config._id)).sort('summary').all()
 
+    def get_calendar_events(self, date_start, date_end):
+        milestones = self.globals.get_milestones_between(date_start, date_end)
+        milestone_counts = self.globals.get_milestone_counts(
+            _milestone_s='" OR "'.join([m["name"] for m in milestones]))
+        events = []
+        for milestone in milestones:
+            due_date = datetime.strptime(milestone["due_date"], '%m/%d/%Y')
+            due_date = int(time.mktime(due_date.timetuple()))
+            title = "{app_label} Milestone {milestone_name} ({num})".format(
+                app_label=self.config.options.mount_label,
+                milestone_name=milestone["name"],
+                num=milestone_counts.get(milestone["name"], 0)
+            )
+            events.append({
+                "id": "{app_config_id}.{milestone_name}".format(
+                    app_config_id=self.config._id,
+                    milestone_name=milestone["name"]
+                ),
+                "title": title,
+                "allDay": True,
+                "start": due_date,
+                "url": '{app_url}milestone/{milestone_name}/'.format(
+                    app_url=self.url,
+                    milestone_name=milestone["name"]),
+                "className": "ticket-milestone-event"
+            })
+        return events
+
 
 class BaseTrackerController(BaseController):
 
@@ -429,8 +462,8 @@ class BaseTrackerController(BaseController):
                 values[k] = v
         if c.app.globals.can_edit_field('assigned_to'):
             assigned_to = post_data.get('assigned_to')
-            values['assigned_to_ids'] = []
             if assigned_to and assigned_to.strip('-'):
+                values['assigned_to_ids'] = []
                 for username in assigned_to.split(','):
                     username = username.strip()
                     if username:
@@ -483,13 +516,13 @@ class TrackerSearchController(BaseController):
     def search(self, query=None, columns=None, limit=None, page=0,
                sort="ticket_num_i desc", tool_q=None, **kw):
         q = kw.pop('q', None)  # temp
-        q = tool_q or query or q
+        q = tool_q or query or q or '*:*'
         c.bin_form = self.Forms.bin_form
         c.ticket_search_results = self.Forms.ticket_search_results
         c.artifact_link = self.Widgets.artifact_link
-        bin = None
+        bin_ = None
         if q:
-            bin = TM.Bin.query.find(dict(
+            bin_ = TM.Bin.query.find(dict(
                 app_config_id=c.app.config._id,
                 terms=q
             )).first()
@@ -497,7 +530,7 @@ class TrackerSearchController(BaseController):
             q, limit=limit, page=page, sort=sort, columns=columns, **kw
         )
         result['allow_edit'] = g.security.has_access(c.app, 'write')
-        result['bin'] = bin
+        result['bin'] = bin_
         return result
 
     @expose(content_type="text/csv")
@@ -514,7 +547,9 @@ class TrackerSearchController(BaseController):
             ('summary_t', 'Summary'),
             ('status_s', 'Status'),
             ('open_b', 'Open'),
+            ('created_date_dt', 'Date Created'),
             ('last_updated_dt', 'Last Updated'),
+            ('closed_date_dt', 'Date Closed'),
             ('assigned_to_s_mv', 'Assigned To'),
             ('reported_by_s', 'Reported By')
         ] + [
@@ -554,27 +589,29 @@ class TrackerSearchController(BaseController):
 
     @expose('json')
     def aggregate(self, q, **kwargs):
+        fields = {
+            'status_s': "Status",
+            'open_b': "Open",
+            'assigned_to_s_mv': "Assignee",
+            'reported_by_s': "Reporter",
+            'labels_t': "Labels"
+        }
+        for custom_field in c.app.globals.custom_fields:
+            if not custom_field.get('show_in_search'):
+                continue
+            if custom_field.get('type') == 'markdown':
+                continue
+            fields['{}_s'.format(custom_field.name)] = custom_field.label
         facet_query = {
             'facet': 'true',
-            'facet.field': [
-                'status_s',
-                'open_b',
-                'milestone_s',
-                'assigned_to_s_mv',
-                'reported_by_s',
-                'labels_t'
-            ],
+            'facet.field': fields.keys(),
             'facet.mincount': 1
-            #'facet.date': [
-            #    'last_updated_dt',
-            #    'created_date_dt'
-            #],
-            #'facet.date.start': 'NOW/DAY-30DAYS',
-            #'facet.date.end': 'NOW/DAY+1DAY',
-            #'facet.date.gap': '+1DAY'
         }
         solr_result = g.search.search_artifact(TM.Ticket, q, **facet_query)
-        return solr_result.facets
+        return {
+            'fields': fields,
+            'facets': solr_result.facets
+        }
 
 
 class RootController(BaseTrackerController):
@@ -603,7 +640,7 @@ class RootController(BaseTrackerController):
         kw.pop('q', None)
         kw.pop('query', None)
         result = self.search.search(
-            query=c.app.globals.not_closed_query,
+            query=c.app.globals.get_default_view_query(),
             sort=sort or c.app.globals.default_ticket_sort,
             columns=columns,
             page=page,
@@ -616,7 +653,7 @@ class RootController(BaseTrackerController):
     @with_trailing_slash
     @vardec
     @expose(TEMPLATE_DIR + 'aggregated.html')
-    def aggregated(self, limit=500, header_field='_affected_subsystem_s',
+    def aggregated(self, header_field='status_s', limit=500,
                    sort='_priority_s asc', **kw):
         q = c.app.globals.not_closed_query
         results = dict()
@@ -626,15 +663,19 @@ class RootController(BaseTrackerController):
             'rows': 0
         }
         facet_search = g.search.search_artifact(TM.Ticket, q, **facet_params)
-        agger_iter = iter(facet_search.facets['facet_fields'][header_field])
-        for header, count in itertools.izip(*[agger_iter] * 2):
+        facet_iter = iter(facet_search.facets['facet_fields'][header_field])
+        for value, count in zip(facet_iter, facet_iter):
+            header = "{}: {} ({})".format(header_field, value, count)
             results[header] = dict(
                 result=TM.Ticket.paged_solr_query(
                     q, limit=limit, fq_dict={header_field: header}, sort=sort),
                 count=count
             )
         c.search_results_widget = self.Forms.ticket_search_results
-        return dict(results=results, limit=limit, q=q, sort=sort)
+        del c.csv_url
+        del c.aggregate_url
+        return dict(field_name=header_field, results=results, limit=limit,
+                    q=q, sort=sort)
 
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'milestones.html')
@@ -666,6 +707,10 @@ class RootController(BaseTrackerController):
     @vardec
     @expose()
     @require_post()
+    @validate({
+        "field_name": HTMLEscapeValidator(),
+        "milestones": ForEach(MilestoneSchema())
+    })
     def update_milestones(self, field_name=None, milestones=None, **kw):
         g.security.require_access(c.app, 'configure')
         update_counts = False
@@ -678,7 +723,7 @@ class RootController(BaseTrackerController):
                             if new['new_name'] == '':
                                 flash('You must name the milestone.', 'error')
                             else:
-                                m.name = new['new_name'].replace('/', '-')
+                                m.name = new['new_name']
                                 m.description = new['description']
                                 m.complete = new['complete'] == 'Closed'
                                 if new['old_name'] != m.name:
@@ -710,7 +755,7 @@ class RootController(BaseTrackerController):
                                         add_artifacts.post(ids)
                     if new['old_name'] == '' and new['new_name'] != '':
                         fld.milestones.append(dict(
-                            name=new['new_name'].replace('/', '-'),
+                            name=new['new_name'],
                             description=new['description'],
                             due_date=new['due_date'],
                             complete=new['complete'] == 'Closed'))
@@ -756,10 +801,14 @@ class RootController(BaseTrackerController):
         if arg.isdigit():
             return TicketController(arg), remainder
         elif remainder:
-            milestone = request.url.split('milestone/')[1].split('/')[0]
-            controller = MilestoneController(
-                self, arg, urllib.unquote(milestone))
-            return controller, remainder[1:]
+            for field in c.app.globals.milestone_fields:
+                if arg != field['name'][1:]:
+                    continue
+                milestone = request.url.split(arg+'/', 1)[1].split('/')[0]
+                controller = MilestoneController(self, arg,
+                                                 urllib.unquote(milestone))
+                return controller, remainder[1:]
+            raise exc.HTTPNotFound
         else:
             raise exc.HTTPNotFound
 
@@ -956,13 +1005,12 @@ class BinController(BaseController):
     @expose(TEMPLATE_DIR + 'bin.html')
     def index(self, **kw):
         count = len(self.app.bins)
-        return dict(bins=self.app.bins, count=count, app=self.app)
-
-    @with_trailing_slash
-    @expose(TEMPLATE_DIR + 'bin.html')
-    def bins(self):
-        count = len(self.app.bins)
-        return dict(bins=self.app.bins, count=count, app=self.app)
+        return {
+            'default_query': self.app.globals.default_view_query or '',
+            'bins': self.app.bins,
+            'count': count,
+            'app': self.app
+        }
 
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'new_bin.html')
@@ -1007,7 +1055,7 @@ class BinController(BaseController):
     @vardec
     @expose()
     @require_post()
-    def update_bins(self, bins=None, **kw):
+    def update_bins(self, bins=None, default_query=None, **kw):
         g.security.require_access(self.app, 'save_searches')
         for bin_form in bins:
             tbin = None
@@ -1023,6 +1071,8 @@ class BinController(BaseController):
                 else:
                     tbin.summary = bin_form['summary']
                     tbin.terms = bin_form['terms']
+        self.app.globals.default_view_query = default_query
+        self.app.globals.query.session.flush(self.app.globals)
         self.app.globals.invalidate_bin_counts()
         redirect('.')
 
@@ -1519,7 +1569,8 @@ class MilestoneController(BaseTrackerController):
 
     def __init__(self, root, field, milestone):
         for fld in c.app.globals.milestone_fields:
-            if fld.name[1:] == field: break
+            if fld.name[1:] == field:
+                break
         else:
             raise exc.HTTPNotFound()
         for m in fld.milestones:
@@ -1530,7 +1581,7 @@ class MilestoneController(BaseTrackerController):
         self.root = root
         self.field = fld
         self.milestone = m
-        self.query = 'milestone_s:"{}"'.format(m.name)
+        self.query = '{}_s:"{}"'.format(fld.name, m.name)
         self.mongo_query = {'custom_fields.{}'.format(fld.name): m.name}
 
     def _before(self, *args, **kwargs):

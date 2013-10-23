@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from webhelpers import paginate
 from tg import request, url
-from ew import Widget
 
-from vulcanforge.resources.widgets import JSScript, JSLink, CSSLink
+from vulcanforge.resources.widgets import JSScript, JSLink, CSSLink, Widget
 
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/widgets/'
 
@@ -72,7 +71,7 @@ class PageList(Widget):
         return url_params
 
     @property
-    def page_url_prefix(page):
+    def page_url_prefix(self):
         params = request.GET.copy()
         if 'page' in params:
             del params['page']

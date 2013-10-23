@@ -4,6 +4,7 @@ from datetime import datetime
 from pprint import pformat
 import urllib
 import bson
+from markupsafe import Markup
 import pkg_resources
 
 import pymongo
@@ -101,7 +102,6 @@ class WorkspaceTabController(RestController):
     # Create
     @expose('json')
     @validate({
-        "href": HTMLEscapeValidator(),
         "title": HTMLEscapeValidator(),
         "type": HTMLEscapeValidator(if_empty=None),
         "order": validators.Int(if_empty=0),
@@ -560,7 +560,10 @@ class UserProfileController(BaseController):
 
     @expose('json')
     def get_user_profile(self, **kw):
-        return self.user.get_profile_info()
+        profile_info = self.user.get_profile_info()
+        profile_info['profileImage'] = Markup(profile_info['profileImage'])
+
+        return profile_info
 
     @expose('json')
     def get_user_trust_history(self, **kw):

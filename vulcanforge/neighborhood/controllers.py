@@ -22,7 +22,6 @@ from vulcanforge.common import helpers as h
 from vulcanforge.common.controllers.rest import ProjectRestController
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import re_path_portion
-from vulcanforge.common.util.antispam import AntiSpam
 from vulcanforge.common.widgets.util import PageSize, PageList
 from vulcanforge.auth.model import User
 from vulcanforge.auth.tasks import remove_workspacetabs
@@ -225,10 +224,7 @@ class NeighborhoodController(BaseTGController):
         if not self.neighborhood.user_can_register():
             flash("You are already a member of a team", "error")
             redirect(self.neighborhood.url())
-        if self.neighborhood.kind == "competition":
-            title = "Form a Team"
-        else:
-            title = "Create a Project"
+        title = "Create a Project"
         c.add_project = self.Forms.add_project
         for checkbox in ['Wiki', 'Tickets', 'Discussion', 'Components']:
             form_data.setdefault(checkbox, True)
@@ -260,7 +256,6 @@ class NeighborhoodController(BaseTGController):
 
     @vardec
     @expose()
-    @AntiSpam.validate('Spambot protection engaged')
     @validate_form('add_project', error_handler=add_project)
     @require_post()
     def register(self, **form_data):
@@ -286,9 +281,19 @@ class NeighborhoodController(BaseTGController):
             'Wiki': 'Docs',
             'Discussion': 'Forums'
         }
-        for repo in ('Git', 'SVN', 'Hg'):
-            tool_info[repo] = 'Repository'
-        for i, tool in enumerate(form_data):
+        repo_kind_map = {
+            'Git': 'Git',
+            'Subversion': 'SVN'
+        }
+        has_repo = form_data.pop('Repository', False)
+        repo_kind_value = form_data.pop('RepositoryKind', None)
+        if has_repo:
+            repo_kind = repo_kind_map.get(repo_kind_value, None)
+            if repo_kind:
+                tool_info[repo_kind] = 'Repository'
+                form_data[repo_kind] = True
+
+        for tool in form_data.keys():
             if tool in tool_info:
                 label, mp = tool_info[tool], tool_info[tool].lower()
             else:

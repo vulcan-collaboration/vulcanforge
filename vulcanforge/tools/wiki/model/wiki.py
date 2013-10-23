@@ -81,6 +81,10 @@ class PageHistory(Snapshot):
     def email_address(self):
         return self.original().email_address
 
+    def get_rendered_html(self):
+        md = self.app.get_markdown()
+        return md.convert(self.text)
+
 
 class Page(VersionedArtifact):
     class __mongometa__:

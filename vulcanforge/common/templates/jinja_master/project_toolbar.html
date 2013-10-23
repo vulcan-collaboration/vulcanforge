@@ -5,7 +5,7 @@
     {% if s.label == 'Home' %}
     <li class="tool-link-wrapper home{% if s.url in request.url %} selected{% endif %}">
     <a href="{{s.url}}" class="ui-no-icon tool-link" title="{{s.label}}">
-        <img src="{{ c.project.icon_url}}" alt="{{c.project.name}}">
+        <img src="{{ c.project.icon_url }}" alt="{{c.project.name}}">
     </a>
     </li>
     {% else %}

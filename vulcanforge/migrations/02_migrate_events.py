@@ -10,7 +10,10 @@ class MigrateEvents(BaseMigration):
     allura_event_collection = main_doc_session.bind.conn['allura']['event']
 
     def is_needed(self):
-        zarkov_event = self.zarkov_event_collection.find_one()
+        try:
+            zarkov_event = self.zarkov_event_collection.find_one()
+        except Exception as e:
+            zarkov_event = None
         if zarkov_event is None:
             return False
 

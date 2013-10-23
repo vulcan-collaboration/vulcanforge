@@ -12,7 +12,8 @@ class AddUserOSId(BaseMigration):
             ForgeGlobals(user_counter=counter + 1)
 
         cur_max_user = User.query.find({
-            "os_id": {"$exists": 1, "$ne": None}}).sort("os_id", pymongo.DESCENDING).first()
+            "os_id": {"$exists": 1, "$ne": None}
+        }).sort("os_id", pymongo.DESCENDING).first()
         if cur_max_user:
             cur_id = cur_max_user.os_id + 1
         else:

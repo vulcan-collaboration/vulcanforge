@@ -36,12 +36,14 @@
             <label>Labels:</label>
             {{c.label_edit.display(id='labels', name='labels', value=page.labels)}}
         </li>
+        {% block precontent_extra_fields %}{% endblock %}
         <li>
             <label>Content:</label>
             <div>
                 {{c.markdown_editor.display(id='text', name='text', value=page.text, attachment_context_id=attachment_context_id, class_name="markdown-edit wiki-markdown")}}
             </div>
         </li>
+        {% block postcontent_extra_fields %}{% endblock %}
         <li>
             <fieldset class="vf-fieldset">
                 {{ c.hide_attachments_field.display(value=page.hide_attachments) }}

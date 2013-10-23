@@ -11,6 +11,7 @@ from datetime import datetime
 import logging
 
 import bson
+from markupsafe import Markup
 import pymongo
 from webob.exc import HTTPNotFound, HTTPBadRequest
 from pylons import tmpl_context as c, app_globals as g, response
@@ -22,6 +23,7 @@ from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.controllers.decorators import validate_form, \
     require_post, require_site_admin_access
 from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.common.widgets.util import PageSize, PageList
 from vulcanforge.messaging.forms import MakeAnnouncementForm, \
     ConversationReplyForm, StartConversationForm, AnnounceToAllForm
@@ -308,9 +310,10 @@ class ActivityFeedController(BaseDashboardController):
         reaching_roles = c.user.get_roles()
         [project_ids.add(r.project_id) for r in reaching_roles if r.name]
         ## from mailboxes
-        js = "db.%s.distinct('project_id', {user_id:ObjectId(\"%s\")})" % (
-            Mailbox.__mongometa__.name, c.user._id)
-        [project_ids.add(x) for x in Mailbox.query.session.impl.db.eval(js)]
+        db, coll = pymongo_db_collection(Mailbox)
+        cur = coll.find({"user_id": c.user._id})
+        user_project_ids = filter(None, cur.distinct('project_id'))
+        project_ids.update(user_project_ids)
 
         # get projects and app config ids
         projects = []
@@ -418,7 +421,7 @@ class ActivityFeedController(BaseDashboardController):
             i += 1
         json += '],"more":{}'.format(has_more)
         json += '}'
-        return json
+        return Markup(json)
 
     def _set_app_config(self, _id_s, value):
         try:

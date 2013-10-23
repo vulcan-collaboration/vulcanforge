@@ -14,12 +14,14 @@ from webhelpers.html import literal
 
 import ew
 from ew.core import widget_context
+from vulcanforge.common.util.filesystem import mkdir_p
 
 from .widgets import Resource, CSSLink, JSLink, JSScript
 
 LOG = logging.getLogger(__name__)
 
 RESOURCE_URL = re.compile(r"url\([\'\"]?([^\"\'\)]+)[\'\"]?\)")
+ROOTRELATIVE_URL = re.compile(r"url\([\'\"]?/([^\"\'\)]+)[\'\"]?\)")
 RECIPE_FILE = 'static_recipes.txt'
 SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
 
@@ -42,14 +44,17 @@ class ResourceManager(ew.ResourceManager):
             config.get('combine_static_resources', 'false'))
         self.static_resources_dir = config.get('static_resources_dir', None)
         self.build_key = config.get('build_key', 'default')
+        self.separator = config.get('resource_separator', ';')
 
         self.debug_mode = asbool(config.get('debug', 'true'))
-        self.use_cache = self.use_cssmin = self.use_jsmin = not self.debug_mode
+        minify = asbool(config.get('minify_static', not self.debug_mode))
+        self.use_cssmin = self.use_jsmin = minify
+        self.use_cache = not self.debug_mode
 
         self.build_dir = os.path.join(
             self.static_resources_dir, self.build_key)
         if not os.path.exists(self.build_dir):
-            os.makedirs(self.build_dir)
+            mkdir_p(self.build_dir)
 
     @property
     def resources(self):
@@ -245,13 +250,27 @@ class ResourceManager(ew.ResourceManager):
 
         return []
 
-    def write_slim_file(self, file_type, rel_resource_paths):
+    def expand_css_urls(self, content):
+        resource_urls = re.findall(ROOTRELATIVE_URL, content)
+        # Just in case the same url is listed twice
+        resource_urls_set = set(resource_urls)
+        for resource_url in resource_urls_set:
+            if SPRITE_MAP_PREFIX in resource_url:
+                continue
+            expanded_url = self.absurl(resource_url)
+            content = content.replace('/' + resource_url, expanded_url)
+        return content
+
+    def write_slim_file(self, file_type, rel_resource_paths,
+                        destination_dir=None):
         """
         Write files with concat+minify+gzip
         """
-        joined_list = ';'.join(rel_resource_paths)
+        if destination_dir is None:
+            destination_dir = self.build_dir
+        joined_list = self.separator.join(rel_resource_paths)
         file_hash = str(abs(hash(joined_list))) + '.' + file_type
-        build_file_path = os.path.join(self.build_dir, file_hash)
+        build_file_path = os.path.join(destination_dir, file_hash)
         if not os.path.exists(build_file_path):
             if file_type == 'js' and self.use_jsmin:
                 content = '\n'.join(

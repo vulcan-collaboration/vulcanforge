@@ -7,12 +7,21 @@ from urlparse import urlsplit
 
 import bson
 from bson.objectid import ObjectId
-from ming.odm.odmsession import ThreadLocalODMSession
+from ming.odm.odmsession import ThreadLocalODMSession, session
 from formencode import validators
 from formencode.api import Invalid
+from paste.deploy.converters import asbool
 from webob import exc as wexc, exc
 from pylons import tmpl_context as c, app_globals as g
-from tg import expose, session, flash, redirect, validate, config, request
+from tg import (
+    expose,
+    flash,
+    redirect,
+    validate,
+    config,
+    request,
+    override_template
+)
 import tg
 from tg.decorators import with_trailing_slash, without_trailing_slash
 
@@ -21,16 +30,6 @@ from vulcanforge.auth.exceptions import PasswordAlreadyUsedError
 from vulcanforge.auth.oauth.forms import OAuthRevocationForm
 from vulcanforge.auth.oauth.model import OAuthAccessToken
 from vulcanforge.auth.validators import UsernameFormatValidator
-from vulcanforge.common.controllers import BaseController
-from vulcanforge.common.controllers.decorators import (
-    require_post,
-    require_anonymous,
-    validate_form,
-    vardec
-)
-from vulcanforge.common.types import SitemapEntry
-from vulcanforge.common.util import get_client_ip, cryptographic_nonce
-from vulcanforge.common.validators import NullValidator
 from vulcanforge.auth.model import (
     EmailAddress,
     PasswordResetToken,
@@ -48,13 +47,24 @@ from vulcanforge.auth.forms import (
     PasswordResetEmailForm,
     PasswordResetForm
 )
+from vulcanforge.common.controllers import BaseController
+from vulcanforge.common.controllers.decorators import (
+    require_post,
+    require_anonymous,
+    validate_form,
+    vardec
+)
+from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.util import get_client_ip, cryptographic_nonce
 from vulcanforge.common.widgets.forms import PasswordChangeForm, UploadKeyForm
+from vulcanforge.config.custom_middleware import VisibilityModeMiddleware
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.model import Mailbox
 from vulcanforge.notification.tasks import sendmail
 from vulcanforge.notification.util import gen_message_id
 from vulcanforge.project.model import Project, AppConfig
 from vulcanforge.project.exceptions import NoSuchProjectError
+from vulcanforge.tools.admin.model import RegistrationRequest
 
 
 LOG = logging.getLogger(__name__)
@@ -74,14 +84,16 @@ OID_PROVIDERS = [
     ('AOL', 'http://openid.aol.com/${username}/')
 ]
 TEMPLATE_DIR = 'jinja:vulcanforge:auth/templates/'
+REGISTRATION_ACTION = '/auth/send_user_registration_email'
 
 
-class AuthController(BaseController):
+class _AuthController(BaseController):
 
     class Forms(BaseController.Forms):
         login_form = LoginForm()
         user_registration_email_form = UserRegistrationEmailForm(
-            action='/auth/send_user_registration_email')
+            affiliate=False,
+            action=REGISTRATION_ACTION)
         user_registration_form = UserRegistrationForm(
             action='/auth/do_user_registration')
         password_reset_email_form = PasswordResetEmailForm(
@@ -95,7 +107,7 @@ class AuthController(BaseController):
     @expose(TEMPLATE_DIR + 'login.html')
     @require_anonymous
     @with_trailing_slash
-    def index(self, _msg='', **kwargs):
+    def index(self, **kwargs):
         msgClass = ''
         orig_request = request.environ.get('pylons.original_request', None)
         if 'return_to' in kwargs:
@@ -106,16 +118,27 @@ class AuthController(BaseController):
             return_to = urlsplit(request.referer).path
         else:
             return_to = '/'
+        if config.get('login_template'):
+            override_template(self.index, config.get('login_template'))
+
         c.form = self.Forms.login_form
-        return dict(msg=_msg, msgClass=msgClass, oid_providers=OID_PROVIDERS,
-                    return_to=return_to, form_values={'return_to': return_to},
-                    can_register=g.show_register_on_login)
+        return {
+            'msg': '',
+            'msgClass': msgClass,
+            'oid_providers': OID_PROVIDERS,
+            'return_to': return_to,
+            'form_values': {'return_to': return_to},
+            'can_register': g.show_register_on_login,
+            'autocomplete': not g.production_mode
+        }
 
     @expose(TEMPLATE_DIR + 'login.html')
     @without_trailing_slash
     def login(self, *args, **kwargs):
         c.form = self.Forms.login_form
-        return {}
+        return {
+            'autocomplete': not g.production_mode
+        }
 
     @expose()
     def send_verification_link(self, a):
@@ -190,7 +213,8 @@ class AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The password reset token is invalid or has expired. "
+                      "Please request another password reset.", 'error')
                 redirect('.?return_to={}'.format(return_to))
         return dict(token=token, form_values=form_values, **kw)
 
@@ -200,18 +224,18 @@ class AuthController(BaseController):
     def send_password_reset_email(self, email=None, return_to="/", **kw):
         LOG.debug("send_password_reset_email %s", email)
         user = User.by_email_address(email)
-        token = PasswordResetToken.query.get(user_id=user._id)
-        if not token:
-            token = PasswordResetToken()
-            token.user_id = user._id
-        token.email = email
-        token.nonce = hashlib.sha256(os.urandom(10)).hexdigest()
-        token.expiry_date = datetime.utcnow() + timedelta(hours=2)
-        token.send_email()
+        if user:
+            token = PasswordResetToken.query.get(user_id=user._id)
+            if not token:
+                token = PasswordResetToken()
+                token.user_id = user._id
+            token.email = email
+            token.nonce = hashlib.sha256(os.urandom(10)).hexdigest()
+            token.expiry_date = datetime.utcnow() + timedelta(hours=2)
+            token.send_email()
         flash(
             "Please check your email for instructions to reset your password.",
-            status='confirm'
-        )
+            status='confirm')
         redirect('/auth/?return_to={}'.format(return_to))
 
     @expose()
@@ -219,8 +243,6 @@ class AuthController(BaseController):
     @validate_form("password_reset_form", error_handler=password_reset)
     def do_password_reset(self, token=None, password=None, return_to=None,
                           **kw):
-        if return_to is None:
-            return_to = config.get('home_url', '/')
         LOG.debug("do_password_reset token: %s", token)
         token_object = PasswordResetToken.query.get(nonce=token)
         user = token_object.user
@@ -235,6 +257,8 @@ class AuthController(BaseController):
         token_object.delete()
         g.auth_provider.login(user)
         flash("Your password has been updated.", status="confirm")
+        if return_to is None:
+            return_to = config.get('home_url', '/')
         return redirect(return_to)
 
     @expose(TEMPLATE_DIR + 'auth_cancel_email_mod.html')
@@ -287,11 +311,12 @@ class AuthController(BaseController):
                 LOG.warn("Invalid token %s\n%s", token, token_object)
                 if token_object:
                     token_object.delete()
-                flash("Invalid token", 'error')
+                flash("The registration token is invalid or has expired. "
+                      "Please register again.", 'error')
                 redirect('.')
         return dict(kw, form_values=form_values)
 
-    @expose('json')
+    @expose()
     @require_post()
     @validate_form("user_registration_email_form", error_handler=register)
     def send_user_registration_email(self, email=None, name='', **kw):
@@ -418,6 +443,63 @@ class AuthController(BaseController):
 
         return dict(available=True,
                     status="The name `{}` is available.".format(username))
+
+
+class _ModeratedAuthController(_AuthController):
+    """
+    Auth controller override for moderated registration situations
+
+    """
+    class Forms(_AuthController.Forms):
+        user_registration_email_form = UserRegistrationEmailForm(
+            affiliate=True,
+            action=REGISTRATION_ACTION)
+
+    @expose('auth/login_cool.html')
+    @require_anonymous
+    @with_trailing_slash
+    def index(self, **kwargs):
+        result = super(_ModeratedAuthController, self).index(**kwargs)
+        result["msg"] = "Use your VF Access ID to sign in."
+        return result
+
+    @expose('auth/registration.html')
+    @require_anonymous
+    @with_trailing_slash
+    def register(self, **kw):
+        """This is necessary because the error_handler argument of tg.validate
+        will not allow accessing subclass attributes.
+
+        TODO: fix this...somehow...
+        """
+        return super(_ModeratedAuthController, self).register(**kw)
+
+    @expose()
+    @require_post()
+    @validate_form("user_registration_email_form", error_handler=register)
+    def send_user_registration_email(self, email=None, name='', **kw):
+        with g.context_manager.push(g.site_admin_project, 'admin'):
+            req = RegistrationRequest(
+                email=email,
+                name=name,
+                user_fields=kw,
+                project_id=c.project._id
+            )
+            session(RegistrationRequest).flush(req)
+            req.notify()
+        redirect('moderate_thanks')
+
+    @expose(TEMPLATE_DIR + 'moderate_thanks.html')
+    def moderate_thanks(self):
+        return dict()
+
+
+# determine whether to moderate general registrations
+#   Use visibility mode settings unless explicitly defined
+_visibility_mode = config.get('visibility_mode', 'default')
+_moderate = asbool(config.get('moderate_registration',
+                              VisibilityModeMiddleware.MODES[_visibility_mode]))
+AuthController = _ModeratedAuthController if _moderate else _AuthController
 
 
 class UserStatePreferencesRESTController(object):
@@ -926,7 +1008,7 @@ class PreferencesController(BaseController):
 
 
 class UserDiscoverController(BaseController):
-    """Controller to search and browse the users of VehicleFORGE"""
+    """Controller to search and browse the users of the forge"""
 
     hide_sidebar = True
     user_title = "Designers"
@@ -939,7 +1021,7 @@ class UserDiscoverController(BaseController):
             'type_s:User',
             'public_b:true',
             'disabled_b:false'
-            ))
+        ))
 
     @expose(TEMPLATE_DIR + 'user_browse.html')
     @validate(dict(

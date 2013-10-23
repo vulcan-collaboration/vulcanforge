@@ -53,13 +53,19 @@
         margin-top: 1.76rem;
     }
 
+    h1[id]::before, h2[id]::before, h3[id]::before, h4[id]::before,
+    h5[id]::before, h6[id]::before {
+        content: "";
+        display: block;
+        height: 156px;
+        margin-top: -156px;
+    }
+
     ol, ul {
         padding-left: 2.4rem;
     }
-    ol ol,
-    ol ul,
-    ul ol,
-    ul ul {
+    li > ol,
+    li > ul {
         margin: 0;
         padding-left: 1.2rem;
     }
@@ -76,6 +82,7 @@
         overflow: auto;
         border: none;
         padding: 0 1.2rem;
+        margin: 0 0 0 1.2rem;
         background: #f0f0f0;
     }
 
@@ -113,7 +120,7 @@
             padding: 0;
             list-style: none;
         }
-        ul ul {
+        li > ul {
             padding-left: 1rem;
         }
     }
@@ -124,6 +131,18 @@
     }
     .toclink {
         color: inherit;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    p,
+    ul, ol,
+    hr,
+    blockquote, center {
+        max-width: 1000px;
+    }
+
+    img {
+        max-width: 100%;
     }
 }
 

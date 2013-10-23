@@ -14,24 +14,27 @@ from vulcanforge.tools.wiki.model import WikiAttachment, PageHistory
 class MigrateWikiAttachmentS3Keys(BaseMigration):
 
     def is_needed(self):
-        cursor = WikiAttachment.query.find({})
+        cursor = WikiAttachment.query.find({
+            'attachment_type': 'WikiAttachment'})
         cursor.sort('_id', pymongo.ASCENDING)
         cursor.limit(1)
         wiki_attachment = cursor.first()
-        wikipage = wiki_attachment.artifact
-        old_key = None
-        while old_key is None and wikipage.version >= 0:
-            old_key = self.get_s3_key(wiki_attachment.keyname,
-                                      wikipage,
-                                      insert_if_missing=False)
-            if old_key is not None:
-                break
-            try:
-                wikipage = wiki_attachment.artifact.\
-                    get_version(wikipage.version - 1)
-            except IndexError:
-                break
-        return old_key is not None
+        if hasattr(wiki_attachment, "artifact"):
+            wikipage = wiki_attachment.artifact
+            old_key = None
+            while old_key is None and wikipage.version >= 0:
+                old_key = self.get_s3_key(wiki_attachment.keyname,
+                                          wikipage,
+                                          insert_if_missing=False)
+                if old_key is not None:
+                    break
+                try:
+                    wikipage = wiki_attachment.artifact.\
+                        get_version(wikipage.version - 1)
+                except IndexError:
+                    break
+            return old_key is not None
+        return False
 
     def run(self):
         self.write_output('Migrating Wiki Attachments...')

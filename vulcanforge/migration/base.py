@@ -36,7 +36,7 @@ class BaseMigration(object):
         """Appends the message to the log objects output array"""
         self.miglog.output.append(msg)
         if loglevel:
-            logfunc = getattr(self.log, loglevel, None)
+            logfunc = getattr(self.log, loglevel.lower(), None)
             if logfunc:
                 logfunc(msg)
 
@@ -50,6 +50,7 @@ class BaseMigration(object):
         purposes, overriding the run method should be sufficient.
 
         """
+        self.log.info('Running %s', str(self.get_name()))
         try:
             self.run()
         except Exception as err:

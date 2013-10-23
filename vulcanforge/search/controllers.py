@@ -157,8 +157,8 @@ class SearchController(BaseController):
         result = g.search(**params)
         # iterate in chunks of 2 (type_s, count)
         if result is not None:
-            for type_s, count in itertools.izip(
-                *[iter(result.facets['facet_fields']['type_s'])] * 2):
+            facet_iter = iter(result.facets['facet_fields']['type_s'])
+            for type_s, count in zip(facet_iter, facet_iter):
                 if count and type_s not in self._get_excluded_types():
                     yield {
                         "name": type_s,

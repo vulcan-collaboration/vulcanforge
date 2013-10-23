@@ -26,6 +26,7 @@ from vulcanforge.artifact.model import (
 )
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACE, ALL_PERMISSIONS, DENY_ALL
+from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.discussion.model import Thread
 from vulcanforge.notification.model import Notification
 from vulcanforge.project.model import ProjectRole
@@ -49,6 +50,7 @@ class Globals(MappedClass):
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
     last_ticket_num = FieldProperty(int)
+    default_view_query = FieldProperty(str, if_missing=None)
     status_names = FieldProperty(str)
     open_status_names = FieldProperty(str)
     closed_status_names = FieldProperty(str)
@@ -114,27 +116,50 @@ class Globals(MappedClass):
 
     @property
     def milestone_fields(self):
-        return [fld for fld in self.custom_fields \
+        return [fld for fld in self.custom_fields
                 if fld.get('type') == 'milestone']
 
+    def get_default_view_query(self):
+        if self.default_view_query:
+            return self.default_view_query
+        return self.not_closed_query
+
+    def get_milestones_between(self, date_start, date_end):
+        for fld in self.custom_fields:
+            if fld["name"] == '_milestone':
+                break
+        else:
+            return []
+
+        date_fmt = '%m/%d/%Y'
+        milestones = []
+        for milestone in fld["milestones"]:
+            if milestone.get("due_date"):
+                m_date = datetime.strptime(milestone["due_date"], date_fmt)
+                if date_start <= m_date <= date_end:
+                    milestones.append(milestone)
+        return milestones
+
     def get_milestone_counts(self, **kw):
+        fields = {'{}_s'.format(f.name): f.name for f in self.milestone_fields}
         params = {
             "facet": "on",
-            "facet.field": "_milestone_s",
+            "facet.field": fields.keys(),
             "rows": 0
         }
         params.update(kw)
         q = ' AND '.join((
-            'app_config_id_s:{}'.format(c.app.config._id),
+            'app_config_id_s:{}'.format(self.app_config_id),
             'type_s:"{}"'.format(Ticket.type_s),
             'is_history_b:False'
         ))
         m_result = g.search(q, **params)
-        milestone_counts = {}
+        milestone_counts = {f: {} for f in fields.values()}
         if m_result is not None:
-            res_iter = iter(m_result.facets['facet_fields']['_milestone_s'])
-            for milestone, count in itertools.izip(*[res_iter] * 2):
-                milestone_counts[milestone] = count
+            for name, facets in m_result.facets['facet_fields'].items():
+                res_iter = iter(facets)
+                for milestone, count in itertools.izip(*[res_iter] * 2):
+                    milestone_counts[fields[name]][milestone] = count
         return milestone_counts
 
     @LazyProperty
@@ -264,6 +289,7 @@ class Ticket(VersionedArtifact):
     type_s = 'Ticket'
     _id = FieldProperty(schema.ObjectId)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
+    closed_date = FieldProperty(datetime, if_missing=None)
 
     super_id = FieldProperty(schema.ObjectId, if_missing=None)
     sub_ids = FieldProperty([schema.ObjectId], if_missing=[])
@@ -299,6 +325,7 @@ class Ticket(VersionedArtifact):
                 raise
 
     def index(self, **kw):
+        assigned_to_name_s = ','.join(sorted(self.assigned_to_names))
         params = dict(
             title_s='Ticket %s' % self.ticket_num,
             version_i=self.version,
@@ -314,8 +341,10 @@ class Ticket(VersionedArtifact):
             reported_by_name_s=self.reported_by_name,
             assigned_to_s_mv=self.assigned_to_usernames,
             assigned_to_name_s_mv=self.assigned_to_names,
-            last_updated_dt=self.last_updated,
+            assigned_to_name_s=assigned_to_name_s,
+            last_updated_dt=self.mod_date,
             created_date_dt=self.created_date,
+            closed_date_dt=self.closed_date,
             text_objects=[
                 self.ticket_num,
                 self.summary,
@@ -323,7 +352,7 @@ class Ticket(VersionedArtifact):
                 self.status,
                 self.reported_by_name,
                 self.reported_by_username,
-                ','.join(self.assigned_to_names),
+                assigned_to_name_s,
                 ','.join(self.assigned_to_usernames)
             ]
         )
@@ -360,29 +389,9 @@ class Ticket(VersionedArtifact):
 
     @classmethod
     def get_label_info(cls):
-        ## this wont work and im not sure why
-        #js = """function() {
-        #map = function() {
-        #    this.labels.forEach( function(l) {
-        #        emit( {label:l}, {count:1} );
-        #    } );
-        #};
-        #reduce = function(key, values) {
-        #    var count=0;
-        #    values.forEach( function(v) {
-        #        count += v['count'];
-        #    } );
-        #    return {count:count};
-        #};
-        #mr = db.%s.mapReduce(map, reduce, { out : { inline : 1 } } );
-        #return db[mr.result].find();
-        #}""" % cls.__mongometa__.name
-        # so we use the simpler
-        js = "db.%s.distinct('labels', {app_config_id:ObjectId(\"%s\")})" % (
-            cls.__mongometa__.name,
-            c.app.config._id
-            )
-        output = cls.query.session.impl.db.eval(js)
+        db, coll = pymongo_db_collection(cls)
+        cur = coll.find({"app_config_id": c.app.config._id})
+        output = filter(None, cur.distinct('labels'))
         return output
 
     @property
@@ -468,6 +477,10 @@ class Ticket(VersionedArtifact):
     private = property(_get_private, _set_private)
 
     def commit(self):
+        if self.is_open():
+            self.closed_date = None
+        elif self.closed_date is None:
+            self.closed_date = datetime.utcnow()
         VersionedArtifact.commit(self)
         if self.version > 1:
             hist = TicketHistory.query.get(
@@ -724,6 +737,7 @@ class Ticket(VersionedArtifact):
         return dict(
             _id=str(self._id),
             created_date=self.created_date,
+            closed_date=self.closed_date,
             mod_date=self.mod_date,
             super_id=str(self.super_id),
             sub_ids=[str(id) for id in self.sub_ids],
@@ -740,71 +754,7 @@ class Ticket(VersionedArtifact):
             custom_fields=self.custom_fields)
 
     @classmethod
-    def paged_query(cls, q, mongo=False, **kw):
-        """
-        Query tickets, default search with SOLR but allow Mongo queries
-        """
-        if mongo:
-            return cls.paged_mongo_query(q, **kw)
-        return cls.paged_solr_query(q, **kw)
-
-    @classmethod
-    def paged_mongo_query(cls, query, limit=None, page=0, sort=None,
-                          columns=None, **kw):
-        """Query tickets, sorting and paginating the result."""
-        limit, page, start = g.handle_paging(limit, page, default=25)
-        q = cls.query.find(dict(query, app_config_id=c.app.config._id))
-        q = q.sort('ticket_num')
-        if sort and sort != 'None':
-            for s in sort.split(','):
-                field, direction = s.split()
-                if field.startswith('_'):
-                    field = 'custom_fields.' + field
-                direction = dict(
-                    asc=pymongo.ASCENDING,
-                    desc=pymongo.DESCENDING)[direction]
-                q = q.sort(field, direction)
-        q = q.skip(start)
-        q = q.limit(limit)
-        tickets = []
-        count = q.count()
-        for t in q:
-            if g.security.has_access(t, 'read'):
-                tickets.append(t)
-            else:
-                count -= 1
-        sortable_custom_fields = \
-            c.app.globals.sortable_custom_fields_shown_in_search()
-        if not columns:
-            columns = [
-                dict(name='ticket_num', sort_name='ticket_num',
-                     label='Ticket Number', active=True),
-                dict(name='summary', sort_name='summary',
-                     label='Summary', active=True),
-                dict(name='status', sort_name='status',
-                     label='Status', active=True),
-                dict(name='assigned_to', sort_name='assigned_to_name_s',
-                     label=c.app.globals.assigned_to_label, active=True),
-                dict(name='last_updated', sort_name='last_updated',
-                     label='Last Updated', active=True)
-            ]
-            for field in sortable_custom_fields:
-                columns.append(
-                    dict(name=field['name'], sort_name=field['name'],
-                         label=field['label'], active=True))
-        return dict(
-            tickets=tickets,
-            sortable_custom_fields=sortable_custom_fields,
-            columns=columns,
-            count=count,
-            q=json.dumps(query),
-            limit=limit,
-            page=page,
-            sort=sort,
-            **kw)
-
-    @classmethod
-    def paged_solr_query(cls, q, limit=None, page=0, sort=None,
+    def paged_query(cls, q, limit=None, page=0, sort=None,
                          columns=None, **kw):
         """Query tickets, sorting and paginating the result.
 
@@ -872,7 +822,9 @@ class Ticket(VersionedArtifact):
                 {'name': 'assigned_to', 'sort_name': 'assigned_to_name_s',
                  'label': c.app.globals.assigned_to_label, 'active': True},
                 {'name': 'last_updated', 'sort_name': 'last_updated_dt',
-                 'label': 'Last Updated', 'active': True}
+                 'label': 'Last Updated', 'active': True},
+                {'name': 'closed_date', 'sort_name': 'closed_date_dt',
+                 'label': 'Date Closed', 'active': True}
             ]
             for field in sortable_custom_fields:
                 columns.append(dict(name=field['name'],

@@ -72,7 +72,7 @@ class WikiPageTreeBlockProcessor(markdown.blockprocessors.BlockProcessor):
         new_block = ""
         for node in tree_index:
             depth = node.depth0 - root_depth
-            if tree_depth is not None and depth >= tree_depth:
+            if tree_depth is not None and depth >= tree_depth or depth < 0:
                 continue
             new_block += "{}- [{}]({})\n".format(depth * "    ", node.label,
                                                  node.url)
@@ -139,7 +139,9 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
         marker_found = False
         header_count = 0
         for (p, element) in self.iterparent(doc):
-            text = ''.join(itertext(element)).strip()
+            text = ''.join(itertext(element))
+            text = self.markdown.forge_processor.placeholder_re.sub('', text)
+            text = text.strip()
             if not text:
                 continue
 
@@ -202,7 +204,7 @@ class ForgeWikiExtension(markdown.Extension):
             'marker': '{Table of Contents}',
             'slugify': markdown.extensions.headerid.slugify,
             'title': 'Table of Contents',
-            'anchorlink': 1
+            'anchorlink': False
         }
         table_of_contents_tree_processor = TableOfContentsTreeProcessor(md)
         table_of_contents_tree_processor.config = table_of_contents_config

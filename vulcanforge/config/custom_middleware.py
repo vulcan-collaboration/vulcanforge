@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-import os
+from itertools import ifilter
 import re
 import logging
+from urllib import urlencode
 import urlparse
 import mimetypes
 from random import random
+from pylons import tmpl_context as c
 
 import tg
 from tg.configuration import config
@@ -20,9 +22,8 @@ from pylons.util import call_wsgi_application
 from webob import exc, Request
 
 from scss import Scss
-
+from vulcanforge.auth.model import User
 from vulcanforge.common.model.stats import Stats
-
 from vulcanforge.common.util import cryptographic_nonce
 from vulcanforge.common.util.log import prefix_lines
 from vulcanforge.common.util.timing import timing, StatsRecord
@@ -135,13 +136,14 @@ class CSRFMiddleware(object):
     request.
 
     """
-    def __init__(self, app, cookie_name, param_name=None,
+    def __init__(self, app, cookie_name, param_name=None, secure=False,
                  blacklist_regex=None):
         if param_name is None:
             param_name = cookie_name
         self._app = app
         self._param_name = param_name
         self._cookie_name = cookie_name
+        self._secure = secure
         if blacklist_regex is not None:
             self._blacklist_regex = re.compile(blacklist_regex)
         else:
@@ -178,9 +180,10 @@ class CSRFMiddleware(object):
                 environ.pop('HTTP_COOKIE', None)
 
         def session_start_response(status, headers, exc_info=None):
-            headers.append(
-                ('Set-cookie',
-                 str('%s=%s; Path=/' % (self._cookie_name, cookie))))
+            cookie_header = '%s=%s; Path=/' % (self._cookie_name, cookie)
+            if self._secure:
+                cookie_header += '; Secure'
+            headers.append(('Set-cookie', str(cookie_header)))
             return start_response(status, headers, exc_info)
 
         return self._app(environ, session_start_response)
@@ -345,9 +348,15 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             })
             scss_data = open(fs_path).read()
             compiled_data = scss_compiler.compile(scss_data)
+            compiled_data = mgr.expand_css_urls(compiled_data)
 
             app = fileapp.DataApp(
                 compiled_data, [('Content-Type', 'text/css')])
+        elif res_path.endswith('.css'):
+            content = open(fs_path).read()
+            content = mgr.expand_css_urls(content)
+            app = fileapp.DataApp(content, [('Content-Type', 'text/css')])
+            app.cache_control(public=True, max_age=mgr.cache_max_age)
         else:
             app = fileapp.FileApp(fs_path, headers=self.extra_headers)
             app.cache_control(public=True, max_age=mgr.cache_max_age)
@@ -397,3 +406,96 @@ class WidgetMiddleware(ew.WidgetMiddleware):
         app.cache_control(public=True, max_age=mgr.cache_max_age)
         app.set_content(data, mtime)
         return app(environ, start_response)
+
+
+class VisibilityModeMiddleware(object):
+    """
+    Redirects unauthorized users
+
+    """
+    MODES = dict(
+        default=False,
+        open=False,
+        closed=True
+    )
+    url_whitelist = [
+        re.compile(r'^/favicon\.(ico|gif|png|jpg)'),
+        re.compile(r'^/error'),
+        re.compile(r'\.(js|css)$'),
+        re.compile(r'^/_test_vars'),
+        re.compile(r'^/webs/'),
+        re.compile(r'^/rest/'),
+        re.compile(r'^/static_auth/')
+    ]
+
+    def __init__(self, app):
+        self.app = app
+        self.mode = tg.config.get('visibility_mode', 'default')
+        # bail early if disabled
+        if not self.is_enabled:
+            return
+        self.login_url = tg.config.get('auth.login_url', '/auth/')
+        self.login_url = "/{}/".format(self.login_url.strip('/'))
+        self.url_whitelist.append(re.compile('^{}'.format(self.login_url)))
+        holes = tg.config.get('visibility_holes', '')
+        for hole in ifilter(None, holes.split(',')):
+            regex = re.compile(hole)
+            self.url_whitelist.append(regex)
+
+    def __call__(self, environ, start_response):
+        # bail early if disabled
+        if not self.is_enabled:
+            return self.app(environ, start_response)
+
+        status, headers, app_iter, exc_info = call_wsgi_application(
+            self.app, environ, catch_exc_info=True)
+        self.environ = environ
+        self.start_response = start_response
+
+        # skip for these conditions
+        if not self.is_anonymous or self.is_whitelisted:
+            start_response(status, headers, exc_info)
+            return app_iter
+
+        # redirect everything else
+        return self.redirect()
+
+    @property
+    def is_enabled(self):
+        return self.MODES[self.mode]
+
+    @property
+    def is_whitelisted(self):
+        path = self.environ['PATH_INFO']
+        for p in self.url_whitelist:
+            if p.match(path):
+                return True
+        return False
+
+    @property
+    def is_anonymous(self):
+        user = User.anonymous() if not getattr(c, 'user', None) else c.user
+        return user == User.anonymous()
+
+    def get_redirect_location(self):
+        if self.environ['REQUEST_METHOD'] == 'GET'\
+        and self.environ['PATH_INFO'] is not '/':
+            return_to = self.environ['PATH_INFO']
+            if self.environ.get('QUERY_STRING'):
+                return_to += '?' + self.environ['QUERY_STRING']
+            location = self.get_login_url(dict(return_to=return_to))
+        else:
+            # Don't try to re-post; the body has been lost.
+            location = self.get_login_url()
+        return location
+
+    def redirect(self):
+        LOG.debug("Redirecting from %s", self.environ['PATH_INFO'])
+        location = self.get_redirect_location()
+        r = exc.HTTPFound(location=location)
+        return r(self.environ, self.start_response)
+
+    def get_login_url(self, params=None):
+        if not params:
+            return self.login_url
+        return '?'.join((self.login_url, urlencode(params)))

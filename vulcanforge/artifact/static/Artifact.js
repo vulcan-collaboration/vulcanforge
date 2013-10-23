@@ -568,7 +568,9 @@
 
                 imgE.load(function() {
                     trace( 'img loaded - redrawing');
-                    config.infoTriggerE.qtip('reposition');
+                    if (config.infoTriggerE) {
+                        config.infoTriggerE.qtip('reposition');
+                    }
                 });
 
                 imgE.attr('src', data.preview);
@@ -720,7 +722,10 @@
                         opacity: 0.7,
                         scroll: true,
 
-                        start: function () {
+                        start: function (event, ui) {
+                            // FIXING Chrome specific offset bug
+                            if(! $.browser.chrome) ui.position.top -= $(window).scrollTop();
+
                             // making textareas link-droppable
 
                             var textareaAction = function (artifactLink) {
@@ -735,6 +740,10 @@
 
                             });
 
+                        },
+                        // FIXING Chrome specific offset bug
+                        drag: function(event, ui) {
+                            if(! $.browser.chrome) ui.position.top -= $(window).scrollTop();
                         }
 
                     });

@@ -1,5 +1,6 @@
 .vfStatsWidget {
     margin: 2rem 1rem;
+    min-height: 300px;
 }
 
 .vfStatsWidgetTooltip {
@@ -71,4 +72,5 @@
 }
 .inline-stats-group .vfStatsWidget {
     margin: 0;
+    min-height: 0;
 }

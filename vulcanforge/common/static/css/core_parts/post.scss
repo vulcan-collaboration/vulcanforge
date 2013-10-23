@@ -37,6 +37,11 @@ $post-options-width: 80px;
     margin-top: 0;
 }
 
+.post-thread-replies {
+    margin-left: 2rem;
+    border-left: 1rem solid #eee;
+}
+
 .post.old:hover,
 .post.old:hover {
 
@@ -98,7 +103,7 @@ $post-options-width: 80px;
 }
 
 .post.old {
-    border-top: 1px dotted $border-color;
+    border-top: 1px solid #eee;
 }
 
 .post-columns {
@@ -210,10 +215,6 @@ h2.discussion-title {
 .post-extras li {
     display: inline-block;
     height: $post-extras-height;
-}
-
-.post-thread-replies {
-    padding-left: $post-avatar-witdh/4;
 }
 
 

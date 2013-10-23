@@ -1,0 +1,94 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('calendar/fullcalendar.css') %}
+{% do g.resource_manager.register_css('calendar/forgecalendar.css') %}
+{% do g.resource_manager.register_js('calendar/fullcalendar.js') %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div id="vulcancalendar"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $(function(){
+        "use strict";
+        var calendarE = $("#vulcancalendar"),
+            init = true,
+            opts = {
+                events: "{{ c.app.url }}get_events",
+                defaultView: "{{ view }}",
+                header: {
+                    left: 'title agendaWeek month',
+                    center: '',
+                    right: 'today prev,next'
+                },
+                height: $("#left-toolbar").height(),
+                eventDataTransform: function(eventData){
+                    if (!$.isArray(eventData)){
+                        eventData = eventData.events;
+                    }
+                    return eventData;
+                },
+                viewRender: function(view, element){
+                    var state = {
+                        view: view.name,
+                        start: view.start.getTime() / 1000.
+                    }, uri = window.location.pathname + '?start=' + state.start + '&view=' + state.view;
+                    if (init || (window.location.pathname + window.location.search) === uri){
+                        window.history.replaceState(state, "", uri);
+                        init = false;
+                    } else {
+                        window.history.pushState(state, "", uri);
+                    }
+                }
+            };
+
+        {% if start %}
+            $.extend(opts, {
+                year: {{ start.year }},
+                month: {{ start.month - 1 }},
+                date: {{ start.day }}
+            });
+        {% endif %}
+        calendarE.fullCalendar(opts);
+
+        function cmpDate(date1, date2){
+            return (date1.getMonth() === date2.getMonth() &&
+                    date1.getFullYear() === date2.getFullYear() &&
+                    date1.getDate() === date2.getDate());
+        }
+
+        $(window).bind('popstate', function(e){
+            var state = e && e.originalEvent && e.originalEvent.state,
+                view,
+                start,
+                pageFunc,
+                maxPages = 52,
+                page = 0;
+            console.log(state);
+            if (state){
+                view = calendarE.fullCalendar("getView");
+                if (state.view !== view.name){
+                    calendarE.fullCalendar("changeView", state.view);
+                } else {
+                    start = new Date();
+                    start.setTime(state.start * 1000);
+                    if (!cmpDate(start, view.start)) {
+                        pageFunc = (start < view.start) ? "prev" : "next";
+                        while (!cmpDate(start, view.start)){
+                            calendarE.fullCalendar(pageFunc);
+                            view = calendarE.fullCalendar("getView");
+                            if (page++ >= maxPages){
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

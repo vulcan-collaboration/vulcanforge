@@ -1,5 +1,5 @@
 //
-// VehicleForge File browser widget
+// VulcanForge File browser widget
 //
 // @author tannern
 //
@@ -375,7 +375,7 @@
                         that.unhighlightAllDropTargets();
 
                         $.each( e.dataTransfer.files, function(i, file){
-                            that._uploadFileToPath(file, path, function () {
+                            that.uploadFileToPath(file, path, function () {
                                 that.refreshActivePath();
                             }, function () {
                                 alert('There was an error while uploading ' + file.name);
@@ -606,7 +606,8 @@
                 $targetListItem,
                 siblingSelectMethod,
                 $listPanel,
-                badDirectionError;
+                badDirectionError,
+                path;
 
             badDirectionError = exc.notImplementedError("selectSiblingPath()" +
                 " requires a direction argument of either " +
@@ -645,7 +646,8 @@
             }
 
             if ($targetListItem.length) {
-                this.selectPath($targetListItem.attr('data-vf-path'));
+                path = this._unescapePath($targetListItem.attr('data-vf-path'));
+                this.selectPath(path);
             }
         },
 
@@ -768,7 +770,21 @@
             return pathData;
         },
 
-        _uploadFileToPath: function (file, path, success, failure) {
+        _escapePath: function(path){
+            if (typeof path === "string"){
+                path = path.replace('"', '&quot;');
+            }
+            return path;
+        },
+
+        _unescapePath: function(path){
+            if (typeof path === "string"){
+                path = path.replace('&quot;', '"');
+            }
+            return path;
+        },
+
+        uploadFileToPath: function (file, path, success, failure) {
             var that = this,
                 url = this.options.getUploadURLForFileAndPath(file, path),
                 formData = this.options.getUploadFormDataForFileAndPath(file, path),
@@ -827,7 +843,9 @@
                         attr('value', 1);
                     $loadingLabel.
                         text('Uploaded ' + file.name);
-                    success();
+                    if (typeof success !== 'undefined') {
+                        success();
+                    }
                     $vf.webflash();
                 },
                 'error' : function () {
@@ -836,7 +854,9 @@
                         attr('value', 0);
                     $loadingLabel.
                         text('Could not upload ' + file.name);
-                    failure();
+                    if (typeof failure !== 'undefined') {
+                        failure();
+                    }
                 },
                 'complete': function () {
                     $(window).
@@ -860,7 +880,7 @@
         //
 
         _findByPath: function ($container, selector, path) {
-            selector += '[data-vf-path="' + path + '"]';
+            selector += '[data-vf-path="' + this._escapePath(path) + '"]';
             return $container.find(selector);
         },
 
@@ -1000,7 +1020,7 @@
             $.each($listPanels, function (i, item) {
                 var $itemListPanel, itemPath;
                 $itemListPanel = $(item);
-                itemPath = $itemListPanel.attr('data-vf-path');
+                itemPath = that._unescapePath($itemListPanel.attr('data-vf-path'));
                 if (pathData.path.indexOf(itemPath) === 0) {
                     $itemListPanel.
                         clearQueue().
@@ -1034,7 +1054,7 @@
             this._getPathNodes().
                 each(function (i, item) {
                     $iterNode = $(item);
-                    iterPath = $iterNode.attr('data-vf-path');
+                    iterPath = that._unescapePath($iterNode.attr('data-vf-path'));
                     if (pathData.path.indexOf(iterPath) === -1) {
                         $iterNode.
                             clearQueue().
@@ -1069,7 +1089,7 @@
 
             $listPanel = $('<div/>').
                 addClass(this._class('listPanel')).
-                attr('data-vf-path', pathData.path).
+                attr('data-vf-path', that._escapePath(pathData.path)).
                 css({
                     'top': 0,
                     'left': (100 * pathDepth) + '%'
@@ -1151,7 +1171,7 @@
                 addClass(this._class('listItem')).
                 addClass(this._class('listItem-row')).
                 addClass(this._class('listItem-row-' + typeName)).
-                attr('data-vf-path', pathData.path).
+                attr('data-vf-path', that._escapePath(pathData.path)).
                 appendTo($list).
                 bind('mouseenter', function (e) {
                     that.selectPath(pathData.path);
@@ -1290,7 +1310,7 @@
 
             $pathNode = $('<li/>').
                 addClass(this._class('pathNode')).
-                attr('data-vf-path', path).
+                attr('data-vf-path', that._escapePath(path)).
                 fadeOut(0);
 
             $parentPathNode = this._findPathNodeByPath(parentPath);

@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from paste.deploy.converters import asbool
 import tg
-from tg import config
 import ew as ew_core
 from ew.core import validator
 import ew.jinja2_ew as ew
@@ -32,6 +31,22 @@ class UserRegistrationEmailForm(ForgeForm):
     style = 'wide'
 
     def __init__(self, affiliate=False, ignore_key_missing=False, **kwargs):
+        self.fields = []
+        self.affiliate = affiliate
+        if self.affiliate:
+            name = tg.config.get('forge_name', 'this site')
+            err_msg = "Please specify your affiliation with {}".format(name)
+            self.fields.append(
+                ew.TextArea(
+                    label="Affiliation with {}".format(name),
+                    name="affiliation",
+                    min=2,
+                    max=255,
+                    messages={'empty': err_msg, 'missing': err_msg},
+                    wide=True
+                )
+            )
+
         self.fields = [
             ew.TextField(
                 label="Name",
@@ -74,16 +89,6 @@ class UserRegistrationEmailForm(ForgeForm):
                 or not 'email' in value):
             raise Invalid('Missing Value', value, state)
 
-        if asbool(config.get('is_itar', 'false')):
-            if not value.get("verify_citizen"):
-                raise Invalid("You must be a U.S. person to participate",
-                    value, state)
-            if not value.get("itar_agree"):
-                raise Invalid(
-                    ("You must certify that you understand that there may be "
-                     "a potential to come into contact with ITAR controlled "
-                     "data"),
-                    value, state)
         ea = EmailAddress.by_address(value['email'], confirmed=True)
         if ea:
             value.pop('recaptcha', None)
@@ -161,20 +166,16 @@ class PasswordResetEmailForm(ForgeForm):
     def validate(self, value, state=None):
         super(PasswordResetEmailForm, self).validate(value, state)
         user = User.by_email_address(value['email'])
-        if not user:
-            raise Invalid(
-                "This email address has not been claimed by any user.",
-                dict(token=value['email']), None
-            )
-        min_hours = int(tg.config.get('auth.pw.min_lifetime.hours', 24))
-        if user.password_set_at is None:
-            now = datetime.utcnow()
-            user.password_set_at = now - timedelta(hours=min_hours)
-        age = datetime.utcnow() - user.password_set_at
-        if age < timedelta(hours=min_hours):
-            raise Invalid("Passwords may only be changed once "
-                          "every {} hours".format(min_hours),
-                          value, state)
+        if user:
+            min_hours = int(tg.config.get('auth.pw.min_lifetime.hours', 24))
+            if user.password_set_at is None:
+                now = datetime.utcnow()
+                user.password_set_at = now - timedelta(hours=min_hours)
+            age = datetime.utcnow() - user.password_set_at
+            if age < timedelta(hours=min_hours):
+                raise Invalid("Passwords may only be changed once "
+                              "every {} hours".format(min_hours),
+                              value, state)
         return value
 
 

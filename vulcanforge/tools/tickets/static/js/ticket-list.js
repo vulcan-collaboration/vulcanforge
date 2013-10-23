@@ -35,22 +35,22 @@
                 $checkbox = $row.find('input[type="checkbox"]'),
                 $link = $row.find('a'),
                 linkTarget = $link.attr('target');
-            if ($target.is('a, input, button')) {
-                /* pass */
-            } else if ($checkbox.length > 0) {
-                if (!$target.is('input[type="checkbox"]')) {
-                    $checkbox.prop('checked', !$checkbox.prop('checked'));
+            if (!$target.is('a, input, button, a *')) {
+                if ($checkbox.length > 0) {
+                    $checkbox.
+                        prop('checked', !$checkbox.prop('checked')).
+                        trigger("change");;
+                } else if ($link.length > 0) {
+                    switch (e.which) {
+                    case 2:
+                        linkTarget = '_blank';
+                        break;
+                    default:
+                        linkTarget = $link.attr('target') || '_self';
+                        break;
+                    }
+                    window.open($link.attr('href'), linkTarget);
                 }
-            } else if ($link.length > 0) {
-                switch (e.which) {
-                case 2:
-                    linkTarget = '_blank';
-                    break;
-                default:
-                    linkTarget = '_self';
-                    break;
-                }
-                window.open($link.attr('href'), linkTarget);
             }
         });
 

@@ -7,10 +7,13 @@ import os
 import random
 import string
 import re
+from formencode.variabledecode import variable_decode
 
 from pylons import request, response, app_globals as g
+import tg
 from vulcanforge.common.helpers import urlquote
 from vulcanforge.common.util.diff import unified_diff
+from vulcanforge.common.util.filesystem import import_object
 
 from vulcanforge.resources.widgets import Widget, CSSLink, JSLink, JSScript
 from vulcanforge.visualize.model import Visualizer
@@ -226,92 +229,26 @@ class DesignContent(BaseContentWidget):
 
 class PDFContent(BaseContentWidget):
     template = TEMPLATE_DIR + 'pdf.html'
-    js_template = """
-    $(document).ready(function(){
-        var numPages = null,
-            pageNum = 1,
-            scale = 1,
-            canvas = document.getElementById('pdf-canvas'),
-            context = canvas.getContext('2d'),
-            pdfDoc = null,
-            atEnd = false,
-            atStart = true,
-            next = $(".next-pdf"),
-            prev = $(".prev-pdf"),
-            documentParams = {
-                url: "{{value}}"
-            };
-
-        function renderPage(num) {
-            pdfDoc.getPage(num).then(function(page) {
-                var viewport = page.getViewport(scale);
-
-                // Prepare canvas using PDF page dimensions
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                // Render PDF page into canvas context
-                var renderContext = {
-                  canvasContext: context,
-                  viewport: viewport
-                };
-                page.render(renderContext);
-                if (num === pdfDoc.numPages) {
-                     next.css("visibility", "hidden");
-                     atEnd = true;
-                } else if (atEnd === true) {
-                    next.css("visibility", "visible");
-                    atEnd = false;
-                }
-                if (num === 1) {
-                    prev.css("visibility", "hidden");
-                    atStart = true;
-                } else if (atStart === true){
-                    prev.css("visibility", "visible");
-                    atStart = false;
-                }
-                $(document).scrollTop(0);
-            });
-        }
-
-        function goPrevious() {
-            if (pageNum <= 1)
-                return;
-            pageNum--;
-            renderPage(pageNum);
-        }
-
-        function goNext() {
-            if (pageNum >= pdfDoc.numPages)
-                return;
-            pageNum++;
-            renderPage(pageNum);
-        }
-
-        prev.click(goPrevious);
-        next.click(goNext);
-        $(document).keydown(function(ev) {
-            if (ev.which === 39){
-                goNext();
-            } else if (ev.which === 37) {
-                goPrevious();
-            }
-        });
-
-        PDFJS.getDocument(documentParams).then(function(pdf) {
-            pdfDoc = pdf;
-            renderPage(pageNum);
-        });
-    });
-    """
 
     def resources(self):
-        pdfjs_url = 'visualize/pdf.js'
-        pdfjs_link = JSLink(pdfjs_url)
-        yield pdfjs_link
-        yield JSLink('visualize/pdf_compatibility.js')
+        pdfbase = "visualize/pdf/"
+        buildbase = pdfbase + "build/"
+        webbase = pdfbase + "web/"
+        yield JSLink(buildbase + "pdf.js")
+        page_JS_urls = [
+            'compatibility.js',
+            'debugger.js',
+            'l10n.js',
+            'viewer.js'
+        ]
+        for url in page_JS_urls:
+            yield JSLink(webbase + url)
+        yield CSSLink(webbase + "viewer.css")
+        worker_url = buildbase + "pdf.worker.js"
+        worker_link = JSLink(worker_url)
+        yield worker_link
         yield JSScript("PDFJS.workerSrc = '{}';".format(
-            pdfjs_link.manager.absurl(pdfjs_url)
+            worker_link.manager.absurl(worker_url)
         ))
 
 
@@ -405,6 +342,14 @@ class ContentVisualizer(DispatchWidget):
         design_space=DesignSpace()
     )
 
+    def __init__(self, **kw):
+        super(ContentVisualizer, self).__init__(**kw)
+        config = variable_decode(tg.config)
+        content_widgets = config.get('visualize', {}).get('widgets', {})
+        for key, path in content_widgets.items():
+            widget_cls = import_object(path)
+            self.widgets[key] = widget_cls()
+
     def get_url(self, value):
         return value
 
@@ -472,9 +417,10 @@ class IFrame(Widget):
     )
 
     def get_query_params(self, extra_params=None):
-        if extra_params is not None:
-            return urllib.urlencode(extra_params)
-        return ''
+        if extra_params is None:
+            extra_params = {}
+        extra_params.setdefault('env', 'vf')
+        return urllib.urlencode(extra_params)
 
     def display(self, value=None, visualizer=None, extra_params=None,
                 new_window_button=False, fs_url=None, **kw):

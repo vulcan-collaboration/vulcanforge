@@ -102,6 +102,20 @@ textarea, select,
 
 }
 
+select:focus,
+input[type="file"]:focus,
+input[type="radio"]:focus,
+input[type="checkbox"]:focus {
+  outline: thin dotted #333;
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
+
+input[disabled], select[disabled], textarea[disabled] {
+    color: #999;
+    border-color: #ccc;
+}
+
 textarea#key {
     width: 600px;
     border-radius: 0;
@@ -390,6 +404,44 @@ form.fix-controls .form-controls {
 .img-thumb-wrapper {
     display: block;
     text-align: center;
+}
+
+.attachment-thumb-link {
+    display: inline-block;
+    height: 2.4em;
+    margin: 0 0.5ex 0 0;
+    vertical-align: top;
+}
+
+.attachment-thumb-link:empty {
+    position: relative;
+    width: 2.4em;
+    background: url('../images/icon-generic-document.png') no-repeat center;
+    background-size: 2.4em 2.4em;
+}
+.attachment-thumb-link:empty::after {
+    content: attr(data-extension);
+    position: absolute;
+    right: 5px;
+    bottom: 1em;
+    left: 5px;
+    display: block;
+    text-align: center;
+    font-size: 8px;
+    line-height: 10px;
+    color: #777;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.attachment-thumb {
+    display: block;
+    height: 2.4em;
+}
+
+.attachment-details {
+    display: inline-block;
+    white-space: nowrap;
 }
 
 a.attachment-actions {

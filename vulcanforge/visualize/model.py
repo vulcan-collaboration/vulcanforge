@@ -74,7 +74,7 @@ class Visualizer(MappedClass):
     active = FieldProperty(bool, if_missing=False)
     priority = FieldProperty(int, if_missing=0)
     # see vulcanforge.visualize.widgets for widget name options
-    widget = FieldProperty(str, if_missing='iframe')
+    widget = FieldProperty(str, if_missing='s3')
     thumb = FieldProperty(str, if_missing='')
 
     name = FieldProperty(str)
@@ -92,7 +92,7 @@ class Visualizer(MappedClass):
         re.compile('__MACOSX/'),
         re.compile('\.DS_Store'),
         re.compile('^/'),
-        re.compile('^\.\.'),
+        re.compile('\.\.'),
     ]
     # attrs editable by manifest file
     _editable_attrs = (
@@ -119,13 +119,14 @@ class Visualizer(MappedClass):
     def __init__(self, extensions=['*'], **kwargs):
         super(Visualizer, self).__init__(extensions=extensions, **kwargs)
 
-    def guess_type(self, name):
+    @classmethod
+    def guess_type(cls, name):
         """Guess the mime type and encoding of a given filename"""
         content_type, encoding = mimetypes.guess_type(name)
         if content_type is None or not content_type.startswith('text/'):
             fn, ext = os.path.splitext(name)
             ext = ext or fn
-            if ext in self._additional_text_extensions:
+            if ext in cls._additional_text_extensions:
                 content_type, encoding = 'text/plain', None
             if content_type is None:
                 content_type, encoding = 'application/octet-stream', None
@@ -138,7 +139,7 @@ class Visualizer(MappedClass):
 
     @LazyProperty
     def key_prefix(self):
-        return urlquote(VISUALIZER_PREFIX + str(self._id) + '#')
+        return VISUALIZER_PREFIX + str(self._id) + '#'
 
     @LazyProperty
     def icon_url(self):
@@ -151,18 +152,25 @@ class Visualizer(MappedClass):
             pass
         return self.icon
 
-    def get_s3_key(self, key_postfix, **kw):
-        key_name = self.key_prefix + urlquote(key_postfix)
+    def get_s3_key(self, path, **kw):
+        key_name = self.key_prefix + path
         return g.get_s3_key(key_name, **kw)
 
+    def get_s3_keys(self):
+        return g.get_s3_keys(self.key_prefix)
+
+    def delete_s3_key(self, path):
+        g.delete_s3_key(self.key_prefix + path)
+
     def delete_s3_keys(self):
-        for key in g.get_s3_keys(self.key_prefix):
+        for key in self.get_s3_keys():
             g.delete_s3_key(key)
 
+    def can_upload(self, path):
+        return not any(r.search(path) for r in self.no_upload_extensions)
+
     def _iter_zip(self, zip_handle):
-        return itertools.ifilter(
-            lambda n: not any(r.search(n) for r in self.no_upload_extensions),
-            zip_handle.namelist())
+        return itertools.ifilter(self.can_upload, zip_handle.namelist())
 
     def update_from_archive(self, archive_fp):
         with zipfile.ZipFile(archive_fp) as zip_handle:
@@ -179,9 +187,10 @@ class Visualizer(MappedClass):
                 self.update_from_manifest_file(manifest_fp)
 
             # append files
-            for filename in itertools.ifilter(
+            file_iter = itertools.ifilter(
                 lambda f: f.startswith(root + '/') if root else True,
-                self._iter_zip(zip_handle)):
+                self._iter_zip(zip_handle))
+            for filename in file_iter:
                 relative_path = os.path.relpath(filename, root)
                 if relative_path != '.':
                     self.bundle_content.append(relative_path)
@@ -208,6 +217,11 @@ class Visualizer(MappedClass):
             self.shortname = self.strip_name(self.name)
         self.cache.clear()
 
+    def download_to_archive(self, archive_fp):
+        for filename in self.bundle_content:
+            key = self.get_s3_key(filename)
+            archive_fp.writestr(filename, key.get_contents_as_string())
+
     @staticmethod
     def strip_name(name):
         """Used to autocreate the shortname"""
@@ -230,7 +244,7 @@ class Visualizer(MappedClass):
 
         # get extension(s)
         extensions = []
-        base = base_path = urlparse.urlsplit(resource_url).path
+        base = base_path = urlparse.urlsplit(resource_url).path.lower()
         remainder = ''
         ext = ''
         while True:
@@ -249,7 +263,7 @@ class Visualizer(MappedClass):
             extensions.append(ext + remainder)
             remainder = ext + remainder
 
-        # see if ext is cached (CHANGE IF USING MORE THAN EXTENSION)
+        # see if ext is cached
         if cache and ext in cls.cache:
             return cls.cache.accessitem(ext)
 
@@ -273,8 +287,8 @@ class Visualizer(MappedClass):
             # couldnt determine mime type, see if we can match an explicit
             # attachment (no * allowed)
             visualizers = [
-            v for v in results
-            if any(ext in v.extensions for ext in extensions)
+                v for v in results
+                if any(ext in v.extensions for ext in extensions)
             ]
         else:
             # match mimetype

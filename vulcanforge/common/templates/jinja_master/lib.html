@@ -97,10 +97,10 @@
   {% endfor %}
 {% endmacro %}
 
-{% macro markdown_syntax(id='') %}
+{% macro markdown_syntax(id='', forge_name='The Forge') %}
 <h1>Markdown Syntax Guide</h1>
 
-<p>VehicleForge uses markdown syntax everywhere to allow you to create rich<br>text markup, and extends markdown in several ways to allow for quick linking<br>to other artifacts in your project. </p>
+<p>{{ config.get('forge_name', 'The Forge') }} uses markdown syntax everywhere to allow you to create rich<br>text markup, and extends markdown in several ways to allow for quick linking<br>to other artifacts in your project. </p>
 <p>Markdown was created to be easy to read, easy to write, and still readable in plain text format.</p>
 
 <ul>
@@ -120,7 +120,10 @@
     <li><a href="#md_ex_escapes{{id}}">Escapes</a></li>
     <li><a href="#md_ex_moreheaders{{id}}">More Headers</a></li>
     <li><a href="#md_ex_code{{id}}">Code Highlighting</a></li>
+    <li><a href="#md_ex_comment{{id}}">Commenting</a></li>
     <li><a href="#md_ex_includes{{id}}">Includes</a></li>
+    <li><a href="#md_ex_page_tree{{id}}">Page Tree</a></li>
+    <li><a href="#md_ex_table_of_contents{{id}}">Table of Contents</a></li>
     <li><a href="#md_ex_thanks{{id}}">Thanks</a></li>
 </ul>
 
@@ -442,10 +445,33 @@ you should escape &amp;lt;unknown&amp;gt; tags
 ~~~~~~
 </pre></div>
 
+<h2 id="md_ex_comment{{id}}" class="markdownguideHeader">Commenting</h2>
+<p>You can comment in Forge Markdown by wrapping text /* like so */.</p>
+<p>Text within the comment will only display when editing the markdown, but not displaying it, so it is a useful way of leaving notes for fellow contributors or future selves.</p>
+
+<div class="codehilite"><pre>
+/* This is a comment and will not show up when displaying the markdown */
+</pre></div>
+
 <h2 id="md_ex_includes{{id}}" class="markdownguideHeader">Includes</h2>
 <p>You can embed another wiki page directly:</p>
 <div class="codehilite"><pre>
 [[include ref="Sample Page"]]
+</pre></div>
+
+<h2 id="md_ex_page_tree{{id}}" class="markdownguideHeader">Page Tree <em>(only available in Wiki tools)</em></h2>
+<p>Inserts nested UL elements with links to wiki pages along a tree specified. Page heirarchy is determined by page names; e.g. - "My Topic" is the parent page of "My Topic/My Subtopic".</p>
+<p>full tree starting at wiki root:</p>
+<div class="codehilite"><pre>{PageTree}</pre></div>
+<p>full tree starting at "My Page":</p>
+<div class="codehilite"><pre>{PageTree My Page}</pre></div>
+<p>2 level tree starting at "My Page":</p>
+<div class="codehilite"><pre>{PageTree:2 My Page}</pre></div>
+
+<h2 id="md_ex_table_of_contents{{id}}" class="markdownguideHeader">Table of Contents <em>(only available in Wiki tools)</em></h2>
+<p>Creates a table of contents from the headers used in the page.</p>
+<div class="codehilite"><pre>
+{Table of Contents}
 </pre></div>
 
 <h2 id="md_ex_thanks{{id}}" class="markdownguideHeader">Thanks</h2>

@@ -10,7 +10,6 @@ from vulcanforge.common.validators import EmailValidator
 from vulcanforge.auth.model import User
 
 
-
 class UsernameFormatValidator(fev.UnicodeString):
     min = 3
     max = 32
@@ -19,15 +18,17 @@ class UsernameFormatValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(msg, value, state)
 
-        if not value == value.lower():
-            raise invalid("Usernames must be all lowercase!")
-        if not re.match(r'^[a-z]', value):
-            raise invalid("Usernames must begin with a letter!")
-        if value == 'user':
-            raise invalid("Invalid username")
-        if not re.match(re_path_portion, value):
-            raise invalid("Usernames may only contain letters, numbers, "
-                          "and dashes (-)!")
+        value = super(UsernameFormatValidator, self).to_python(value, state)
+        if value:
+            if not value == value.lower():
+                raise invalid("Usernames must be all lowercase!")
+            if not re.match(r'^[a-z]', value):
+                raise invalid("Usernames must begin with a letter!")
+            if value == 'user':
+                raise invalid("Invalid username")
+            if not re.match(re_path_portion, value):
+                raise invalid("Usernames may only contain letters, numbers, "
+                              "and dashes (-)!")
         return value
 
 
@@ -88,9 +89,12 @@ class UsernameListValidator(fev.UnicodeString):
 
 class PasswordValidator(fev.UnicodeString):
     min = int(tg.config.get('auth.pw.min_length', 10))
+    max = int(tg.config.get('auth.pw.max_length', 512))
     messages = {
         'tooShort': "Password should be at least {} characters "
                     "long!".format(min),
+        'tooLong': "Password should be no longer than {} characters".format(
+            max),
         'missingLower': "Password must contain at least one lowercase "
                         "letter",
         'missingUpper': "Password must contain at least one uppercase "
@@ -104,8 +108,7 @@ class PasswordValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(self.message(msg, state), value, state)
         value = really_unicode(value or '').encode('utf-8')
-        if len(value) < self.min:
-            raise invalid('tooShort')
+        value = super(PasswordValidator, self).to_python(value, state)
         if not re.match(r'(?=.*[a-z])', value):
             raise invalid('missingLower')
         if not re.match(r'(?=.*[A-Z])', value):

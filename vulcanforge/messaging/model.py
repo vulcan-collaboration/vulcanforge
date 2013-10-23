@@ -42,6 +42,7 @@ from ming.odm.property import (
     RelationProperty,
     ForeignIdProperty
 )
+from tg import config
 
 from vulcanforge.auth.model import User
 from vulcanforge.auth.security_manager import RoleCache
@@ -204,7 +205,8 @@ class Conversation(MappedClass):
             in_reply_to = str(messages.first()._id)
         else:
             in_reply_to = None
-        subject = u"New message on vehicleFORGE: \"{}\"".format(
+        subject = u"New message on {}: \"{}\"".format(
+            config.get('forge_name', 'the forge'),
             message.get_summary_text())
         sender = g.forgemail_return_path
         email_text = (

@@ -265,11 +265,12 @@
 
 .vf-filebrowser-listItem.vf-filebrowser-listItem-selected {
     background: #d9dfed;
-    background-image: linear-gradient(bottom, #B5C5EB, #D1E0FF);
-    background-image: -o-linear-gradient(bottom, #B5C5EB, #D1E0FF);
-    background-image: -moz-linear-gradient(bottom, #B5C5EB, #D1E0FF);
-    background-image: -webkit-linear-gradient(bottom, #B5C5EB, #D1E0FF);
-    background-image: -ms-linear-gradient(bottom, #B5C5EB, #D1E0FF);
+    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    text-shadow: 0 1px 1px #f0f8ff;
 }
 
 .vf-filebrowser-listItem-link-file {

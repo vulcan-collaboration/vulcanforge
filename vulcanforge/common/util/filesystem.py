@@ -6,6 +6,7 @@ import re
 import errno
 import mimetypes
 from contextlib import contextmanager
+import zipfile
 
 LOG = logging.getLogger(__name__)
 SANITIZE_PATH_REGEX = re.compile(r'(?<=:)[\\/]|[\\/]+')
@@ -67,7 +68,7 @@ def guess_mime_type(filename):
 
 def import_object(path):
     """e.g. path.to.module:Classname"""
-    modulename, classname = path.rsplit(':', 1)
+    modulename, classname = str(path).rsplit(':', 1)
     module = __import__(modulename, fromlist=[classname])
     return getattr(module, classname)
 
@@ -97,6 +98,14 @@ def temporary_dir(**kw):
             dname,
             onerror=func
         )
+
+
+@contextmanager
+def temporary_zip_extract(fp, **kw):
+    with temporary_dir(**kw) as dirname:
+        with zipfile.ZipFile(fp) as zp:
+            safe_extract_zip(zp, dirname)
+        yield dirname
 
 
 def mkdir_p(path):

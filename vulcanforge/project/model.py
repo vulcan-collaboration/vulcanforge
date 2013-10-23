@@ -48,6 +48,8 @@ class ProjectFile(File):
     category = FieldProperty(str)
     caption = FieldProperty(str)
 
+    THUMB_URL_POSTFIX = ''
+
     @property
     def project(self):
         return Project.query.get(_id=self.project_id)
@@ -388,10 +390,6 @@ class Project(SOLRIndexed):
     def best_download_url(self):
         return None
 
-    def get_screenshots(self):
-        return ProjectFile.query.find(dict(
-            project_id=self._id, category='screenshot')).all()
-
     @property
     def icon(self):
         icon_file = None
@@ -717,7 +715,8 @@ class Project(SOLRIndexed):
 
     @LazyProperty
     def home_ac(self):
-        home_tools = {'home', 'neighborhood_home', 'competition_home'}
+        home_tools = {'home', 'team_home', 'neighborhood_home',
+                      'competition_home'}
         for ac in self.app_configs:
             if ac.tool_name in home_tools:
                 return ac
@@ -780,6 +779,8 @@ class Project(SOLRIndexed):
 
         if user is None and username is not None:
             user = User.by_username(username)
+        if user is None:
+            return None
         named_roles = g.security.credentials.project_roles(
             project_id=self.root_project._id).named
         for r in named_roles.roles_that_reach:
@@ -1017,7 +1018,7 @@ class Project(SOLRIndexed):
     @property
     def registration_datetime(self):
         gt = self._id.generation_time
-        return datetime.utcfromtimestamp(time.mktime(gt.timetuple()))
+        return datetime.utcfromtimestamp(time.mktime(gt.utctimetuple()))
 
     def delete_project(self, user=None):
         from vulcanforge.neighborhood.marketplace.model import (

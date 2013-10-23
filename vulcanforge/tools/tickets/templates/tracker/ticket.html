@@ -105,11 +105,17 @@
             {% endif %}
             <li>
                 <span class="label">Created:</span>
-                <span class="value">{{ abbr_date(ticket.created_date) }}</span>
+                <span class="value" title="{{ ticket.created_date }}">{{ abbr_date(ticket.created_date) }}</span>
             </li>
+            {% if not ticket.is_open() %}
+            <li>
+                <span class="label">Closed:</span>
+                <span class="value" title="{{ ticket.closed_date }}">{{ abbr_date(ticket.closed_date) }}</span>
+            </li>
+            {% endif %}
             <li>
                 <span class="label">Updated:</span>
-                <span class="value">{{ abbr_date(ticket.mod_date) }}</span>
+                <span class="value" title="{{ ticket.mod_date }}">{{ abbr_date(ticket.mod_date) }}</span>
             </li>
             <li>
                 <span class="label">Visibility:</span>

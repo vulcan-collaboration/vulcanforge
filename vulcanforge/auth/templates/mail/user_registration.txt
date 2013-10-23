@@ -1,0 +1,14 @@
+Hello {{name}},
+
+Welcome{% if forge_name %} to {{forge_name}}{% endif %}.  Thank you for asking to register with our site.  In order for you to complete your registration you must click on the following link:
+
+{{url}}
+
+The link expires in 2 hours. If it expires, you must register again.
+
+Once you have completed your registration you will be able to start and join projects, collaborate with teammates, explore and create cyber-physical vehicle designs, and interact with your own secure file repositories.
+
+Thank you{% if forge_name %}and enjoy {{forge_name}}{% endif %}.
+Sincerely,
+
+The {{forge_name}} Team

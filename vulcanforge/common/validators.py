@@ -8,8 +8,9 @@ from datetime import datetime
 from dateutil.parser import parse
 from bson import ObjectId
 from bson.errors import InvalidId
-from formencode import Invalid, ForEach, validators as fev
+from formencode import Invalid, ForEach, validators as fev, Schema
 from formencode.api import NoDefault
+from tg import request
 
 from vulcanforge.common import helpers as h
 
@@ -36,6 +37,20 @@ class DatetimeValidator(fev.FancyValidator):
         return value
 
 
+class TimestampValidator(fev.Number):
+    messages = {
+        'invalid': 'This does not appear to be a valid timestamp'
+    }
+
+    def _to_python(self, value, state):
+        value = super(TimestampValidator, self)._to_python(value, state)
+        try:
+            value = datetime.fromtimestamp(value)
+        except ValueError:
+            raise fev.Invalid(self.message('invalid', state), value, state)
+        return value
+
+
 class DateTimeConverter(fev.FancyValidator):
     """Duplicate functionality to above, let's decide which is cooler"""
 
@@ -55,7 +70,7 @@ class DateTimeConverter(fev.FancyValidator):
 class CommaSeparatedEach(ForEach):
 
     def _convert_to_list(self, value):
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, basestring):
             return value.split(',')
         return super(CommaSeparatedEach, self)._convert_to_list(value)
 
@@ -76,12 +91,45 @@ class JSONValidator(fev.String):
         return value
 
 
+class JSONSchema(Schema):
+    """
+    Take the request body, parse it as json, and place that in the params
+    for further validation
+
+    """
+    # these two fields make it work like a normal tg validator
+    ignore_key_missing = True
+    allow_extra_fields = True
+
+    messages = {
+        'invalid': 'Invalid JSON'
+    }
+
+    def is_empty(self, value):
+        return False
+
+    def validate_other(self, params, state):
+        if not request.content_type == 'application/json':
+            LOG.debug('Invalid content type')
+            raise fev.Invalid(self.message('invalid', state), params, state)
+
+    def _to_python(self, value_dict, state):
+        try:
+            payload = json.loads(request.body)
+        except ValueError:
+            LOG.debug('Error parsing JSON: %s with params', request.body)
+            raise fev.Invalid(
+                self.message('invalid', state), value_dict, state)
+        value_dict.update(Schema._to_python(self, payload, state))
+        return value_dict
+
+
 class NullValidator(fev.Validator):
 
-    def to_python(self, value, state):
+    def to_python(self, value, state=None):
         return value
 
-    def from_python(self, value, state):
+    def from_python(self, value, state=None):
         return value
 
     def validate(self, value, state):
@@ -98,13 +146,13 @@ class MaxBytesValidator(fev.FancyValidator):
                              "long!" % self.max, value, state)
         return value
 
-    def from_python(self, value, state):
+    def from_python(self, value, state=None):
         return h.really_unicode(value or '')
 
 
 class EmailValidator(fev.UnicodeString):
 
-    def to_python(self, value, state):
+    def to_python(self, value, state=None):
         value = h.really_unicode(value or '').encode('utf-8')
         if not value or not re.match(EMAIL_RE, value):
             raise Invalid("Please enter a valid email address!",
@@ -126,16 +174,17 @@ class ObjectIdValidator(fev.UnicodeString):
         def invalid(msg):
             return Invalid(msg, value, state)
 
-        try:
-            value = ObjectId(value)
-        except InvalidId:
-            raise invalid("'{}' is not a valid id".format(value))
-        if self.mapped_class is not None:
-            instance = self.mapped_class.query.get(_id=value)
-            if instance is None:
-                raise invalid(
-                    "no instance found with the id '{}'".format(value))
-            return instance
+        if value:
+            try:
+                value = ObjectId(value)
+            except InvalidId:
+                raise invalid("'{}' is not a valid id".format(value))
+            if self.mapped_class is not None:
+                instance = self.mapped_class.query.get(_id=value)
+                if instance is None:
+                    raise invalid(
+                        "no instance found with the id '{}'".format(value))
+                return instance
         return value
 
 
@@ -163,7 +212,8 @@ class MountPointValidator(fev.Regex):
     regex = r'^[a-z][-a-z0-9]{2,}$'
     messages = dict(
         fev.Regex._messages,
-        invalid='Please use 3-15 letters, numbers, or dashes.',
+        invalid='Please use at least 3 lowercase letters and numbers '
+                'beginning with a letter',
         bad='Invalid value. Please choose another.',
         taken='That url is already taken, please choose another.'
     )
@@ -183,3 +233,9 @@ class HTMLEscapeValidator(fev.String):
     def _to_python(self, value, state):
         value = super(HTMLEscapeValidator, self)._to_python(value, state)
         return cgi.escape(value)
+
+
+class HexValidator(fev.Regex):
+    regex = r'^[0-9A-F]+$'
+    regexOps = ('I',)
+

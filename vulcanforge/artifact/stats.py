@@ -41,7 +41,7 @@ class ArtifactAggregator(BaseStatsAggregator):
             self.query['extra'] = {
                 "$and": [
                     {"$ne": None},
-                    {"$ne": re.compile(r'^vehicleforge/discuss/model/')}
+                    {"$ne": re.compile(r'^vulcanforge/discussion/model/')}
                 ]
             }
         else:

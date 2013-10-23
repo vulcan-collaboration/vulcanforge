@@ -20,12 +20,10 @@ from paste.deploy.converters import asbool, asint
 import pysolr
 import tg
 import jinja2
+from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 import pylons
 from routes import Mapper
 from tg.configuration import AppConfig, config
-from tg.render import render_json
-from webhelpers.html import literal
-import ew
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.exception import S3CreateError
 
@@ -44,8 +42,10 @@ from vulcanforge.common.util.debug import (
 from vulcanforge import resources
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.util.model import close_all_mongo_connections
+from vulcanforge.config.render.jinja import PackagePathLoader, JinjaEngine
+from vulcanforge.config.render.jsonify import JSONRenderer
+from vulcanforge.config.render.template.filters import jsonify, timesince
 from .tool_manager import ToolManager
-from .template.filters import jsonify, timesince
 from .context_manager import ContextManager
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
@@ -67,6 +67,17 @@ class ForgeConfig(AppConfig):
         'project': ['vulcanforge:project/static'],
         'visualize': ['vulcanforge:visualize/static'],
         'websocket': ['vulcanforge:websocket/static']
+    }
+    template_dirs = ['vulcanforge:common/templates']
+    namespaced_template_dirs = {
+        'artifact': ['vulcanforge:artifact/templates'],
+        'auth': ['vulcanforge:auth/templates'],
+        'dashboard': ['vulcanforge:dashboard/templates'],
+        'discussion': ['vulcanforge:discussion/templates'],
+        'neighborhood': ['vulcanforge:neighborhood/templates'],
+        'notification': ['vulcanforge:notification/templates'],
+        'project': ['vulcanforge:project/templates'],
+        'visualize': ['vulcanforge:visualize/templates']
     }
     vulcan_packages = ['vulcanforge']
 
@@ -330,13 +341,75 @@ class ForgeConfig(AppConfig):
                     action='routes_placeholder')
         config['routes.map'] = map
 
+    def setup_template_loader(self):
+        """Setup the template loader, responsible for finding the templates
+        on the filesystem associated with a given path.
+
+        One can override this by specifying the template_loader config
+        parameter, but do this carefully so as not to break the default
+        functionality. It may be easier to override this method instead.
+
+        The default loader uses the jinja2.loaders.ChoiceLoader cls to
+        achieve the following functionality:
+
+        if a ":" is in the path, the left side of the path is treated as a
+        package and the right as a relative path within that package to the
+        template:
+            g.jinja2_env.get_template('vulcanforge.auth:templates/login.html')
+            >> <Template 'vulcanforge.auth:templates/login.html'>
+
+        Otherwise, it will look for the given path in the directories specified
+        on self.template_dirs, which defaults to vulcanforge/common/templates
+        and the templates directory in the app.
+
+        Finally, if the first part of the path matches a tool entry point or a
+        namespace registered on self.namespaced_template_dirs, it looks for the
+        file in the directories specified in that namespace.
+
+        """
+        if config.get('template_loader'):
+            loader = import_object(config['template_loader'])
+        else:
+            loaders = [PackagePathLoader()]
+
+            fs_paths = []
+            # static directories have priority
+            for tmpl_entry in self.template_dirs:
+                module, dir_path = tmpl_entry.split(':')
+                os_folder = pkg_resources.resource_filename(module, dir_path)
+                if os.path.exists(os_folder):
+                    fs_paths.append(os_folder)
+            loaders.append(FileSystemLoader(fs_paths))
+
+            # tool directory paths
+            namespaces = {}
+            tool_manager = config['pylons.app_globals'].tool_manager
+            for tool_name, tool in tool_manager.tools.items():
+                namespaces.setdefault(tool_name, []).extend(
+                    tool['app'].template_directories())
+            # explicit namespaced directories next
+            for namespace, tmpl_dirs in self.namespaced_template_dirs.items():
+                for tmpl_entry in tmpl_dirs:
+                    module, dir_path = tmpl_entry.split(':')
+                    os_folder = pkg_resources.resource_filename(
+                        module, dir_path)
+                    if os.path.exists(os_folder):
+                        namespaces.setdefault(namespace, []).append(os_folder)
+            # create namespaced loader
+            spec = {k: FileSystemLoader(v) for k, v in namespaces.items()}
+            loaders.append(PrefixLoader(spec))
+
+            loader = ChoiceLoader(loaders)
+        return loader
+
     def setup_jinja_renderer(self):
         jinja2_env = jinja2.Environment(
-            loader=PackagePathLoader(),
+            loader=self.setup_template_loader(),
             auto_reload=self.auto_reload_templates,
             autoescape=True,
             extensions=['jinja2.ext.do', 'jinja2.ext.i18n'],
-            trim_blocks=True
+            trim_blocks=True,
+            cache_size=asint(config.get('jinja.cache_size', 100))
         )
         jinja2_env.install_gettext_translations(pylons.i18n)
         jinja2_env.filters.update({
@@ -348,37 +421,12 @@ class ForgeConfig(AppConfig):
         self.render_functions.jinja = tg.render.render_jinja
 
     def setup_json_renderer(self):
-        self.render_functions.json = render_json
+        json_renderer = JSONRenderer(
+            allow_nan=not asbool(config.get('json.strict', False)),
+            sort_keys=asbool(config.get('json.sort_keys', False)),
+            indent=int(config['json.indent'])
+                if 'json.indent' in config else None
+        )
 
-
-class JinjaEngine(ew.TemplateEngine):
-
-    @property
-    def _environ(self):
-        return config['pylons.app_globals'].jinja2_env
-
-    def load(self, template_name):
-        try:
-            return self._environ.get_template(template_name)
-        except jinja2.TemplateNotFound:
-            raise ew.errors.TemplateNotFound, '%s not found' % template_name
-
-    def parse(self, template_text, filepath=None):
-        return self._environ.from_string(template_text)
-
-    def render(self, template, context):
-        context = self.context(context)
-        with ew.utils.push_context(ew.widget_context, render_context=context):
-            text = template.render(**context)
-            return literal(text)
-
-
-class PackagePathLoader(jinja2.BaseLoader):
-
-    def __init__(self):
-        self.fs_loader = jinja2.FileSystemLoader(['/'])
-
-    def get_source(self, environment, template):
-        package, path = template.split(':')
-        filename = pkg_resources.resource_filename(package, path)
-        return self.fs_loader.get_source(environment, filename)
+        config['pylons.app_globals'].json_renderer = json_renderer
+        self.render_functions.json = json_renderer.render_json

@@ -5,7 +5,6 @@ import cgi
 import json
 import datetime
 import os
-import re
 import requests
 import urllib
 import time
@@ -21,7 +20,6 @@ from pylons import tmpl_context as c, request
 from tg import config, session
 from pypeline.markup import markup as pypeline_markup
 from boto.s3.key import Key
-from ming.utils import LazyProperty
 
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
@@ -32,7 +30,7 @@ from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
 from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
-from vulcanforge.config.markdown_ext.mdx_forge import ForgeExtension
+from vulcanforge.config.render.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
 from vulcanforge.project.model import Project
@@ -80,11 +78,6 @@ class ForgeAppGlobals(object):
         # other special urls
         self.user_register_url = config.get("user_register_url",
                                             "/auth/register/")
-        self.site_issues_url = config.get("site_issues_url",
-                                          "/projects/forgeadmin/issues/")
-        self.site_issues_label = config.get("site_issues_label", "Help Desk")
-        self.site_faq_url = config.get("site_faq_url",
-                                       "/projects/forgeadmin/help/Home")
         self.home_url = config.get("home_url", "/")
         self.browse_home = config.get("browse_home", "/")
         self.show_register_on_login = asbool(config.get(
@@ -201,6 +194,9 @@ class ForgeAppGlobals(object):
         # Title postfix
         self.title_postfix = config.get('title_postfix', ' - VF')
 
+        # TrustForge
+        self.trustforge_enabled = asbool(
+            config.get('trustforge.enabled', False))
         self.trustforge_url = config.get('trustforge.url', '')
         self.trustforge_token = config.get('trustforge.auth_token', '')
 
@@ -211,7 +207,7 @@ class ForgeAppGlobals(object):
 
         # forgemail
         self.forgemail_return_path = config.get('forgemail.return_path',
-                                                'noreply@vehicleforge.org')
+                                                'noreply@vulcanforge.org')
 
         # Templates
         tmpl_master = 'vulcanforge.common:templates/jinja_master/'

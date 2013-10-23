@@ -15,6 +15,7 @@ Periodically:
 
 Notifications are also available for use in feeds
 """
+import cgi
 
 import logging
 from datetime import datetime, timedelta
@@ -242,7 +243,7 @@ class Notification(SOLRIndexed):
             shortname, c.app.config.options.mount_point)
         if topic == 'message':
             post = kwargs.pop('post')
-            subject = post.subject or ''
+            subject = cgi.escape(post.subject or '')
             if post.parent_id and not subject.lower().startswith('re:'):
                 subject = u'Re: '+subject
             author = post.author()
@@ -260,7 +261,7 @@ class Notification(SOLRIndexed):
                 # TODO: forgemail reference follows
                 reply_to_address=u'"%s" <%s>' % (
                     subject_prefix, getattr(artifact, 'email_address',
-                                            'noreply@in.vehicleforge.net')),
+                                            'noreply@in.vulcanforge.org')),
                 subject=subject_prefix+subject,
                 text=text,
                 in_reply_to=post.parent_id,
@@ -277,7 +278,7 @@ class Notification(SOLRIndexed):
             d = dict(
                 from_address=reply_to,
                 reply_to_address=reply_to,
-                subject=subject_prefix+subject,
+                subject=subject_prefix + cgi.escape(subject),
                 text=text,
                 author_id=c.user._id,
                 pubdate=datetime.utcnow())
@@ -339,7 +340,7 @@ class Notification(SOLRIndexed):
         safe_notifications = asbool(config.get('safe_notifications', 'false'))
         context = {
             'notification': self,
-            'prefix': config.get('forgemail.url', 'https://vehicleforge.net'),
+            'prefix': config.get('forgemail.url', 'https://vulcanforge.org'),
             'safe_notifications': safe_notifications,
             'forge_name': config.get('forge_name', 'Forge')
         }
@@ -757,7 +758,6 @@ class Mailbox(MappedClass):
                     Notification.send_digest(
                         self.user_id,
                         from_address,
-                        subject,
                         ns,
                         reply_to_address
                     )

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from BeautifulSoup import UnicodeDammit
+from webob import exc
 from paste.httpheaders import CACHE_CONTROL, EXPIRES
 import pylons
 from tg import response
@@ -8,6 +9,14 @@ from tg import response
 from vulcanforge.common.util.filesystem import guess_mime_type
 
 RFC_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
+
+
+def raise_404(*args, **kwargs):
+    raise exc.HTTPNotFound()
+
+
+def raise_400(*args, **kwargs):
+    raise exc.HTTPBadRequest()
 
 
 def set_cache_headers(last_modified=None, expires_in=365):

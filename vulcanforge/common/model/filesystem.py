@@ -44,12 +44,18 @@ class File(MappedClass):
 
     artifact = None  # hack cuz of the way the s3 stuff is set up
 
+    THUMB_URL_POSTFIX = '/thumb'
+
     def __init__(self, **kw):
         super(File, self).__init__(**kw)
         if self.content_type is None:
             self.content_type = guess_mime_type(self.filename)
         if self.keyname is None:
             self.keyname = self.default_keyname
+
+    @LazyProperty
+    def size(self):
+        return self.key.size
 
     @property
     def default_keyname(self):
@@ -81,6 +87,24 @@ class File(MappedClass):
     def remove(cls, spec):
         for fobj in cls.query.find(spec):
             fobj.delete()
+
+    def get_thumb_query_params(self):
+        return {
+            'filename': self.filename,
+            'is_thumb': True
+        }
+
+    def get_thumb(self):
+        if self.is_thumb:
+            return None
+        thumb_query_params = self.get_thumb_query_params()
+        return self.__class__.query.get(**thumb_query_params)
+
+    def get_extension(self):
+        name_parts = self.filename.rsplit('.', 1)
+        if len(name_parts) > 1:
+            return name_parts[-1]
+        return None
 
     @property
     def _s3_headers(self):
@@ -145,6 +169,8 @@ class File(MappedClass):
             url = self.local_url()
             if absolute:
                 url = g.url(url)
+            if self.is_thumb and self.THUMB_URL_POSTFIX:
+                url += self.THUMB_URL_POSTFIX
             return url
         else:
             return self.remote_url()

@@ -36,7 +36,7 @@ from vulcanforge.common.helpers import urlquote, really_unicode, diff_text
 from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.types import SitemapEntry
-from vulcanforge.common.validators import DateTimeConverter
+from vulcanforge.common.validators import DateTimeConverter, HTMLEscapeValidator
 from vulcanforge.common.widgets.form_fields import (
     AttachmentList,
     MarkdownEdit,
@@ -409,6 +409,7 @@ class RootController(WikiContentBaseController):
         self._discuss = AppDiscussionController()
         self.new_with_reference = ReferenceController()
         self.search = WikiSearchController()
+        self.page_controller_cls = PageController
 
     def _check_security(self):
         g.security.require_access(c.app, 'read')
@@ -425,7 +426,7 @@ class RootController(WikiContentBaseController):
         # a dotted wiki page name if it matches a known file extension. Here,
         # we reassemble the original page name.
         pname, remainder = get_page_title_from_request()
-        return PageController(pname), remainder
+        return self.page_controller_cls(pname), remainder
 
     @expose()
     def new_page(self, title):
@@ -646,7 +647,7 @@ class PageController(WikiContentBaseController):
         next_ = cur + 1
         hide_sidebar = not (c.app.show_left_bar or
                             g.security.has_access(self.page, 'edit'))
-        page_html = self.page.get_rendered_html()
+        page_html = page.get_rendered_html()
         hierarchy_items = self.get_hierarchy_items()
         return dict(
             page=page,
@@ -845,6 +846,7 @@ class PageController(WikiContentBaseController):
     @expose()
     @require_post()
     @validate(validators={
+        'title': HTMLEscapeValidator(),
         'hide_attachments': validators.StringBool(if_empty=False,
                                                   if_missing=False),
         'rename_descendants': validators.StringBool(if_empty=False,

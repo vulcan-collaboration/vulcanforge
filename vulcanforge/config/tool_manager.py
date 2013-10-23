@@ -50,6 +50,10 @@ class ToolManager(object):
             "app_path": TOOLS_DIR + "neighborhood_home.app:NeighborhoodHomeApp",
             "installable": False,
             "required": True
+        },
+        "calendar": {
+            "app_path": TOOLS_DIR + 'calendar.app:ForgeCalendarApp',
+            "installable": True
         }
     })
 
