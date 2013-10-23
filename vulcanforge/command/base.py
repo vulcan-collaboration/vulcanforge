@@ -15,9 +15,6 @@ from vulcanforge.auth.security_manager import Credentials
 from vulcanforge.common.util.model import close_all_mongo_connections
 
 
-log = None
-
-
 class EmptyClass(object):
     pass
 
@@ -27,6 +24,10 @@ class Command(command.Command):
     max_args = 1
     usage = '[<ini file>]'
     group_name = 'VulcanForge'
+
+    def __init__(self, name, log=None):
+        super(Command, self).__init__(name)
+        self.log = log or logging.getLogger('vulcanforge.command')
 
     @LazyProperty
     def registry(self):
@@ -43,7 +44,6 @@ class Command(command.Command):
         return result
 
     def basic_setup(self):
-        global log
         if self.args:
             # Configure logging
             config_file = self.args[0]
@@ -59,14 +59,12 @@ class Command(command.Command):
                 print >> sys.stderr, (
                     'Could not configure logging with config file %s' %
                     self.args[0])
-            log = logging.getLogger(__name__)
-            log.info('Initialize command with config %r', self.args[0])
             self.wsgiapp = loadapp(config_name, relative_to=here_dir)
             self.setup_globals()
 
             pylons.tmpl_context.user = User.anonymous()
-        else:
-            log = logging.getLogger('vulcanforge.command')
+        self.log.info('Initialize command %s with config with args %r',
+                      self.__class__.__name__, self.args)
 
     def setup_globals(self):
         self.registry.prepare()

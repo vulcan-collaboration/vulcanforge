@@ -1,3 +1,4 @@
+import logging
 import smtpd
 
 import tg
@@ -28,8 +29,25 @@ class SMTPServerCommand(base.Command):
 
 
 class MailServer(smtpd.SMTPServer):
+
+    def __init__(self, localaddr, remoteaddr, logger=None):
+        smtpd.SMTPServer.__init__(self, localaddr, remoteaddr)
+        self.logger = logger or logging.getLogger(__name__)
+
+    def log(self, message):
+        self.logger.info(message)
+
+    def log_info(self, message, type='info'):
+        if type == 'error':
+            log_function = self.logger.error
+        elif type == 'warning':
+            log_function = self.logger.warn
+        else:
+            log_function = self.logger.info
+        log_function(message)
+
     def process_message(self, peer, mailfrom, rcpttos, data):
-        base.log.info('Msg Received from %s for %s', mailfrom, rcpttos)
-        base.log.info(' (%d bytes)', len(data))
+        self.logger.info('Msg Received from %s for %s', mailfrom, rcpttos)
+        self.logger.info(' (%d bytes)', len(data))
         route_email(peer=peer, mailfrom=mailfrom, rcpttos=rcpttos, data=data)
-        base.log.info('Msg passed along')
+        self.logger.info('Msg passed along')

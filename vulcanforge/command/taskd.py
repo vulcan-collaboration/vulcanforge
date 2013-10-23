@@ -18,14 +18,14 @@ class TaskdCommand(base.Command):
 
     def command(self):
         self.basic_setup()
-        base.log.info('taskd pid %s starting', os.getpid())
+        self.log.info('taskd pid %s starting', os.getpid())
         self.keep_running = True
         self.restart_when_done = False
         self.worker = TaskdWorker(
             self.args[0].split("#")[0],
             name='%s pid %s' % (os.uname()[1], os.getpid()),
             only=self.options.only,
-            log=base.log)
+            log=self.log)
         signal.signal(signal.SIGHUP, self.worker.graceful_restart)
         signal.signal(signal.SIGTERM, self.worker.graceful_stop)
         signal.signal(signal.SIGUSR1, self.worker.log_current_task)
@@ -65,7 +65,7 @@ class TaskCommand(base.Command):
     def _list(self):
         """List tasks"""
 
-        base.log.info('Listing tasks of state %s', self.options.state)
+        self.log.info('Listing tasks of state %s', self.options.state)
         if self.options.state == '*':
             q = dict()
         else:
@@ -76,7 +76,7 @@ class TaskCommand(base.Command):
     def _retry(self):
         """Retry tasks in an error state"""
 
-        base.log.info('Retry tasks in error state')
+        self.log.info('Retry tasks in error state')
         MonQTask.query.update(
             dict(state='error'),
             {'$set': dict(state='ready')},
@@ -85,14 +85,14 @@ class TaskCommand(base.Command):
     def _purge(self):
         """Purge completed tasks"""
 
-        base.log.info('Purge complete/forget tasks')
+        self.log.info('Purge complete/forget tasks')
         MonQTask.query.remove(
             dict(state='complete', result_type='forget'))
 
     def _timeout(self):
         """Reset tasks that have been busy too long to 'ready' state"""
 
-        base.log.info(
+        self.log.info(
             'Reset tasks stuck for %ss or more', self.options.timeout)
         cutoff = datetime.utcnow() - timedelta(seconds=self.options.timeout)
         MonQTask.timeout_tasks(cutoff)
@@ -105,5 +105,5 @@ class TaskCommand(base.Command):
     def _commit(self):
         """Schedule a SOLR commit"""
 
-        base.log.info('Commit to solr')
+        self.log.info('Commit to solr')
         index_tasks.commit.post()
