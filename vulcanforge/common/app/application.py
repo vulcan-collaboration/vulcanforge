@@ -81,6 +81,7 @@ class Application(object):
         "read": "view this tool"
     }
     default_acl = {}
+    is_customizable = True
 
     def __init__(self, project, app_config_object):
         self.project = project

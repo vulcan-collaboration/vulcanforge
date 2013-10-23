@@ -51,7 +51,7 @@
                         <li class="text-centered">
                             <div class="tool-title">{{ label }}</div>
                             <img src="{{ mount['ac'].icon_url(32) }}" alt="">
-                            {% if g.tool_manager.is_customizable(mount['ac'].tool_name) %}<a class="customize-button" href="customize_tool/{{mount['ac'].options['mount_point']}}" title="Set custom label or icon">Customize</a>{% endif %}
+                            {% if app.is_customizable %}<a class="customize-button" href="customize_tool/{{mount['ac'].options['mount_point']}}" title="Set custom label or icon">Customize</a>{% endif %}
                         </li>
                         {% for link in links %}
                         <li>

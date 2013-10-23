@@ -649,7 +649,7 @@ class ProjectAdminController(BaseController):
         ac = c.project.app_config(kwargs.get('mount_point'))
         icon = kwargs.get('icon')
         mount_label = kwargs.get('mount_label')
-        if ac is not None and g.tool_manager.is_customizable(ac.tool_name):
+        if ac is not None and ac.app.is_customizable:
             if mount_label and ac.options.mount_label != mount_label:
                 ac.options.mount_label = mount_label
                 flash("Tool Label uploaded", "success")

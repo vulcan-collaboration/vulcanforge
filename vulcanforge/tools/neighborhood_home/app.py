@@ -40,6 +40,7 @@ class NeighborhoodHomeApp(Application):
     default_acl = {
         '*anonymous': ['read']
     }
+    is_customizable = False
 
     root_controller_class = NeighborhoodHomeRootController
 

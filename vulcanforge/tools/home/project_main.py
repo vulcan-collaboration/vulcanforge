@@ -32,6 +32,7 @@ class ProjectHomeApp(Application):
     tool_label = 'home'
     static_folder = 'home'
     default_mount_label = 'Project Home'
+    is_customizable = False
     icons = {
         24: '{ep_name}/images/home_24.png',
         32: '{ep_name}/images/home_32.png',
