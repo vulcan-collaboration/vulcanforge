@@ -101,6 +101,7 @@ setup(
     },
     entry_points="""
     [paste.paster_command]
+    eventd = vulcanforge.command.eventd:EventdCommand
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand
     run_migrations = vulcanforge.command.migration:MigrationCommand
