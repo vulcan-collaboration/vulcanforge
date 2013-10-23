@@ -1,3 +1,4 @@
+import argparse
 from ming.odm import ThreadLocalODMSession, session
 from pylons import app_globals as g, tmpl_context as c
 
@@ -32,25 +33,26 @@ def main(args):
                 msg = "No such custom milestone field: " + args.milestone
                 raise ScriptException(msg)
             # update tickets
+            old_name, new_name = args.name, args.new_name
             app_config_id = tracker.globals.app_config_id
+            base_query = {"app_config_id": app_config_id}
             db, coll_ticket = pymongo_db_collection(Ticket)
-            query = {"app_config_id": app_config_id}
-            count = 0
-            for ticket in coll_ticket.find(query):
-                cfs = ticket['custom_fields']
-                if name in cfs and cfs[name] == args.name:
-                    count += 1
-                    cfs[name] = args.new_name
-            print "Modified {} tickets.".format(count)
-            # update ticket history
+            query = {"custom_fields." + name: old_name}
+            query.update(base_query)
+            count = coll_ticket.find(query, limit=0).count()
+            if count:
+                update = {"$set": {"custom_fields." + name: new_name}}
+                coll_ticket.update(query, update, multi=True)
+                print "Modified {} tickets.".format(count)
+            # update ticket histories
             db, coll_ticket_history = pymongo_db_collection(TicketHistory)
-            count = 0
-            for ticket_history in coll_ticket_history.find(query):
-                cfs = ticket_history['data']['custom_fields']
-                if name in cfs and cfs[name] == args.name:
-                    count += 1
-                    cfs[name] = args.new_name
-            print "Modified {} ticket histories.".format(count)
+            query = {"data.custom_fields." + name: old_name}
+            query.update(base_query)
+            count = coll_ticket_history.find(query, limit=0).count()
+            if count:
+                update = {"$set": {"data.custom_fields." + name: new_name}}
+                coll_ticket_history.update(query, update, multi=True)
+                print "Modified {} ticket histories.".format(count)
         else:
             raise ScriptException("No such tracker: " + args.tracker)
     else:
