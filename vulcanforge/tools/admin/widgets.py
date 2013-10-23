@@ -4,7 +4,6 @@ import ew as ew_core
 from ew import jinja2_ew as ew
 
 from vulcanforge.common import validators as V
-from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.common.widgets.forms import ForgeForm, AdminForm
 from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.project.model import ProjectRole
@@ -235,8 +234,7 @@ class ProjectOverviewForm(ForgeForm):
                 attrs={
                     'cols': 30,
                     'rows': 10
-                },
-                validator=HTMLEscapeValidator()
+                }
             ),
             MarkdownEdit(
                 name="description",
@@ -273,8 +271,7 @@ class ProjectOverviewForm(ForgeForm):
                             'maxlength': 255,
                             'cols': 30,
                             'rows': 10
-                        },
-                        validator=HTMLEscapeValidator()
+                        }
                     ),
                     ew.Checkbox(
                         name="unpublish_ad",
