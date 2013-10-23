@@ -26,9 +26,9 @@
         {% endif %}
         {% if app_config %}
             {% if mailbox and mailbox.get_is_tool_subscription() %}
-                <p><a href="/auth/prefs/unsubscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.load().icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> unsubscribe from {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
+                <p><a href="/auth/prefs/unsubscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> unsubscribe from {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
             {% else %}
-                <p><a href="/auth/prefs/subscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.load().icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> subscribe to {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
+                <p><a href="/auth/prefs/subscribe_app?app_config_id={{ app_config._id }}&return_to={{ h.urlquote(c.url) }}"><img class="app-icon" src="{{ app_config.icon_url(48) }}" alt="{{ app_config.options.mount_label }}"> subscribe to {{ app_config.options.mount_label }} <em>(Tool)</em></a></p>
             {% endif %}
         {% endif %}
         {% if project %}

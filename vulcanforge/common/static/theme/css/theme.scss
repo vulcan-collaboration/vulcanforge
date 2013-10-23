@@ -19,15 +19,15 @@ body.front #bottom-bg-container {
 }
 
 .big_icon.ui-icon-tool-home {
-    background-image: url("../images/home_48.png");
+    background-image: url("../../../../tools/home/static/images/home_48.png");
 }
 
 .big_icon.ui-icon-tool-wiki {
-    background-image: url("../images/wiki_48.png");
+    background-image: url("../../../../tools/wiki/static/images/wiki_48.png");
 }
 
 .big_icon.ui-icon-tool-git, .big_icon.ui-icon-tool-svn, .big_icon.ui-icon-tool-hg {
-    background-image: url("../images/code_48.png");
+    background-image: url("../../images/code_48.png");
 }
 
 .big_icon.ui-icon-tool-stats {
@@ -35,19 +35,19 @@ body.front #bottom-bg-container {
 }
 
 .big_icon.ui-icon-tool-admin, .big_icon.ui-icon-admin {
-    background-image: url("../images/admin_48.png");
+    background-image: url("../../images/default_tool_icons/admin_48.png");
 }
 
 .big_icon.ui-icon-tool-discussion {
-    background-image: url("../images/forums_48.png");
+    background-image: url("../../../../tools/forum/static/images/forums_48.png");
 }
 
 .big_icon.ui-icon-tool-tickets {
-    background-image: url("../images/tickets_48.png");
+    background-image: url("../../../../tools/tickets/static/images/tickets_48.png");
 }
 
 .big_icon.ui-icon-tool-downloads {
-    background-image: url("../images/downloads_48.png");
+    background-image: url("../../../../tools/downloads/static/images/downloads_48.png");
 }
 
 .big_icon.ui-icon-tool-link {
@@ -63,5 +63,5 @@ body.front #bottom-bg-container {
 }
 
 .big_icon.ui-icon-tool-components {
-    background-image: url("../images/publish_48.png");
+    background-image: url("../../../../../../vehicleforge/vehicleforge/componentexchange/static/images/publish_48.png");
 }

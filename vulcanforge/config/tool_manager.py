@@ -1,6 +1,8 @@
 from copy import deepcopy
 from collections import OrderedDict
 
+from pylons import app_globals as g
+
 from vulcanforge.common.util.filesystem import import_object
 
 TOOLS_DIR = 'vulcanforge.tools.'
@@ -88,9 +90,13 @@ class ToolManager(object):
             app = spec.get('app', None)
             app_status = getattr(app, 'status', None)
             if installable and app_status in project.allowed_tool_status:
+
+                icon_resource = spec["app"].icon_url(32, name)
+
                 tools.append({
                     "name": name,
-                    "app": spec["app"]
+                    "app": spec["app"],
+                    "icon_url": icon_resource
                 })
         return tools
 

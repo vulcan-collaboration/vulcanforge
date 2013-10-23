@@ -4,7 +4,6 @@ import ew as ew_core
 from ew import jinja2_ew as ew
 
 from vulcanforge.common import validators as V
-from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.common.widgets.forms import ForgeForm, AdminForm
 from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.project.model import ProjectRole
@@ -235,8 +234,7 @@ class ProjectOverviewForm(ForgeForm):
                 attrs={
                     'cols': 30,
                     'rows': 10
-                },
-                validator=HTMLEscapeValidator()
+                }
             ),
             MarkdownEdit(
                 name="description",
@@ -273,8 +271,7 @@ class ProjectOverviewForm(ForgeForm):
                             'maxlength': 255,
                             'cols': 30,
                             'rows': 10
-                        },
-                        validator=HTMLEscapeValidator()
+                        }
                     ),
                     ew.Checkbox(
                         name="unpublish_ad",
@@ -324,3 +321,66 @@ class ProjectMemberAgreementForm(ForgeForm):
         member_agreement_html = ew.HTMLField(wide=True)
         member_agreement = ew.FileField(label="Upload New")
         delete_member_agreement = ew.Checkbox(label="Delete Current Plan")
+
+
+class CustomizeToolForm(ForgeForm):
+    defaults = dict(ForgeForm.defaults, enctype='multipart/form-data')
+
+    @property
+    def fields(self):
+        field_set_fields = []
+        icon = None
+        if hasattr(c, "ac"):
+            icon = c.ac.get_icon()
+        if icon is not None:
+            field_set_fields.extend([
+                ToolIconField(
+                    name="icon",
+                    label="Uploaded Custom Icon: <i>{}</i>".format(
+                        icon.filename),
+                    wide=True,
+                    attrs={
+                        'accept': 'image/*'
+                    }
+                ),
+                ew.Checkbox(
+                    name="delete_icon",
+                    label="Delete Custom Icon",
+                    wide=True
+                )
+            ])
+        else:
+            field_set_fields.append(
+                ToolIconField(
+                    name="icon",
+                    label="Default Tool Icon (32x32 pixels)",
+                    wide=True,
+                    attrs={
+                        'accept': 'image/*'
+                    }
+                )
+            )
+
+        return [
+            ew.HiddenField(
+                name="mount_point"
+            ),
+            ew.TextField(
+                name="mount_label",
+                label="Tool Label",
+                wide=True
+            ),
+            ew.FieldSet(
+                label="Tool Icon",
+                fields=field_set_fields,
+                wide=True,
+                attrs={
+                    'class': 'vf-fieldset tool-icon',
+                }
+            )
+
+        ]
+
+
+class ToolIconField(ew.FileField):
+    template = 'jinja:vulcanforge:common/templates/form/tool-icon-field.html'

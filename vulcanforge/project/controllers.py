@@ -110,6 +110,14 @@ class ProjectController(BaseController):
             raise exc.HTTPNotFound
         return icon.serve()
 
+    @expose(content_type="image/*")
+    def app_icon(self, mount_point):
+        ac = c.project.app_config(mount_point)
+        icon = ac.get_icon(32)
+        if not icon:
+            return redirect(ac.icon_url(32, skip_lookup=True))
+        return icon.serve()
+
     @expose()
     def member_agreement(self):
         agreement = c.project.member_agreement

@@ -27,7 +27,7 @@ from vulcanforge.auth.validators import UserIdentifierValidator
 from vulcanforge.common.widgets.util import LightboxWidget
 from vulcanforge.common.widgets.form_fields import MarkdownEdit, LabelEdit
 from vulcanforge.project.model import (
-    Project, ProjectFile, ProjectCategory, ProjectRole)
+    Project, ProjectFile, ProjectCategory, ProjectRole, AppConfigFile)
 from vulcanforge.project.tasks import update_project_indexes
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.neighborhood.exceptions import RegistrationError
@@ -63,11 +63,6 @@ class AdminApp(Application):
     tool_label = 'admin'
     static_folder = "admin"
     default_mount_label = 'Admin'
-    icons = {
-        24: 'images/admin_24.png',
-        32: 'images/admin_32.png',
-        48: 'images/admin_48.png'
-    }
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
@@ -203,10 +198,13 @@ class ProjectAdminController(BaseController):
                                      trigger='a.admin_modal')
         install_modal = LightboxWidget(
             name='install_modal', trigger='a.install_trig')
+        customize_modal = LightboxWidget(
+            name='customize_modal', trigger='a.customize-button')
 
     class Forms(BaseController.Forms):
         project_overview_form = aw.ProjectOverviewForm()
         member_agreement_form = aw.ProjectMemberAgreementForm()
+        customize_tool_form = aw.CustomizeToolForm()
 
     def _check_security(self):
         g.security.require_access(c.project, 'admin')
@@ -239,7 +237,7 @@ class ProjectAdminController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=app.icon_url(48),
+                            url=ac.icon_url(48),
                             class_name=''
                         ),
                         actions=dict(
@@ -621,6 +619,7 @@ class ProjectAdminController(BaseController):
         c.markdown_editor = self.Widgets.markdown_editor
         c.label_edit = self.Widgets.label_edit
         c.mount_delete = self.Widgets.mount_delete
+        c.customize_modal = self.Widgets.customize_modal
         c.admin_modal = self.Widgets.admin_modal
         c.install_modal = self.Widgets.install_modal
         mounts = c.project.ordered_mounts()
@@ -632,6 +631,55 @@ class ProjectAdminController(BaseController):
             categories=ProjectCategory.query.find(dict(
                 parent_id=None)).sort('label').all()
         )
+
+    @without_trailing_slash
+    @expose(TEMPLATE_DIR + 'customize_tool.html')
+    def customize_tool(self, mount_point, **kw):
+        c.form = self.Forms.customize_tool_form
+        c.mount_point = mount_point
+        c.ac = c.project.app_config(c.mount_point)
+        c.icon_url = c.ac.icon_url(32)
+        c.app_label = c.ac.options['mount_label']
+        return dict(
+            mount_point=mount_point
+        )
+
+    @expose()
+    def update_tool(self, **kwargs):
+        ac = c.project.app_config(kwargs.get('mount_point'))
+        icon = kwargs.get('icon')
+        mount_label = kwargs.get('mount_label')
+        if ac is not None and ac.app.is_customizable:
+            if mount_label and ac.options.mount_label != mount_label:
+                ac.options.mount_label = mount_label
+                flash("Tool Label uploaded", "success")
+
+            if hasattr(icon, 'file'):
+                AppConfigFile.remove(dict(
+                    app_config_id=ac._id,
+                    category='icon'
+                ))
+                AppConfigFile.save_image(
+                    icon.filename,
+                    icon.file,
+                    content_type=icon.type,
+                    square=True,
+                    thumbnail_size=(32, 32),
+                    thumbnail_meta=dict(
+                        app_config_id=ac._id, category='icon', size=32))
+                flash("New icon uploaded", "success")
+            elif kwargs.get('delete_icon'):
+                old_icon = ac.get_icon()
+                if old_icon:
+                    AppConfigFile.remove(dict(
+                        app_config_id=ac._id,
+                        category='icon'
+                    ))
+                    flash("Custom icon deleted", "success")
+                else:
+                    flash("There was no custom icon to delete", "error")
+
+        return redirect('tools')
 
     @expose()
     @require_post()

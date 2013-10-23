@@ -46,9 +46,9 @@ class ForgeDiscussionApp(Application):
     default_mount_label = 'Discussion'
     default_mount_point = 'discussion'
     icons = {
-        24: 'images/forums_24.png',
-        32: 'images/forums_32.png',
-        48: 'images/forums_48.png'
+        24: '{ep_name}/images/forums_24.png',
+        32: '{ep_name}/images/forums_32.png',
+        48: '{ep_name}/images/forums_48.png'
     }
     reference_opts = dict(Application.reference_opts,
         can_reference=True,
