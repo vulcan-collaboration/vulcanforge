@@ -45,18 +45,19 @@ class SanitizeEncode(GenericJSON):
 
     def _sanitize_encode(self, encoder, sanitize=True):
         def sanitize_encoder(o):
+            do_sanitize = sanitize
             if isinstance(o, Markup):
                 try:
                     o = str(o)
                 except UnicodeEncodeError:
                     o = unicode(o)
-                return encoder(o)
-            elif sanitize:
-                s = encoder(o)
+                do_sanitize = False
+            s = encoder(o)
+            if do_sanitize:
                 s = s.replace('&', '\\u0026')\
                      .replace('<', '\\u003c')\
                      .replace('>', '\\u003e')
-                return s
+            return s
         return sanitize_encoder
 
     def iterencode(self, o, _one_shot=False, sanitize=True):
