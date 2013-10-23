@@ -12,7 +12,7 @@
         return;
     }
     var VFSOCK = $vf.webSocket = {
-        socketURL: 'ws://' + window.location.host + '/ws',
+        socketURL: 'ws://' + window.location.host + '/ws/',
         ws: null,
         handlers: [],
         subscriptions: [],
@@ -27,10 +27,11 @@
             });
         },
         _connect: function () {
-            VFSOCK.ws = new WebSocket(VFSOCK.socketURL, "vulcanForge");
+            VFSOCK.ws = new WebSocket(VFSOCK.socketURL);
             VFSOCK.ws.addEventListener('open', VFSOCK._handleOpen);
             VFSOCK.ws.addEventListener('message', VFSOCK._handleMessage);
             VFSOCK.ws.addEventListener('close', VFSOCK._handleClose);
+            VFSOCK.ws.addEventListener('error', VFSOCK._handleError);
         },
         _testHandler: function (handler, channel) {
             return channel.match(handler.pattern);
@@ -43,6 +44,9 @@
         },
         _handleClose: function (e) {
             setTimeout(VFSOCK._connect, 1000);  // connection lost wait 1 sec and try again
+        },
+        _handleError: function (e) {
+            console.error(e);
         },
         _handleMessage: function (e) {
             var msg = JSON.parse(e.data);

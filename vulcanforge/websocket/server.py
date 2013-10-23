@@ -96,7 +96,8 @@ class ConnectionController(object):
         except (
             gevent.GreenletExit,
             geventwebsocket.WebSocketError,
-            WebSocketException
+            WebSocketException,
+            LostConnection
         ):
             self.connected = False
 
@@ -112,6 +113,7 @@ class ConnectionController(object):
     def _listen_frame(self):
         try:
             message = self.websocket.receive()
+            LOG.debug("received:%s", message)
         except:
             LOG.exception("websocket.receive failed")
             raise LostConnection()
@@ -129,20 +131,25 @@ class ConnectionController(object):
     def _speak_frame(self):
         for message in self.pubsub.listen():
             message.pop('pattern', None)
-            try:
-                self.websocket.send(json.dumps(message))
-            except:
-                LOG.exception("websocket.send failed")
-                raise LostConnection()
+            self.send(message)
+
+    def send(self, message):
+        try:
+            json_message = json.dumps(message)
+            LOG.debug("sending:%s", json_message)
+            self.websocket.send(json_message)
+        except:
+            LOG.exception("websocket.send failed")
+            raise LostConnection()
 
     def _send_error(self, kind, message):
-        self.websocket.send(json.dumps({
+        self.send({
             'type': 'error',
             'data': {
                 'kind': kind,
                 'message': message
             }
-        }))
+        })
 
     def _send_exception(self, e):
         self._send_error(e.__class__.__name__, unicode(e))

@@ -31,11 +31,11 @@ def main():
     try:
         config_path = sys.argv[1]
     except IndexError:
-        LOG.info("expected path to config file as first argument")
+        LOG.error("expected path to config file as first argument")
         sys.exit(1)
     config = get_config(config_path)
     if not config:
-        LOG.info("could not load file config at {}".format())
+        LOG.error("could not load file config at {}".format())
         sys.exit(2)
     if asbool(config.get('debug', False)):
         logging.getLogger('vulcanforge').setLevel(logging.DEBUG)
