@@ -86,7 +86,8 @@ class AppConfigFile(File):
         return '/'.join(('AppConfigFile', str(self.app_config_id), keyname))
 
     def local_url(self):
-        return self.app_config.project.url() + 'app_icon/' + self.app_config.options.get('mount_point')
+        return self.app_config.project.url() + 'app_icon/' + \
+               self.app_config.options.get('mount_point')
 
 
 class ProjectCategory(MappedClass):
@@ -535,9 +536,9 @@ class Project(SOLRIndexed):
     @classmethod
     def icon_urls(cls, projects):
         """Return a dict[project_id] = icon_url, efficiently"""
-        result = dict(
-            (p._id, g.resource_manager.absurl('images/project_default.png'))
-            for p in projects)
+        result = {
+            p._id: g.resource_manager.absurl('images/project_default.png')
+            for p in projects}
         ico_query = {
             'project_id': {'$in': result.keys()},
             'category': 'icon'
@@ -561,7 +562,6 @@ class Project(SOLRIndexed):
                 entry.url = ac.url()
                 entry.ui_icon = 'tool-%s' % ac.tool_name.lower()
                 entry.icon_url = ac.icon_url(32)
-
                 ordinal = ac.options.get('ordinal', 0)
                 entries.append({'ordinal': ordinal, 'entry': entry})
         entries = sorted(entries, key=lambda e: e['ordinal'])
@@ -1158,11 +1158,11 @@ class AppConfig(MappedClass):
         return self.discussion_cls.query.get(_id=self.discussion_id)
 
     def icon_url(self, size, skip_lookup=False):
-
         if not skip_lookup:
             icon = self.get_icon(size)
             if icon is not None:
-                return self.project.url() + '/app_icon/' + self.options.get('mount_point')
+                return self.project.url() + '/app_icon/' + \
+                       self.options.get('mount_point')
 
         return self.app.icon_url(size, self.tool_name.lower())
 
@@ -1276,14 +1276,13 @@ class AppConfig(MappedClass):
                         if new_ace not in self.acl:
                             self.acl.append(new_ace)
 
-    def get_icon(self, size=None):
-        if size is None:
-            size = 32
+    def get_icon(self, size=32):
         icon_file = AppConfigFile.query.get(
             app_config_id=self._id,
             category='icon',
             size=size)
         return icon_file
+
 
 class ProjectRole(BaseMappedClass):
     """

@@ -22,6 +22,7 @@ class ForgeCalendarApp(Application):
         32: '{ep_name}/images/calendar-icon_32.png',
         48: '{ep_name}/images/calendar-icon_48.png'
     }
+
     def __init__(self, project, config):
         Application.__init__(self, project, config)
         self.root = CalendarRootController()

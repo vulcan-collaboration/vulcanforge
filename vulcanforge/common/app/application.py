@@ -116,11 +116,9 @@ class Application(object):
     @classmethod
     def icon_url(cls, size, ep_name):
         icon_resource = cls.icons.get(size)
-
         if icon_resource:
-            return g.resource_manager.absurl(icon_resource.format(ep_name=ep_name))
-
-
+            return g.resource_manager.absurl(
+                icon_resource.format(ep_name=ep_name))
 
     @property
     def acl(self):

@@ -92,8 +92,7 @@ class ProjectHomeController(BaseController):
     def index(self, **kw):
         # project news/description
         if c.project.short_description:
-            project_description = g.markdown.convert(
-                c.project.short_description)
+            project_description = g.markdown.convert(c.project.description)
         else:
             project_description = ''
 

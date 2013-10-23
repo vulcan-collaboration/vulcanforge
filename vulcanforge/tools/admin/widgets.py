@@ -4,7 +4,7 @@ import ew as ew_core
 from ew import jinja2_ew as ew
 
 from vulcanforge.common import validators as V
-from vulcanforge.common.validators import HTMLEscapeValidator, MountPointValidator
+from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.common.widgets.forms import ForgeForm, AdminForm
 from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.project.model import ProjectRole
@@ -325,6 +325,7 @@ class ProjectMemberAgreementForm(ForgeForm):
         member_agreement = ew.FileField(label="Upload New")
         delete_member_agreement = ew.Checkbox(label="Delete Current Plan")
 
+
 class CustomizeToolForm(ForgeForm):
     defaults = dict(ForgeForm.defaults, enctype='multipart/form-data')
 
@@ -335,12 +336,13 @@ class CustomizeToolForm(ForgeForm):
         if hasattr(c, "ac"):
             icon = c.ac.get_icon()
         if icon is not None:
-            field_set_fields += [
+            field_set_fields.extend([
                 ToolIconField(
                     name="icon",
-                    label="Uploaded Custom Icon: <i>{}</i>".format(icon.filename),
+                    label="Uploaded Custom Icon: <i>{}</i>".format(
+                        icon.filename),
                     wide=True,
-                    attrs= {
+                    attrs={
                         'accept': 'image/*'
                     }
                 ),
@@ -349,20 +351,20 @@ class CustomizeToolForm(ForgeForm):
                     label="Delete Custom Icon",
                     wide=True
                 )
-            ]
+            ])
         else:
             field_set_fields.append(
                 ToolIconField(
                     name="icon",
                     label="Default Tool Icon (32x32 pixels)",
                     wide=True,
-                    attrs= {
+                    attrs={
                         'accept': 'image/*'
                     }
                 )
             )
 
-        return  [
+        return [
             ew.HiddenField(
                 name="mount_point"
             ),
@@ -381,7 +383,6 @@ class CustomizeToolForm(ForgeForm):
             )
 
         ]
-
 
 
 class ToolIconField(ew.FileField):

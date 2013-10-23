@@ -69,6 +69,7 @@ from vulcanforge.project.model import (
     ProjectCategory,
     ProjectFile,
     AppConfig,
+    AppConfigFile,
     ProjectRole
 )
 from vulcanforge.taskd.model import MonQTask

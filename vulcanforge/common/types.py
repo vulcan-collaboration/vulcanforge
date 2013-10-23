@@ -1,4 +1,5 @@
 from urllib import basejoin
+from vulcanforge.common.helpers import slugify
 
 
 class ConfigOption(object):
@@ -17,7 +18,7 @@ class ConfigOption(object):
 class SitemapEntry(object):
 
     def __init__(self, label, url=None, children=None, className=None,
-                 ui_icon=None, small=None, icon_url=None):
+                 ui_icon=None, small=None, icon_url=None, icon_id=None):
         self.label = label
         self.className = className
         self.url = url
@@ -27,6 +28,9 @@ class SitemapEntry(object):
         if children is None:
             children = []
         self.children = children
+        if icon_id is None:
+            icon_id = slugify(self.label)
+        self.icon_id = icon_id
 
     def __getitem__(self, x):
         if isinstance(x, (list, tuple)):
@@ -41,7 +45,7 @@ class SitemapEntry(object):
             '    label=%r' % self.label,
             '    children=%s' % repr(self.children).replace('\n', '\n    '),
             '>'
-            ))
+        ))
 
     def bind_app(self, app):
         lbl = self.label

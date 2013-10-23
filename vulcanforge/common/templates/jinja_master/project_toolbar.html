@@ -4,15 +4,17 @@
     {% for s in c.project.sitemap() %}
     {% if s.label == 'Home' %}
     <li class="tool-link-wrapper home{% if s.url in request.url %} selected{% endif %}">
-    <a href="{{s.url}}" class="ui-no-icon tool-link" title="{{s.label}}">
-        <img src="{{ c.project.icon_url }}" alt="{{c.project.name}}">
-    </a>
+        <a href="{{s.url}}" class="ui-no-icon tool-link" title="{{s.label}}">
+            <img src="{{ c.project.icon_url }}" alt="{{c.project.name}}">
+        </a>
     </li>
     {% else %}
     <li class="tool-link-wrapper{% if s.url in request.url %} selected{% endif %}">
-        <a id="project-toolbar-button-{{ s.label|slugify }}" href="{{s.url}}" title="{{s.label}}" class="tool-link">
+        <a id="project-toolbar-button-{{ s.icon_id }}" href="{{s.url}}" class="tool-link" title="{{s.label}}">
             <img src="{{s.icon_url}}" class="ui-icon-tool ui-icon-{{s.ui_icon or 'admin'}}">
-            <div class="tool-label">{{s.label}}</div>
+            {% if s.label %}
+                <div class="tool-label">{{s.label}}</div>
+            {% endif %}
         </a>
     </li>
     {% endif %}

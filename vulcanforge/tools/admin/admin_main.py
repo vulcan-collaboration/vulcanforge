@@ -622,7 +622,6 @@ class ProjectAdminController(BaseController):
         c.customize_modal = self.Widgets.customize_modal
         c.admin_modal = self.Widgets.admin_modal
         c.install_modal = self.Widgets.install_modal
-
         mounts = c.project.ordered_mounts()
         return dict(
             mounts=mounts,
@@ -647,41 +646,35 @@ class ProjectAdminController(BaseController):
 
     @expose()
     def update_tool(self, **kwargs):
-        ac = c.project.app_config(kwargs.get('mount_point', None))
-        icon = kwargs.get('icon', None)
-        mount_label = kwargs.get('mount_label', None)
+        ac = c.project.app_config(kwargs.get('mount_point'))
+        icon = kwargs.get('icon')
+        mount_label = kwargs.get('mount_label')
         if ac is not None and g.tool_manager.is_customizable(ac.tool_name):
-            if mount_label is not None and ac.options.mount_label != mount_label:
-                if mount_label != '':
-                    ac.options.mount_label = mount_label
-                    flash("Tool Label uploaded", "success")
-                else:
-                    flash("That would be quite a lame name don't you think!", "error")
+            if mount_label and ac.options.mount_label != mount_label:
+                ac.options.mount_label = mount_label
+                flash("Tool Label uploaded", "success")
 
-            old_icon = ac.get_icon()
-            if icon is not None and icon != '':
-                if old_icon:
-                    AppConfigFile.remove(dict(
-                        app_config_id=ac._id,
-                        category='icon'
-                    ))
+            if hasattr(icon, 'file'):
+                AppConfigFile.remove(dict(
+                    app_config_id=ac._id,
+                    category='icon'
+                ))
                 AppConfigFile.save_image(
                     icon.filename,
                     icon.file,
                     content_type=icon.type,
                     square=True,
                     thumbnail_size=(32, 32),
-                    thumbnail_meta=dict(app_config_id=ac._id, category='icon', size=32))
-                session(AppConfigFile).flush()
+                    thumbnail_meta=dict(
+                        app_config_id=ac._id, category='icon', size=32))
                 flash("New icon uploaded", "success")
-
-            if kwargs.get('delete_icon', False):
+            elif kwargs.get('delete_icon'):
+                old_icon = ac.get_icon()
                 if old_icon:
                     AppConfigFile.remove(dict(
                         app_config_id=ac._id,
                         category='icon'
                     ))
-                    session(AppConfigFile).flush()
                     flash("Custom icon deleted", "success")
                 else:
                     flash("There was no custom icon to delete", "error")
