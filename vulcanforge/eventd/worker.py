@@ -19,9 +19,6 @@ from pylons import app_globals as g
 from tg import config
 
 
-LOG = logging.getLogger(__name__)
-
-
 class EventdWorker(object):
 
     def __init__(self, config_path, relative_path=None, log=None):
@@ -89,7 +86,7 @@ class EventdWorker(object):
     def get_handler_for_event(self, event):
         handler = self.handlers.get(event['type'])
         if not handler:
-            LOG.warn('no handler found for {!r}'.format(event))
+            self.log.warn('no handler found for {!r}'.format(event))
         return handler
 
     @staticmethod
@@ -123,6 +120,5 @@ class EventdWorker(object):
 
     @staticmethod
     def handle_test(name, targets, params):
-        LOG.info('handling test event')
         redis = Redis()
         redis.publish(params['channel'], params['message'])

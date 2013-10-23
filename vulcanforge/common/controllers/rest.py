@@ -46,6 +46,7 @@ from vulcanforge.artifact.controllers import ArtifactRestController
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.exceptions import NoSuchProjectError
 from vulcanforge.project.model import AppConfig
+from vulcanforge.websocket.controllers import WebSocketAPIController
 
 LOG = logging.getLogger(__name__)
 
@@ -413,3 +414,8 @@ class SwiftAuthRestController(object):
             'has_permission is %s to resource %s for %s',
             str(has_permission), path, c.user.username)
         return {"has_permission": has_permission}
+
+
+class WebServiceRestController(object):
+    auth = WebServiceAuthController()
+    websocket = WebSocketAPIController()
