@@ -30,6 +30,7 @@ class ForgeForm(ew.SimpleForm):
         form_id=None,
         form_control_box=True,
         form_name=None,
+        is_lightbox=False,
         links=[])
 
     def __init__(self, ignore_key_missing=True, *args, **kwargs):

@@ -296,7 +296,6 @@
                                 },
                                 dataType: 'json',
                                 success: function ( data ) {
-
                                     data.userURL = options.userURL;
 
                                     createUserIdPanel( $content, data );

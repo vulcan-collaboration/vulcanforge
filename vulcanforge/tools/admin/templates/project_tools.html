@@ -15,7 +15,7 @@
           <span class="text-centered installable_tool">
             <a class="install_trig" data-tool="{{ tool['name'] }}">
               <div class="tool-title">{{ tool['app'].tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
-              <img src="{{ tool['app'].icon_url(32) or 'unk.png' }}" alt="">
+              <img src="{{ tool.icon_url }}" alt="">
             </a>
           </span>
         {% endfor %}
@@ -50,7 +50,8 @@
                     <ul class="deck">
                         <li class="text-centered">
                             <div class="tool-title">{{ label }}</div>
-                            <img src="{{ app.icon_url(48) }}" alt="">
+                            <img src="{{ mount['ac'].icon_url(32) }}" alt="">
+                            {% if app.is_customizable %}<a class="customize-button" href="customize_tool/{{mount['ac'].options['mount_point']}}" title="Set custom label or icon">Customize</a>{% endif %}
                         </li>
                         {% for link in links %}
                         <li>
@@ -88,6 +89,7 @@
     </form>
     {{c.admin_modal.display(content='<h1 id="popup_title"></h1><div id="popup_contents"></div>')}}
     {{c.mount_delete.display(content='<h1>Confirm Delete</h1>')}}
+    {{c.customize_modal.display(content='<h1 id="customize_modal_title"></h1><div id="customize_modal_contents"></div>')}}
     <div><!--dummy-->
 </div>
 {% endblock %}

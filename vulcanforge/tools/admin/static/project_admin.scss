@@ -48,3 +48,39 @@ table .mem-left {
 table .mem-right {
   width: 30%;
 }
+
+fieldset.tool-icon img {
+    width: 32px;
+    height: 32px;
+    background-color: #eee;
+    margin: 1ex;
+    border: 1px solid #333;
+}
+
+ul.deck li .customize-button {
+    font-weight: bold;
+    opacity: 0.5;
+    font-size: 0.6em;
+    line-height: .7em;
+    height: 1.8em;
+    text-transform: uppercase;
+    display: inline-block;
+    padding: 1ex 1ex;
+    margin-bottom: 1ex;
+    border-radius: 1em;
+    border: 1px solid #555;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+
+ul.deck li .customize-button:hover {
+    border-color: #555;
+    background-color: #fff;
+    color: #555;
+    opacity: 1;
+}
+
+.tool-title {
+    margin: 1ex;
+    font-weight: bold;
+    font-size: .9em;
+}

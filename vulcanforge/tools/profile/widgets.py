@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from formencode import validators
 from paste.deploy.converters import asbool
 from tg import config
 from ew import jinja2_ew
 
 from vulcanforge.common.widgets.forms import ForgeForm
-from vulcanforge.common.validators import HTMLEscapeValidator
 
 LOG = logging.getLogger(__name__)
 
@@ -46,26 +44,22 @@ class EditProfileForm(ForgeForm):
                 fields=[
                     jinja2_ew.TextField(
                         label="Display Name",
-                        name="display_name",
-                        validator=HTMLEscapeValidator(max=255)
+                        name="display_name"
                     ),
                     jinja2_ew.TextArea(
                         label="Your Mission",
                         name="mission",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
-                        validator=HTMLEscapeValidator(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
                     ),
                     jinja2_ew.TextArea(
                         label="Your Interests",
                         name="interests",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
-                        validator=HTMLEscapeValidator(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
                     ),
                     jinja2_ew.TextArea(
                         label="Your Expertise",
                         name="expertise",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3},
-                        validator=HTMLEscapeValidator(max=255)
+                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
                     )
                 ],
                 wide=True,
@@ -83,8 +77,7 @@ class EditProfileForm(ForgeForm):
                             'maxlength': 255,
                             'cols': 30,
                             'rows': 10
-                        },
-                        validator=HTMLEscapeValidator(max=255)
+                        }
                     ),
                     jinja2_ew.Checkbox(
                         label="Remove Advertisement",
@@ -100,8 +93,7 @@ class EditProfileForm(ForgeForm):
                     jinja2_ew.TextField(
                         label="Skype Name (for VCDE tool only)",
                         name="skype_name",
-                        note="For use in VCDE tool",
-                        validator=HTMLEscapeValidator(max=255)
+                        note="For use in VCDE tool"
                     )
                 ],
                 wide=True,

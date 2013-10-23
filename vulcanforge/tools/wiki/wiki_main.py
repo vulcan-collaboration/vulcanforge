@@ -36,7 +36,7 @@ from vulcanforge.common.helpers import urlquote, really_unicode, diff_text
 from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.types import SitemapEntry
-from vulcanforge.common.validators import DateTimeConverter, HTMLEscapeValidator
+from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.common.widgets.form_fields import (
     AttachmentList,
     MarkdownEdit,
@@ -102,9 +102,9 @@ class ForgeWikiApp(Application):
     default_mount_point = 'wiki'
     default_root_page_name = u'Wiki Home'
     icons = {
-        24: 'images/wiki_24.png',
-        32: 'images/wiki_32.png',
-        48: 'images/wiki_48.png'
+        24: '{ep_name}/images/wiki_24.png',
+        32: '{ep_name}/images/wiki_32.png',
+        48: '{ep_name}/images/wiki_48.png'
     }
     # whether its artifacts are referenceable from the repo browser
     reference_opts = dict(Application.reference_opts,
@@ -837,7 +837,6 @@ class PageController(WikiContentBaseController):
     @expose()
     @require_post()
     @validate(validators={
-        'title': HTMLEscapeValidator(),
         'hide_attachments': validators.StringBool(if_empty=False,
                                                   if_missing=False),
         'rename_descendants': validators.StringBool(if_empty=False,

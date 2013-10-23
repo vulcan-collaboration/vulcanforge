@@ -21,6 +21,10 @@ ul.deck h3 {
     text-transform: uppercase;
 }
 
+ul.deck li {
+    position: relative;
+}
+
 ul.deck li:first-child {
     border-top: 1px none !important;
     border-top-left-radius: 4px;

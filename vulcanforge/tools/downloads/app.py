@@ -37,9 +37,9 @@ class ForgeDownloadsApp(Application):
     reference_opts = dict(Application.reference_opts, can_reference=True)
     admin_description = "Offer things for download with the Downloads tool!"
     icons = {
-        24: 'images/downloads_24.png',
-        32: 'images/downloads_32.png',
-        48: 'images/downloads_48.png'
+        24: '{ep_name}/images/downloads_24.png',
+        32: '{ep_name}/images/downloads_32.png',
+        48: '{ep_name}/images/downloads_48.png'
     }
     default_acl = {
         'Admin': permissions,

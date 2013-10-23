@@ -1,0 +1,8 @@
+<img src="{{ c.icon_url }}" alt="{{ c.app_label }} icon"/><br/>
+<input {{widget.j2_attrs({
+    'id':id,
+    'type':field_type,
+    'name':rendered_name,
+    'class':css_class,
+    'readonly':readonly},
+    attrs)}}>
