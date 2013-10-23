@@ -13,46 +13,44 @@ class ScriptException(Exception):
 
 
 def main(args):
+    """
+    Modifies a milestone label in an tracker and updates its tickets and
+    ticket histories.
+    """
     project_path = "/{}/{}".format(args.neighborhood, args.project)
     project, extra = Project.by_url_path(project_path)
     if project:
         tracker = project.app_instance(args.tracker)
         if tracker and type(tracker) == ForgeTrackerApp:
+            # update milestone label
             for cf in tracker.globals.custom_fields:
                 name, label = cf['name'], cf['label']
                 if label == args.milestone and 'milestones' in cf:
                     for m in cf['milestones']:
-                        if m['name'] == args.name:
+                        if m['name'] == args.old_name:
                             m['name'] = args.new_name
                             break
                     else:
-                        msg = "No such milestone name: " + args.name
+                        msg = "No such milestone name: " + args.old_name
                         raise ScriptException(msg)
                     break
             else:
                 msg = "No such custom milestone field: " + args.milestone
                 raise ScriptException(msg)
-            # update tickets
-            old_name, new_name = args.name, args.new_name
-            app_config_id = tracker.globals.app_config_id
-            base_query = {"app_config_id": app_config_id}
-            db, coll_ticket = pymongo_db_collection(Ticket)
-            query = {"custom_fields." + name: old_name}
-            query.update(base_query)
-            count = coll_ticket.find(query, limit=0).count()
-            if count:
-                update = {"$set": {"custom_fields." + name: new_name}}
-                coll_ticket.update(query, update, multi=True)
-                print "Modified {} tickets.".format(count)
-            # update ticket histories
-            db, coll_ticket_history = pymongo_db_collection(TicketHistory)
-            query = {"data.custom_fields." + name: old_name}
-            query.update(base_query)
-            count = coll_ticket_history.find(query, limit=0).count()
-            if count:
-                update = {"$set": {"data.custom_fields." + name: new_name}}
-                coll_ticket_history.update(query, update, multi=True)
-                print "Modified {} ticket histories.".format(count)
+            msg = "Updated milestone label '{}' for field '{}'."
+            print msg.format(args.old_name, name)
+
+            # update tickets and ticket histories
+            field_base = "custom_fields." + name
+            collections = dict(tickets=(Ticket, field_base),
+                               histories=(TicketHistory, "data." + field_base))
+            for item, (cls, field) in collections.items():
+                db, col = pymongo_db_collection(cls)
+                query = {'app_config_id': tracker.globals.app_config_id,
+                         field: args.old_name}
+                update = {"$set": {field: args.new_name}}
+                result = col.update(query, update, multi=True)
+                print "Updated {} {}.".format(result.get('n', 0), item)
         else:
             raise ScriptException("No such tracker: " + args.tracker)
     else:
@@ -66,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('project')
     parser.add_argument('tracker')
     parser.add_argument('milestone')
-    parser.add_argument('name')
+    parser.add_argument('old_name')
     parser.add_argument('new_name')
     args = parser.parse_args()
 
