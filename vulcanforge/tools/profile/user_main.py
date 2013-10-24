@@ -23,7 +23,7 @@ from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config, nonce
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.app import Application
-from vulcanforge.common.validators import DateTimeConverter, HTMLEscapeValidator
+from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.auth.schema import ACE
 from vulcanforge.auth.model import WorkspaceTab
 from vulcanforge.artifact.model import ArtifactReference
@@ -101,12 +101,6 @@ class WorkspaceTabController(RestController):
 
     # Create
     @expose('json')
-    @validate({
-        "title": HTMLEscapeValidator(),
-        "type": HTMLEscapeValidator(if_empty=None),
-        "order": validators.Int(if_empty=0),
-        "state": HTMLEscapeValidator(if_empty=None)
-    })
     def post(self, href=None, title=None, type=None, order=0, state=None,
              **kw):
         g.security.require_access(c.project, 'create')
@@ -123,7 +117,7 @@ class WorkspaceTabController(RestController):
             title=title,
             type=type,
             href=href,
-            order=order,
+            order=int(order),
             state=state
         )
 
@@ -131,9 +125,6 @@ class WorkspaceTabController(RestController):
 
     # Update
     @expose()
-    @validate({
-        "value": HTMLEscapeValidator()
-    })
     def put(self, object_id, operation, value, **kwargs):
         g.security.require_access(c.project, 'create')
         tab = WorkspaceTab.query.get(

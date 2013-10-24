@@ -17,6 +17,11 @@ class ForgeCalendarApp(Application):
         'Developer': ['read', 'write'],
         'Member': ['read']
     }
+    icons = {
+        24: '{ep_name}/images/calendar-icon_24.png',
+        32: '{ep_name}/images/calendar-icon_32.png',
+        48: '{ep_name}/images/calendar-icon_48.png'
+    }
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)

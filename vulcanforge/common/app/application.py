@@ -60,9 +60,9 @@ class Application(object):
     default_mount_label = 'Tool Name'
     default_mount_point = 'tool'
     icons = {
-        24: 'images/admin_24.png',
-        32: 'images/admin_32.png',
-        48: 'images/admin_48.png'
+        24: 'images/default_tool_icons/24.png',
+        32: 'images/default_tool_icons/32.png',
+        48: 'images/default_tool_icons/48.png'
     }
     artifacts = {}
     # admin description
@@ -81,6 +81,7 @@ class Application(object):
         "read": "view this tool"
     }
     default_acl = {}
+    is_customizable = True
 
     def __init__(self, project, app_config_object):
         self.project = project
@@ -113,6 +114,13 @@ class Application(object):
     def can_create(cls, artifact):
         return True
 
+    @classmethod
+    def icon_url(cls, size, ep_name):
+        icon_resource = cls.icons.get(size)
+        if icon_resource:
+            return g.resource_manager.absurl(
+                icon_resource.format(ep_name=ep_name))
+
     @property
     def acl(self):
         return self.config.acl
@@ -123,22 +131,6 @@ class Application(object):
     @classmethod
     def status_int(cls):
         return cls.status_map.index(cls.status)
-
-    @classmethod
-    def icon_url(cls, size):
-        """
-        Subclasses (tools) provide their own icons (preferred) or in
-        extraordinary circumstances override this routine to provide
-        the URL to an icon of the requested size specific to that tool.
-
-        Application.icons is simply a default if no more specific icon
-        is available.
-
-        """
-        resource = cls.icons.get(size)
-        if resource:
-            return g.resource_manager.absurl('theme/{}'.format(resource))
-        return ''
 
     def has_access(self, user, topic):
         """Whether the user has access to send email to the given topic"""

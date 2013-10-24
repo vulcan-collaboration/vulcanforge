@@ -36,7 +36,6 @@ from vulcanforge.common.util import push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.common.validators import HTMLEscapeValidator
 from vulcanforge.artifact.controllers import (
     ArtifactRestController,
     AttachmentController,
@@ -94,9 +93,9 @@ class ForgeTrackerApp(Application):
     default_mount_label = 'Tickets'
     default_mount_point = 'tickets'
     icons = {
-        24: 'images/tickets_24.png',
-        32: 'images/tickets_32.png',
-        48: 'images/tickets_48.png'
+        24: '{ep_name}/images/tickets_24.png',
+        32: '{ep_name}/images/tickets_32.png',
+        48: '{ep_name}/images/tickets_48.png'
     }
     # whether its artifacts are referenceable from the repo browser
     reference_opts = dict(
@@ -708,7 +707,6 @@ class RootController(BaseTrackerController):
     @expose()
     @require_post()
     @validate({
-        "field_name": HTMLEscapeValidator(),
         "milestones": ForEach(MilestoneSchema())
     })
     def update_milestones(self, field_name=None, milestones=None, **kw):

@@ -156,111 +156,11 @@ div.project-toolbar-hidden > ul > li.tool-link-wrapper {
     box-shadow: 0 0 3px white;
 }
 
-
-$tool-icons: sprite-map("images/tools/*.png");
-
-.ui-icon-home {
-    background: sprite($tool-icons, icon_home_off);
+#project-toolbar .ui-icon-tool {
+    opacity: 1;
 }
 
-.tool-link:hover .ui-icon-home {
-    background: sprite($tool-icons, icon_home_on);
-}
-
-.ui-icon-tool,
-.ui-icon-tool-admin {
-    display: block;
-    height: $tool-icon-size;
-    width: $tool-icon-size;
-    margin-left: auto;
-    margin-right: auto;
-    background: sprite($tool-icons, icon_admin_off) no-repeat;
-    overflow: hidden;
-}
-
-.tool-link:hover .ui-icon-tool,
-.tool-link:hover .ui-icon-tool-admin {
-    background: sprite($tool-icons, icon_admin_on) no-repeat;
-}
-
-.ui-icon-tool-tickets {
-    background: sprite($tool-icons, icon_tickets_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-tickets {
-    background: sprite($tool-icons, icon_tickets_on) no-repeat;
-}
-
-.ui-icon-tool-wiki {
-    background: sprite($tool-icons, icon_wiki_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-wiki {
-    background: sprite($tool-icons, icon_wiki_on) no-repeat;
-}
-
-.ui-icon-tool-discussion {
-    background: sprite($tool-icons, icon_discussion_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-discussion {
-    background: sprite($tool-icons, icon_discussion_on) no-repeat;
-}
-
-.ui-icon-tool-blog {
-    background: sprite($tool-icons, icon_blog_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-blog {
-    background: sprite($tool-icons, icon_blog_on) no-repeat;
-}
-
-.ui-icon-tool-chat {
-    background: sprite($tool-icons, icon_chat_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-chat {
-    background: sprite($tool-icons, icon_chat_on) no-repeat;
-}
-
-.ui-icon-tool-downloads {
-    background: sprite($tool-icons, downloads_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-downloads {
-    background: sprite($tool-icons, downloads_on) no-repeat;
-}
-
-.ui-icon-tool-components {
-    background: sprite($tool-icons, icon_publish_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-components {
-    background: sprite($tool-icons, icon_publish_on) no-repeat;
-}
-
-.ui-icon-tool-cloud {
-    background: sprite($tool-icons, cloud_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-cloud {
-    background: sprite($tool-icons, cloud_on) no-repeat;
-}
-
-.ui-icon-tool-vcde {
-    background: sprite($tool-icons, vcde_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-vcde {
-    background: sprite($tool-icons, vcde_on) no-repeat;
-}
-
-.ui-icon-tool-svn,
-.ui-icon-tool-git {
-    background: sprite($tool-icons, code_off) no-repeat;
-}
-
-.tool-link:hover .ui-icon-tool-svn,
-.tool-link:hover .ui-icon-tool-git {
-    background: sprite($tool-icons, code_on) no-repeat;
+#project-toolbar .tool-link-wrapper:hover .ui-icon-tool {
+    filter: url(../assets/svg_filters/filters.svg#projectToolBarMouseOver);
+    -webkit-filter: brightness(1.4) contrast(120%);
 }

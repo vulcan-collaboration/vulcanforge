@@ -32,10 +32,11 @@ class ProjectHomeApp(Application):
     tool_label = 'home'
     static_folder = 'home'
     default_mount_label = 'Project Home'
+    is_customizable = False
     icons = {
-        24: 'images/home_24.png',
-        32: 'images/home_32.png',
-        48: 'images/home_48.png'
+        24: '{ep_name}/images/home_24.png',
+        32: '{ep_name}/images/home_32.png',
+        48: '{ep_name}/images/home_48.png'
     }
     permissions = ['read']
     default_acl = {
@@ -92,8 +93,7 @@ class ProjectHomeController(BaseController):
     def index(self, **kw):
         # project news/description
         if c.project.short_description:
-            project_description = g.markdown.convert(
-                c.project.short_description)
+            project_description = g.markdown.convert(c.project.description)
         else:
             project_description = ''
 
@@ -161,7 +161,7 @@ class ProjectHomeController(BaseController):
                         base_url=ac.url(),
                         description=app.admin_description,
                         icon=dict(
-                            url=app.icon_url(48),
+                            url=ac.icon_url(48),
                             class_name=''
                         ),
                         actions=tool_actions,

@@ -27,7 +27,10 @@ from vulcanforge.common.util.json_util import JSONSafe
 
 
 class SanitizeEncode(GenericJSON):
-    """Taken from simplejson.encode.JSONEncoderForHTML"""
+    """Taken from simplejson.encode.JSONEncoderForHTML. Overriden to support
+    markupsafe.Markup objects
+
+    """
 
     def encode(self, o, sanitize=None):
         # Override JSONEncoder.encode because it has hacks for
@@ -42,16 +45,19 @@ class SanitizeEncode(GenericJSON):
 
     def _sanitize_encode(self, encoder, sanitize=True):
         def sanitize_encoder(o):
+            do_sanitize = sanitize
             if isinstance(o, Markup):
                 try:
                     o = str(o)
                 except UnicodeEncodeError:
                     o = unicode(o)
-            elif sanitize:
-                o = o.replace('&', '\\u0026')\
+                do_sanitize = False
+            s = encoder(o)
+            if do_sanitize:
+                s = s.replace('&', '\\u0026')\
                      .replace('<', '\\u003c')\
                      .replace('>', '\\u003e')
-            return encoder(o)
+            return s
         return sanitize_encoder
 
     def iterencode(self, o, _one_shot=False, sanitize=True):
