@@ -112,13 +112,12 @@ class EventdWorker(object):
             })
         result = list(self.wsgi_app(r.environ, self.start_response))
 
-    @classmethod
-    def make_handler_map(cls):
+    def make_handler_map(self):
         return {
-            'test': cls.handle_test
+            'test': self.handle_test
         }
 
-    @staticmethod
-    def handle_test(name, targets, params):
+    def handle_test(self, name, targets, params):
         redis = Redis()
-        redis.publish(params['channel'], params['message'])
+        for target in targets:
+            redis.publish(target, params['message'])

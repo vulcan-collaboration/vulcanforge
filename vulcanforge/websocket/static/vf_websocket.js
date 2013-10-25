@@ -11,8 +11,9 @@
         console.warn("vf_websocket.js depends on vf.js and must be loaded after it");
         return;
     }
-    var VFSOCK = $vf.webSocket = {
-        socketURL: 'ws://' + window.location.host + '/ws/',
+    var wsProtocol = (window.location.protocol === 'https:') ? 'wss' : 'ws',
+        VFSOCK = $vf.webSocket = {
+        socketURL: wsProtocol + '://' + window.location.host + '/ws/',
         ws: null,
         handlers: [],
         subscriptions: [],
@@ -106,7 +107,7 @@
         },
         removeHandlers: function (pattern) {
             VFSOCK.handlers = VFSOCK.handlers.filter(function (handler) {
-                return VFSOCK._testHandler(handler, pattern);
+                return !VFSOCK._testHandler(handler, pattern);
             });
         }
     };
