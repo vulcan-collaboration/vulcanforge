@@ -8,8 +8,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from formencode import validators
 from webob import exc
-from pylons import tmpl_context as c
-from tg import config
+from pylons import tmpl_context as c, app_globals as g
 from tg.decorators import expose, validate
 
 from vulcanforge.common.controllers import BaseController
@@ -105,7 +104,7 @@ class VisualizerController(BaseController):
         visualizer_options = Visualizer.get_for_resource(base_url)
         filename = os.path.basename(base_url)
         return dict(
-            logo_url=config.get('base_url'),
+            logo_url=g.home_url,
             visualizer=self.visualizer,
             visualizer_options=visualizer_options,
             filename=filename,
