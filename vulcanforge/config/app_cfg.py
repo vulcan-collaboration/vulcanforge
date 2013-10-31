@@ -19,6 +19,7 @@ import pkg_resources
 from paste.deploy.converters import asbool, asint
 import pysolr
 import tg
+import tg.render
 import jinja2
 from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 import pylons
@@ -30,7 +31,7 @@ from boto.exception import S3CreateError
 # needed for tg.configuration to work
 from vulcanforge.auth.authentication_provider import (
     LocalAuthenticationProvider)
-from vulcanforge.auth.security_manager import SecurityManager, SwiftAuthorizer
+from vulcanforge.auth.security_manager import SecurityManager
 from vulcanforge.cache.redis_cache import RedisCache
 from vulcanforge.common.helpers import slugify, split_subdomain
 from vulcanforge.common.util.debug import (
@@ -47,9 +48,11 @@ from vulcanforge.config.render.jsonify import JSONRenderer
 from vulcanforge.config.render.template.filters import jsonify, timesince
 from .tool_manager import ToolManager
 from .context_manager import ContextManager
+from vulcanforge.s3.auth import SwiftAuthorizer
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
 from vulcanforge.taskd.queue import RedisQueue
+from vulcanforge.visualize.api import VisualizerAPI
 
 LOG = logging.getLogger(__name__)
 
@@ -108,6 +111,7 @@ class ForgeConfig(AppConfig):
         self.setup_search()
         self.setup_cache()
         self.setup_task_queue()
+        self.setup_visualize()
 
     def register_packages(self):
         """This is a placeholder for now, but soon it will hold our extension
@@ -405,3 +409,10 @@ class ForgeConfig(AppConfig):
 
         config['pylons.app_globals'].json_renderer = json_renderer
         self.render_functions.json = json_renderer.render_json
+
+    def setup_visualize(self):
+        if config.get('visualizer_api'):
+            visualizer_api = import_object(config['visualizer_api'])
+        else:
+            visualizer_api = VisualizerAPI()
+        config['pylons.app_globals'].visualize = visualizer_api

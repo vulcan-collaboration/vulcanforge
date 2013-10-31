@@ -2,13 +2,13 @@ from pylons import app_globals as g
 
 from vulcanforge.common.helpers import urlquote
 from vulcanforge.migration.base import BaseMigration
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 
 
 class SanitizeVisualizerKeys(BaseMigration):
     def run(self):
         count = 0
-        for visualizer in Visualizer.query.find({"widget": "iframe"}):
+        for visualizer in VisualizerConfig.query.find({"widget": "iframe"}):
             visualizer.widget = 's3'
             for path in visualizer.bundle_content:
                 if not visualizer.get_s3_key(path, insert_if_missing=False):

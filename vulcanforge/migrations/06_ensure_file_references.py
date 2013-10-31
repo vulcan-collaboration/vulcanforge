@@ -6,7 +6,7 @@
 @author: U{tannern<tannern@gmail.com>}
 """
 from vulcanforge.artifact.model import BaseAttachment
-from vulcanforge.common.model import File, FileReference
+from vulcanforge.s3.model import File, FileReference
 from vulcanforge.discussion.model import DiscussionAttachment
 from vulcanforge.migration.base import BaseMigration
 from vulcanforge.neighborhood.model import NeighborhoodFile

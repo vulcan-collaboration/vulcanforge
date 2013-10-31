@@ -269,8 +269,8 @@ class ForgeAppGlobals(object):
 
     def make_s3_keyname(self, key_name, artifact=None):
         return config.get('s3.app_prefix', 'Forge') + '/' + \
-               self.artifact_s3_prefix(artifact) + \
-               h.urlquote(key_name)
+            self.artifact_s3_prefix(artifact) + \
+            h.urlquote(key_name)
 
     def get_s3_key(self, key_name, artifact=None, bucket=None,
                    insert_if_missing=True):

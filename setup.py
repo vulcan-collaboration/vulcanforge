@@ -111,7 +111,7 @@ setup(
     set-tool-access = vulcanforge.command:SetToolAccessCommand
     smtp_server = vulcanforge.command:SMTPServerCommand
     create-neighborhood = vulcanforge.command:CreateNeighborhoodCommand
-    #create-default-visualizers = vulcanforge.command:CreateDefaultVisualizersCommand
+    sync_visualizers = vulcanforge.command:SyncVisualizersCommand
     forgeadmin-tools = vulcanforge.command:ForgeAdminToolsCommand
     createuser = vulcanforge.command.user:CreateUserCommand
     stage-static-resources = vulcanforge.command.resources:StageStaticResources

@@ -7,7 +7,7 @@ from urlparse import urljoin
 from tg import config
 from pylons import tmpl_context as c, request
 from BeautifulSoup import BeautifulSoup
-import feedparser
+from feedparser import _HTMLSanitizer
 
 import markdown
 from markdown.util import etree
@@ -21,7 +21,11 @@ from vulcanforge.artifact.model import Shortlink, ArtifactReference
 from vulcanforge.artifact.widgets import ArtifactLink
 
 from . import markdown_macro
-from .mdx_visualizer import StashProcessor, VisualizerPattern, StashPattern
+from .mdx_stash import StashProcessor, StashPattern
+from vulcanforge.visualize.markdown_ext import (
+    VisualizerPattern,
+    FullVisualizerPattern
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -69,6 +73,7 @@ class ForgeExtension(OEmbedExtension):
                 patterns={
                     'visualizer': VisualizerPattern,
                     'oembed': OEmbedStashedPattern,
+                    'full_visualizer': FullVisualizerPattern
                 },
                 pattern_kwargs={
                     'oembed': {
@@ -368,18 +373,18 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
         tag[attr] = val
 
 
-class ForgeHTMLSanitizer(feedparser._HTMLSanitizer):
-    acceptable_elements = feedparser._HTMLSanitizer.acceptable_elements.difference(
+class ForgeHTMLSanitizer(_HTMLSanitizer):
+    acceptable_elements = _HTMLSanitizer.acceptable_elements.difference(
         {'form', 'noscript', 'sound'})
 
-    acceptable_attributes = feedparser._HTMLSanitizer.acceptable_attributes.difference(
+    acceptable_attributes = _HTMLSanitizer.acceptable_attributes.difference(
         {'action', 'method'})
 
     def __init__(self, encoding, _type=''):
         try:
-            feedparser._HTMLSanitizer.__init__(self, encoding)
+            _HTMLSanitizer.__init__(self, encoding)
         except TypeError:
-            feedparser._HTMLSanitizer.__init__(self, encoding, _type)
+            _HTMLSanitizer.__init__(self, encoding, _type)
 
 
 class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):

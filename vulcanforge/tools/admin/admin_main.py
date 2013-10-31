@@ -34,7 +34,7 @@ from vulcanforge.neighborhood.exceptions import RegistrationError
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.neighborhood.marketplace.model import ProjectAdvertisement
 from vulcanforge.resources import Icon
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.notification import tasks as mail_tasks
 from vulcanforge.notification.util import gen_message_id
 from vulcanforge.messaging.model import Conversation
@@ -410,20 +410,18 @@ class ProjectAdminController(BaseController):
                                 delete_member_agreement=None, **kwargs):
         if member_agreement is not None and member_agreement != '':
             if c.project.member_agreement:
-                ProjectFile.remove(dict(
-                    project_id=c.project._id,
-                    category='member_agreement'
-                ))
+                ProjectFile.remove(
+                    {'project_id': c.project._id,
+                     'category': 'member_agreement'})
             ProjectFile.from_stream(
                 member_agreement.filename,
                 member_agreement.file,
                 project_id=c.project._id,
                 category='member_agreement')
         if delete_member_agreement:
-            ProjectFile.remove(dict(
-                project_id=c.project._id,
-                category='member_agreement'
-            ))
+            ProjectFile.remove({
+                'project_id': c.project._id,
+                'category': 'member_agreement'})
         return redirect('members')
 
     @expose('json')

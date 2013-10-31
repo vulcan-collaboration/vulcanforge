@@ -33,7 +33,7 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common import validators as V, helpers as h
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.artifact.controllers import (

@@ -15,14 +15,13 @@ from ming.odm import state, session
 from ming.odm import (
     FieldProperty,
     ForeignIdProperty,
-    RelationProperty,
-    Mapper
-)
+    RelationProperty
+    )
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 
 from vulcanforge.common.model.base import BaseMappedClass
-from vulcanforge.common.model.filesystem import File
+from vulcanforge.s3.model import File
 from vulcanforge.common.model.session import (
     artifact_orm_session,
     project_orm_session,

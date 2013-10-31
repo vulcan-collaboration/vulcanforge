@@ -21,7 +21,7 @@ from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.controllers.decorators import vardec
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config, nonce
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.app import Application
 from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.auth.schema import ACE

@@ -1,7 +1,5 @@
 from vulcanforge.common.model import (
     GlobalObjectReference,
-    File,
-    FileReference,
     Stats,
     ForgeGlobals
 )
@@ -72,8 +70,13 @@ from vulcanforge.project.model import (
     AppConfigFile,
     ProjectRole
 )
+from vulcanforge.s3.model import File, FileReference
 from vulcanforge.taskd.model import MonQTask
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import (
+    VisualizerConfig,
+    ProcessedArtifactFile,
+    S3VisualizerFile
+)
 
 from vulcanforge.tools.admin.model import *
 from vulcanforge.tools.downloads.model import (

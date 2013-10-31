@@ -34,7 +34,7 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.helpers import urlquote, really_unicode, diff_text
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.common.widgets.form_fields import (

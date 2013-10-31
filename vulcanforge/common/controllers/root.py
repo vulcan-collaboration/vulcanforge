@@ -29,6 +29,7 @@ from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.controllers import ProjectBrowseController
 from vulcanforge.project.model import ProjectCategory, Project
 from vulcanforge.project.widgets import ProjectListWidget
+from vulcanforge.s3.controllers import S3ProxyController
 from vulcanforge.search.controllers import (
     AutocompleteController,
     SearchController
@@ -71,6 +72,7 @@ class ForgeRootController(WsgiDispatchController):
     rest = RestController()
     search = SearchController()
     static_auth = SwiftAuthRestController()
+    s3_proxy = S3ProxyController()
     visualize = VisualizerRootController()
 
     # widgets

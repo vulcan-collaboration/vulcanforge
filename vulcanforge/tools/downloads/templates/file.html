@@ -3,7 +3,6 @@
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
 {% do g.resource_manager.register_js('visualize/visualizer.js') %}
-{% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
 
 {% block title %}
 {{c.project.name}} / {{c.app.config.options.mount_label}}
@@ -19,7 +18,7 @@
 
 {% block content %}
 
-{{c.url_file_widget.display(value=fd_file, force=force_display)}}
+{{g.visualize.full_render_artifact(value=fd_file, force=force_display)}}
 
 {% endblock %}
 

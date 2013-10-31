@@ -16,7 +16,7 @@ from vulcanforge.common.util.diff import unified_diff
 from vulcanforge.common.util.filesystem import import_object
 
 from vulcanforge.resources.widgets import Widget, CSSLink, JSLink, JSScript
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.visualize.util import (
     get_iframe_url,
     get_fs_url,
@@ -49,7 +49,7 @@ class DispatchWidget(Widget):
     def _get_widget(self, url=None, visualizers=None, visualizer=None):
         if visualizer is None:
             if visualizers is None:
-                visualizers = Visualizer.get_for_resource(url)
+                visualizers = VisualizerConfig.get_for_resource(url)
             if visualizers:
                 visualizer = visualizers[0]
                 widget = self.widgets.get(visualizer.widget)
@@ -174,50 +174,30 @@ class StepToolsCADContent(BaseContentWidget):
         yield JSLink('js/vf.js')
         yield JSLink('js/lib/jquery/jquery.cookie.js')
 
-        yield JSLink('visualize/cad/sti_utils.js',
-                     scope='page')
-        yield JSLink('visualize/cad/GeomView.js',
-                     scope='page')
-        yield JSLink('visualize/cad/SceneGraph.js',
-                     scope='page')
+        yield JSLink('visualize/cad/sti_utils.js', scope='page')
+        yield JSLink('visualize/cad/GeomView.js', scope='page')
+        yield JSLink('visualize/cad/SceneGraph.js', scope='page')
 
-        yield JSLink('visualize/cad/Assembly.js',
-                     scope='page')
-        yield JSLink('visualize/cad/BoundingBox.js',
-                     scope='page')
+        yield JSLink('visualize/cad/Assembly.js', scope='page')
+        yield JSLink('visualize/cad/BoundingBox.js', scope='page')
 
-        yield JSLink('visualize/cad/Executable.js',
-                     scope='page')
-        yield JSLink('visualize/cad/GLTransform.js',
-                     scope='page')
+        yield JSLink('visualize/cad/Executable.js', scope='page')
+        yield JSLink('visualize/cad/GLTransform.js', scope='page')
 
-        yield JSLink('visualize/cad/Operation.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Placement.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Project.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Selective.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Shape.js',
-                     scope='page')
-        yield JSLink('visualize/cad/ShapeBuilder.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Shell.js',
-                     scope='page')
+        yield JSLink('visualize/cad/Operation.js', scope='page')
+        yield JSLink('visualize/cad/Placement.js', scope='page')
+        yield JSLink('visualize/cad/Project.js', scope='page')
+        yield JSLink('visualize/cad/Selective.js', scope='page')
+        yield JSLink('visualize/cad/Shape.js', scope='page')
+        yield JSLink('visualize/cad/ShapeBuilder.js', scope='page')
+        yield JSLink('visualize/cad/Shell.js', scope='page')
 
-        yield JSLink('visualize/cad/Toolpath.js',
-                     scope='page')
-        yield JSLink('visualize/cad/ViewVolume.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Workingstep.js',
-                     scope='page')
-        yield JSLink('visualize/cad/Workplan.js',
-                     scope='page')
-        yield JSLink('visualize/cad/webgl-utils.js',
-                     scope='page')
-        yield JSLink('visualize/cad/gl-matrix.js',
-                     scope='page')
+        yield JSLink('visualize/cad/Toolpath.js', scope='page')
+        yield JSLink('visualize/cad/ViewVolume.js', scope='page')
+        yield JSLink('visualize/cad/Workingstep.js', scope='page')
+        yield JSLink('visualize/cad/Workplan.js', scope='page')
+        yield JSLink('visualize/cad/webgl-utils.js', scope='page')
+        yield JSLink('visualize/cad/gl-matrix.js', scope='page')
 
 
 class DesignContent(BaseContentWidget):
@@ -262,7 +242,7 @@ class S3Content(BaseContentWidget):
     def display(self, value=None, visualizer=None, **kwargs):
         # assemble path
         try:
-            key = request.path.split('/src/', 1)[1]
+            key = request.path.split('/content/', 1)[1]
         except IndexError:
             key = None
         if not key:

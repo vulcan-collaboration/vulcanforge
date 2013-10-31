@@ -12,6 +12,7 @@ from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 
 from .session import project_orm_session
+from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.util import set_download_headers, set_cache_headers
 from vulcanforge.common.util.filesystem import guess_mime_type, temporary_file
 
@@ -26,7 +27,7 @@ SUPPORTED_BY_PIL = {
 }
 
 
-class File(MappedClass):
+class File(BaseMappedClass):
     """Metadata and convenience utils for a file stored in S3"""
 
     class __mongometa__:
@@ -134,7 +135,8 @@ class File(MappedClass):
         if headers is None:
             headers = {}
         headers.update(self._s3_headers)
-        self.key.set_contents_from_string(content_string, headers=headers, **kw)
+        self.key.set_contents_from_string(
+            content_string, headers=headers, **kw)
         self._update_metadata()
 
     def get_key(self, **kw):
@@ -160,7 +162,9 @@ class File(MappedClass):
         return g.swift_auth_url(self.keyname, self.bucket_name, self.artifact)
 
     def local_url(self):
-        raise NotImplementedError('local_url')
+        return '/s3_proxy/{}/{}'.format(
+            self.bucket_name,
+            g.make_s3_keyname(self.keyname, self.artifact))
 
     def url(self, absolute=False):
         try:

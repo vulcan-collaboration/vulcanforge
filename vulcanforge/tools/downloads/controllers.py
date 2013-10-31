@@ -26,9 +26,8 @@ from vulcanforge.common.util.http import (
 )
 from vulcanforge.common import exceptions as exc
 from vulcanforge.artifact.widgets import RelatedArtifactsWidget
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.tools.downloads import model as FDM
-from vulcanforge.visualize.widgets.visualize import ArtifactEmbedVisualizer
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:tools/downloads/templates/'
@@ -45,7 +44,6 @@ class FileController(BaseTGController):
 
     class Widgets(BaseTGController.Widgets):
         related_artifacts = RelatedArtifactsWidget()
-        url_file_widget = ArtifactEmbedVisualizer()
 
     @expose(TEMPLATE_DIR + 'file.html')
     def _default(self, *args, **kwargs):
@@ -55,7 +53,6 @@ class FileController(BaseTGController):
             raise exc.AJAXNotFound('The requested file does not exist.')
 
         c.related_artifacts_widget = self.Widgets.related_artifacts
-        c.url_file_widget = self.Widgets.url_file_widget
         return dict(
             hide_sidebar=True,
             fd_file=fd_file,
@@ -216,7 +213,7 @@ class ContentRestController(RestController):
                     'type': entry.type_s
                 }
 
-            vis = Visualizer.get_for_resource(path, cache=True)
+            vis = VisualizerConfig.get_for_resource(path, cache=True)
             if vis:
                 # only shows the first visualizer icon for now
                 # should show available visualizers

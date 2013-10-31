@@ -33,7 +33,7 @@
         </thead>
         <tbody>
             {% for visualizer in visualizers %}
-            <tr class="visualizer_row{{loop.index0%2 and ' even' or ''}} {{visualizer.active and 'active' or 'inactive'}}">
+            <tr class="visualizer_row{{loop.index0 % 2 and ' even' or ''}} {{visualizer.active and 'active' or 'inactive'}}">
                 <td class="btn_container"></td>
                 <td class="visualizer_name">
                     <span class="original">{{visualizer.name}}</span>

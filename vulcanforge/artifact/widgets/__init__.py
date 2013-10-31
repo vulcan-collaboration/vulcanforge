@@ -3,8 +3,10 @@ import ew
 import random
 import string
 
+from pylons import app_globals as g
+
 from vulcanforge.resources.widgets import Widget
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:artifact/templates/widgets/'
@@ -24,9 +26,9 @@ def short_artifact_link_data(artifact):
         'artifactType': artifact.type_s
     }
     if data['artifactType'] == "Blob":
-        visualizers = Visualizer.get_for_resource(artifact.name)
-        if visualizers:
-            data['iconURL'] = visualizers[0].icon_url
+        visualizer = g.visualize.get_visualizer_by_url(artifact.url())
+        if visualizer:
+            data['iconURL'] = visualizer.icon_url
     return data
 
 
@@ -59,9 +61,9 @@ class FileReferenceLink(VFArtifactLink):
 
     def display(self, value=None, icon_url=None, **kw):
         if icon_url is None:
-            visualizers = Visualizer.get_for_resource(value.name)
-            if visualizers:
-                icon_url = visualizers[0].icon_url
+            visualizer = g.visualize.get_visualizer_by_url(value.name)
+            if visualizer:
+                icon_url = visualizer.icon_url
         return VFArtifactLink.display(
             self, value=value, icon_url=icon_url, **kw)
 

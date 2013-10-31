@@ -17,7 +17,7 @@ from vulcanforge.common.app import (
     Application, DefaultAdminController)
 from vulcanforge.common.types import SitemapEntry, ConfigOption
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.auth.model import User
 from vulcanforge.resources import Icon
 from vulcanforge.tools.forum import model as DM, util, version

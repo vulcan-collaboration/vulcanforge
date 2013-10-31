@@ -18,8 +18,9 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config
 from vulcanforge.common.validators import MingValidator
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.visualize.manage_tool.admin import VisualizerUploadForm
+from vulcanforge.visualize.s3 import S3Visualizer
 
 
 LOG = logging.getLogger(__name__)
@@ -75,43 +76,40 @@ class VisualizerConfigController(BaseController):
     @expose(TEMPLATE_DIR + 'manage.html')
     def index(self, **kw):
         c.upload_form = self.Forms.upload_form
-        visualizers = Visualizer.query.find({}).sort(
+        visualizers = VisualizerConfig.query.find({}).sort(
             'priority', pymongo.DESCENDING)
-        return dict(
-            kw,
-            visualizers=visualizers,
-            is_admin=g.security.has_access(self.app, 'edit')
-        )
+        return {
+            'visualizers': visualizers,
+            'is_admin': g.security.has_access(self.app, 'edit')
+        }
 
     @expose()
-    @validate(dict(
-        visualizers=validators.UnicodeString(not_empty=True)
-    ))
+    @validate({'visualizers': validators.UnicodeString(not_empty=True)})
     @require_post()
     def set_priority(self, visualizers=None):
         g.security.require_access(self.app, 'edit')
         ordered_ids = visualizers.split(',')
         num = len(ordered_ids)
-        for n, id in enumerate(ordered_ids):
-            visualizer = Visualizer.query.get(_id=ObjectId(id))
+        for n, vis_id in enumerate(ordered_ids):
+            visualizer = VisualizerConfig.query.get(_id=ObjectId(vis_id))
             visualizer.priority = (num - n) * 10
 
     @expose()
-    @validate(dict(
-        visualizer=MingValidator(Visualizer, not_empty=True),
-        active=validators.Bool(if_empty=False)
-    ))
+    @validate({
+        'visualizer': MingValidator(VisualizerConfig, not_empty=True),
+        'active': validators.Bool(if_empty=True)
+    })
     @require_post()
-    def update(self, archive=None, visualizer=None, delete=None, active=False,
+    def update(self, archive=None, visualizer=None, delete=None, active=True,
                **kw):
         g.security.require_access(self.app, 'edit')
         if delete == u'Delete':
             try:
                 visualizer.delete_s3_keys()
-            except Exception, e:
+            except Exception:
                 LOG.exception(
-                    'deleting s3 content %s on visualizer delete: %s' % (
-                        visualizer.name, str(e)))
+                    'deleting s3 content %s on visualizer delete: %s',
+                    visualizer.name)
             visualizer.delete()
         else:
             # extract and read archive
@@ -119,7 +117,6 @@ class VisualizerConfigController(BaseController):
                 visualizer.update_from_archive(archive.file)
             # set active state
             visualizer.active = active
-        Visualizer.cache.clear()
         redirect('index')
 
     @expose()
@@ -130,7 +127,5 @@ class VisualizerConfigController(BaseController):
         if archive is None:
             raise exc.HTTPBadRequest('Must include an archive')
 
-        visualizer = Visualizer()
-        visualizer.update_from_archive(archive.file)
-        Visualizer.cache.clear()
+        S3Visualizer.new_from_archive(archive.file)
         redirect('index')

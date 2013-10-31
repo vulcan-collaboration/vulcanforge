@@ -3,34 +3,35 @@ import time
 from datetime import datetime
 from uuid import UUID
 import json
-import pymongo
 import re
 
+import pymongo
 from pylons import tmpl_context as c, app_globals as g, request
 from tg import config
 from bson import ObjectId
 from ming import schema as S
 from ming.utils import LazyProperty
-from ming.odm import ThreadLocalODMSession, Mapper
+from ming.odm import ThreadLocalODMSession
 from ming.odm import session, state
 from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
 from ming.odm.declarative import MappedClass
+
 from vulcanforge.auth.model import User
 from vulcanforge.common.model.base import BaseMappedClass
-
 from vulcanforge.common.model.session import (
     main_orm_session,
     project_orm_session
 )
-from vulcanforge.common.model.filesystem import File
+from vulcanforge.s3.model import File
 from vulcanforge.common.model.index import SOLRIndexed
 from vulcanforge.common.helpers import strip_str
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import title_sort, push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.auth.schema import ACL, ACE, EVERYONE
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.tasks import unindex_project, reindex_project
+
 
 LOG = logging.getLogger(__name__)
 
