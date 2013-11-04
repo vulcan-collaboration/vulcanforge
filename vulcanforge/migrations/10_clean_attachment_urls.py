@@ -5,6 +5,8 @@
 
 @author: U{tannern<tannern@gmail.com>}
 """
+from ming.odm.odmsession import ThreadLocalODMSession
+
 from vulcanforge.artifact.model import BaseAttachment
 from vulcanforge.discussion.model import Post, DiscussionAttachment
 from vulcanforge.migration.base import BaseMigration
@@ -41,16 +43,21 @@ class CleanAttachmentURLs(BaseMigration):
     def run(self):
         self.log.info('Migrating all attachment urls in markdown fields...')
         self.log.info('- attachments:')
+        sub_urls = []
         for old_url, new_url in self.iter_urls():
+            sub_urls.append((old_url, new_url))
             self.log.info('    {}  -->  {}'.format(old_url, new_url))
+        self.close_sessions()
         self.log.info('- migration:')
         for field_record in self.markdown_fields:
             self.log.info('    migrating {}...'.format(field_record))
             for instance in field_record.iter_instances():
                 value = field_record.get_value(instance)
-                for remote_url, local_url in self.iter_urls():
+                for remote_url, local_url in sub_urls:
                     value = value.replace(remote_url, local_url)
                 field_record.set_value(instance, value)
+            ThreadLocalODMSession.flush_all()
+            self.close_sessions()
         self.log.info('done.')
 
     def iter_urls(self):
