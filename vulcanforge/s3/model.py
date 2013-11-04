@@ -6,12 +6,12 @@ from cStringIO import StringIO
 
 import Image
 from pylons import app_globals as g
-from ming import schema as S
+from ming import schema
 from ming.odm import FieldProperty
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 
-from .session import project_orm_session
+from vulcanforge.common.model.session import project_orm_session
 from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.util import set_download_headers, set_cache_headers
 from vulcanforge.common.util.filesystem import guess_mime_type, temporary_file
@@ -35,7 +35,7 @@ class File(BaseMappedClass):
         name = 'fs'
         indexes = ['filename']
 
-    _id = FieldProperty(S.ObjectId)
+    _id = FieldProperty(schema.ObjectId)
     filename = FieldProperty(str, if_missing='unknown')
     keyname = FieldProperty(str, if_missing=None)
     content_type = FieldProperty(str)
@@ -163,15 +163,14 @@ class File(BaseMappedClass):
 
     def local_url(self):
         return '/s3_proxy/{}/{}'.format(
-            self.bucket_name,
+            self.bucket_name or g.s3_bucket.name,
             g.make_s3_keyname(self.keyname, self.artifact))
 
-    def url(self, absolute=False):
-        try:
-            url = self.local_url()
-        except NotImplementedError:
+    def url(self, absolute=False, direct_to_remote=False):
+        if direct_to_remote and not g.s3_serve_local:
             url = self.remote_url()
         else:
+            url = self.local_url()
             if absolute:
                 url = g.url(url)
         return url
@@ -314,10 +313,10 @@ class FileReference(MappedClass):
         name = 'file_reference'
         indexes = ['key_name']
 
-    _id = FieldProperty(S.ObjectId)
-    key_name = FieldProperty(S.String)
-    file_class_name = FieldProperty(S.String)
-    file_id = FieldProperty(S.ObjectId)
+    _id = FieldProperty(schema.ObjectId)
+    key_name = FieldProperty(schema.String)
+    file_class_name = FieldProperty(schema.String)
+    file_id = FieldProperty(schema.ObjectId)
 
     def __repr__(self):
         keys = self.query.mapper.property_index.keys()

@@ -64,7 +64,7 @@ class VisualizerController(BaseController):
         return True
 
     @expose()
-    def src(self, resource_url='', *args, **kw):
+    def content(self, resource_url='', *args, **kw):
         """Renders visualizer content"""
         # check permissions
         if self.visualizer is None:

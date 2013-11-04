@@ -9,9 +9,10 @@ from ming.odm.property import (
     ForeignIdProperty,
     RelationProperty
 )
-from ming import schema
+from ming import schema, session
 from ming.utils import LazyProperty
-from pylons import tmpl_context as c, app_globals as g
+from pylons import tmpl_context as c
+from pymongo.errors import DuplicateKeyError
 
 from vulcanforge.artifact.model import ArtifactReference
 from vulcanforge.s3.model import File
@@ -101,6 +102,11 @@ class VisualizerConfig(BaseMappedClass):
         if self.creator_id:
             return User.query.get(_id=self.creator_id)
 
+    def delete(self):
+        visualizer = self.load()
+        visualizer.on_config_delete()
+        super(VisualizerConfig, self).delete()
+
     def load(self):
         path = '{0.module}:{0.classname}'.format(self.visualizer)
         try:
@@ -125,22 +131,66 @@ class VisualizerConfig(BaseMappedClass):
 
 class _BaseVisualizerFile(File):
     class __mongometa__:
-        name = None
+        name = '_base_visualizer_file'
 
-    visualizer_config_id = ForeignIdProperty(VisualizerConfig)
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
     visualizer = RelationProperty(VisualizerConfig, via="visualizer_id")
 
 
 class ProcessedArtifactFile(_BaseVisualizerFile):
     """Represents visualizer-specific synthesized resources typically
-    generated from processing an artifact. For example, the STEP visualizer
+    generated from processing a resource. For example, the STEP visualizer
     will generate meshes for visualization in the forge.
+
+    By default (using `vulcanforge.visualize.widgets.IFrame`), the url of any
+    these files will be included in the query str of the iframe src for use
+    by the visualizer, with the parameter name determined by `query_param`.
+    To hide the url of the original resource, provide `resource_url` as the
+    value of `query_param`.
+
+    `unique_id` uniquely identifies a given resource within the forge, and is
+    used to map a resource to its processed files (the reverse lookup is
+    currently unnecessary).
+
+    `ref_id` associates a resource with a corresponding Artifact (if any)
+    for access control purposes.
 
     """
     class __mongometa__:
         name = 'visualizer_processed_artifact'
+        unique_indexes = [('unique_id', 'filename')]
 
+    query_param = FieldProperty(str, if_missing='processed_file')
+    unique_id = FieldProperty(str)
     ref_id = ForeignIdProperty(ArtifactReference, if_missing=None)
+    status = FieldProperty(
+        schema.OneOf('loading', 'ready', if_missing='ready'))
+
+    @classmethod
+    def get_from_visualizable(cls, visualizable, **kwargs):
+        return cls.find_from_visualizable(visualizable, **kwargs).first()
+
+    @classmethod
+    def find_from_visualizable(cls, visualizable, **kwargs):
+        kwargs['unique_id'] = visualizable.unique_id()
+        return cls.query.get(**kwargs)
+
+    @classmethod
+    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+        pfile = cls.find_from_visualizable(
+            visualizable, filename=filename).first()
+        if not pfile:
+            try:
+                pfile = cls(
+                    unique_id=visualizable.unique_id(),
+                    filename=filename)
+                session(pfile).flush(pfile)
+            except DuplicateKeyError:  # pragma no cover
+                session(pfile).expunge(pfile)
+        kwargs.setdefault('ref_id', visualizable.artifact_ref_id())
+        for name, value in kwargs.items():
+            setattr(pfile, name, value)
+        return pfile
 
     @LazyProperty
     def artifact(self):
@@ -168,5 +218,3 @@ class S3VisualizerFile(_BaseVisualizerFile):
             'Visualizer',
             str(self.visualizer_config_id),
             super(_BaseVisualizerFile, self).default_keyname)
-
-

@@ -7,6 +7,7 @@ from urlparse import urlparse
 from pylons import app_globals as g
 
 from vulcanforge.resources.widgets import Widget
+from vulcanforge.visualize.model import ProcessedArtifactFile
 
 
 class BaseContentWidget(Widget):
@@ -71,18 +72,17 @@ class ArtifactIFrame(IFrame):
     """Renders iframe given an artifact"""
 
     def get_resource_url(self, value, visualizer):
-        resource = visualizer.get_resource_for_artifact(value)
-        if resource:
-            url = resource.url()
-        else:
-            url = value.raw_url()
-        return url
+        return value.raw_url()
 
     def get_query(self, value, visualizer, extra_params=None):
         resource_url = self.get_resource_url(value, visualizer)
         query = super(ArtifactIFrame, self).get_query(
             resource_url, visualizer, extra_params)
-        query['refId'] = value.index_id()
+        query['refId'] = value.artifact_ref_id()
+        cur = ProcessedArtifactFile.find_from_visualizable(
+            value, visualizer_config_id=visualizer.config._id)
+        for pfile in cur:
+            query[pfile.query_param] = pfile.url()
         return query
 
 

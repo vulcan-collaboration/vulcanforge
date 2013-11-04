@@ -26,7 +26,7 @@ class SyntaxVisualizer(BaseVisualizer):
             '^application/x-info',
             '^application/x-latex'
         ],
-        "extensions": None,
+        "extensions": ['*'],
         "description": "Visualizes code and markup documents",
         "icon": "FILE_TEXT",
         "priority": -1

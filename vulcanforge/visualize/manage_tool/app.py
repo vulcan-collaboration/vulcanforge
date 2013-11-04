@@ -20,7 +20,7 @@ from vulcanforge.common.util import push_config
 from vulcanforge.common.validators import MingValidator
 from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.visualize.manage_tool.admin import VisualizerUploadForm
-from vulcanforge.visualize.s3 import S3Visualizer
+from vulcanforge.visualize.s3hosted import S3HostedVisualizer
 
 
 LOG = logging.getLogger(__name__)
@@ -104,17 +104,11 @@ class VisualizerConfigController(BaseController):
                **kw):
         g.security.require_access(self.app, 'edit')
         if delete == u'Delete':
-            try:
-                visualizer.delete_s3_keys()
-            except Exception:
-                LOG.exception(
-                    'deleting s3 content %s on visualizer delete: %s',
-                    visualizer.name)
             visualizer.delete()
         else:
             # extract and read archive
             if isinstance(archive, cgi.FieldStorage):
-                visualizer.update_from_archive(archive.file)
+                visualizer.load().update_from_archive(archive.file)
             # set active state
             visualizer.active = active
         redirect('index')
@@ -127,5 +121,5 @@ class VisualizerConfigController(BaseController):
         if archive is None:
             raise exc.HTTPBadRequest('Must include an archive')
 
-        S3Visualizer.new_from_archive(archive.file)
+        S3HostedVisualizer.new_from_archive(archive.file)
         redirect('index')

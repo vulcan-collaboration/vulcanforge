@@ -34,6 +34,7 @@ from vulcanforge.auth.schema import ACL
 from vulcanforge.project.model import Project
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.util import gen_message_id
+from vulcanforge.visualize.base import VisualizableMixIn
 
 LOG = logging.getLogger(__name__)
 
@@ -196,24 +197,6 @@ class ArtifactApiMixin(object):
         """
         return self.app_config.options.mount_label
 
-    def get_alt_resource(self, key, **kw):
-        raise NotImplementedError('get_alt_resource')
-
-    def _process_alt_file(self, file, filename=None):
-        """Process alt resource file, uploads to s3"""
-        if filename is None:
-            filename = os.path.basename(file.name)
-
-        # upload the file
-        key = g.get_s3_key(filename, self)
-        LOG.info('Writing new resource to {}'.format(key.name))
-        key.set_contents_from_file(file)
-
-        return dict(key=key.name)
-
-    def url_for_visualizer(self):
-        return self.get_alt_resource('visualizer') or self.url()
-
     def raw_url(self):
         """
         Url at which to download the resource.
@@ -221,7 +204,7 @@ class ArtifactApiMixin(object):
         @return: str
 
         """
-        return self.get_alt_resource('raw') or self.url()
+        return self.url()
 
     def get_discussion_thread(self, data=None, generate_if_missing=True):
         """
@@ -289,8 +272,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     labels = FieldProperty([str])
     app_config = RelationProperty('AppConfig')
     preview_url = FieldProperty(str, if_missing=None)
-    alt_resources = FieldProperty({str: None})
-    _alt_loading = FieldProperty(bool, if_missing=False)
 
     @classmethod
     def attachment_class(cls):  # pragma no cover
@@ -481,34 +462,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         """
         return None
 
-    def get_alt_resource(self, key):
-        if key in self.alt_resources:
-            return self.alt_resources[key]
-        return self.alt_resources.get('*')
-
-    def set_alt_resource(self, key, url=None, file=None, flush=False, **kw):
-        if file and not url:
-            url = self._process_alt_file(file, **kw)
-        self.alt_resources[key] = url
-        if flush:
-            session(self.__class__).flush(self)
-
-    def alternate_rest_url(self):
-        """
-        Url at which to set alternate resource for the artifact
-
-        :return: str
-        """
-        return '/rest{}artifact/alternate'.format(self.app_config.url())
-
-    def _get_alt_loading(self):
-        return self._alt_loading
-
-    def _set_alt_loading(self, value):
-        self._alt_loading = bool(value)
-
-    alt_loading = property(_get_alt_loading, _set_alt_loading)
-
     def attach(self, filename, fp, **kw):
         att = self.attachment_class().save_attachment(
             filename=filename, fp=fp, artifact_id=self._id, **kw)
@@ -677,8 +630,8 @@ class VersionedArtifact(Artifact):
         self.version = old_version
 
     def history(self):
-        HC = self.__mongometa__.history_class
-        q = HC.query.find(dict(
+        history_cls = self.__mongometa__.history_class
+        q = history_cls.query.find(dict(
             artifact_id=self._id
         )).sort('version', pymongo.DESCENDING)
         return q
@@ -886,7 +839,7 @@ class Feed(MappedClass):
         return feed
 
 
-class BaseAttachment(File):
+class BaseAttachment(VisualizableMixIn, File):
     thumbnail_size = (96, 96)
     ArtifactType = None
 
@@ -958,51 +911,15 @@ class BaseAttachment(File):
             'artifact_id': self.artifact_id
         }
 
+    def unique_id(self):
+        return 'attachment.{}.{}.{}'.format(
+            self.attachment_type,
+            self.artifact.index_id(),
+            self.filename
+        )
 
-class ArtifactProcessor(object):
-    """
-    Processes artifacts for alternate resource generation.
-
-    Developed for on-demand alternate resource generation
-
-    This was designed to accept plugins if need be
-
-    """
-    processor_map = {}
-
-    @classmethod
-    def process(cls, name, artifact, context, verbose=True):
-        if name == 'cad':
-            # this is a temporary hack until [#1128]
-            if 'cad' not in cls.processor_map:
-                try:
-                    from vehicleforge.cad.processors import CADProcessor
-                except ImportError:
-                    CADProcessor = None
-                if CADProcessor:
-                    cls.processor_map['cad'] = CADProcessor
-            processor_cls = cls.processor_map.get(name)
-
-            # this is stuff we will more or less keep
-            if processor_cls:
-                try:
-                    with temporary_dir() as tmpdir:
-                        processor = processor_cls(verbose=verbose)
-                        filename = artifact.get_content_to_folder(tmpdir)
-
-                        outfile = processor.run(os.path.join(tmpdir, filename))
-                        with open(outfile, 'r') as fp:
-                            artifact.set_alt_resource(context, file=fp)
-                except Exception:
-                    artifact.set_alt_resource(
-                        context, {'status': 'error'}, flush=True)
-                    raise
-                finally:
-                    artifact.alt_loading = False
-            else:
-                LOG.warn('processor not found for {}'.format(artifact))
-        else:
-            LOG.warn('processor name was not cad')
+    def artifact_ref_id(self):
+        return self.artifact.index_id()
 
 
 # Ephemeral Functions for ArtifactReference
@@ -1393,3 +1310,10 @@ class Shortlink(BaseMappedClass):
             return ref_id
 
 
+class VisualizableArtifact(Artifact, VisualizableMixIn):
+
+    def unique_id(self):
+        return self.index_id()
+
+    def artifact_ref_id(self):
+        return self.index_id()

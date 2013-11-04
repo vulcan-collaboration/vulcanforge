@@ -1,4 +1,4 @@
-
+from ming.odm.odmsession import ThreadLocalODMSession
 from .model import MonQTask
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.taskd.exceptions import TaskdException
@@ -61,6 +61,11 @@ class _model_task_decorator(object):
 
 
 def _run_model_task(method_path, _id, *args, **kwargs):
+    """this is only run as a task
+
+    It loads the corresponding model instance and runs the appropriate method
+
+    """
     path, method = method_path.rsplit('.', 1)
     cls = import_object(path)
     inst = cls.query.get(_id=_id)
@@ -68,4 +73,6 @@ def _run_model_task(method_path, _id, *args, **kwargs):
         raise TaskdException("Instance of {} not found with _id {}".format(
             path, _id))
     func = getattr(inst, method)
-    return func(*args, **kwargs)
+    resp = func(*args, **kwargs)
+    ThreadLocalODMSession.flush_all()
+    return resp

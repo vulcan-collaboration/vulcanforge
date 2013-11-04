@@ -313,12 +313,12 @@ class ForgeConfig(AppConfig):
         config['pylons.app_globals'].task_queue = task_queue
 
     def setup_routes(self):
-        map = Mapper(directory=config['pylons.paths']['controllers'],
-                     always_scan=config['debug'])
+        mapper = Mapper(directory=config['pylons.paths']['controllers'],
+                        always_scan=config['debug'])
         # Setup a default route for the root of object dispatch
-        map.connect('*url', controller=self.root_controller,
-                    action='routes_placeholder')
-        config['routes.map'] = map
+        mapper.connect('*url', controller=self.root_controller,
+                       action='routes_placeholder')
+        config['routes.map'] = mapper
 
     def setup_template_loader(self):
         """Setup the template loader, responsible for finding the templates

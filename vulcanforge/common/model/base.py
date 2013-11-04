@@ -5,7 +5,7 @@ from ming.odm.declarative import MappedClass
 
 class BaseMappedClass(MappedClass):
 
-    query = None  # TODO: confirm this doesn't break automatic assignment
+    query = None
     # @type: ming.odm.mapper._ClassQuery
 
     class __mongometa__:

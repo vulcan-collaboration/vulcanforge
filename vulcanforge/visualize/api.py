@@ -42,8 +42,12 @@ class VisualizerAPI(object):
 
         """
         specs = []
-        visualizers = self._get_visualizers_for_full(
-            artifact.url(), shortnames)
+        if shortnames:
+            cur = VisualizerConfig.query.find(
+                {"shortname": {"$in": shortnames}})
+            visualizers = [config.load() for config in cur]
+        else:
+            visualizers = self.find_visualizers_by_artifact(artifact)
         for visualizer in visualizers:
             if not active:
                 active = visualizer.config.shortname
@@ -70,7 +74,12 @@ class VisualizerAPI(object):
 
         """
         specs = []
-        visualizers = self._get_visualizers_for_full(url, shortnames)
+        if shortnames:
+            cur = VisualizerConfig.query.find(
+                {"shortname": {"$in": shortnames}})
+            visualizers = [config.load() for config in cur]
+        else:
+            visualizers = self.find_visualizers_by_url(url)
         for visualizer in visualizers:
             if not active:
                 active = visualizer.config.shortname
@@ -118,14 +127,13 @@ class VisualizerAPI(object):
         if vc:
             return vc.load()
 
-    def _get_visualizers_for_full(self, url, shortnames=None):
-        if shortnames:
-            cur = VisualizerConfig.query.find(
-                {"shortname": {"$in": shortnames}})
-            visualizers = [config.load() for config in cur]
-        else:
-            visualizers = self.find_visualizers_by_url(url)
-        return visualizers
+    def find_visualizers_by_artifact(self, artifact):
+        return [vc.load() for vc in self.find_configs_by_url(artifact.url())]
+
+    def get_visualizer_by_artifact(self, artifact):
+        vc = self.find_configs_by_url(artifact.url()).first()
+        if vc:
+            return vc.load()
 
     def _make_spec_for_full(self, url, visualizer, extra_params=None,
                             active=None):

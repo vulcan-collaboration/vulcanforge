@@ -11,7 +11,7 @@ from ming.odm import FieldProperty
 
 from pylons import app_globals as g, tmpl_context as c
 
-from vulcanforge.artifact.model import Artifact
+from vulcanforge.artifact.model import Artifact, VisualizableArtifact
 
 
 class ForgeDownloadsAbstractItem(Artifact):
@@ -29,7 +29,7 @@ class ForgeDownloadsAbstractItem(Artifact):
         return self.app_config.url() + 'content' + self.item_key
 
 
-class ForgeDownloadsFile(ForgeDownloadsAbstractItem):
+class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
 
     class __mongometa__:
         name = 'forgedownloads_file'
@@ -78,6 +78,10 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem):
         key = g.get_s3_key('', self)
         g.delete_s3_key(key)
         super(ForgeDownloadsFile, self).delete()
+
+    def read(self):
+        key = g.get_s3_key('', self)
+        return key.read()
 
 
 class ForgeDownloadsDirectory(ForgeDownloadsAbstractItem):

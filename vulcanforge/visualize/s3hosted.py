@@ -61,16 +61,24 @@ class S3HostedVisualizer(BaseVisualizer):
     def new_from_archive(cls, archive_fp):
         inst = cls(VisualizerConfig.from_visualizer(cls))
         inst.update_from_archive(archive_fp)
+        return inst
 
     @property
     def src_url(self):
-        return self.get_entry_point_file().url()
+        ep_file = self.get_entry_point_file()
+        return ep_file.url(absolute=True, direct_to_remote=True)
 
     def get_entry_point_file(self):
         ep_file = S3VisualizerFile.query.get(
             filename=self.config.options["entry_point"],
             visualizer_config_id=self.config._id)
         return ep_file
+
+    def find_files(self, query=None):
+        if query is None:
+            query = {}
+        query["visualizer_config_id"] = self.config._id
+        return S3VisualizerFile.query.find(query)
 
     def update_from_archive(self, archive_fp):
         with zipfile.ZipFile(archive_fp) as zip_handle:
@@ -116,8 +124,13 @@ class S3HostedVisualizer(BaseVisualizer):
     def _upload_files(self, zip_handle, root=''):
         for zip_info in zip_handle.filelist:
             filename = zip_info.filename
-            if self._can_upload(filename) and not os.path.isdir(filename):
+            if not filename.endswith('/') and self._can_upload(filename):
                 with zip_handle.open(filename) as fp:
                     relative_path = os.path.relpath(filename, root)
-                    s3_file = S3VisualizerFile(filename=relative_path)
-                    s3_file.set_contents_from_string(fp.read())
+                    S3VisualizerFile.from_data(
+                        relative_path, fp.read(),
+                        visualizer_config_id=self.config._id)
+
+    def on_config_delete(self):
+        for s3file in self.find_files():
+            s3file.delete()

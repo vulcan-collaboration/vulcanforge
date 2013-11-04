@@ -144,62 +144,6 @@ class JSSyntax(BaseContentWidget):
         )
 
 
-class WebGLCADContent(BaseContentWidget):
-    template = TEMPLATE_DIR + 'webgl_cad.html'
-
-    def resources(self):
-        yield CSSLink(
-            'visualize/threed/cad_visualizer.css')
-        yield JSLink("http://ajax.googleapis.com/"
-                     "ajax/libs/chrome-frame/1/CFInstall.min.js")
-        yield JSLink('js/lib/jquery/jquery.cookie.js')
-        yield JSLink('visualize/threed/Three.js')
-        yield JSLink('visualize/threed/plane.js')
-        yield JSScript("""
-        var thingiview, thingiurlbase = "{}";
-        """.format(
-            g.resource_manager.absurl(
-                'visualize/threed/thingihelpers')
-        ))
-        yield JSLink('visualize/threed/thingiview.js')
-        yield JSLink('js/vf.js')
-        yield JSLink('visualize/visualizer.js',
-                     scope='page')
-
-
-class StepToolsCADContent(BaseContentWidget):
-    template = TEMPLATE_DIR + 'step_tools_cad.html'
-
-    def resources(self):
-        yield JSLink('js/vf.js')
-        yield JSLink('js/lib/jquery/jquery.cookie.js')
-
-        yield JSLink('visualize/cad/sti_utils.js', scope='page')
-        yield JSLink('visualize/cad/GeomView.js', scope='page')
-        yield JSLink('visualize/cad/SceneGraph.js', scope='page')
-
-        yield JSLink('visualize/cad/Assembly.js', scope='page')
-        yield JSLink('visualize/cad/BoundingBox.js', scope='page')
-
-        yield JSLink('visualize/cad/Executable.js', scope='page')
-        yield JSLink('visualize/cad/GLTransform.js', scope='page')
-
-        yield JSLink('visualize/cad/Operation.js', scope='page')
-        yield JSLink('visualize/cad/Placement.js', scope='page')
-        yield JSLink('visualize/cad/Project.js', scope='page')
-        yield JSLink('visualize/cad/Selective.js', scope='page')
-        yield JSLink('visualize/cad/Shape.js', scope='page')
-        yield JSLink('visualize/cad/ShapeBuilder.js', scope='page')
-        yield JSLink('visualize/cad/Shell.js', scope='page')
-
-        yield JSLink('visualize/cad/Toolpath.js', scope='page')
-        yield JSLink('visualize/cad/ViewVolume.js', scope='page')
-        yield JSLink('visualize/cad/Workingstep.js', scope='page')
-        yield JSLink('visualize/cad/Workplan.js', scope='page')
-        yield JSLink('visualize/cad/webgl-utils.js', scope='page')
-        yield JSLink('visualize/cad/gl-matrix.js', scope='page')
-
-
 class DesignContent(BaseContentWidget):
     template = TEMPLATE_DIR + 'design.html'
 
@@ -227,9 +171,8 @@ class PDFContent(BaseContentWidget):
         worker_url = buildbase + "pdf.worker.js"
         worker_link = JSLink(worker_url)
         yield worker_link
-        yield JSScript("PDFJS.workerSrc = '{}';".format(
-            worker_link.manager.absurl(worker_url)
-        ))
+        worker_url = worker_link.manager.absurl(worker_url)
+        yield JSScript("PDFJS.workerSrc = '{}';".format(worker_url))
 
 
 class S3Content(BaseContentWidget):

@@ -182,21 +182,16 @@ class Page(VersionedArtifact):
         """Update page with `title` or insert new page with that name"""
         if version is None:
             # Check for existing page object
-            obj = cls.query.get(
-                app_config_id=c.app.config._id,
-                title=title)
+            obj = cls.query.get(app_config_id=c.app.config._id, title=title)
             if obj is None:
-                obj = cls(
-                    title=title,
-                    app_config_id=c.app.config._id,
-                    )
+                obj = cls(title=title, app_config_id=c.app.config._id)
                 Thread(discussion_id=obj.app_config.discussion_id,
                        ref_id=obj.index_id())
             return obj
         else:
             pg = cls.upsert(title)
-            HC = cls.__mongometa__.history_class
-            ss = HC.query.find({
+            history_cls = cls.__mongometa__.history_class
+            ss = history_cls.query.find({
                 'artifact_id': pg._id,
                 'version': int(version)
             }).one()
@@ -222,13 +217,8 @@ class Page(VersionedArtifact):
 
     def authors(self):
         """All the users that have edited this page"""
-        def uniq(users):
-            t = {}
-            for user in users:
-                t[user.username] = user.id
-            return t.values()
-        user_ids = uniq([r.author for r in self.history().all()])
-        return User.query.find({'_id': {'$in': user_ids}}).all()
+        user_ids = set(r.author.id for r in self.history())
+        return User.query.find({'_id': {'$in': list(user_ids)}}).all()
 
     def get_rendered_html(self):
         md = self.app.get_markdown()

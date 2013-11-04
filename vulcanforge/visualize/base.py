@@ -1,4 +1,12 @@
+import logging
+from ming.odm import ThreadLocalODMSession
+
+from pylons import app_globals as g
+
+from vulcanforge.taskd import model_task
 from vulcanforge.visualize.widgets import IFrame, ArtifactIFrame
+
+LOG = logging.getLogger(__name__)
 
 
 class BaseVisualizer(object):
@@ -83,4 +91,52 @@ class BaseVisualizer(object):
     def render_content(self, value, **kwargs):
         return self.content_widget.display(value, **kwargs)
 
+    def process_artifact(self, artifact):
+        pass
 
+    # hooks
+    def on_upload(self, artifact):
+        pass
+
+    def on_config_delete(self):
+        pass
+
+
+# For Visualizable mapped classes
+class VisualizableMixIn(object):
+
+    @model_task
+    def process_for_visualization(self):
+        """Invoke pre-visualization processing hooks"""
+        for visualizer in g.find_visualizers_by_artifact(self):
+            try:
+                visualizer.process_artifact(self)
+            except Exception:
+                LOG.exception('Error process artifact %s in visualizer %s',
+                              self.unique_id(), visualizer.name)
+
+    @model_task
+    def trigger_visualization_upload_hook(self):
+        for visualizer in g.find_visualizers_by_artifact(self):
+            try:
+                visualizer.on_upload(self)
+            except Exception:
+                LOG.exception('Error running on_upload hook on %s in %s',
+                              self.unique_id(), visualizer.name)
+
+    # subclasses should implement the following not implemented methods
+    def unique_id(self):
+        """Globally unique identifier across all visualizable documents"""
+        raise NotImplementedError('unique_id')
+
+    def artifact_ref_id(self):
+        pass
+
+    def read(self):
+        raise NotImplementedError('read')
+
+    def url(self):
+        raise NotImplementedError('url')
+
+    def raw_url(self):
+        return self.url()
