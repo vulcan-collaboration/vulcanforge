@@ -437,7 +437,8 @@ function detectIfBrowserSUpported(req){
     $.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
 
     // Is this a version of IE?
-    if($.browser.msie){
+    if($.browser.msie ||
+        navigator.appName === 'Netscape' && (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent)) !== null){
         userAgent = $.browser.version;
         userAgent = userAgent.substring(0,userAgent.indexOf('.'));
         version = userAgent;
