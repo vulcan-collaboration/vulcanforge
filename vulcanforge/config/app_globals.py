@@ -231,9 +231,8 @@ class ForgeAppGlobals(object):
 
     def tool_icon_url(self, tool_entry_point, size):
         tool_entry_point = tool_entry_point.lower()
-        resource = self.tool_manager.tools[tool_entry_point]['app'].icons[size]
-        resource = 'theme/{}'.format(resource)
-        return self.resource_manager.absurl(resource)
+        app = self.tool_manager.tools[tool_entry_point]['app']
+        return app.icon_url(size, tool_entry_point)
 
     def get_site_admin_project(self):
         return Project.query.get(shortname=self.site_admin_project)
