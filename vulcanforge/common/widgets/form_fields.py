@@ -113,11 +113,7 @@ class Attachment(Widget):
     def display(self, value=None, **kw):
         visualizer_link_items = get_fs_items(
             value.url(), dl_too=True, size=value.length)
-        thumb = value.get_thumb()
-        if thumb is not None:
-            thumb_url = thumb.url()
-        else:
-            thumb_url = None
+        thumb_url = value.get_thumb_url()
         absolute_url = value.url(absolute=True)
         try:
             link_url = visualizer_link_items[0]['url']

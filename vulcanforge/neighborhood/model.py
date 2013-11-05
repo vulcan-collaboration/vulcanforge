@@ -37,8 +37,6 @@ class NeighborhoodFile(File):
     neighborhood_id = FieldProperty(S.ObjectId)
     category = FieldProperty(str)
 
-    THUMB_URL_POSTFIX = ''
-
     @property
     def neighborhood(self):
         return Neighborhood.query.get(_id=self.neighborhood_id)

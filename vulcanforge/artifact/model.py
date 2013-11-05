@@ -909,7 +909,10 @@ class BaseAttachment(File):
 
     def local_url(self):
         """Forge-local URL (not s3. Generally one should use File.url)"""
-        return self.artifact.url() + 'attachment/' + urlquote(self.filename)
+        filename = self.filename
+        if self.is_thumb:
+            filename += '/thumb'
+        return self.artifact.url() + 'attachment/' + urlquote(filename)
 
     def is_embedded(self):
         return self.filename in request.environ.get(
