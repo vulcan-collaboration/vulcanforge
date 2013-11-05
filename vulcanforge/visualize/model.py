@@ -27,6 +27,28 @@ VISUALIZER_PREFIX = 'Visualizer/'
 
 
 class VisualizerConfig(BaseMappedClass):
+    """
+    Database representation of a Forge Visualizer
+
+    :param name: str display name of the visualizer
+    :param shortname: str unique str
+    :param description: str
+    :param visualizer: dict path to Visualizer object
+    :param icon: str url of icon to use for this visualizer
+    :param mime_types: list of mimetypes to match to invoke this visualizer
+    :param extensions: list of extensions to match (default all)
+    :param processing_mime_types: list of mimetypes to match to invoke the
+        visualizers pre-processing hooks
+    :param processing_extensions: list of extensions to match to invoke the
+        visualizers pre-processing hooks
+    :param priority: determines order for tabbed visualizer display
+    :param active: bool
+    :param creator_id: user_id
+    :param created_date: date uploaded/created
+    :param modified_date: date modified
+    :param options: dict dumping ground for visualizer specific opts
+
+    """
 
     class __mongometa__:
         name = 'visualizer'
@@ -48,12 +70,14 @@ class VisualizerConfig(BaseMappedClass):
     icon = FieldProperty(str)
     mime_types = FieldProperty([str])
     extensions = FieldProperty([str], if_missing=['*'])
+    processing_mime_types = FieldProperty([str])
+    processing_extensions = FieldProperty([str], if_missing=['*'])
     priority = FieldProperty(int, if_missing=0)
     active = FieldProperty(bool, if_missing=True)
     creator_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     modified_date = FieldProperty(datetime, if_missing=datetime.utcnow)
-    options = FieldProperty({})  # dumping ground for visualizer specific opts
+    options = FieldProperty({})
 
     @staticmethod
     def strip_name(name):
@@ -79,23 +103,48 @@ class VisualizerConfig(BaseMappedClass):
         return vis_config
 
     @classmethod
+    def find_active(cls, query):
+        query['active'] = True
+        return cls.query.find(query).sort('priority', pymongo.DESCENDING)
+
+    @classmethod
     def find_for_mtype_ext(cls, mime_type=None, extensions=None):
-        # find matching visualizers
-        if extensions is None:
-            extensions = []
-        cur = cls.query.find({
-            "extensions": {"$in": extensions + ['*']},
-            "active": True
-        }).sort('priority', pymongo.DESCENDING)
+        configs = []
+        query = {"extensions": {"$in": extensions + ['*']}}
+        cur = cls.query.find_active(query)
 
-        # get visualizers
         if mime_type:
-            visualizers = [v for v in cur if v._matches_mime_type(mime_type)]
-        else:
-            visualizers = [v for v in cur
-                           if v._matches_explicit_extensions(extensions)]
+            configs = [vc for vc in cur if cls._matches_mime_type(
+                mime_type, vc.mime_types)]
+        elif extensions:
+            configs = [vc for vc in cur if cls._matches_extensions(
+                extensions, vc.extensions)]
 
-        return visualizers
+        return configs
+
+    @classmethod
+    def find_for_processing_mtype_ext(cls, mime_type=None, extensions=None):
+        configs = []
+        query = {"processing_extensions": {"$in": extensions + ['*']}}
+        cur = cls.query.find_active(query)
+
+        if mime_type:
+            configs = [vc for vc in cur if cls._matches_mime_type(
+                mime_type, vc.processing_mime_types)]
+        elif extensions:
+            configs = [vc for vc in cur if cls._matches_extensions(
+                extensions, vc.processing_extensions)]
+
+        return configs
+
+    @classmethod
+    def find_for_all_mtype_ext(cls, mime_type=None, extensions=None):
+        configs = cls.find_for_mtype_ext(mime_type, extensions)
+        seen_ids = set(v._id for v in configs)
+        for vc in cls.find_for_processing_mtype_ext(mime_type, extensions):
+            if vc._id not in seen_ids:
+                configs.append(vc)
+        return configs
 
     @property
     def creator(self):
@@ -116,14 +165,16 @@ class VisualizerConfig(BaseMappedClass):
             inst = None
         return inst
 
-    def _matches_explicit_extensions(self, extensions):
+    @staticmethod
+    def _matches_extensions(extensions, ext_opts):
         # no * matching
-        return any(ext in self.extensions for ext in extensions)
+        return any(ext in ext_opts for ext in extensions)
 
-    def _matches_mime_type(self, mime_type):
-        if not self.mime_types:  # matches any
+    @staticmethod
+    def _matches_mime_type(mime_type, mime_types):
+        if not mime_types:  # matches any
             return True
-        for pattern in self.mime_types:  # find explicit match
+        for pattern in mime_types:  # find explicit match
             if re.search(pattern, mime_type):
                 return True
         return False
@@ -160,7 +211,7 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
         name = 'visualizer_processed_artifact'
         unique_indexes = [('unique_id', 'filename')]
 
-    query_param = FieldProperty(str, if_missing='processed_file')
+    query_param = FieldProperty(str, if_missing='resource_url')
     unique_id = FieldProperty(str)
     ref_id = ForeignIdProperty(ArtifactReference, if_missing=None)
     status = FieldProperty(

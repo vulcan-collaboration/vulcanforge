@@ -42,6 +42,8 @@ class model_task(object):
 class _model_task_decorator(object):
     """model task methods are decorated dynamically"""
 
+    task_dispatcher = _run_model_task
+
     def __init__(self, func, instance):
         self.func = func
         self.instance = instance
@@ -54,7 +56,7 @@ class _model_task_decorator(object):
             method=self.func.__name__
         )
         args = [method_path, self.instance._id] + list(args)
-        return MonQTask.post(_run_model_task, args, kwargs)
+        return MonQTask.post(self.task_dispatcher, args, kwargs)
 
     def __call__(self, *args, **kwargs):
         return self.func(self.instance, *args, **kwargs)

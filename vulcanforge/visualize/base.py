@@ -4,7 +4,8 @@ from ming.odm import ThreadLocalODMSession
 from pylons import app_globals as g
 
 from vulcanforge.taskd import model_task
-from vulcanforge.visualize.widgets import IFrame, ArtifactIFrame
+from vulcanforge.visualize.model import ProcessedArtifactFile
+from vulcanforge.visualize.widgets import IFrame, ArtifactIFrame, LoadingProcessedWidget
 
 LOG = logging.getLogger(__name__)
 
@@ -102,27 +103,24 @@ class BaseVisualizer(object):
         pass
 
 
-# For Visualizable mapped classes
+class OnDemandProcessingVisualizer(BaseVisualizer):
+
+    loading_widget = LoadingProcessedWidget()
+
+    def render_artifact(self, artifact, **kwargs):
+        pfile = ProcessedArtifactFile.get_from_visualizable(
+            artifact, visualizer_config_id=self.config._id)
+        if pfile:
+            func = super(OnDemandProcessingVisualizer, self).render_artifact
+            content = func(artifact, **kwargs)
+        else:
+
+            content = self.loading_widget.display(artifact, self, **kwargs)
+        return content
+
+
+# For Visualizable artifacts and mapped classes
 class VisualizableMixIn(object):
-
-    @model_task
-    def process_for_visualization(self):
-        """Invoke pre-visualization processing hooks"""
-        for visualizer in g.find_visualizers_by_artifact(self):
-            try:
-                visualizer.process_artifact(self)
-            except Exception:
-                LOG.exception('Error process artifact %s in visualizer %s',
-                              self.unique_id(), visualizer.name)
-
-    @model_task
-    def trigger_visualization_upload_hook(self):
-        for visualizer in g.find_visualizers_by_artifact(self):
-            try:
-                visualizer.on_upload(self)
-            except Exception:
-                LOG.exception('Error running on_upload hook on %s in %s',
-                              self.unique_id(), visualizer.name)
 
     # subclasses should implement the following not implemented methods
     def unique_id(self):
@@ -140,3 +138,27 @@ class VisualizableMixIn(object):
 
     def raw_url(self):
         return self.url()
+
+    @model_task
+    def trigger_visualization_upload_hook(self):
+        for visualizer in g.find_for_processing(self):
+            try:
+                visualizer.on_upload(self)
+            except Exception:
+                LOG.exception('Error running on_upload hook on %s in %s',
+                              self.unique_id(), visualizer.name)
+
+    @model_task
+    def process_for_visualization(self, force=False):
+        """Invoke pre-visualization processing hooks"""
+        for visualizer in g.find_for_processing(self):
+            if not force:
+                pfile = ProcessedArtifactFile.get_from_visualizable(
+                    self, visualizer_config_id=visualizer.config._id)
+                if pfile:
+                    continue
+            try:
+                visualizer.process_artifact(self)
+            except Exception:
+                LOG.exception('Error process artifact %s in visualizer %s',
+                              self.unique_id(), visualizer.name)

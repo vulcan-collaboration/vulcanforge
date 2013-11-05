@@ -123,3 +123,6 @@ class TabbedVisualizers(Widget):
         return super(TabbedVisualizers, self).display(
             visualizer_specs=visualizer_specs, uid=uid, **kw)
 
+
+class LoadingProcessedIFrame(IFrame):
+    pass

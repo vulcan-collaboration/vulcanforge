@@ -112,9 +112,7 @@ class VisualizerAPI(object):
             return visualizer.icon_url
 
     def find_configs_by_url(self, url):
-        parsed = urlparse(url)
-        filename = os.path.basename(parsed.path)
-        mtype, extensions = self._get_mimetype_ext(filename)
+        mtype, extensions = self._get_mimetype_ext(url)
         cur = VisualizerConfig.find_for_mtype_ext(
             mime_type=mtype, extensions=extensions)
         return cur
@@ -128,12 +126,21 @@ class VisualizerAPI(object):
             return vc.load()
 
     def find_visualizers_by_artifact(self, artifact):
-        return [vc.load() for vc in self.find_configs_by_url(artifact.url())]
+        mtype, extensions = self._get_mimetype_ext(artifact.url())
+        cur = VisualizerConfig.find_for_all_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return [vc.load() for vc in cur]
 
     def get_visualizer_by_artifact(self, artifact):
-        vc = self.find_configs_by_url(artifact.url()).first()
-        if vc:
-            return vc.load()
+        visualizers = self.find_visualizers_by_artifact(artifact)
+        if visualizers:
+            return visualizers[0]
+
+    def find_for_processing(self, artifact):
+        mtype, extensions = self._get_mimetype_ext(artifact.url())
+        cur = VisualizerConfig.find_for_processing_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return [vc.load() for vc in cur]
 
     def _make_spec_for_full(self, url, visualizer, extra_params=None,
                             active=None):
@@ -161,7 +168,9 @@ class VisualizerAPI(object):
             visualizer = self.get_visualizer_by_url(url)
         return visualizer
 
-    def _get_mimetype_ext(self, filename):
+    def _get_mimetype_ext(self, url):
+        parsed = urlparse(url)
+        filename = os.path.basename(parsed.path)
         extensions = []
         base = filename.lower()
         remainder = ''
