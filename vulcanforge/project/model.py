@@ -48,8 +48,6 @@ class ProjectFile(File):
     category = FieldProperty(str)
     caption = FieldProperty(str)
 
-    THUMB_URL_POSTFIX = ''
-
     @property
     def project(self):
         return Project.query.get(_id=self.project_id)

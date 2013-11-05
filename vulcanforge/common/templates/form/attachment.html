@@ -1,4 +1,4 @@
-<div class="attachment" data-filename="{{ value.filename }}" data-url="{{ value.url(absolute=True) }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">
+<div class="attachment" data-filename="{{ value.filename }}" data-url="{{ value.url() }}" data-thumb-url="{{ thumb_url or '' }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">
     <a class="attachment-thumb-link" href="{{ link_url }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">{% if thumb_url %}<img class="attachment-thumb" src="{{ thumb_url }}"/>{% endif %}</a>
     <div class="attachment-details">
         <a class="attachment-link" href="{{ link_url }}">{{ value.filename }}</a>
