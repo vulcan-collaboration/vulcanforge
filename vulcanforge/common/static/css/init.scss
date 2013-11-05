@@ -1,4 +1,3 @@
-@import "theme/css/theme_mixins.scss";
 
 /* z-indexes */
 $click-condom-z-index: 100000;
@@ -96,3 +95,4 @@ $icon-color-transition-duration: .2s;
   background: linear-gradient($direction, $stop1, $stop2, $stop3, $stop4, $stop5);
 }
 
+@import "theme/css/theme_mixins.scss";
