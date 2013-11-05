@@ -14,7 +14,7 @@ import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
 import time
-from vulcanforge.websocket import load_auth
+from vulcanforge.websocket import load_auth_broker
 from vulcanforge.websocket.exceptions import WebSocketException, \
     LostConnection, InvalidMessageException, NotAuthorized
 from vulcanforge.websocket.reactor import MessageReactor
@@ -26,6 +26,7 @@ LOG = logging.getLogger(__name__)
 class WebSocketApp(object):
 
     def __init__(self, config):
+        super(WebSocketApp, self).__init__()
         self.config = config
         self.redis = redis.Redis(host=config['redis.host'],
                                  port=int(config['redis.port']))
@@ -35,10 +36,10 @@ class WebSocketApp(object):
         if websocket is None:
             return self._http_handler(environ, start_response)
         pubsub = self.redis.pubsub()
-        auth_class = load_auth(self.config)
-        auth = auth_class(environ, self.config)
-        reactor = MessageReactor(environ, self.config, auth, self.redis, pubsub)
-        controller = ConnectionController(environ, self.config, auth, websocket,
+        auth_broker_class = load_auth_broker(self.config)
+        broker = auth_broker_class(environ, self.config)
+        reactor = MessageReactor(environ, self.config, broker, self.redis, pubsub)
+        controller = ConnectionController(environ, self.config, broker, websocket,
                                           self.redis, pubsub, reactor)
         group = gevent.pool.Group()
         listener = gevent.Greenlet(controller.run_listener)
@@ -73,21 +74,28 @@ class WebSocketApp(object):
 
 class ConnectionController(object):
 
-    def __init__(self, environ, config, auth, websocket, redis, pubsub,
+    def __init__(self, environ, config, broker, websocket, redis, pubsub,
                  reactor):
+        super(ConnectionController, self).__init__()
         self.environ = environ
         self.config = config
+        self.broker = broker
         self.websocket = websocket
         self.redis = redis
         self.pubsub = pubsub
-        self.pubsub.subscribe(['system'])
         self.reactor = reactor
         self.connected = True
-        self.auth = auth
         try:
-            self.auth.authenticate()
+            self.broker.authenticate()
         except NotAuthorized, e:
             self._send_exception(e)
+        else:
+            connection_info = self.broker.start_connection()
+            channels = ['system'] + connection_info.get('channels', [])
+            self.pubsub.subscribe(channels)
+
+    def __del__(self):
+        self.broker.end_connection()
 
     def _loop(self, method):
         try:

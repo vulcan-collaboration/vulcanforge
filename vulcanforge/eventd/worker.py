@@ -5,18 +5,17 @@ worker
 
 @author: U{tannern<tannern@gmail.com>}
 """
-import json
+import sys
 import os
+import json
 import logging
 from paste.deploy.converters import asint
 from redis import Redis
-import sys
 
 from webob import Request
 from paste.deploy import loadapp
-import pylons
-from pylons import app_globals as g
-from tg import config
+from pylons import app_globals as g, tmpl_context as c
+import tg
 
 
 class EventdWorker(object):
@@ -30,7 +29,8 @@ class EventdWorker(object):
         self.wsgi_app = None
         self.wsgi_error_log = None
         self.handlers = self.make_handler_map()
-        self.event_queue_timeout = asint(config.get('event_queue.timeout', 2))
+        raw_timeout = tg.config.get('event_queue.timeout', 2)
+        self.event_queue_timeout = asint(raw_timeout)
 
     def graceful_restart(self, signum, frame):
         self.log.info('eventd pid %s recieved signal %s restarting gracefully',
@@ -50,7 +50,7 @@ class EventdWorker(object):
 
         # this is only present to avoid errors within weberror's
         # ErrorMiddleware if the default error stream (stderr?) doesn't work
-        wsgi_error_log_path = pylons.config.get('eventd.wsgi_log', '/dev/null')
+        wsgi_error_log_path = tg.config.get('eventd.wsgi_log', '/dev/null')
         self.wsgi_error_log = open(wsgi_error_log_path, 'a')
 
     def event_loop(self):
@@ -114,10 +114,21 @@ class EventdWorker(object):
 
     def make_handler_map(self):
         return {
-            'test': self.handle_test
+            'test': self.handle_test,
+            'post': self.handle_post
         }
 
     def handle_test(self, name, targets, params):
         redis = Redis()
         for target in targets:
             redis.publish(target, params['message'])
+
+    def handle_post(self, name, targets, params):
+        redis = Redis()
+        message_info = {
+            'content': params,
+            'author': c.user.username
+        }
+        for target in targets:
+            # TODO: create post in thread
+            redis.publish(target, json.dumps(message_info))

@@ -1,0 +1,51 @@
+#vf-chat-container {
+    position: fixed;
+    z-index: 12000;
+    bottom: 0;
+    left: 0;
+    display: block;
+    width: 500px;
+    height: 300px;
+    resize: both;
+    background: #282828;
+    -webkit-transition: bottom 300ms;
+    -moz-transition: bottom 300ms;
+    -ms-transition: bottom 300ms;
+    -o-transition: bottom 300ms;
+    transition: bottom 300ms;
+}
+
+#vf-chat-container.closed {
+    bottom: -300px;
+}
+
+#vf-chat-container.open {
+    bottom: 0;
+}
+
+#vf-chat-container .vf-chat-tab {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding: 1ex 1em;
+    background: #202020;
+    color: #ddd;
+    cursor: pointer;
+}
+#vf-chat-container .vf-chat-tab:hover {
+    color: #fff;
+}
+#vf-chat-container .vf-chat-tab::before {
+    margin: 0 1ex 0 0;
+    opacity: 0.5;
+}
+#vf-chat-container.closed .vf-chat-tab::before {
+    content: "\25B2 ";
+}
+#vf-chat-container.open .vf-chat-tab::before {
+    content: "\25BC ";
+}
+
+.vf-chat-project-button img {
+    max-height: 1em;
+}

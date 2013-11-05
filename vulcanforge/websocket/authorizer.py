@@ -6,10 +6,15 @@ authorizer
 @author: U{tannern<tannern@gmail.com>}
 """
 import bson
-from pylons import tmpl_context as c
+from pylons import tmpl_context as c, app_globals as g
 from vulcanforge.common.util.pattern_method_map import PatternMethodMap
 from vulcanforge.messaging.model import Conversation
+from vulcanforge.project.model import Project
 from vulcanforge.websocket.exceptions import NotAuthorized
+
+
+import logging
+LOG = logging.getLogger(__name__)
 
 
 class WebSocketAuthorizer(object):
@@ -17,7 +22,8 @@ class WebSocketAuthorizer(object):
     _publish_map = PatternMethodMap()
     _target_map = PatternMethodMap()
 
-    def fail(self, msg=None):
+    @staticmethod
+    def fail(msg=None):
         if msg:
             raise NotAuthorized(msg)
         else:
@@ -53,13 +59,36 @@ class WebSocketAuthorizer(object):
         if status is None:
             self.fail()
 
+    @_listen_map.decorate(r'^project\.(.+)$')
+    @_target_map.decorate(r'^project\.(.+)$')
+    def chat_project(self, name, match):
+        shortname = match.group(1)
+        cursor = Project.query.find({'shortname': shortname})
+        if cursor.count() == 0:
+            LOG.debug("project not found %r", shortname)
+            self.fail()
+        if cursor.count() > 1:
+            LOG.debug("multiple projects found for %r", shortname)
+            self.fail()
+        project = cursor.first()
+        if not g.security.has_access(project, 'read'):
+            LOG.debug("user does not have read access to %r", shortname)
+            self.fail()
+
     @_listen_map.decorate(r'^system$')
-    def system_listen(self, name, match):
-        pass  # allow listening to system channel
+    def allow(self, name, match):
+        """
+        Generic allow
+        """
+        pass
 
     @_publish_map.decorate(r'^system$')
-    def system_publish(self, name, match):
-        self.fail()  # do not allow publishing to system channel
+    @_listen_map.decorate(r'^project\.(.+)$')
+    def deny(self, name, match):
+        """
+        Generic deny
+        """
+        self.fail()
 
     @_listen_map.decorate(r'^test\.(.+)$')
     @_publish_map.decorate(r'^test\.(.+)$')

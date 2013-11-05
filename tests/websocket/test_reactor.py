@@ -155,11 +155,12 @@ class TestReactor(ReactorTestCase):
         }
         message = json.dumps(message_dict)
         self.reactor.react(message)
-        self.mock_redis.rpush.assert_called_with(self.reactor.event_queue_key,
-                                                 {
-                                                     'cookie': 'dummy-cookie',
-                                                     'event': event_dict
-                                                 })
+        self.mock_redis.rpush.assert_called_with(
+            self.reactor.event_queue.key,
+            json.dumps({
+                'cookie': 'dummy-cookie',
+                'event': event_dict
+            }))
         self.assertFalse(self.mock_redis.publish.called)
 
     def test_publish_message(self):
@@ -289,14 +290,14 @@ class TestAuthBroker(ReactorTestCase):
             }
         }))
         self.mock_redis.rpush.assert_called_once_with(
-            self.reactor.event_queue_key,
-            {
+            self.reactor.event_queue.key,
+            json.dumps({
                 'cookie': 'dummy-cookie',
                 'event': {
                     'targets': ['foo'],
                     'type': 'howdy'
                 }
-            })
+            }))
         self.mock_redis.rpush.reset_mock()
         with self.assertRaises(NotAuthorized):
             self.reactor.react(json.dumps({

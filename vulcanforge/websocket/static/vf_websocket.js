@@ -12,107 +12,114 @@
         return;
     }
     var wsProtocol = (window.location.protocol === 'https:') ? 'wss' : 'ws',
-        VFSOCK = $vf.webSocket = {
-        socketURL: wsProtocol + '://' + window.location.host + '/ws/',
-        ws: null,
-        handlers: [],
-        subscriptions: [],
-        _init: function () {
-            if ($vf.logged_in_as) {
-                VFSOCK.userChannel = 'user.username.' + $vf.logged_in_as;
-                VFSOCK.subscriptions.push(VFSOCK.userChannel);
-            }
-            VFSOCK._connect();
-            VFSOCK.addHandler(/^test\.(.+)$/, function (match, msg) {
-                console.info(msg.data);
-            });
-        },
-        _connect: function () {
-            VFSOCK.ws = new WebSocket(VFSOCK.socketURL);
-            VFSOCK.ws.addEventListener('open', VFSOCK._handleOpen);
-            VFSOCK.ws.addEventListener('message', VFSOCK._handleMessage);
-            VFSOCK.ws.addEventListener('close', VFSOCK._handleClose);
-            VFSOCK.ws.addEventListener('error', VFSOCK._handleError);
-        },
-        _testHandler: function (handler, channel) {
-            return channel.match(handler.pattern);
-        },
-        // ## events
-        _handleOpen: function (e) {
-            if (VFSOCK.subscriptions.length) {
-                VFSOCK.subscribe(VFSOCK.subscriptions);
-            }
-        },
-        _handleClose: function (e) {
-            setTimeout(VFSOCK._connect, 1000);  // connection lost wait 1 sec and try again
-        },
-        _handleError: function (e) {
-            console.error(e);
-        },
-        _handleMessage: function (e) {
-            var msg = JSON.parse(e.data);
-            switch (msg.type) {
-            case 'error':
-                console.warn(msg.data.kind + ': ' + msg.data.message);
-                break;
-            case 'message':
-                $.each(VFSOCK.handlers, function (i, handler) {
-                    var match = VFSOCK._testHandler(handler, msg.channel);
-                    if (match) {
-                        handler.func(match, msg);
+        vfSocket = $vf.webSocket = {
+            socketURL: wsProtocol + '://' + window.location.host + '/ws/',
+            _socket: null,
+            _handlers: [],
+            _subscriptions: [],
+            _init: function () {
+                vfSocket._connect();
+                vfSocket.addHandler(/^test\.(.+)$/, function (match, msg) {
+                    console.info(msg.data);
+                });
+                $(window).trigger('VFWebSocketInit', vfSocket);
+            },
+            _connect: function () {
+                vfSocket._socket = new WebSocket(vfSocket.socketURL);
+                vfSocket._socket.addEventListener('open', vfSocket._handleOpen);
+                vfSocket._socket.addEventListener('message', vfSocket._handleMessage);
+                vfSocket._socket.addEventListener('close', vfSocket._handleClose);
+                vfSocket._socket.addEventListener('error', vfSocket._handleError);
+            },
+            _testHandler: function (handler, channel) {
+                return channel.match(handler.pattern);
+            },
+            // ## events
+            _handleOpen: function (e) {
+                if (vfSocket._subscriptions.length) {
+                    vfSocket.subscribe(vfSocket._subscriptions);
+                }
+            },
+            _handleClose: function (e) {
+                setTimeout(vfSocket._connect, 1000);  // connection lost wait 1 sec and try again
+            },
+            _handleError: function (e) {
+                console.error(e);
+            },
+            _handleMessage: function (e) {
+                var msg = JSON.parse(e.data);
+                if (DEBUG) {
+                    console.debug(msg);
+                }
+                switch (msg.type) {
+                case 'error':
+                    console.warn(msg.data.kind + ': ' + msg.data.message);
+                    break;
+                case 'message':
+                    $.each(vfSocket._handlers, function (i, handler) {
+                        var match = vfSocket._testHandler(handler, msg.channel);
+                        if (match) {
+                            handler.func(match, msg);
+                        }
+                    });
+                    break;
+                case 'subscribe':
+                    if (vfSocket._subscriptions.indexOf(msg.channel) === -1) {
+                        vfSocket._subscriptions.push(msg.channel);
                     }
-                });
-                break;
-            case 'subscribe':
-                if (VFSOCK.subscriptions.indexOf(msg.channel) === -1) {
-                    VFSOCK.subscriptions.push(msg.channel);
+                    break;
+                case 'unsubscribe':
+                    vfSocket._subscriptions =
+                        vfSocket._subscriptions.filter(function (item) {
+                            return item !== msg.channel;
+                        });
+                    break;
                 }
-                break;
-            case 'unsubscribe':
-                VFSOCK.subscriptions = VFSOCK.subscriptions.filter(function (item) {
-                    return item !== msg.channel;
+            },
+            // ## interface
+            subscribe: function (channels) {
+                vfSocket._socket.send(JSON.stringify({
+                    'subscribe': channels
+                }));
+                return vfSocket;
+            },
+            unsubscribe: function (channels) {
+                vfSocket._socket.send(JSON.stringify({
+                    'unsubscribe': channels
+                }));
+                return vfSocket;
+            },
+            trigger: function (eventSpec) {
+                vfSocket._socket.send(JSON.stringify({
+                    'trigger': eventSpec
+                }));
+                return vfSocket;
+            },
+            publish: function (channels, message) {
+                vfSocket._socket.send(JSON.stringify({
+                    'publish': {
+                        'channels': channels,
+                        'message': message
+                    }
+                }));
+                return vfSocket;
+            },
+            addHandler: function (channelPattern, func) {
+                vfSocket._handlers.push({
+                    'pattern': channelPattern,
+                    'func': func
                 });
-                break;
+                return vfSocket;
+            },
+            removeHandlers: function (pattern) {
+                vfSocket._handlers = vfSocket._handlers.filter(function (handler) {
+                    return !vfSocket._testHandler(handler, pattern);
+                });
+                return vfSocket;
             }
-        },
-        // ## interface
-        subscribe: function (channels) {
-            VFSOCK.ws.send(JSON.stringify({
-                'subscribe': channels
-            }));
-        },
-        unsubscribe: function (channels) {
-            VFSOCK.ws.send(JSON.stringify({
-                'unsubscribe': channels
-            }));
-        },
-        trigger: function (eventSpec) {
-            VFSOCK.ws.send(JSON.stringify({
-                'trigger': eventSpec
-            }));
-        },
-        publish: function (channels, message) {
-            VFSOCK.ws.send(JSON.stringify({
-                'publish': {
-                    'channels': channels,
-                    'message': message
-                }
-            }));
-        },
-        addHandler: function (pattern, func) {
-            VFSOCK.handlers.push({
-                'pattern': pattern,
-                'func': func
-            });
-        },
-        removeHandlers: function (pattern) {
-            VFSOCK.handlers = VFSOCK.handlers.filter(function (handler) {
-                return !VFSOCK._testHandler(handler, pattern);
-            });
-        }
-    };
+        };
     if (WebSocket) {
-        $vf.afterInit(VFSOCK._init, []);
+        $vf.afterInit(vfSocket._init, []);
     } else {
         console.warn("WebSocket is not available in this browser.");
     }

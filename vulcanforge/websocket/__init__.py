@@ -57,27 +57,27 @@ INCOMING_MESSAGE_SCHEMA = {
 }
 DEFAULT_SERVER_CONFIG = {
     'websocket.host': 'localhost',
-    'websocket.port': 8001,
+    'websocket.port': 8002,
     'websocket.process_count': multiprocessing.cpu_count(),
     'websocket.auth_broker': 'vulcanforge.websocket.auth_broker:'
                               'WebSocketAuthBroker',
-    'eventd.queue_name': 'queue.event'
+    'event_queue.name': 'event_queue',
+    'event_queue.namespace': 'eventd'
 }
 
 
-def get_config(filename):
+def get_config(filename, section_name="websocketserver"):
     import ConfigParser
     parser = ConfigParser.ConfigParser()
     with open(filename, 'r') as fp:
         parser.readfp(fp)
-    section_name = "websocketserver"
     config = DEFAULT_SERVER_CONFIG
     for option in parser.options(section_name):
         config[option] = parser.get(section_name, option)
     return config
 
 
-def load_auth(config):
+def load_auth_broker(config):
     path = config['websocket.auth_broker']
     modulename, classname = path.rsplit(':', 1)
     module = __import__(modulename, fromlist=[classname])
