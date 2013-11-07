@@ -3080,7 +3080,9 @@ var NetworkManager = (function NetworkManagerClosure() {
     this.httpHeaders = args.httpHeaders || {};
     this.getXhr = args.getXhr ||
       function NetworkManager_getXhr() {
-        return new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        return xhr;
       };
 
     this.currXhrId = 0;
@@ -3467,7 +3469,9 @@ var ChunkedStreamManager = (function ChunkedStreamManagerClosure() {
     } else {
 
       var getXhr = function getXhr() {
-        return new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        return xhr;
       };
       this.networkManager = new NetworkManager(this.url, {
         getXhr: getXhr,
@@ -34353,6 +34357,7 @@ var JpxImage = (function JpxImageClosure() {
   JpxImage.prototype = {
     load: function JpxImage_load(url) {
       var xhr = new XMLHttpRequest();
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       xhr.open('GET', url, true);
       xhr.responseType = 'arraybuffer';
       xhr.onload = (function() {
@@ -38240,6 +38245,7 @@ var JpegImage = (function jpegImage() {
   constructor.prototype = {
     load: function load(path) {
       var xhr = new XMLHttpRequest();
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       xhr.open("GET", path, true);
       xhr.responseType = "arraybuffer";
       xhr.onload = (function() {
