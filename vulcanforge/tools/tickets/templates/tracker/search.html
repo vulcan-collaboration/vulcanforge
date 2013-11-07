@@ -70,7 +70,7 @@
     <div class="padded top-spaced">
 
         <form class="ticket-search-form search-form" method="GET" action="{{ c.app.url }}search/search/">
-            <input class="search-query" type="text" name="tool_q" value="{{ q and h.urlquote(q)|safe }}"
+            <input class="search-query" type="text" name="tool_q" value="{{ q and h.html_attribute_escape(q)|safe }}"
                    id="bin_terms">
             <input class="search-submit" type="submit" value="Search"/>
         </form>
