@@ -32,10 +32,11 @@
     <script>
         {% if c.aggregate_url %}
             $(function () {
-                var $statsContainer = $('#stats-container'),
+                var searchURL = '{{ c.app.url }}search/search/',
+                        $statsContainer = $('#stats-container'),
                         $inlineGroups = $('#inline-stats-groups'),
                         $detailedStatsContainer = $('#detailed-stats-container'),
-                        makeTable = function (label, dataset) {
+                        makeTable = function (fieldName, label, dataset) {
                             var $container = $('<div/>').
                                             addClass('stats-detail-table-container'),
                                     $table = $('<table/>').
@@ -48,13 +49,27 @@
                                 var mod = i % 2;
                                 if (mod === 0) {
                                     $row = $('<tr/>').
-                                            append($('<th/>', {text: datum})).
+                                            append($('<th/>').
+                                                    append($('<a/>').
+                                                            text(datum).
+                                                            attr('title', 'Refine search query with this parameter').
+                                                            attr('href', getRefinedQueryURL(fieldName + ':"' + datum + '"')))).
                                             appendTo($table);
                                 } else {
                                     $('<td/>', {text: datum}).appendTo($row);
                                 }
                             });
                             return $container;
+                        },
+                        getRefinedQueryURL = function (queryString) {
+                            var newQ = decodeURIComponent(q);
+                            if (newQ === '*:*') {
+                                newQ = queryString;
+                            }
+                            else if (newQ.indexOf(queryString) === -1) {
+                                newQ = q + '+AND+' + queryString;
+                            }
+                            return searchURL + '?q=' + newQ;
                         };
                 $statsContainer.hide();
                 $detailedStatsContainer.hide();
@@ -81,12 +96,18 @@
                                         appendTo($group).
                                         vfStatsWidget({
                                             graphType: 'facet-pie',
-                                            dataset: fieldData
+                                            dataset: fieldData,
+                                            clickable: true
+                                        }).
+                                        bind({
+                                            'labelSelected.vfStats': function (e, context) {
+                                                window.location.href = getRefinedQueryURL(name + ':"' + context.label + '"');
+                                            }
                                         });
                                 dataToShow = true;
                             }
                             if (fieldData.length > 0) {
-                                makeTable(label, fieldData).appendTo($detailedStatsContainer);
+                                makeTable(name, label, fieldData).appendTo($detailedStatsContainer);
                                 dataToShow = true;
                             }
                         });
