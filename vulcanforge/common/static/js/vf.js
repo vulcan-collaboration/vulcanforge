@@ -295,8 +295,7 @@ var $vf = $vf || {
             trace ('Initing global search');
 
             // setting up global-search-field
-            var globalSearchFieldE = $('#global-search-field' ),
-                $sidebar = $("#sidebar");
+            var globalSearchFieldE = $('#global-search-field' );
 
             var updateKeywordSearchField = function () {
                 var field = $(this);
@@ -323,33 +322,6 @@ var $vf = $vf || {
             });
 
             updateKeywordSearchField.call(globalSearchFieldE);
-
-            // Setting up sidebar-scroll
-            trace('Setting up sidebar-scroll');
-            if ($sidebar.length){
-                $sidebar.niceScroll({
-                    cursorcolor:"#999",
-                    cursoropacitymax:0.8,
-                    boxzoom:false,
-                    touchbehavior:false,
-                    zindex:85,
-                    railoffset:{
-                        top:0,
-                        left:0
-                    },
-                    cursorwidth:4
-                });
-
-                $vf.sidebarScroll = $sidebar.getNiceScroll();
-
-                // block scrollbar from blocking other elements
-
-                $('#sidebar').mouseout(function () {
-                    $vf.sidebarScroll.hide();
-                }).mouseover(function () {
-                    $vf.sidebarScroll.show();
-                });
-            }
 
             // Taking care of post-links
             $( '.post-link' )
