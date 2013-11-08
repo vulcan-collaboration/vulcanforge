@@ -295,8 +295,7 @@ var $vf = $vf || {
             trace ('Initing global search');
 
             // setting up global-search-field
-            var globalSearchFieldE = $('#global-search-field' ),
-                $sidebar = $("#sidebar");
+            var globalSearchFieldE = $('#global-search-field' );
 
             var updateKeywordSearchField = function () {
                 var field = $(this);
@@ -323,33 +322,6 @@ var $vf = $vf || {
             });
 
             updateKeywordSearchField.call(globalSearchFieldE);
-
-            // Setting up sidebar-scroll
-            trace('Setting up sidebar-scroll');
-            if ($sidebar.length){
-                $sidebar.niceScroll({
-                    cursorcolor:"#999",
-                    cursoropacitymax:0.8,
-                    boxzoom:false,
-                    touchbehavior:false,
-                    zindex:85,
-                    railoffset:{
-                        top:0,
-                        left:0
-                    },
-                    cursorwidth:4
-                });
-
-                $vf.sidebarScroll = $sidebar.getNiceScroll();
-
-                // block scrollbar from blocking other elements
-
-                $('#sidebar').mouseout(function () {
-                    $vf.sidebarScroll.hide();
-                }).mouseover(function () {
-                    $vf.sidebarScroll.show();
-                });
-            }
 
             // Taking care of post-links
             $( '.post-link' )
@@ -740,6 +712,18 @@ var $vf = $vf || {
 
         configure: function (config) {
             $.extend(this, config);
+            if (typeof config.currentPage !== 'undefined'){
+                this.currentPage = parseInt(config.currentPage);
+            }
+            if (typeof config.totalPages !== 'undefined'){
+                this.totalPages = parseInt(config.totalPages);
+            }
+            if (typeof config.itemCount !== 'undefined'){
+                this.itemCount = parseInt(config.itemCount);
+            }
+            if (typeof config.itemPerPage !== 'undefined'){
+                this.itemPerPage = parseInt(config.itemPerPage);
+            }
         },
 
         render: function () {
@@ -836,19 +820,17 @@ var $vf = $vf || {
 
                 for (i = 0; i < this.totalPages; i++) {
 
-                    if (!compress || (
-
-                        // each page gets its individual button within the close range of currentPage
-                        compress &&
-                            ( i >= closeRange.bottom &&
-                                i <= closeRange.top )
-
+                    if (!compress ||
+                        (
+                            // each page gets its individual button within the close range of currentPage
+                            compress &&
+                                ( i >= closeRange.bottom &&
+                                    i <= closeRange.top )
                         ) || (
-
-                        compress && (
-                            ( i < closeRange.bottom && ( (i + 1) % DL) === 0) ||
-                                ( i > closeRange.top && ( (i + 1) % DU) === 0 )
-                            )
+                            compress && (
+                                ( i < closeRange.bottom && ( (i + 1) % DL) === 0) ||
+                                    ( i > closeRange.top && ( (i + 1) % DU) === 0 )
+                                )
                         )) {
 
                         var liE = $('<li/>', {});
