@@ -712,16 +712,16 @@ var $vf = $vf || {
 
         configure: function (config) {
             $.extend(this, config);
-            if (typeof config.currentPage !== 'undefined'){
+            if (typeof config.currentPage !== 'undefined' && config.currentPage !== ""){
                 this.currentPage = parseInt(config.currentPage);
             }
-            if (typeof config.totalPages !== 'undefined'){
+            if (typeof config.totalPages !== 'undefined' && config.totalPages !== ""){
                 this.totalPages = parseInt(config.totalPages);
             }
-            if (typeof config.itemCount !== 'undefined'){
+            if (typeof config.itemCount !== 'undefined' && config.itemCount !== ""){
                 this.itemCount = parseInt(config.itemCount);
             }
-            if (typeof config.itemPerPage !== 'undefined'){
+            if (typeof config.itemPerPage !== 'undefined' && config.itemPerPage !== ""){
                 this.itemPerPage = parseInt(config.itemPerPage);
             }
         },
