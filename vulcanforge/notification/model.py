@@ -243,6 +243,7 @@ class Notification(SOLRIndexed):
             shortname, c.app.config.options.mount_point)
         if topic == 'message':
             post = kwargs.pop('post')
+            safe_text = getattr(post, 'safe_text', None)
             subject = cgi.escape(post.subject or '')
             if post.parent_id and not subject.lower().startswith('re:'):
                 subject = u'Re: '+subject
