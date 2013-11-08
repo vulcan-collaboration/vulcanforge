@@ -2,7 +2,7 @@
 {% for key, values in changelist %}\
 {% choose %}\
 {% when key == 'description' %}\
-- Description has changed:
+- **description** has changed:
 
 Diff:
 
