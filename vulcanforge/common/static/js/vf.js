@@ -712,6 +712,18 @@ var $vf = $vf || {
 
         configure: function (config) {
             $.extend(this, config);
+            if (typeof config.currentPage !== 'undefined'){
+                this.currentPage = parseInt(config.currentPage);
+            }
+            if (typeof config.totalPages !== 'undefined'){
+                this.totalPages = parseInt(config.totalPages);
+            }
+            if (typeof config.itemCount !== 'undefined'){
+                this.itemCount = parseInt(config.itemCount);
+            }
+            if (typeof config.itemPerPage !== 'undefined'){
+                this.itemPerPage = parseInt(config.itemPerPage);
+            }
         },
 
         render: function () {
@@ -808,19 +820,17 @@ var $vf = $vf || {
 
                 for (i = 0; i < this.totalPages; i++) {
 
-                    if (!compress || (
-
-                        // each page gets its individual button within the close range of currentPage
-                        compress &&
-                            ( i >= closeRange.bottom &&
-                                i <= closeRange.top )
-
+                    if (!compress ||
+                        (
+                            // each page gets its individual button within the close range of currentPage
+                            compress &&
+                                ( i >= closeRange.bottom &&
+                                    i <= closeRange.top )
                         ) || (
-
-                        compress && (
-                            ( i < closeRange.bottom && ( (i + 1) % DL) === 0) ||
-                                ( i > closeRange.top && ( (i + 1) % DU) === 0 )
-                            )
+                            compress && (
+                                ( i < closeRange.bottom && ( (i + 1) % DL) === 0) ||
+                                    ( i > closeRange.top && ( (i + 1) % DU) === 0 )
+                                )
                         )) {
 
                         var liE = $('<li/>', {});
