@@ -238,6 +238,10 @@ class ForgeTrackerApp(Application):
                 'Home',
                 self.config.url(),
                 ui_icon=Icon('', 'ico-home')))
+            links.append(SitemapEntry(
+                'My Tickets',
+                self.get_user_query_url(c.user.username),
+                ui_icon=Icon('', 'ico-user')))
         if g.security.has_access(self, 'write'):
             links.append(SitemapEntry(
                 'Create Ticket',
@@ -423,6 +427,12 @@ class ForgeTrackerApp(Application):
                 "className": "ticket-milestone-event"
             })
         return events
+
+    def get_user_query_url(self, username):
+        template = '{base}search/search/?q=' \
+                   'assigned_to_s_mv:{username}+OR+' \
+                   'reported_by_s:{username}'
+        return template.format(base=self.config.url(), username=username)
 
 
 class BaseTrackerController(BaseController):
