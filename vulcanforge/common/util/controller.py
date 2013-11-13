@@ -2,6 +2,8 @@
 Utilities when working with TG Controllers
 
 """
+import os
+
 from tg import request
 
 
@@ -23,8 +25,7 @@ def get_remainder_path(args, use_ext=True):
 
     """
     path = '/' + '/'.join(args)
-    if use_ext:
-        request_ext = request.response_ext
-        if request_ext and not path.endswith(request_ext):
+    if use_ext and request.response_ext:
+        if not os.path.basename(request.path) == os.path.basename(path):
             path += request.response_ext
     return path
