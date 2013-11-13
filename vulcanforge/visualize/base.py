@@ -1,11 +1,14 @@
 import logging
-from ming.odm import ThreadLocalODMSession
 
 from pylons import app_globals as g
 
 from vulcanforge.taskd import model_task
 from vulcanforge.visualize.model import ProcessedArtifactFile
-from vulcanforge.visualize.widgets import IFrame, ArtifactIFrame, LoadingProcessedWidget
+from vulcanforge.visualize.widgets import (
+    IFrame,
+    ArtifactIFrame,
+    ArtifactDiff,
+    UrlDiff)
 
 LOG = logging.getLogger(__name__)
 
@@ -40,6 +43,8 @@ class BaseVisualizer(object):
         "mime_types": None,
         "extensions": ['*'],
         "description": None,
+        "processing_mime_types": None,
+        "processing_extensions": None,
         "icon": None,
         "priority": 0
     }
@@ -51,6 +56,10 @@ class BaseVisualizer(object):
     # to be visualized. These widgets typically do not need to be overridden.
     artifact_widget = ArtifactIFrame()
     url_widget = IFrame()
+
+    # Diff widgets (defaults to rendering content side by side)
+    artifact_diff_widget = ArtifactDiff()
+    url_diff_widget = UrlDiff()
 
     def __init__(self, config):
         super(BaseVisualizer, self).__init__()
@@ -80,6 +89,11 @@ class BaseVisualizer(object):
             "resource_url": url
         }
 
+    def get_query_for_artifact(self, artifact):
+        query = self.get_query_for_url(artifact.raw_url())
+        query['refId'] = artifact.artifact_ref_id()
+        return query
+
     # these methods are just here to provide hooks for visualizer developers,
     # though the standard way of developing a server side visualizer is to
     # mount the appropriate content_widget on the visualizer class
@@ -92,8 +106,12 @@ class BaseVisualizer(object):
     def render_content(self, value, **kwargs):
         return self.content_widget.display(value, **kwargs)
 
-    def process_artifact(self, artifact):
-        pass
+    def render_diff_url(self, url1, url2, **kwargs):
+        return self.url_diff_widget.display(url1, url2, self, **kwargs)
+
+    def render_diff_artifact(self, artifact1, artifact2, **kwargs):
+        return self.artifact_diff_widget.display(
+            artifact1, artifact2, self, **kwargs)
 
     # hooks
     def on_upload(self, artifact):
@@ -102,21 +120,74 @@ class BaseVisualizer(object):
     def on_config_delete(self):
         pass
 
+    def on_artifact_delete(self, artifact):
+        pass
 
-class OnDemandProcessingVisualizer(BaseVisualizer):
 
-    loading_widget = LoadingProcessedWidget()
+class _BaseProcessingVisualizer(BaseVisualizer):
 
-    def render_artifact(self, artifact, **kwargs):
+    def get_query_for_artifact(self, artifact):
+        query = super(_BaseProcessingVisualizer, self).get_query_for_artifact(
+            artifact)
+        cur = ProcessedArtifactFile.find_from_visualizable(
+            artifact, visualizer_config_id=self.config._id)
+        for pfile in cur:
+            query[pfile.query_param] = pfile.url()
+            if pfile.status == "error":
+                query.update({
+                    "processingStatus": "error",
+                    "processingResourceId": pfile.unique_id
+                })
+            elif pfile.status == "loading" and not query.get(
+                    "processingStatus"):
+                query.update({
+                    "processingStatus": "loading",
+                    "processingResourceId": pfile.unique_id
+                })
+        return query
+
+    def get_processing_status(self, artifact):
+        """
+        :return str (unprocessed, loading, ready, error)
+
+        """
         pfile = ProcessedArtifactFile.get_from_visualizable(
             artifact, visualizer_config_id=self.config._id)
         if pfile:
-            func = super(OnDemandProcessingVisualizer, self).render_artifact
-            content = func(artifact, **kwargs)
+            status = pfile.status
         else:
+            status = 'unprocessed'
+        return status
 
-            content = self.loading_widget.display(artifact, self, **kwargs)
-        return content
+    def on_artifact_delete(self, artifact):
+        cur = ProcessedArtifactFile.find_from_visualizable(
+            artifact, visualizer_config_id=self.config._id)
+        for pfile in cur:
+            pfile.delete()
+
+    def process_artifact(self, artifact):
+        # subclasses should implement this
+        pass
+
+
+class OnUploadProcessingVisualizer(_BaseProcessingVisualizer):
+
+    def on_upload(self, artifact):
+        self.process_artifact(artifact)
+
+
+class OnDemandProcessingVisualizer(_BaseProcessingVisualizer):
+
+    def get_query_for_artifact(self, artifact):
+        # Looking at the query params means its time to process (it can't be on
+        # render_artifact because full_render and visualizer options widget
+        # do not call render_artifact
+        status = self.get_processing_status(artifact)
+        if status == 'unprocessed':
+            self.process_artifact(artifact)
+        super_func = super(
+            OnDemandProcessingVisualizer, self).get_query_for_artifact
+        return super_func(artifact)
 
 
 # For Visualizable artifacts and mapped classes
@@ -140,8 +211,8 @@ class VisualizableMixIn(object):
         return self.url()
 
     @model_task
-    def trigger_visualization_upload_hook(self):
-        for visualizer in g.find_for_processing(self):
+    def trigger_vis_upload_hook(self):
+        for visualizer in g.visualize.find_for_processing(self):
             try:
                 visualizer.on_upload(self)
             except Exception:
@@ -149,16 +220,51 @@ class VisualizableMixIn(object):
                               self.unique_id(), visualizer.name)
 
     @model_task
-    def process_for_visualization(self, force=False):
-        """Invoke pre-visualization processing hooks"""
-        for visualizer in g.find_for_processing(self):
-            if not force:
-                pfile = ProcessedArtifactFile.get_from_visualizable(
-                    self, visualizer_config_id=visualizer.config._id)
-                if pfile:
-                    continue
+    def trigger_vis_delete_hook(self):
+        for visualizer in g.visualize.find_for_processing(self):
             try:
-                visualizer.process_artifact(self)
+                visualizer.on_delete(self)
             except Exception:
-                LOG.exception('Error process artifact %s in visualizer %s',
+                LOG.exception('Error running on_delete hook on %s in %s',
                               self.unique_id(), visualizer.name)
+
+
+class BaseFileProcessor(object):
+    """Generates a single file from an artifact"""
+
+    def __init__(self, artifact, visualizer):
+        self.artifact = artifact
+        self.visualizer = visualizer
+        super(BaseFileProcessor, self).__init__()
+
+    def run(self, pfile):
+        raise NotImplementedError('run')
+
+    @property
+    def processed_filename(self):
+        raise NotImplementedError('processed_filename')
+
+    def make_processed_file(self, status="loading"):
+        pfile = ProcessedArtifactFile.upsert_from_visualizable(
+            self.artifact,
+            self.processed_filename,
+            visualizer_config_id=self.visualizer.config._id,
+            status=status
+        )
+        return pfile
+
+    def full_run(self):
+        pfile = self.make_processed_file()
+        try:
+            result = self.run(pfile)
+        except Exception, e:
+            LOG.info("Error processing {}:{} for {}\n{}".format(
+                self.artifact,
+                self.artifact.unique_id(),
+                self.visualizer,
+                e
+            ))
+            pfile.status = "error"
+        else:
+            pfile.status = "ready"
+            return result

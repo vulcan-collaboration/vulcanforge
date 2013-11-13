@@ -294,7 +294,7 @@ class PostWidget(HierWidget):
             for r in w.resources():
                 yield r
         yield JSLink('js/lib/jquery/jquery.lightbox_me.js')
-        yield JSLink('visualize/visualizer.js')
+        yield JSLink('visualize/js/visualizer_util.js')
         yield JSLink('discussion/post.js')
 
     def display(self, value=None, attachment_context_id=None, **kw):

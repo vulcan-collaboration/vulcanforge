@@ -13,7 +13,7 @@ from ming.odm.odmsession import (
 LOG = logging.getLogger(__name__)
 
 
-class ArtifactSessionExtension(SessionExtension):
+class VFSessionExtension(SessionExtension):
 
     def __init__(self, session):
         SessionExtension.__init__(self, session)
@@ -34,6 +34,14 @@ class ArtifactSessionExtension(SessionExtension):
                 self.objects_modified = [obj]
             elif st.status == st.deleted:
                 self.objects_deleted = [obj]
+
+    def after_flush(self, obj=None):
+        self.objects_added = []
+        self.objects_modified = []
+        self.objects_deleted = []
+
+
+class ArtifactSessionExtension(VFSessionExtension):
 
     def index_deleted(self, deleted_specs):
         """deleted_specs should be a list of dictionaries with keys
@@ -98,32 +106,10 @@ class ArtifactSessionExtension(SessionExtension):
             for app_config in app_configs:
                 app_config.update_label_counts()
 
-        self.objects_added = []
-        self.objects_modified = []
-        self.objects_deleted = []
+        super(ArtifactSessionExtension, self).after_flush(obj)
 
 
-class SOLRSessionExtension(SessionExtension):
-
-    def __init__(self, session):
-        SessionExtension.__init__(self, session)
-        self.objects_added = []
-        self.objects_modified = []
-        self.objects_deleted = []
-
-    def before_flush(self, obj=None):
-        if obj is None:
-            self.objects_added = list(self.session.uow.new)
-            self.objects_modified = list(self.session.uow.dirty)
-            self.objects_deleted = list(self.session.uow.deleted)
-        else:  # pragma no cover
-            st = state(obj)
-            if st.status == st.new:
-                self.objects_added = [obj]
-            elif st.status == st.dirty:
-                self.objects_modified = [obj]
-            elif st.status == st.deleted:
-                self.objects_deleted = [obj]
+class SOLRSessionExtension(VFSessionExtension):
 
     def after_flush(self, obj=None):
         """Update/add to solr"""
@@ -145,9 +131,17 @@ class SOLRSessionExtension(SessionExtension):
         if refs:
             add_global_objs.post([ref._id for ref in refs])
 
-        self.objects_added = []
-        self.objects_modified = []
-        self.objects_deleted = []
+        super(SOLRSessionExtension, self).after_flush(obj)
+
+
+class VisualizableSessionExtension(VFSessionExtension):
+
+    def after_flush(self, obj=None):
+        for obj in self.objects_added + self.objects_modified:
+            obj.trigger_vis_upload_hook()
+        for obj in self.objects_deleted:
+            obj.trigger_vis_delete_hook()
+        super(VisualizableSessionExtension, self).after_flush(obj)
 
 
 main_doc_session = Session.by_name('main')
@@ -163,3 +157,9 @@ repository_orm_session = ThreadLocalODMSession(
 solr_indexed_session = ThreadLocalODMSession(
     doc_session=main_doc_session,
     extensions=[SOLRSessionExtension])
+visualizable_orm_session = ThreadLocalODMSession(
+    doc_session=project_doc_session,
+    extensions=[VisualizableSessionExtension])
+visualizable_artifact_session = ThreadLocalODMSession(
+    doc_session=project_doc_session,
+    extensions=[ArtifactSessionExtension, VisualizableSessionExtension])

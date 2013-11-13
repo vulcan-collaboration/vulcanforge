@@ -78,7 +78,7 @@ class ArtifactLink(ew.Widget):
 
     def display(self, value=None, **kw):
         widget = self.widgets[value.link_type]
-        return widget.display(value=value, **kw)
+        return widget.display(value1=value, **kw)
 
 
 class RelatedArtifactsWidget(Widget):

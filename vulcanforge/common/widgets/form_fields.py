@@ -12,7 +12,7 @@ from ew.render import File
 
 from vulcanforge.common.widgets.util import onready
 from vulcanforge.resources.widgets import JSLink, CSSLink, Widget
-from vulcanforge.visualize.util import get_fs_items
+from vulcanforge.visualize.util import get_visualizer_options
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/form/'
@@ -97,15 +97,15 @@ class Attachment(Widget):
     params = ['value']
 
     def resources(self):
-        yield JSLink('visualize/visualizer.js')
+        yield JSLink('visualize/js/visualizer_util.js')
         yield JSLink('assets/attachment/attachment.js')
 
     def get_mode(self, *args, **kw):
         return 'thumb'
 
     def display(self, value=None, **kw):
-        visualizer_link_items = get_fs_items(
-            value.url(), dl_too=True, size=value.length)
+        visualizer_link_items = get_visualizer_options(
+            value, dl_too=True, size=value.length)
         thumb_url = value.get_thumb_url()
         absolute_url = value.url(absolute=True)
         try:

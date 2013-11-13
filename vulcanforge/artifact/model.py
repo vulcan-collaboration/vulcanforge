@@ -1,5 +1,4 @@
 import logging
-import os
 from collections import defaultdict
 from datetime import datetime
 from pprint import pformat
@@ -16,7 +15,7 @@ from ming.odm import (
     FieldProperty,
     ForeignIdProperty,
     RelationProperty
-    )
+)
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 
@@ -25,15 +24,18 @@ from vulcanforge.s3.model import File
 from vulcanforge.common.model.session import (
     artifact_orm_session,
     project_orm_session,
-    main_orm_session)
+    main_orm_session,
+    visualizable_orm_session,
+    visualizable_artifact_session)
 from vulcanforge.common.helpers import absurl, urlquote
-from vulcanforge.common.util import nonce, temporary_dir
+from vulcanforge.common.util import nonce
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACL
 from vulcanforge.project.model import Project
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.util import gen_message_id
+from vulcanforge.taskd import model_task
 from vulcanforge.visualize.base import VisualizableMixIn
 
 LOG = logging.getLogger(__name__)
@@ -839,7 +841,7 @@ class Feed(MappedClass):
         return feed
 
 
-class BaseAttachment(VisualizableMixIn, File):
+class BaseAttachment(File, VisualizableMixIn):
     thumbnail_size = (96, 96)
     ArtifactType = None
 
@@ -847,7 +849,7 @@ class BaseAttachment(VisualizableMixIn, File):
         name = 'attachment'
         polymorphic_on = 'attachment_type'
         polymorphic_identity = None
-        session = project_orm_session
+        session = visualizable_orm_session
         indexes = ['artifact_id', 'app_config_id'] + File.__mongometa__.indexes
 
     artifact_id = FieldProperty(S.ObjectId)
@@ -920,6 +922,16 @@ class BaseAttachment(VisualizableMixIn, File):
 
     def artifact_ref_id(self):
         return self.artifact.index_id()
+
+    @model_task
+    def trigger_vis_upload_hook(self):
+        # process attachments immediately
+        for visualizer in g.visualize.find_for_processing(self):
+            try:
+                visualizer.process_artifact(self)
+            except Exception:
+                LOG.exception('Error running on_upload hook on %s in %s',
+                              self.unique_id(), visualizer.name)
 
 
 # Ephemeral Functions for ArtifactReference
@@ -1311,6 +1323,9 @@ class Shortlink(BaseMappedClass):
 
 
 class VisualizableArtifact(Artifact, VisualizableMixIn):
+
+    class __mongometa__:
+        session = visualizable_artifact_session
 
     def unique_id(self):
         return self.index_id()

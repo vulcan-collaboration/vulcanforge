@@ -1,0 +1,14 @@
+
+<div id="visualizerDiffTabs_{{ uid }}" class="visualizerTabsWrapper visualizerDiffTabs visualizerWrapper">
+    <div class="visualizerTabs visualizerToolbar">
+        <ul>
+            {% for diff_spec in diff_specs %}
+            <li><a href="#{{ diff_spec.slug }}">{{ diff_spec.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% for diff_spec in diff_specs %}
+    <div id="{{ diff_spec.slug }}">{{ diff_spec.content | safe }}</div>
+    {% endfor %}
+</div>
+

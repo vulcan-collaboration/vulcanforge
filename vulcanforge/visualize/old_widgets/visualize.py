@@ -72,7 +72,7 @@ class DispatchWidget(Widget):
         )
         g.resource_manager.register(widget)
         return widget.display(
-            value=value, visualizer=visualizer, visualizers=visualizers, **kw
+            value1=value, visualizer=visualizer, visualizers=visualizers, **kw
         )
 
 
@@ -207,46 +207,6 @@ class S3Content(BaseContentWidget):
         for header, val in headers.iteritems():
             response.headers[header] = val
         return r.read()
-
-
-class DesignSpace(BaseContentWidget):
-    template = TEMPLATE_DIR + 'design_space.html'
-
-    def resources(self):
-
-        page_JS_urls = [
-            'js/lib/jquery/jquery.1.7.2.min.js',
-            'js/lib/jquery/jquery-ui.1.10.3.js',
-            'js/lib/jquery/jquery.qtip.js',
-            'js/lib/raphael/raphael.js',
-            'js/lib/utils.js',
-            'js/lib/dragscrollable.js',
-            'assets/data_pump/DataPump.js',
-            'visualize/design_space_visualizer/DesignSpace.js',
-            'visualize/topology_visualizer/TopologyVisualizer.js'
-        ]
-
-        page_CSS_urls = [
-            'css/core.scss',
-            'artifact/artifact.scss',
-            'visualize/design_space_visualizer/design_space.scss'
-        ]
-
-        for url in page_JS_urls:
-            yield JSLink(url)
-
-        for url in page_CSS_urls:
-            yield CSSLink(url)
-
-    def display(self, value=None, visualizer=None, **kw):
-        base_url, query = urllib.splitquery(request.url)
-        params = dict(urlparse.parse_qsl(urllib.unquote(query)))
-        if 'service_url' not in params and value:
-            service_url = '{}/home/design_api'.format(
-                '/'.join(value.split('/', 3)[0:3]))
-        else:
-            service_url = params['service_url']
-        return super(DesignSpace, self).display(service_url=service_url, **kw)
 
 
 class ContentVisualizer(DispatchWidget):

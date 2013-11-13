@@ -9,12 +9,12 @@ from ming.odm.property import (
     ForeignIdProperty,
     RelationProperty
 )
-from ming import schema, session
+from ming import schema
+from ming.odm import session
 from ming.utils import LazyProperty
 from pylons import tmpl_context as c
 from pymongo.errors import DuplicateKeyError
 
-from vulcanforge.artifact.model import ArtifactReference
 from vulcanforge.s3.model import File
 from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.model.session import main_orm_session
@@ -70,7 +70,7 @@ class VisualizerConfig(BaseMappedClass):
     icon = FieldProperty(str)
     mime_types = FieldProperty([str])
     extensions = FieldProperty([str], if_missing=['*'])
-    processing_mime_types = FieldProperty([str])
+    processing_mime_types = FieldProperty([str], if_missing=None)
     processing_extensions = FieldProperty([str], if_missing=['*'])
     priority = FieldProperty(int, if_missing=0)
     active = FieldProperty(bool, if_missing=True)
@@ -109,9 +109,11 @@ class VisualizerConfig(BaseMappedClass):
 
     @classmethod
     def find_for_mtype_ext(cls, mime_type=None, extensions=None):
+        if extensions is None:
+            extensions = []
         configs = []
         query = {"extensions": {"$in": extensions + ['*']}}
-        cur = cls.query.find_active(query)
+        cur = cls.find_active(query)
 
         if mime_type:
             configs = [vc for vc in cur if cls._matches_mime_type(
@@ -124,13 +126,16 @@ class VisualizerConfig(BaseMappedClass):
 
     @classmethod
     def find_for_processing_mtype_ext(cls, mime_type=None, extensions=None):
+        if extensions is None:
+            extensions = []
         configs = []
         query = {"processing_extensions": {"$in": extensions + ['*']}}
-        cur = cls.query.find_active(query)
+        cur = cls.find_active(query)
 
         if mime_type:
-            configs = [vc for vc in cur if cls._matches_mime_type(
-                mime_type, vc.processing_mime_types)]
+            configs = [vc for vc in cur
+                       if vc.processing_mime_types and cls._matches_mime_type(
+                           mime_type, vc.processing_mime_types)]
         elif extensions:
             configs = [vc for vc in cur if cls._matches_extensions(
                 extensions, vc.processing_extensions)]
@@ -213,9 +218,9 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
 
     query_param = FieldProperty(str, if_missing='resource_url')
     unique_id = FieldProperty(str)
-    ref_id = ForeignIdProperty(ArtifactReference, if_missing=None)
+    ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
     status = FieldProperty(
-        schema.OneOf('loading', 'ready', if_missing='ready'))
+        schema.OneOf('loading', 'ready', 'error', if_missing='ready'))
 
     @classmethod
     def get_from_visualizable(cls, visualizable, **kwargs):
@@ -224,7 +229,7 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
     @classmethod
     def find_from_visualizable(cls, visualizable, **kwargs):
         kwargs['unique_id'] = visualizable.unique_id()
-        return cls.query.get(**kwargs)
+        return cls.query.find(kwargs)
 
     @classmethod
     def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
@@ -235,16 +240,18 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
                 pfile = cls(
                     unique_id=visualizable.unique_id(),
                     filename=filename)
-                session(pfile).flush(pfile)
+                session(cls).flush(pfile)
             except DuplicateKeyError:  # pragma no cover
                 session(pfile).expunge(pfile)
         kwargs.setdefault('ref_id', visualizable.artifact_ref_id())
         for name, value in kwargs.items():
             setattr(pfile, name, value)
+        session(cls).flush(pfile)  # flush to prevent conflict
         return pfile
 
     @LazyProperty
     def artifact(self):
+        from vulcanforge.artifact.model import ArtifactReference
         if self.ref_id:
             aref = ArtifactReference.query.get(_id=self.ref_id)
             if aref:

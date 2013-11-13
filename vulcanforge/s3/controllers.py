@@ -7,7 +7,7 @@ from pylons import app_globals as g
 from tg import expose, redirect, config, response
 
 from vulcanforge.common.controllers import BaseController, BaseRestController
-from vulcanforge.common.helpers import urlquote
+from vulcanforge.common.helpers import urlquote, urlunquote
 from vulcanforge.common.util.controller import get_remainder_path
 from vulcanforge.common.util.filesystem import guess_mime_type
 
@@ -34,7 +34,7 @@ class BucketController(BaseRestController):
 
         """
         force_local = asbool(kwargs.get('force_local', False))
-        keyname = get_remainder_path(map(urlquote, args))
+        keyname = get_remainder_path(map(urlunquote, args))
         if not g.s3_serve_local and not force_local:
             # redirect to remote
             remote_url = '{base_url}{prefix}/{bucket}{key}'.format(
@@ -46,7 +46,7 @@ class BucketController(BaseRestController):
             redirect(remote_url)
         g.s3_auth.require_access(self.bucket.name + keyname, method="GET")
         LOG.debug('S3 Proxy GET Request to %s', keyname)
-        resp = g.s3.make_request("GET", self.bucket, keyname)
+        resp = g.s3.make_request("GET", self.bucket, urlquote(keyname))
         if resp.status != 200:
             raise exc.HTTPNotFound(keyname)
         headers = dict(resp.getheaders())

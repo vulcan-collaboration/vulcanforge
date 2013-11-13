@@ -12,7 +12,7 @@ from pylons import tmpl_context as c, app_globals as g
 from tg.decorators import expose, validate
 
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.visualize.model import VisualizerConfig
+from vulcanforge.visualize.model import VisualizerConfig, ProcessedArtifactFile
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
@@ -44,12 +44,10 @@ class VisualizerRootController(BaseController):
 
         # try to find a matching id
         visualizer = VisualizerConfig.query.get(_id=vis_id)
-        # try to find a matching mime-type
-        if visualizer is None:  # pragma no cover
-            visualizer = VisualizerConfig.query.get({
-                'mime_types': key
-            })
-        vc = VisualizerController(visualizer)
+        if visualizer is None:
+            raise exc.HTTPNotFound
+
+        vc = VisualizerController(visualizer.load())
 
         return vc, remainder
 
@@ -66,12 +64,19 @@ class VisualizerController(BaseController):
     @expose()
     def content(self, resource_url='', *args, **kw):
         """Renders visualizer content"""
-        # check permissions
-        if self.visualizer is None:
-            raise exc.HTTPForbidden()
+        return self.visualizer.render_content(resource_url)
 
-        visualizer_obj = self.visualizer.load()
-        return visualizer_obj.render_content(resource_url)
+    @expose('json')
+    def processed_status(self, unique_id, **kwargs):
+        pfile = ProcessedArtifactFile.query.get(
+            visualizer_config_id=self.visualizer.config._id,
+            unique_id=ObjectId("unique_id")
+        )
+        if pfile:
+            result = {"status": pfile.status}
+        else:
+            result = {"status": "unprocessed"}
+        return result
 
     @expose(TEMPLATE_DIR + 'fullscreen.html')
     def fs(self, resource_url=None, iframe_query=None, **kw):
@@ -90,7 +95,7 @@ class VisualizerController(BaseController):
         filename = os.path.basename(base_url)
         return dict(
             logo_url=g.home_url,
-            active_visualizer=self.visualizer,
+            visualizer=self.visualizer,
             filename=filename,
             query_str=urllib.urlencode(query_params, doseq=True),
             base_query=urllib.urlencode(base_query, doseq=True),

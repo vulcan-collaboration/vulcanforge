@@ -72,7 +72,7 @@ function renderTabbedVisualizer(config) {
         $element = config.element,
         downloadUrl = config.downloadUrl,
         filename = config.filename,
-        $contentE = $('<div/>', {"class": 'visualizerTabsContent'}),
+        $iframeE = $('<iframe/>', {"class": 'visualizerContainer'}),
         visualizerToolbarE,
         newWindowB,
         toolbarTabsUL,
@@ -89,14 +89,11 @@ function renderTabbedVisualizer(config) {
     /* --new window button */
     newWindowB = new $vf.NewWindowButton(visualizerSpecs[0].fullscreen_url, {
         "generateUrl": function(url){
-            var iframeSearchStr = null,
-                $iframeE = $contentE.find('iframe');
-            if ($iframeE.length){
-                iframeSearchStr = $iframeE.location.search;
-                if (iframeSearchStr.charAt(0) === '?'){
-                    iframeSearchStr = iframeSearchStr.slice(1);
-                    url += '&iframe_query=' + encodeURIComponent(iframeSearchStr);
-                }
+            var iframeSearchStr = null;
+            iframeSearchStr = $iframeE.location.search;
+            if (iframeSearchStr.charAt(0) === '?'){
+                iframeSearchStr = iframeSearchStr.slice(1);
+                url += '&iframe_query=' + encodeURIComponent(iframeSearchStr);
             }
             return url;
         }
@@ -107,24 +104,33 @@ function renderTabbedVisualizer(config) {
         "class": "ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-corner-all"
     });
     $.each(visualizerSpecs, function(i, spec){
+        var thisTab;
         if (!spec.hasOwnProperty("fullscreen_url")){
             spec.fullscreen_url = '#';
         }
-        toolbarTabsUL.append($('<li/>', {
-            "class": "ui-state-default ui-corner-top" + (spec.active === true ? " ui-state-active ui-tabs-selected" : " ui-tabs-unselected")
+        thisTab = $('<li/>', {
+            "class": "ui-state-default ui-corner-top" +
+                (spec.active === true ? " ui-state-active ui-tabs-selected" : " ui-tabs-unselected")
         }).append($('<a/>', {
             "href": spec.fullscreen_url,
             "text": spec.name,
             "title": "View with " + spec.name,
             "click": function(){
-                toolbarTabsUL.find('li.ui-tabs-selected').removeClass('ui-tabs-selected ui-state-active').addClass('ui-tabs-unselected');
-                $(this).parent().addClass('ui-tabs-selected ui-state-active').removeClass('ui-tabs-unselected');
-                $contentE.html(spec.content);
+                toolbarTabsUL
+                    .find('li.ui-tabs-selected')
+                    .removeClass('ui-tabs-selected ui-state-active')
+                    .addClass('ui-tabs-unselected');
+                $(this).parent().addClass('ui-tabs-selected ui-state-active')
+                                .removeClass('ui-tabs-unselected');
+                $iframeE.attr("src", spec.iframe_url);
                 newWindowB.setUrl(spec.fullscreen_url);
                 return false;
             }
-        }))
-        );
+        }));
+        toolbarTabsUL.append(thisTab);
+        if (i === 0){
+            thisTab.find("a").click();
+        }
     });
 
     /* --download button */
@@ -161,7 +167,7 @@ function renderTabbedVisualizer(config) {
     });
     visualizerWrapperE
         .append(visualizerToolbarE)
-        .append($contentE)
+        .append($iframeE)
         .append(visualizerFooterE);
     $element.html(visualizerWrapperE);
 }

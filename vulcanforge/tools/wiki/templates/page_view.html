@@ -6,7 +6,7 @@
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
 {% do g.resource_manager.register_css('css/hilite.css') %}
 
-{% do g.resource_manager.register_js('visualize/visualizer.js') %}
+{% do g.resource_manager.register_js('visualize/js/visualizer_util.js') %}
 
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}}{% endblock %}
 

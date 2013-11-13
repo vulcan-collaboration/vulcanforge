@@ -11,6 +11,7 @@ from ming.odm import FieldProperty
 
 from pylons import app_globals as g, tmpl_context as c
 
+from vulcanforge.common.model.session import visualizable_artifact_session
 from vulcanforge.artifact.model import Artifact, VisualizableArtifact
 
 
@@ -33,6 +34,7 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
 
     class __mongometa__:
         name = 'forgedownloads_file'
+        session = visualizable_artifact_session
         indexes = [
             'mod_date',
             ('app_config_id', 'item_key'),

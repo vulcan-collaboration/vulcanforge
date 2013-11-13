@@ -14,7 +14,7 @@ class SyncVisualizersCommand(base.Command):
         '-s', '--shortname', dest='shortname',
         help="shortname of visualizer to sync (defaults to all)")
     parser.add_option(
-        '-u', '--update_existing', dest='update_existing',
+        '-u', '--update_existing', dest='update_existing', action="store_true",
         help="Update existing visualizers with options on default_options "
              "attribute of Visualizer class")
 
@@ -29,6 +29,10 @@ class SyncVisualizersCommand(base.Command):
             model_inst = VisualizerConfig.query.get(shortname=shortname)
             if model_inst:
                 if self.options.update_existing:
+                    model_inst.visualizer = {
+                        "classname": visualizer_obj.__name__,
+                        "module": visualizer_obj.__module__
+                    }
                     for key, value in visualizer_obj.default_options.items():
                         setattr(model_inst, key, value)
             else:

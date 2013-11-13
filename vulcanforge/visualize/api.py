@@ -1,16 +1,10 @@
-import os
-import posixpath
-import mimetypes
-import urllib
-from urlparse import urlparse
-
-from vulcanforge.visualize.exceptions import VisualizerError
-from vulcanforge.visualize.model import VisualizerConfig
-from vulcanforge.visualize.widgets import TabbedVisualizers
 
 
-def raise_error(msg):
-    raise VisualizerError(msg)
+from vulcanforge.visualize.resource_interface import (
+    ArtifactResourceInterface,
+    UrlResourceInterface
+)
+from vulcanforge.visualize.widgets import TabbedVisualizers, TabbedDiffs
 
 
 class VisualizerAPI(object):
@@ -22,6 +16,10 @@ class VisualizerAPI(object):
 
     """
     full_render_widget = TabbedVisualizers()
+    full_diff_widget = TabbedDiffs()
+
+    artifact_interface_cls = ArtifactResourceInterface
+    url_interface_cls = UrlResourceInterface
 
     _additional_text_extensions = {
         '.ini',
@@ -30,168 +28,102 @@ class VisualizerAPI(object):
         'readme'
     }
 
-    def full_render_artifact(self, artifact, shortnames=None, active=None,
-                             extra_params=None, **kwargs):
+    def full_render_artifact(self, artifact, **kwargs):
         """
         Render artifact with toolbar "chrome" on the top
 
         @param shortnames list of visualizer shortnames to use
-        @param active str shortname of visualizer to make active
+        @param active_shortname str shortname of visualizer to make active
         @param kwargs passed on to the render_artifact function on the
             visualizer
 
         """
-        specs = []
-        if shortnames:
-            cur = VisualizerConfig.query.find(
-                {"shortname": {"$in": shortnames}})
-            visualizers = [config.load() for config in cur]
-        else:
-            visualizers = self.find_visualizers_by_artifact(artifact)
-        for visualizer in visualizers:
-            if not active:
-                active = visualizer.config.shortname
-            spec = self._make_spec_for_full(
-                artifact.url(), visualizer, extra_params, active)
-            spec["content"] = visualizer.render_artifact(
-                artifact, extra_params=extra_params, **kwargs)
-            specs.append(spec)
-        return self.full_render_widget.display(
-            specs,
-            filename=os.path.basename(artifact.url()),
-            download_url=artifact.raw_url(),
-            **kwargs)
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.full_render(**kwargs)
 
-    def full_render_url(self, url, shortnames=None, active=None,
-                        extra_params=None, **kwargs):
+    def full_render_url(self, url, **kwargs):
         """
         Render artifact with toolbar on the top
 
         @param shortnames list of visualizer shortnames to use
-        @param active str shortname of visualizer to make active
+        @param active_shortname str shortname of visualizer to make active
         @param kwargs passed on to the render_url function on the
             visualizer
 
         """
-        specs = []
-        if shortnames:
-            cur = VisualizerConfig.query.find(
-                {"shortname": {"$in": shortnames}})
-            visualizers = [config.load() for config in cur]
-        else:
-            visualizers = self.find_visualizers_by_url(url)
-        for visualizer in visualizers:
-            if not active:
-                active = visualizer.config.shortname
-            spec = self._make_spec_for_full(
-                url, visualizer, extra_params, active)
-            spec["content"] = visualizer.render_url(
-                url, extra_params=extra_params, **kwargs)
-            specs.append(spec)
-        return self.full_render_widget.display(
-            specs,
-            filename=os.path.basename(url),
-            download_url=url,
-            **kwargs)
+        interface = self.url_interface_cls(url, self)
+        return interface.full_render(**kwargs)
 
-    def render_artifact(self, artifact, shortname=None,
-                        on_not_found=raise_error, **kwargs):
-        visualizer = self._get_visualizer_for_render(
-            artifact.url(), shortname, on_not_found=on_not_found)
-        return visualizer.render_artifact(artifact, **kwargs)
+    def render_artifact(self, artifact, shortname=None, **kwargs):
+        """Render an artifact with a single visualizer with no toolbar
 
-    def render_url(self, s, shortname=None, on_not_found=raise_error,
-                   **kwargs):
-        visualizer = self._get_visualizer_for_render(
-            s, shortname, on_not_found=on_not_found)
-        return visualizer.render_url(s, **kwargs)
+        @param shortname: shortname of visualizer to use to render
+        @param kwargs: kwargs to pass on to the render_artifact function of the
+            visualizer
 
-    def get_icon_url(self, s, shortname=None):
-        visualizer = self._get_visualizer_for_render(s, shortname)
-        if visualizer:
-            return visualizer.icon_url
+        """
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.render(shortname=shortname, **kwargs)
 
-    def find_configs_by_url(self, url):
-        mtype, extensions = self._get_mimetype_ext(url)
-        cur = VisualizerConfig.find_for_mtype_ext(
-            mime_type=mtype, extensions=extensions)
-        return cur
+    def render_url(self, url, shortname=None, **kwargs):
+        """Render a url with a single visualizer with no toolbar
+
+        @param shortname: shortname of visualizer to use to render
+        @param kwargs: kwargs to pass on to the render_artifact function of the
+            visualizer
+
+        """
+        interface = self.url_interface_cls(url, self)
+        return interface.render(shortname=shortname, **kwargs)
+
+    def get_icon_url(self, url, shortname=None):
+        interface = self.url_interface_cls(url, self)
+        return interface.get_icon_url(shortname)
 
     def find_visualizers_by_url(self, url):
-        return [vc.load() for vc in self.find_configs_by_url(url)]
+        interface = self.url_interface_cls(url, self)
+        return interface.find_visualizers()
 
     def get_visualizer_by_url(self, url):
-        vc = self.find_configs_by_url(url).first()
-        if vc:
-            return vc.load()
+        interface = self.url_interface_cls(url, self)
+        return interface.get_visualizer()
 
     def find_visualizers_by_artifact(self, artifact):
-        mtype, extensions = self._get_mimetype_ext(artifact.url())
-        cur = VisualizerConfig.find_for_all_mtype_ext(
-            mime_type=mtype, extensions=extensions)
-        return [vc.load() for vc in cur]
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.find_visualizers()
 
     def get_visualizer_by_artifact(self, artifact):
-        visualizers = self.find_visualizers_by_artifact(artifact)
-        if visualizers:
-            return visualizers[0]
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.get_visualizer()
 
     def find_for_processing(self, artifact):
-        mtype, extensions = self._get_mimetype_ext(artifact.url())
-        cur = VisualizerConfig.find_for_processing_mtype_ext(
-            mime_type=mtype, extensions=extensions)
-        return [vc.load() for vc in cur]
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.find_for_processing()
 
-    def _make_spec_for_full(self, url, visualizer, extra_params=None,
-                            active=None):
-        query = visualizer.get_query_for_url(url)
-        if extra_params:
-            query.update(extra_params)
-        query_str = urllib.urlencode(query)
-        spec = {
-            "name": visualizer.name,
-            "fullscreen_url": visualizer.fs_url + '?' + query_str,
-            "active": active and visualizer.config.shortname == active,
-        }
-        return spec
+    def content_urls_for_artifact(self, artifact, visualizer,
+                                  extra_params=None):
+        interface = self.artifact_interface_cls(artifact, self)
+        return interface.get_content_urls_for_visualizer(
+            visualizer, extra_params)
 
-    def _get_visualizer_for_render(self, url, shortname=None,
-                                   on_not_found=None):
-        visualizer = None
-        if shortname:
-            config = VisualizerConfig.query.get(shortname=shortname)
-            if config:
-                visualizer = config.load()
-            elif on_not_found:
-                on_not_found()
-        else:
-            visualizer = self.get_visualizer_by_url(url)
-        return visualizer
+    def content_urls_for_url(self, url, visualizer, extra_params=None):
+        interface = self.url_interface_cls(url, self)
+        return interface.get_content_urls_for_visualizer(
+            visualizer, extra_params)
 
-    def _get_mimetype_ext(self, url):
-        parsed = urlparse(url)
-        filename = os.path.basename(parsed.path)
-        extensions = []
-        base = filename.lower()
-        remainder = ''
-        mtype = None
-        while True:
-            base, ext = posixpath.splitext(base)
-            if ext in self._additional_text_extensions or (
-                    not ext and not mtype and
-                        base in self._additional_text_extensions):
-                mtype = 'text/plain'
-            if not ext:
-                break
-            while ext in mimetypes.suffix_map:
-                base, ext = posixpath.splitext(
-                    base + mimetypes.suffix_map[ext])
-            if ext in mimetypes.encodings_map:
-                base, ext = posixpath.splitext(base)
-            extensions.append(ext + remainder)
-            remainder = ext + remainder
+    def full_diff_artifact(self, artifact1, artifact2, shortnames=None,
+                           **kwargs):
+        interface = self.artifact_interface_cls(artifact1, self)
+        return interface.full_diff(artifact2, shortnames=shortnames, **kwargs)
 
-        if not mtype:
-            mtype = mimetypes.guess_type(filename)[0]
+    def full_diff_url(self, url1, url2, shortnames=None, **kwargs):
+        interface = self.url_interface_cls(url1, self)
+        return interface.full_diff(url2, shortnames=shortnames, **kwargs)
 
-        return mtype, extensions
+    def diff_artifact(self, artifact1, artifact2, shortname=None, **kwargs):
+        interface = self.artifact_interface_cls(artifact1, self)
+        return interface.diff(artifact2, shortname=shortname, **kwargs)
+
+    def diff_url(self, url1, url2, shortname=None, **kwargs):
+        interface = self.url_interface_cls(url1, self)
+        return interface.diff(url2, shortname=shortname, **kwargs)

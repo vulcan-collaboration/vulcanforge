@@ -3,8 +3,6 @@
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
 
-{% do g.resource_manager.register_js('visualize/visualizer.js') %}
-
 {% block title %}{{ config.get("forge_name", "Forge") }} {{page.title}}{% endblock %}
 
 {% block header %}{{page.title}}{% endblock %}

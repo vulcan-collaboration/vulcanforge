@@ -6,8 +6,12 @@
     border: 0px solid #aaa;
     padding:  0px;
     margin:  0px;
-    border-bottom:  1px solid #999;
+    border-bottom: 1px solid #999;
     background-color: #fff;
+}
+
+.visualizerHalfWidth .visualizerContainer {
+    width: 49%;
 }
 
 .visualizerWrapper .visualizerToolbar {
@@ -20,7 +24,7 @@
 }
 
 .visualizerWrapper .visualizerContainer {
-    height: 700px;
+    height: 100%;
 }
 
 .visualizerFooter {
@@ -97,31 +101,37 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     border-top-right-radius: 4px;
 }
 
-.visualizerTabs li.ui-tabs-selected{
+.visualizerTabs .ui-state-default{
+    @include linearGradient2(top, #555, #393939);
+    border-bottom-width: 0;
+}
+
+.visualizerTabs li.ui-tabs-active{
     cursor: default;
     @include linearGradient2(top, #fff, #ddd);
+    border-bottom-width: 2.5px;
 }
 
-.visualizerTabs li.ui-tabs-unselected{
-    @include linearGradient2(top, #555, #393939);
-    border-bottom: none;
-    color: #fff;
-}
-
-.visualizerTabs li.ui-tabs-unselected:hover{
+.visualizerTabs li:hover{
     background-image: none;
     @include linearGradient2(top, #000, #111);
 }
 
-.visualizerTabs li.ui-tabs-unselected a {
+.visualizerTabs li.ui-tabs-active:hover{
+    @include linearGradient2(top, #fff, #ddd);
+}
+
+.visualizerTabs li.ui-state-default a {
     color: #eee;
     text-shadow: 0 0 1px #000;
 }
 
-.visualizerTabs li.ui-tabs-selected a{
+.visualizerTabs li.ui-tabs-active a{
     cursor: default;
     border-top-left-radius: 1em;
     border-top-right-radius: 1em;
+    text-shadow: none;
+    color: #333;
 }
 
 .visualizerTabs li a {
@@ -129,7 +139,7 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
 }
 
 .visualizerTabs a.dl-link{
-    background-image: url("visualize/images/download_icon.png");
+    background-image: url("images/download_icon.png");
     background-position: center center;
     background-repeat: no-repeat;
     height: 24px;
@@ -137,7 +147,7 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     display: inline-block;
 }
 
-.vis-repo iframe.visualizerContainer{
+iframe.visualizerContainer{
     min-height: 700px;
 }
 
@@ -166,4 +176,9 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     position: absolute;
     right: 0;
     border-radius: 1em;
+}
+
+.fullscreen-vis .visualizerToolbar div.visualizerTabs {
+    float: right;
+    margin-right: 15px;
 }

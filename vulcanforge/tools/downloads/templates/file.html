@@ -2,7 +2,6 @@
 {% set has_related_artifacts = True %}
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
-{% do g.resource_manager.register_js('visualize/visualizer.js') %}
 
 {% block title %}
 {{c.project.name}} / {{c.app.config.options.mount_label}}

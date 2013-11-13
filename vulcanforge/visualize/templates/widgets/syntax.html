@@ -11,19 +11,17 @@
 
 {% block extra_js %}
 <script type="text/javascript">
-    $(function(){
-        var codeContainer = $('#{{uid}}code');
-        $.ajax({
-            url: "{{value|safe}}",
-            dataType: "text",
-            xhrFields: {
-                withCredentials: {{with_credentials}}
-            },
-            success: function(resp){
-                resp = $vf.xmlEscape(resp);
-                codeContainer.html(prettyPrintOne(resp, null, true));
-            }
-        });
+    var codeContainer = $('#{{uid}}code');
+    $.ajax({
+        url: "{{value|safe}}",
+        dataType: "text",
+        xhrFields: {
+            withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
+        },
+        success: function(resp){
+            resp = $vf.xmlEscape(resp);
+            codeContainer.html(prettyPrintOne(resp, null, true));
+        }
     });
 </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 body.fullscreen-vis{
     overflow: hidden;
+    background-color: #000;
 }
 .visualizer_options{
     position: absolute;
@@ -37,10 +38,6 @@ body.fullscreen-vis{
 
 .vis-fullscreen .visualizerToolbar{
     height: 36px;
-}
-
-.vis-fullscreen .visualizerWrapper{
-    padding-top: 30px;
 }
 
 body.vis-fullscreen .visualizerTabs {

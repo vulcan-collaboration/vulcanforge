@@ -14,7 +14,6 @@
 {% do g.resource_manager.register_js('js/lib/utils.js') %}
 {% do g.resource_manager.register_js('js/vf.js') %}
 
-{% do g.resource_manager.register_js('visualize/visualizer.js') %}
 {% do g.resource_manager.register_js('artifact/Artifact.js') %}
         
 {% do g.resource_manager.register_js('assets/workspace/Workspace.js') %}
@@ -29,7 +28,7 @@
 
 <html>
 <head>
-    <title>{{active_visualizer.name}}</title>
+    <title>{{ filename }} | {{visualizer.name}}</title>
 
     {% for blob in g.resource_manager.emit('css') %}
     {{ blob }}
@@ -41,7 +40,16 @@
         <div class="visualizerToolbar" id="visualizerToolbar">
             <a href="{{logo_url}}" id="vfLink" title="Vehicle Forge"></a>
             <div id="messages"></div>
-            {{ g.visualize.full_render_url(resource_url, active_visualizer=active_visualizer) }}
+            <div class="visualizerTabs">
+                <ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-corner-all">
+                    <li class="ui-state-default ui-corner-top ui-tabs-unselected">
+                        <a class="dl-link" href="{{ resource_url }}" title="Download {{ filename }}"></a>
+                    </li>
+                </ul>
+            </div>
+            <div style="clear: both"></div>
+        </div>
+        {{ visualizer.render_url(resource_url) }}
         <div id="right-toolbar">
             <div class="toolbar-upper">
                 {{ theme_macros.project_floating_details() }}
@@ -49,14 +57,17 @@
             <div class="toolbar-lower">
             </div>
         </div>
+        <div class="visualizerFooter" id="visualizerFooter">
+            <div class="visualizerFilename">Source: {{filename}}</div>
+        </div>
     </div>
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}
 {% endfor %}
 <script type="text/javascript">
     $(document).ready(function () {
-        var visualizerContainerE = $('#visualizerContainer');
-        var lessHeight = $('#visualizerToolbar').outerHeight()+$('#visualizerFooter').outerHeight()+2;
+        var visualizerContainerE = $('.visualizerWrapper');
+        var lessHeight = $('#visualizerToolbar').outerHeight() + $('#visualizerFooter').outerHeight()+2;
 
         visualizerContainerE.height($(window).height() - lessHeight);
         visualizerContainerE.width($(window).width() - 20);
@@ -64,14 +75,6 @@
         $(window).resize(function() {
             visualizerContainerE.height($(window).height() - lessHeight);
             visualizerContainerE.width($(window).width() - 20);
-        });
-
-        $('.visualizerTabs li.selectable a').click(function(){
-            var li = $(this).parent();
-            li.siblings('li.ui-tabs-selected').removeClass('ui-tabs-selected ui-state-active').addClass('ui-tabs-unselected');
-            li.addClass('ui-tabs-selected ui-state-active').removeClass('ui-tabs-unselected');
-            visualizerContainerE.attr('src', $(this).attr('href'));
-            return false;
         });
 
         {% for n in h.pop_user_notifications() %}
