@@ -91,7 +91,7 @@
                                             <td class="label-cell">
                                                 <input type="hidden" name="app_config_ids" value="{{ app_config._id }}">
                                                 <a href="{{ app_config.url() }}">
-                                                    <img class="app_config-icon" src="{{ app_config.load().icon_url(32) }}" alt="{{ app_config.options.mount_label }}">
+                                                    <img class="app_config-icon" src="{{ app_config.icon_url(32) }}" alt="{{ app_config.options.mount_label }}">
                                                     {{ app_config.options.mount_label }}<br>
                                                     <em>({{ app_config.tool_name }})</em>
                                                 </a>

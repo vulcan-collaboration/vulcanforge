@@ -595,6 +595,21 @@
                             that.$tooltip.
                                 hide();
                         }
+                    },
+                    'plotclick': function (e, pos, item) {
+                        var entry = null;
+                        if (item !== null) {
+                            if (item.series.label === 'Other'){
+                                entry = others;
+                            } else {
+                                entry = dataset[item.seriesIndex];
+                            }
+                            that.options.selectedLabel = item.series.label;
+                            that.element.trigger('labelSelected.vfStats', {
+                                label: item.series.label,
+                                entry: entry
+                            });
+                        }
                     }
                 });
                 this.element.bind('mouseleave', function () {
