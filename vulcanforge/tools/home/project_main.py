@@ -139,16 +139,17 @@ class ProjectHomeController(BaseController):
                     app = App(c.project, ac)
                     # permission descriptions
                     perm_descriptions = []
-                    for p in app.permissions:
-                        if g.security.has_access(app, p):
-                            if p in app.permission_descriptions:
-                                perm_descriptions.append(
-                                    'You can {}'.format(
-                                        app.permission_descriptions[p])
-                                )
-                            else:
-                                perm_descriptions.append(
-                                    'You have the {} permission'.format(p))
+                    if type(app.permissions) is dict:
+                        for p in app.permissions:
+                            if g.security.has_access(app, p):
+                                if p in app.permissions and app.permissions[p]:
+                                    perm_descriptions.append(
+                                        'You can {}'.format(
+                                            app.permissions[p].lower())
+                                    )
+                                else:
+                                    perm_descriptions.append(
+                                        'You have the {} permission'.format(p))
                     # tool infos
                     tool_actions = {
                         k: ac.url() + v['url']

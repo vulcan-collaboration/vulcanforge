@@ -42,7 +42,7 @@
                 <td>{{abbr_date(p.mod_date)}}
                     <div class="avatar-list">by {{g.avatar.display(user=p.author_user, size=16, compact=True)}}</div>
                     <div class="version-actions">
-                        {% if i != 0 and g.security.has_access(p, 'edit') %}
+                        {% if i != 0 and g.security.has_access(p, 'write') %}
                         {{ g.icon_button_widget.display('Revert to version ' ~ p.version, 'revert_' ~ p.version,
                         'post-link', 'ico-undo', href="./revert?version=" ~ p.version) }}
                         {% endif %}

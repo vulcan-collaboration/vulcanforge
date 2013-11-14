@@ -93,8 +93,13 @@ class WikiSearchController(DefaultSearchController):
 class ForgeWikiApp(Application):
     """This is the Wiki app for PyForge"""
     __version__ = __version__
-    permissions = ['configure', 'read', 'create', 'edit', 'delete',
-                   'unmoderated_post', 'post', 'moderate', 'admin']
+    permissions = dict(Application.permissions,
+        read='View wiki pages',
+        write='Create, modify and delete wiki pages',
+        moderate='Moderate comments',
+        unmoderated_post='Add comments without moderation',
+        post='Add comments'
+    )
     searchable = True
     tool_label = 'Wiki'
     static_folder = 'Wiki'
@@ -110,7 +115,7 @@ class ForgeWikiApp(Application):
     reference_opts = dict(Application.reference_opts,
         can_reference=True,
         can_create=True,
-        create_perm='create'
+        create_perm='write'
     )
     admin_description = (
         "The wiki is a veritable content management system for your project. "
@@ -121,22 +126,14 @@ class ForgeWikiApp(Application):
     admin_actions = {
         "Add Page": {
             "url": "New%20Wiki%20Page",
-            "permission": "create"
+            "permission": "write"
         },
         "View Wiki": {"url": ""},
     }
-    permission_descriptions = dict(
-        Application.permission_descriptions,
-        moderate="moderate new content",
-        unmoderated_post="add content without moderation",
-        create="create new pages",
-        edit="edit existing pages",
-        delete="delete pages"
-    )
     default_acl = {
-        'Admin': permissions,
-        'Developer': ['delete', 'moderate'],
-        'Member': ['create', 'edit'],
+        'Admin': permissions.keys(),
+        'Developer': ['write', 'moderate'],
+        'Member': ['write', 'read'],
         '*authenticated': ['post', 'unmoderated_post'],
         '*anonymous': ['read']
     }
@@ -251,7 +248,7 @@ class ForgeWikiApp(Application):
             SitemapEntry(
                 'Options', admin_url + 'options', className='admin_modal')
         ]
-        if self.permissions and g.security.has_access(self, 'configure'):
+        if self.permissions and g.security.has_access(self, 'admin'):
             links.append(
                 SitemapEntry(
                     'Permissions',
@@ -263,7 +260,7 @@ class ForgeWikiApp(Application):
 
     def sidebar_menu(self):
         links = []
-        if g.security.has_access(self, 'create'):
+        if g.security.has_access(self, 'write'):
             links.extend([
                 SitemapEntry(
                     'Create Page',
@@ -446,7 +443,7 @@ class RootController(WikiContentBaseController):
         limit, pagenum, start = g.handle_paging(limit, page, default=25)
         pages = []
         criteria = dict(app_config_id=c.app.config._id)
-        can_delete = g.security.has_access(c.app, 'delete')
+        can_delete = g.security.has_access(c.app, 'write')
         show_deleted = show_deleted and can_delete
         if not can_delete:
             criteria['deleted'] = False
@@ -586,9 +583,9 @@ class PageController(WikiContentBaseController):
         if self.page:
             g.security.require_access(self.page, 'read')
             if self.page.deleted:
-                g.security.require_access(self.page, 'delete')
+                g.security.require_access(self.page, 'write')
         else:
-            g.security.require_access(c.app, 'create')
+            g.security.require_access(c.app, 'write')
 
     def fake_page(self):
         return dict(
@@ -640,7 +637,7 @@ class PageController(WikiContentBaseController):
                 c.user.username not in page.viewable_by:
             raise exc.HTTPForbidden(detail="You may not view this page.")
         hide_sidebar = not (c.app.show_left_bar or
-                            g.security.has_access(self.page, 'edit'))
+                            g.security.has_access(self.page, 'write'))
         page_html = page.get_rendered_html()
         hierarchy_items = self.get_hierarchy_items()
         return dict(
@@ -682,7 +679,7 @@ class PageController(WikiContentBaseController):
     @expose('json')
     @require_post()
     def delete(self):
-        g.security.require_access(self.page, 'delete')
+        g.security.require_access(self.page, 'write')
         Shortlink.query.remove(dict(ref_id=self.page.index_id()))
         self.page.deleted = True
         self.page.deleted_time = datetime.utcnow()
@@ -693,7 +690,7 @@ class PageController(WikiContentBaseController):
     @expose('json')
     @require_post()
     def undelete(self):
-        g.security.require_access(self.page, 'delete')
+        g.security.require_access(self.page, 'write')
         self.page.deleted = False
         Shortlink.from_artifact(self.page)
         return dict(location='.')
@@ -799,7 +796,7 @@ class PageController(WikiContentBaseController):
     def revert(self, version):
         if not self.page:
             raise exc.HTTPNotFound
-        g.security.require_access(self.page, 'edit')
+        g.security.require_access(self.page, 'write')
         orig = self.get_version(version)
         if orig:
             self.page.text = orig.text
@@ -853,7 +850,7 @@ class PageController(WikiContentBaseController):
             self.page = Page.upsert(self.title)
             self.page.viewable_by = ['all']
         else:
-            g.security.require_access(self.page, 'edit')
+            g.security.require_access(self.page, 'write')
         name_conflict = None
         if self.page.title != title:
             name_conflict = self._rename_page(title, rename_descendants)
@@ -1010,10 +1007,10 @@ class RootRestController(RestController):
             title=title,
             deleted=False)
         if not page:
-            g.security.require_access(c.app, 'create')
+            g.security.require_access(c.app, 'write')
             page = Page.upsert(title)
         else:
-            g.security.require_access(page, 'edit')
+            g.security.require_access(page, 'write')
         page.text = post_data['text']
         if 'labels' in post_data:
             page.labels = post_data['labels'].split(',')
@@ -1023,7 +1020,7 @@ class RootRestController(RestController):
 class WikiAdminController(DefaultAdminController):
 
     def _check_security(self):
-        g.security.require_access(self.app, 'configure')
+        g.security.require_access(self.app, 'admin')
 
     @with_trailing_slash
     def index(self, **kw):
@@ -1034,13 +1031,13 @@ class WikiAdminController(DefaultAdminController):
     def home(self):
         return dict(app=self.app,
                     home=self.app.root_page_name,
-                    allow_config=g.security.has_access(self.app, 'configure'))
+                    allow_config=g.security.has_access(self.app, 'admin'))
 
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'admin_options.html')
     def options(self):
         return dict(app=self.app,
-                    allow_config=g.security.has_access(self.app, 'configure'))
+                    allow_config=g.security.has_access(self.app, 'admin'))
 
     @without_trailing_slash
     @expose()

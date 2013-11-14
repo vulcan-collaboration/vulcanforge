@@ -109,7 +109,7 @@ class ProjectCategory(MappedClass):
 
 
 class Project(SOLRIndexed):
-    _perms_base = ['read', 'update', 'admin', 'create']
+    _perms_base = ['read', 'write', 'admin']
     _perms_proj = _perms_base[:]
     _perms_init = _perms_base + ['register', 'overseer']
 
