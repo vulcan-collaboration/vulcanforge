@@ -2,21 +2,7 @@
 {% for key, values in changelist %}\
 {% choose %}\
 {% when key == 'description' %}\
-- **description** has changed:
-
-Diff:
-
-~~~~
-
-${'\n'.join(diff.unified_diff(
-                            a=values[0].splitlines(),
-                            b=values[1].splitlines(),
-                            fromfile='old',
-                            tofile='new',
-                            lineterm=''))}
-
-~~~~
-
+- **description** has changed.
 {% end %}\
 {% otherwise %}\
 {% with oldv, newv = values %}\

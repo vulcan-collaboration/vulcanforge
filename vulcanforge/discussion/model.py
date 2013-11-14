@@ -265,6 +265,7 @@ class AbstractThread(Artifact):
             thread_id=self._id,
             parent_id=parent_id,
             text=text,
+            safe_text=kw.get('safe_text', None),
             status='pending'
         )
         if timestamp is not None:
@@ -404,6 +405,7 @@ class AbstractPost(Message, VersionedArtifact):
     last_edit_date = FieldProperty(datetime, if_missing=None)
     last_edit_by_id = ForeignIdProperty(User)
     edit_count = FieldProperty(int, if_missing=0)
+    safe_text = FieldProperty(str, if_missing=None)
 
     thread = RelationProperty(Thread)
     discussion = RelationProperty(Discussion)
