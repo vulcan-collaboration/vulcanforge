@@ -6,11 +6,15 @@ model
 @author: U{tannern<tannern@gmail.com>}
 """
 import os
+import logging
 from bson import ObjectId
-from ming.odm import ForeignIdProperty, FieldProperty
+from ming.odm import FieldProperty, RelationProperty
 from vulcanforge.common.model.session import artifact_orm_session
-from vulcanforge.discussion.model import AbstractPost, PostHistory, \
-    DiscussionAttachment, AbstractThread, Discussion
+from vulcanforge.discussion.model import Discussion, \
+    PostHistory, DiscussionAttachment, AbstractPost, Thread
+
+
+LOG = logging.getLogger(__name__)
 
 
 class ChatSession(Discussion):
@@ -25,13 +29,8 @@ class ChatSession(Discussion):
 
     type_s = 'ChatChannel'
 
-    @classmethod
-    def attachment_class(cls):
-        return ChatAttachment
-
-    @classmethod
-    def thread_class(cls):
-        return ChatThread
+    threads = RelationProperty('ChatThread')
+    posts = RelationProperty('ChatPost')
 
     @classmethod
     def by_id(cls, id_, suppress=True):
@@ -54,20 +53,14 @@ class ChatSession(Discussion):
         return os.path.join(self.app.url, str(self._id))
 
 
-class ChatPostHistory(PostHistory):
-
-    class __mongometa__(object):
-        name = 'post_history'
-
-    artifact_id = ForeignIdProperty('ChatPost')
-
-
-class ChatThread(AbstractThread):
+class ChatThread(Thread):
 
     class __mongometa__:
-        name = 'forum_thread'
-        indexes = ['flags']
+        polymorphic_identity = 'chat_thread'
 
+    kind = FieldProperty(str, if_missing='chat_thread')
+    discussion = RelationProperty(ChatSession)
+    posts = RelationProperty('ChatPost', via='thread_id')
     type_s = 'ChatThread'
 
     @staticmethod
@@ -82,16 +75,40 @@ class ChatThread(AbstractThread):
     def post_class():
         return ChatPost
 
+    def url(self):
+        return self.app.url
+
 
 class ChatPost(AbstractPost):
 
     class __mongometa__(object):
-        session = artifact_orm_session
-        name = 'chat_post'
-        history_class = ChatPostHistory
+        polymorphic_identity = "chat_post"
+        history_class = PostHistory
+
+    kind = FieldProperty(str, if_missing='chat_post')
+
+    thread = RelationProperty(ChatThread)
+    discussion = RelationProperty(ChatSession)
+
+    @classmethod
+    def attachment_class(cls):
+        return ChatAttachment
+
+    def get_publish_channels(self):
+        channels = super(ChatPost, self).get_publish_channels()
+        active_session = self.app.get_active_session()
+        thread = active_session.get_discussion_thread()
+        if self.thread_id == thread._id:
+            channels.append('project.{}.chat'.format(self.project.shortname))
+        return channels
+
+    def url(self):
+        return self.app.url
 
 
 class ChatAttachment(DiscussionAttachment):
 
     class __mongometa__(object):
-        polymorphic_identity = "ChatAttachment"
+        polymorphic_identity = "chat_attachment"
+
+    kind = FieldProperty(str, if_missing='chat_attachment')

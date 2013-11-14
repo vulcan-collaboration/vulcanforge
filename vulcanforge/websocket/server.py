@@ -7,6 +7,7 @@ server
 """
 import logging
 import json
+from paste.deploy.converters import asint
 import redis
 import gevent
 import gevent.baseserver
@@ -29,7 +30,8 @@ class WebSocketApp(object):
         super(WebSocketApp, self).__init__()
         self.config = config
         self.redis = redis.Redis(host=config['redis.host'],
-                                 port=int(config['redis.port']))
+                                 port=asint(config.get('redis.port', 6379)),
+                                 db=asint(config.get('redis.db', 0)))
 
     def __call__(self, environ, start_response):
         websocket = environ.get('wsgi.websocket')

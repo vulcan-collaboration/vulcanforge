@@ -5,6 +5,7 @@ app
 @author: U{tannern<tannern@gmail.com>}
 """
 from datetime import datetime, timedelta
+from pylons import app_globals as g
 from vulcanforge.common.app import Application
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.tools import chat
@@ -36,6 +37,7 @@ class ForgeChatApp(Application):
     artifacts = {
         'session': chat_model.ChatSession
     }
+    DiscussionClass = chat_model.ChatSession
     PostClass = chat_model.ChatPost
     AttachmentClass = chat_model.ChatAttachment
 
@@ -54,14 +56,20 @@ class ForgeChatApp(Application):
         super(ForgeChatApp, self).install(project, acl=acl)
 
     def get_active_session(self):
-        query = {
-            'app_config_id': self.config._id,
-            'mod_date': {
-                '$gte': datetime.utcnow() - timedelta(hours=12)
+        with g.context_manager.push(app_config_id=self.config._id):
+            query = {
+                'app_config_id': self.config._id,
+                'mod_date': {
+                    '$gte': datetime.utcnow() - timedelta(hours=12)
+                }
             }
-        }
-        session = chat_model.ChatSession.query.get(**query)
-        if session is None:
-            session = chat_model.ChatSession()
-            session.flush_self()
-        return session
+            session = chat_model.ChatSession.query.get(**query)
+            if session is None:
+                session = chat_model.ChatSession()
+                session.flush_self()
+            return session
+
+    def get_active_thread(self):
+        with g.context_manager.push(app_config_id=self.config._id):
+            session = self.get_active_session()
+            return session.get_discussion_thread()

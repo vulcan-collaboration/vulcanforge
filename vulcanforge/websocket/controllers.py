@@ -88,6 +88,12 @@ class WebSocketAPIController(BaseController):
         for project in c.user.my_projects():
             # mark user as connected
             key = 'project.{}.connected_users'.format(project.shortname)
+            if not redis.sismember(key, c.user.username):
+                redis.publish('project.{}'.format(project.shortname),
+                              json.dumps({
+                                  'type': 'UserConnect',
+                                  'username': c.user.username
+                              }))
             redis.sadd(key, c.user.username)
             # skip neighborhood projects
             if project.shortname == '__init__':
@@ -111,23 +117,42 @@ class WebSocketAPIController(BaseController):
                 # mark user as disconnected
                 key = 'project.{}.connected_users'.format(project.shortname)
                 redis.srem(key, c.user.username)
+                redis.publish('project.{}'.format(project.shortname),
+                              json.dumps({
+                                  'type': 'UserDisconnect',
+                                  'username': c.user.username
+                              }))
         return {}
 
 
 class ChatAPIController(BaseController):
 
     @expose('json')
-    def projects(self):
+    def state(self):
         redis = g.cache.redis
         projects = []
         for project in c.user.my_projects():
-            project_data = project.__json__()
             if project.shortname == '__init__':
                 continue
             if project.shortname.startswith('u/'):
                 continue
-            key = 'project.{}.connected_users'.format(project.shortname)
+            project_data = project.__json__()
+            chat_app_config = project.get_app_configs_by_kind('chat').first()
+            project_prefix = 'project.{}'.format(project.shortname)
+            # connected users
+            key = '{}.connected_users'.format(project_prefix)
             project_data['online_users'] = list(redis.smembers(key))
+            # chat thread
+            if chat_app_config is None:
+                project_data['chatChannel'] = None
+            else:
+                chat_app = chat_app_config.load()(project, chat_app_config)
+                thread = chat_app.get_active_thread()
+                project_data['chatChannel'] = '{}.chat'.format(project_prefix)
+                project_data['chatMessages'] = [
+                    p.get_publish_dict()
+                    for p in thread.query_posts(style="timestamp")
+                ]
             projects.append(project_data)
         return {
             'projects': projects

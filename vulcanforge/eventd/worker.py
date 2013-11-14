@@ -9,16 +9,21 @@ import sys
 import os
 import json
 import logging
+from beaker.middleware import SessionMiddleware
+from ming.odm import ThreadLocalODMSession
 from paste.deploy.converters import asint
+import re
+from paste.registry import RegistryManager
 from redis import Redis
 
 from webob import Request
 from paste.deploy import loadapp
 from pylons import app_globals as g, tmpl_context as c
 import tg
+from vulcanforge.auth.middleware import AuthMiddleware
 
 
-class EventdWorker(object):
+class AbstractEventdWorker(object):
 
     def __init__(self, config_path, relative_path=None, log=None):
         self.config_path = config_path
@@ -80,13 +85,10 @@ class EventdWorker(object):
         while self.keep_running:
             item = g.event_queue.get(timeout=self.event_queue_timeout)
             if item:
-                self.log.debug('eventd found event: {!r}'.format(item))
                 return item
 
     def get_handler_for_event(self, event):
         handler = self.handlers.get(event['type'])
-        if not handler:
-            self.log.warn('no handler found for {!r}'.format(event))
         return handler
 
     @staticmethod
@@ -97,6 +99,7 @@ class EventdWorker(object):
         event = event_info['event']
         handler = self.get_handler_for_event(event)
         if handler is None:
+            self.log.warn('no handler found for {!r}'.format(event))
             return
         r = Request.blank(
             '/__event__/{type}/'.format(**event),
@@ -110,25 +113,52 @@ class EventdWorker(object):
             headers={
                 'Cookie': str(event_info['cookie'])
             })
-        result = list(self.wsgi_app(r.environ, self.start_response))
+        return list(self.wsgi_app(r.environ, self.start_response))
 
     def make_handler_map(self):
+        """
+        should be overridden in subclass, example method included to show format
+        """
         return {
-            'test': self.handle_test,
-            'post': self.handle_post
+            'test': self.handle_test
         }
 
     def handle_test(self, name, targets, params):
+        """
+        example method, should be overridden or excluded from handler map
+        """
         redis = Redis()
         for target in targets:
             redis.publish(target, params['message'])
 
-    def handle_post(self, name, targets, params):
-        redis = Redis()
-        message_info = {
-            'content': params,
-            'author': c.user.username
+
+class EventdWorker(AbstractEventdWorker):
+
+    def make_handler_map(self):
+        return {
+            'PostChatMessage': self.handle_post_chat_message
         }
-        for target in targets:
-            # TODO: create post in thread
-            redis.publish(target, json.dumps(message_info))
+
+    def handle_post_chat_message(self, name, targets, params):
+        try:
+            from vulcanforge.project.model import Project
+            message_text = params.get('message', None)
+            if message_text is None:
+                self.log.warn("invalid message params: %r", params)
+            for target in targets:
+                match = re.match(r'^project\.([^\.]+).chat$', target)
+                shortname = match.group(1)
+                project = Project.query.get(shortname=shortname)
+                if project is None:
+                    self.log.warn("No project found with shortname: %s", shortname)
+                    continue
+                chat_app_config = project.get_app_configs_by_kind('chat').first()
+                if chat_app_config is None:
+                    self.log.warn("No chat app found for project: %s", shortname)
+                    continue
+                with g.context_manager.push(app_config_id=chat_app_config._id):
+                    chat_app = chat_app_config.app(project, chat_app_config)
+                    thread = chat_app.get_active_thread()
+                    thread.post(message_text)
+        except:
+            self.log.exception('nooooooooo!')

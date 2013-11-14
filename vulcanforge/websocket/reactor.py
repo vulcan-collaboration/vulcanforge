@@ -7,9 +7,29 @@ reactor
 """
 import json
 import jsonschema
+from paste.deploy.converters import asint
+from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.taskd.queue import RedisQueue
 from vulcanforge.websocket import INCOMING_MESSAGE_SCHEMA
 from vulcanforge.websocket.exceptions import InvalidMessageException
+
+
+def _make_event_queue(config):
+    api_path = config.get('event_queue.cls')
+    if api_path:
+        cls = import_object(api_path)
+    else:
+        cls = RedisQueue
+    kwargs = {
+        'host': config.get('event_queue.host', config['redis.host']),
+        'port': asint(config.get('event_queue.port',
+                                 config.get('redis.port', 6379))),
+        'db': asint(config.get('event_queue.db',
+                               config.get('redis.db', 0)))
+    }
+    if config.get('event_queue.namespace'):
+        kwargs['namespace'] = config['event_queue.namespace']
+    return cls(config.get('event_queue.name', 'event_queue'), **kwargs)
 
 
 class MessageReactor(object):
@@ -25,10 +45,7 @@ class MessageReactor(object):
         self.redis = redis_client
         self.pubsub = pubsub_client
         self.auth = auth
-        self.event_queue = RedisQueue(
-            self.config.get('event_queue.name', 'event_queue'),
-            namespace=self.config.get('event_queue.namespace'),
-            conn=self.redis)
+        self.event_queue = _make_event_queue(config)
 
     def react(self, message):
         """

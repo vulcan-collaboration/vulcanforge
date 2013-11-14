@@ -19,9 +19,6 @@
             _subscriptions: [],
             _init: function () {
                 vfSocket._connect();
-                vfSocket.addHandler(/^test\.(.+)$/, function (match, msg) {
-                    console.info(msg.data);
-                });
                 $(window).trigger('VFWebSocketInit', vfSocket);
             },
             _connect: function () {
@@ -78,12 +75,18 @@
             },
             // ## interface
             subscribe: function (channels) {
+                if (!(channels instanceof Array)) {
+                    channels = [channels];
+                }
                 vfSocket._socket.send(JSON.stringify({
                     'subscribe': channels
                 }));
                 return vfSocket;
             },
             unsubscribe: function (channels) {
+                if (!(channels instanceof Array)) {
+                    channels = [channels];
+                }
                 vfSocket._socket.send(JSON.stringify({
                     'unsubscribe': channels
                 }));
@@ -96,6 +99,9 @@
                 return vfSocket;
             },
             publish: function (channels, message) {
+                if (!(channels instanceof Array)) {
+                    channels = [channels];
+                }
                 vfSocket._socket.send(JSON.stringify({
                     'publish': {
                         'channels': channels,

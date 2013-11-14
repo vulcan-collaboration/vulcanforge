@@ -59,23 +59,32 @@ class WebSocketAuthorizer(object):
         if status is None:
             self.fail()
 
-    @_listen_map.decorate(r'^project\.(.+)$')
-    @_target_map.decorate(r'^project\.(.+)$')
-    def chat_project(self, name, match):
+    @_listen_map.decorate(r'^project\.([^\.]+)$')
+    @_target_map.decorate(r'^project\.([^\.]+)$')
+    def project(self, name, match):
         shortname = match.group(1)
-        cursor = Project.query.find({'shortname': shortname})
-        if cursor.count() == 0:
-            LOG.debug("project not found %r", shortname)
-            self.fail()
-        if cursor.count() > 1:
-            LOG.debug("multiple projects found for %r", shortname)
-            self.fail()
-        project = cursor.first()
+        project = self._get_project_by_shortname(shortname)
         if not g.security.has_access(project, 'read'):
             LOG.debug("user does not have read access to %r", shortname)
             self.fail()
 
+    @_listen_map.decorate(r'^project\.([^\.]+).chat$')
+    @_target_map.decorate(r'^project\.([^\.]+).chat$')
+    def project_chat(self, name, match):
+        shortname = match.group(1)
+        project = self._get_project_by_shortname(shortname)
+        chat_config = project.get_app_configs_by_kind('chat').first()
+        if chat_config is None:
+            LOG.debug("no chat tool installed for %r", shortname)
+            self.fail()
+        if not g.security.has_access(chat_config, 'read'):
+            LOG.debug("user does not have read access to %r chat", shortname)
+            self.fail()
+
     @_listen_map.decorate(r'^system$')
+    @_listen_map.decorate(r'^test\.(.+)$')
+    @_publish_map.decorate(r'^test\.(.+)$')
+    @_target_map.decorate(r'^test\.(.+)$')
     def allow(self, name, match):
         """
         Generic allow
@@ -83,17 +92,19 @@ class WebSocketAuthorizer(object):
         pass
 
     @_publish_map.decorate(r'^system$')
-    @_listen_map.decorate(r'^project\.(.+)$')
+    @_publish_map.decorate(r'^project\.([^\.]+)$')
     def deny(self, name, match):
         """
         Generic deny
         """
         self.fail()
 
-    @_listen_map.decorate(r'^test\.(.+)$')
-    @_publish_map.decorate(r'^test\.(.+)$')
-    @_target_map.decorate(r'^test\.(.+)$')
-    def test(self, name, match):
-        pass
-
-
+    def _get_project_by_shortname(self, shortname):
+        cursor = Project.query.find({'shortname': shortname})
+        if cursor.count() == 0:
+            LOG.debug("project not found %r", shortname)
+            self.fail()
+        if cursor.count() > 1:
+            LOG.debug("multiple projects found for %r", shortname)
+            self.fail()
+        return cursor.first()
