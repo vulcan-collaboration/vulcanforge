@@ -421,7 +421,7 @@ class AttachmentController(BaseController):
                 filename=self.attachment.filename,
                 context="embed"
             )
-        elif g.s3_serve_local:
+        elif g.s3_serve_local or request.is_xhr:
             return self.attachment.serve(embed)
         else:
             return redirect(self.attachment.remote_url())
