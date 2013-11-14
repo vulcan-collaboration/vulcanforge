@@ -17,7 +17,6 @@ class MigrationLog(BaseMappedClass):
         name = 'migration_log'
         unique_indexes = ['name']
 
-    _id = FieldProperty(schema.ObjectId)
     name = FieldProperty(str)
     # status is pending, warn, error, noop, success, etc..
     status = FieldProperty(str, if_missing='pending')

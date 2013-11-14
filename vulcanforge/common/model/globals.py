@@ -13,7 +13,6 @@ class ForgeGlobals(BaseMappedClass):
         name = 'forge_globals'
         session = main_orm_session
 
-    _id = FieldProperty(S.ObjectId)
     user_counter = FieldProperty(int, if_missing=1)
     taskd_tester = FieldProperty(S.Object({
         'counter': S.Int(if_missing=0),
