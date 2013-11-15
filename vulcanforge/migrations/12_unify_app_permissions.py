@@ -28,7 +28,7 @@ class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
                     if ace.permission == 'configure':
                         ace.permission = 'write'
 
-            # discussions permission: configure, admin -> admin
+            # wiki permission: configure, admin -> admin
             #                       create, edit, delete -> write
             elif app_config.tool_name == 'wiki':
                 new_acl = []
@@ -51,6 +51,29 @@ class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
                     new_acl.append(new_ace)
 
                 app_config.acl = new_acl
+
+            # ticket permission: configure, admin -> admin
+            elif app_config.tool_name == 'tickets':
+                new_acl = []
+                admin_role_id_set = set()
+                for ace in app_config.acl:
+                    if ace.permission in ('configure', 'admin'):
+                        admin_role_id_set.add(ace.role_id)
+                    else:
+                        new_acl.append(ace)
+
+                for admin_role_id in admin_role_id_set:
+                    new_ace = ACE.allow(admin_role_id, 'admin')
+                    new_acl.append(new_ace)
+
+                app_config.acl = new_acl
+
+            # discussions permission: edit -> write
+            elif app_config.tool_name == 'Visualize':
+                for ace in app_config.acl:
+                    if ace.permission == 'edit':
+                        ace.permission = 'write'
+
 
         ThreadLocalODMSession.flush_all()
 
