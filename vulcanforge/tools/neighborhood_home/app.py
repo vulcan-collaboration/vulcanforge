@@ -36,7 +36,9 @@ class NeighborhoodHomeApp(Application):
         32: '{ep_name}/images/home_32.png',
         48: '{ep_name}/images/home_48.png'
     }
-    permissions = ['read']
+    permissions = dict(
+        read = Application.permissions['read']
+    )
     default_acl = {
         '*anonymous': ['read']
     }

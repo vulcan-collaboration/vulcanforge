@@ -38,7 +38,9 @@ class ProjectHomeApp(Application):
         32: '{ep_name}/images/home_32.png',
         48: '{ep_name}/images/home_48.png'
     }
-    permissions = ['read']
+    permissions = dict(
+        read = Application.permissions['read']
+    )
     default_acl = {
         '*anonymous': ['read']
     }
@@ -297,7 +299,7 @@ class ProjectHomeController(BaseController):
     @require_post()
     def update_configuration(self, divs=None, layout_class=None, new_div=None,
                              **kw):
-        g.security.require_access(c.project, 'update')
+        g.security.require_access(c.project, 'write')
         config = PortalConfig.current()
         config.layout_class = layout_class
         # Handle updated and deleted divs
