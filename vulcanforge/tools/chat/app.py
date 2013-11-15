@@ -21,13 +21,20 @@ class ForgeChatApp(Application):
     default_mount_point = 'chat'
     sitemap = []
     permissions = [
-        'admin', 'read', 'post', 'unmoderated_post', 'configure'
+        'admin', 'read', 'post', 'moderate', 'unmoderated_post'
     ]
     permission_descriptions = {
         "admin": "edit access control to this tool",
         "read": "view messages",
+        "moderate": "moderate new messages",
         "post": "post messages",
-        "configure": "create and edit channels"
+        "unmoderated_post": "add content without moderation"
+    }
+    default_acl = {
+        'Admin': permissions,
+        'Developer': ['moderate'],
+        '*authenticated': ['post', 'unmoderated_post'],
+        '*anonymous': ['read']
     }
     reference_opts = dict(
         Application.reference_opts,

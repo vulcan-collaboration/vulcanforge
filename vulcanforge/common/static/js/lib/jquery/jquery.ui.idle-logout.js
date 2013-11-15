@@ -195,7 +195,7 @@
       if (IDLE.countdownInterval) {
         window.clearInterval(IDLE.countdownInterval);
       }
-      if (IDLE.$countdownDialog.dialog('isOpen')) {
+      if (IDLE.$countdownDialog.dialog('_isOpen')) {
         IDLE.$countdownDialog.dialog('close');
       }
       IDLE.countingDown = false;

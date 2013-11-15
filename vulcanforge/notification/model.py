@@ -541,7 +541,7 @@ class Mailbox(MappedClass):
         if tool_already_subscribed:
             LOG.debug('Tried to subscribe to artifact %s, '
                       'while there is a tool subscription',
-                      artifact.index_id())
+                      artifact and artifact.index_id())
             return
         if artifact is None:
             artifact_title = 'All artifacts'

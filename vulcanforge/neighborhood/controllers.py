@@ -303,7 +303,8 @@ class NeighborhoodController(BaseTGController):
         if apps:
             apps = [
                 ('home', 'home', 'Home'),
-                ('admin', 'admin', 'Admin')
+                ('admin', 'admin', 'Admin'),
+                ('chat', 'chat', 'Chat'),
             ] + apps
 
         # install the project

@@ -17,6 +17,7 @@
             _socket: null,
             _handlers: [],
             _subscriptions: [],
+            _retryCount: 0,
             _init: function () {
                 vfSocket._connect();
                 $(window).trigger('VFWebSocketInit', vfSocket);
@@ -38,13 +39,16 @@
                 }
             },
             _handleClose: function (e) {
-                setTimeout(vfSocket._connect, 1000);  // connection lost wait 1 sec and try again
+                var delay = Math.pow(2, vfSocket._retryCount) * 1000;
+                vfSocket._retryCount += 1;
+                setTimeout(vfSocket._connect, delay);
             },
             _handleError: function (e) {
                 console.error(e);
             },
             _handleMessage: function (e) {
                 var msg = JSON.parse(e.data);
+                vfSocket._retryCount = 0;  // TODO: find a better way to reset the retry count
                 if (DEBUG) {
                     console.debug(msg);
                 }
