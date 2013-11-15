@@ -12,7 +12,6 @@ class UnifyAppPermissions(BaseMigration):
     """WARNING: this migration is NOT idempotent. DO NOT RUN TWICE"""
 
     def run(self):
-        # only runs on wiki pages and tickets
 
         # Change old permission names to new ones
         for app_config in AppConfig.query.find().all():
@@ -68,7 +67,7 @@ class UnifyAppPermissions(BaseMigration):
 
                 app_config.acl = new_acl
 
-            # discussions permission: edit -> write
+            # visualize permission: edit -> write
             elif app_config.tool_name == 'Visualize':
                 for ace in app_config.acl:
                     if ace.permission == 'edit':
