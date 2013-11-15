@@ -106,19 +106,19 @@
                 this.$submit = $('<input type="submit" value="&#xe047;" disabled="disabled">').
                     addClass('vf-chat-submit').
                     appendTo(this.$form);
-                $.each(this._projectData, function (i, v) {
-                    if (!v.chatChannel) {
-                        return true;  // Skip if project doesn't have chat
+                $.each(this._projectData, function (i, project) {
+                    if (!project.chatChannel) {
+                        return;  // Skip if project doesn't have chat
                     }
                     $('<div/>').
                         addClass('vf-chat-project-button').
-                        html('<img class="vf-chat-project-button-icon" src="'+ v.icon_url +'">' +
-                             '<span class="vf-chat-project-button-label">' + v.name + '</span>').
-                        attr('data-project', v.shortname).
+                        html('<img class="vf-chat-project-button-icon" src="'+ project.icon_url +'">' +
+                             '<span class="vf-chat-project-button-label">' + project.name + '</span>').
+                        attr('data-project', project.shortname).
                         appendTo(that.$projects);
                     $('<div/>').
                         addClass('vf-chat-project-content').
-                        attr('data-project', v.shortname).
+                        attr('data-project', project.shortname).
                         appendTo(that.$content);
                 });
                 this.$container.appendTo('body');
@@ -162,8 +162,14 @@
                     });
                 this.$content.
                     on('scroll', function (e) {
-                        that._autoScroll = that.$content.prop('scrollHeight') - that.$content.height() - 10 <= that.$content.scrollTop();
+                        clearTimeout(that._scrollTimeout);
+                        that._autoScroll = that.$content.prop('scrollHeight') - that.$content.height() - 2 <= that.$content.scrollTop();
+                        that._scrollTimeout = setTimeout(function () {
+                            that.scrollTimeoutFunction.call(that);
+                        }, 400);
                     });
+                // register timers
+                this.scrollTimeoutFunction();
                 // register socket message handlers
                 vfSocket.
                     addHandler(/^project\.([^\.]+).chat/, function (match, msg) {
@@ -195,10 +201,7 @@
                 var response = $.cookie(key, opt_value);
                 return typeof opt_value === 'undefined' ? response : opt_value.toString();
             },
-            //
-            getProjectDataByShortname: function (shortname) {
-                return this._projectData[this._projectNameIndex[shortname]];
-            },
+            // states
             setIsOpen: function (value) {
                 this.prefBool('open', this._isOpen = !!value);
                 this.$container.
@@ -214,10 +217,22 @@
             toggleChat: function () {
                 this.setIsOpen(!this._isOpen);
             },
-            jumpToBottomOfChat: function () {
+            // scrolling
+            scrollToBottom: function () {
                 if (this._autoScroll) {
                     this.$content.scrollTop(this.$content.prop('scrollHeight'));
                 }
+            },
+            scrollTimeoutFunction: function () {
+                var that = this;
+                this.scrollToBottom();
+                this._scrollTimeout = setTimeout(function () {
+                    that.scrollTimeoutFunction.call(that);
+                }, 50);
+            },
+            // projects
+            getProjectDataByShortname: function (shortname) {
+                return this._projectData[this._projectNameIndex[shortname]];
             },
             selectProject: function (projectName) {
                 this._autoScroll = true;
@@ -233,6 +248,7 @@
                         $this.toggleClass('vf-chat-project-active', $this.attr('data-project') === projectName);
                     });
             },
+            // messages
             postMessageToProject: function (messageContent, projectName) {
                 var projectData = this.getProjectDataByShortname(projectName);
                 vfSocket.trigger({
@@ -243,6 +259,7 @@
                         'timestamp': new Date().toISOString()
                     }
                 });
+                this._autoScroll = true;
             },
             renderMessageToProject: function (messageData, projectName) {
                 var $projectContent = $('.vf-chat-project-content[data-project="'+projectName+'"]'),
@@ -257,6 +274,7 @@
                         html(messageData.html);
                 $projectContent.append($messageContainer);
             },
+            // users
             renderAuthorWidget: function (username, $container) {
                 var that = this,
                     userProfile = this._userProfiles[username];
@@ -287,7 +305,6 @@
             }
         };
 
-        window.VF_CHAT = vfChat;
         vfChat.init();
     });
 

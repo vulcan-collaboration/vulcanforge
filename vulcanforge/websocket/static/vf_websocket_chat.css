@@ -20,6 +20,24 @@
 }
 
 
+#vf-chat-container ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+#vf-chat-container ::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+#vf-chat-container ::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.3);
+}
+#vf-chat-container :hover::-webkit-scrollbar-track {
+    background-color: rgba(0,0,0,0.2);
+}
+#vf-chat-container :hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.5);
+}
+
+
 #vf-chat-container .vf-chat-tab {
     position: absolute;
     bottom: 100%;
@@ -77,6 +95,7 @@
     background: #404040;
     color: #000;
     overflow: auto;
+    overflow-y: scroll;
     overflow-x: hidden;
 }
 .vf-chat-form-container {
@@ -153,7 +172,7 @@ input.vf-chat-submit[type="submit"][disabled] {
 .vf-chat-message-container {
     position: relative;
     margin: 1ex;
-    padding: 0 2em;
+    padding: 0 3.5em;
 }
 
 .vf-chat-message-content {
@@ -164,11 +183,11 @@ input.vf-chat-submit[type="submit"][disabled] {
     display: block;
     position: absolute;
     bottom: 0;
-    left: 0;
-    max-width: 2em;
+    left: 0.5em;
+    width: 3em;
 }
 
 .vf-chat-current-user-message .vf-chat-user-icon {
-    right: 0;
+    right: 0.5em;
     left: auto;
 }
