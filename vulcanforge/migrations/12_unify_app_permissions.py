@@ -1,14 +1,14 @@
 import logging
 
 from ming.odm.odmsession import ThreadLocalODMSession
-from vulcanforge.auth.schema import ACL, ACE
+from vulcanforge.auth.schema import ACE
 from vulcanforge.migration.base import BaseMigration
 from vulcanforge.project.model import AppConfig, Project
 
 LOG = logging.getLogger(__name__)
 
 
-class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
+class UnifyAppPermissions(BaseMigration):
     """WARNING: this migration is NOT idempotent. DO NOT RUN TWICE"""
 
     def run(self):
@@ -92,3 +92,5 @@ class RemoveMarkdownLineOrientatedProcessor(BaseMigration):
                 new_acl.append(new_ace)
 
             project.acl = new_acl
+
+        ThreadLocalODMSession.flush_all()
