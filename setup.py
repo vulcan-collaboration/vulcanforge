@@ -41,7 +41,7 @@ setup(
         'ipython',
         "docutils < 0.10",
         "Genshi < 0.7",
-        "TurboGears2",
+        "TurboGears2==2.2.2",
         "Pylons >= 1.0",
         "Ming == 0.4.0",
         "boto >= 2.6",
@@ -82,7 +82,7 @@ setup(
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=[
-        'WebTest < 2',
+        'WebTest==1.4.3',
         'BeautifulSoup < 4.0',
         'pytidylib',
         'poster',

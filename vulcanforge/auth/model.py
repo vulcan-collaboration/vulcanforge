@@ -195,7 +195,6 @@ class ServiceToken(BaseMappedClass):
         session = main_orm_session
         indexes = ['api_key', 'user_id']
 
-    _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty('User')
     api_key = FieldProperty(str, if_missing=lambda: cryptographic_nonce(128))
     expires = FieldProperty(

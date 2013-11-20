@@ -279,7 +279,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     type_s = 'Generic Artifact'
 
     # Artifact base schema
-    _id = FieldProperty(S.ObjectId)
     mod_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
