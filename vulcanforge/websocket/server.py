@@ -188,7 +188,11 @@ class ConnectionController(object):
     def _decrement_count(self):
         count = self.redis.decr(self._user_count_key)
         if count <= 0:
-            self.redis.delete(self._user_count_key)
+            ttl = 5
+            self.redis.expire(self._user_count_key, ttl)
+            gevent.sleep(ttl + 1)
+            if self.redis.exists(self._user_count_key):
+                return
             self.redis.publish(self._user_channel_key, json.dumps({
                 'type': 'UserOffline'
             }))

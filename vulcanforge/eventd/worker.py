@@ -143,7 +143,7 @@ class EventdWorker(AbstractEventdWorker):
         try:
             from vulcanforge.project.model import Project
             message_text = params.get('message', None)
-            if message_text is None:
+            if message_text is None or message_text == '':
                 self.log.warn("invalid message params: %r", params)
             for target in targets:
                 match = re.match(r'^project\.([^\.]+).chat$', target)

@@ -19,6 +19,7 @@
             _projectData: [],
             _projectNameIndex: {},
             _projectsWithChat: [],
+            _unreadCounts: {},
             _activeProjectName: null,
             _userProfiles: {},
             _autoScroll: true,
@@ -67,6 +68,7 @@
                             that._projectNameIndex[project.shortname] = i;
                             if (project.chatChannel) {
                                 that._projectsWithChat.push(project.shortname);
+                                that._unreadCounts[project.shortname] = 0;
                             }
                         });
                         if (opt_callback) {
@@ -160,15 +162,18 @@
                         that.postMessageToProject(that.$textarea.val().trim(), that._activeProjectName);
                         that.$textarea.val('');
                         that.$submit.attr('disabled', 'disabled');
+                        that._autoScroll = true;
                     }).
                     on('keydown', '.vf-chat-textarea', function (e) {
                         if (e.keyCode === 13 && !e.shiftKey) {
                             e.preventDefault();
                             e.stopPropagation();
-                            that.$form.submit();
+                            if (!that.$submit.prop('disabled')) {
+                                that.$form.submit();
+                            }
                         }
                     }).
-                    on('keyup', '.vf-chat-textarea', function (e) {
+                    on('keyup change focus blur', '.vf-chat-textarea', function (e) {
                         var value;
                         value = that.$textarea.val();
                         if (value.trim().length > 0) {
@@ -180,20 +185,21 @@
                 $('.vf-chat-project-messages').
                     on('scroll', function (e) {
                         var $messages = $(this);
-                        clearTimeout(that._scrollTimeout);
                         that._autoScroll = $messages.prop('scrollHeight') - $messages.height() - 2 <= $messages.scrollTop();
-                        that._scrollTimeout = setTimeout(function () {
-                            that.scrollTimeoutFunction.call(that);
-                        }, 400);
                     });
-                // register timers
-                this.scrollTimeoutFunction();
                 // register socket message handlers
                 vfSocket.
                     addHandler(/^project\.([^\.]+).chat/, function (match, msg) {
-                        var data = JSON.parse(msg.data);
+                        var data = JSON.parse(msg.data),
+                            shortname = match[1];
                         if (data.type === 'Post') {
-                            that.renderMessageToProject(data.data, match[1]);
+                            that.renderMessageToProject(data.data, shortname);
+                            if (shortname !== that._activeProjectName) {
+                                that._unreadCounts[shortname] += 1;
+                                console.log(that.$container.
+                                    find('.vf-chat-project-button[data-project="' + shortname + '"]').
+                                    attr('data-unread-count', that._unreadCounts[shortname]));
+                            }
                         }
                     }).
                     addHandler(/^user\.([^\.]+)/, function (match, msg) {
@@ -251,30 +257,30 @@
                     $messages.scrollTop($messages.prop('scrollHeight'));
                 }
             },
-            scrollTimeoutFunction: function () {
-                var that = this;
-                this.scrollToBottom();
-                this._scrollTimeout = setTimeout(function () {
-                    that.scrollTimeoutFunction.call(that);
-                }, 50);
-            },
             // projects
             getProjectDataByShortname: function (shortname) {
                 return this._projectData[this._projectNameIndex[shortname]];
             },
-            selectProject: function (projectName) {
+            selectProject: function (shortname) {
+                var that = this;
                 this._autoScroll = true;
-                this._activeProjectName = projectName;
-                this.pref('project', projectName);
+                this._activeProjectName = shortname;
+                this.pref('project', shortname);
                 $('.vf-chat-project-content', this.$container).
                     each(function () {
-                        $(this).toggle($(this).attr('data-project') === projectName);
+                        $(this).toggle($(this).attr('data-project') === shortname);
                     });
                 $('.vf-chat-project-button', this.$container).
                     each(function () {
-                        var $this = $(this);
-                        $this.toggleClass('vf-chat-project-active', $this.attr('data-project') === projectName);
+                        var $this = $(this),
+                            newlySelected = $this.attr('data-project') === shortname;
+                        $this.toggleClass('vf-chat-project-active', newlySelected);
                     });
+                this._unreadCounts[shortname] = 0;
+                this.$container.
+                    find('.vf-chat-project-button[data-project="' + shortname + '"]').
+                    removeAttr('data-unread-count');
+                this.scrollToBottom();
             },
             // messages
             postMessageToProject: function (messageContent, projectName) {
@@ -290,17 +296,23 @@
                 this._autoScroll = true;
             },
             renderMessageToProject: function (messageData, projectName) {
-                var $projectMessages = $('.vf-chat-project-messages[data-project="'+projectName+'"]'),
+                var that = this,
+                    $projectMessages = $('.vf-chat-project-messages[data-project="'+projectName+'"]'),
                     $messageContainer = $("<div/>").
                         addClass('vf-chat-message-container').
                         toggleClass('vf-chat-current-user-message', messageData.author === $vf.logged_in_as).
-                        attr('data-timestamp', messageData.timestamp),
-                    $author = this.renderUserWidget(messageData.author, $messageContainer),
-                    $messageContent = $('<div/>').
+                        attr('data-timestamp', messageData.timestamp);
+                    this.renderUserWidget(messageData.author, $messageContainer);
+                    $('<div/>').
                         addClass('vf-chat-message-content').
                         appendTo($messageContainer).
-                        html(messageData.html);
+                        html(messageData.html).
+                        find('img').
+                        on('load', function () {
+                            that.scrollToBottom.call(that);
+                        });
                 $projectMessages.append($messageContainer);
+                that.scrollToBottom();
             },
             // users
             renderUserWidget: function (username, $container) {

@@ -43,7 +43,7 @@
     bottom: 100%;
     left: 0;
     padding: 1ex 1em;
-    background: #202020;
+    background: #181818;
     color: #ddd;
     cursor: pointer;
     -webkit-touch-callout: none;
@@ -80,7 +80,7 @@
 .vf-chat-header {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
-    background: #282828;
+    background: #181818;
     color: #ddd;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -93,6 +93,7 @@
     -webkit-flex: 1 1 auto;
     flex: 1 1 auto;
     position: relative;
+    background: #eee;
 }
 .vf-chat-form-container {
     -webkit-flex: 0 0 auto;
@@ -109,9 +110,45 @@
 }
 
 
+.vf-chat-project-button {
+    position: relative;
+    display: inline-block;
+    padding: 0 1ex;
+    cursor: pointer;
+    line-height: 2em;
+    color: #a0a0a0;
+}
+.vf-chat-project-button.vf-chat-project-active {
+    background: #0095da;
+    color: white;
+}
+.vf-chat-project-button-icon {
+    height: 2em;
+    vertical-align: middle;
+}
+.vf-chat-project-button-label {
+    display: inline-block;
+    padding: 0.5em;
+    line-height: 1em;
+}
+.vf-chat-project-button[data-unread-count]::after {
+    content: attr(data-unread-count);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2px 4px;
+    font-size: 8px;
+    line-height: 1em;
+    background: #c04;
+    color: white;
+}
+
+
 .vf-chat-project-content {
     display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
     position: absolute;
     top: 0;
     left: 0;
@@ -121,9 +158,8 @@
 .vf-chat-project-users {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
-    padding: 0.5rem;
-    width: 2rem;
-    background: #202020;
+    padding: 4px;
+    background: #505050;
     color: #000;
     overflow: auto;
     overflow-x: hidden;
@@ -131,7 +167,6 @@
 .vf-chat-project-messages {
     -webkit-flex: 2 1 auto;
     flex: 2 1 auto;
-    background: #404040;
     color: #000;
     overflow: auto;
     overflow-y: scroll;
@@ -147,27 +182,6 @@
     color: #202020;
     font-size: 3rem;
     font-weight: lighter;
-}
-
-
-.vf-chat-project-button {
-    display: inline-block;
-    padding: 0 1ex;
-    cursor: pointer;
-    line-height: 2em;
-}
-.vf-chat-project-button.vf-chat-project-active {
-    background: #0095da;
-    color: white;
-}
-.vf-chat-project-button-icon {
-    height: 2em;
-    vertical-align: middle;
-}
-.vf-chat-project-button-label {
-    display: inline-block;
-    padding: 0.5em;
-    line-height: 1em;
 }
 
 
@@ -224,8 +238,13 @@ input.vf-chat-submit[type="submit"][disabled] {
 }
 
 .vf-chat-project-users .vf-chat-user-icon {
-    display: block;
-    width: 2rem;
+    display: inline-block;
+    height: 24px;
+    margin: 2px;
+    vertical-align: bottom;
+}
+.vf-chat-project-users .vf-chat-user-icon.vf-chat-user-offline {
+    height: 18px;
 }
 
 .vf-chat-message-container .vf-chat-user-icon {
