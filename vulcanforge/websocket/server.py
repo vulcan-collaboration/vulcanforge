@@ -92,12 +92,18 @@ class ConnectionController(object):
         except NotAuthorized, e:
             self._send_exception(e)
         else:
-            connection_info = self.broker.start_connection()
-            channels = ['system'] + connection_info.get('channels', [])
+            self.connection_info = self.broker.start_connection()
+            channels = ['system'] + self.connection_info.get('channels', [])
             self.pubsub.subscribe(channels)
+            self._user_count_key = 'user.{username}.connection_count'.format(
+                **self.connection_info)
+            self._user_channel_key = 'user.{username}'.format(
+                **self.connection_info)
+            self._increment_count()
+            self._extend_count_expire()
 
     def __del__(self):
-        self.broker.end_connection()
+        self._decrement_count()
 
     def _loop(self, method):
         try:
@@ -129,6 +135,7 @@ class ConnectionController(object):
             raise LostConnection()
         if message is None:
             return
+        self._extend_count_expire()
         try:
             self.reactor.react(message)
         except InvalidMessageException, e:
@@ -144,6 +151,7 @@ class ConnectionController(object):
             self.send(message)
 
     def send(self, message):
+        self._extend_count_expire()
         try:
             json_message = json.dumps(message)
             LOG.debug("sending:%s", json_message)
@@ -163,6 +171,27 @@ class ConnectionController(object):
 
     def _send_exception(self, e):
         self._send_error(e.__class__.__name__, unicode(e))
+
+    def _increment_count(self):
+        count = self.redis.incr(self._user_count_key)
+        self._extend_count_expire()
+        if count == 1:
+            self.redis.publish(self._user_channel_key, json.dumps({
+                'type': 'UserOnline'
+            }))
+
+    def _extend_count_expire(self):
+        if not hasattr(self, 'connection_info'):
+            return
+        self.redis.expire(self._user_count_key, 65)
+
+    def _decrement_count(self):
+        count = self.redis.decr(self._user_count_key)
+        if count <= 0:
+            self.redis.delete(self._user_count_key)
+            self.redis.publish(self._user_channel_key, json.dumps({
+                'type': 'UserOffline'
+            }))
 
 
 def make_server(config, listener=None):

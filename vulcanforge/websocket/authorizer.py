@@ -38,8 +38,7 @@ class WebSocketAuthorizer(object):
     def can_target(self, name):
         self._target_map.apply(name, context_self=self)
 
-    @_listen_map.decorate(r'^user\.username\.(.+)$')
-    @_publish_map.decorate(r'^user\.username\.(.+)$')
+    @_publish_map.decorate(r'^user\.([^\.]+)$')
     def user_username(self, name, match):
         username = match.group(1)
         if c.user.username != username:
@@ -82,6 +81,7 @@ class WebSocketAuthorizer(object):
             self.fail()
 
     @_listen_map.decorate(r'^system$')
+    @_listen_map.decorate(r'^user\.([^\.]+)$')
     @_listen_map.decorate(r'^test\.(.+)$')
     @_publish_map.decorate(r'^test\.(.+)$')
     @_target_map.decorate(r'^test\.(.+)$')

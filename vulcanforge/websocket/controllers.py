@@ -7,8 +7,10 @@ controllers
 """
 import json
 import logging
+from markupsafe import Markup
 from pylons import app_globals as g, tmpl_context as c, request
 from tg import expose
+from webob.exc import HTTPNotFound
 from vulcanforge.auth.model import User
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.websocket.authorizer import WebSocketAuthorizer
@@ -81,47 +83,44 @@ class WebSocketAPIController(BaseController):
 
     @expose('json')
     def start_connection(self):
-        redis = g.cache.redis
-        count_key = 'user.{}.connection_count'.format(c.user.username)
-        redis.incr(count_key)
+        #redis = g.cache.redis
+        #user_prefix = 'user.{}'.format(c.user.username)
+        #
+        #count_key = '{}.connection_count'.format(user_prefix)
+        #count = redis.incr(count_key)
+        #redis.expire(count_key, 65)
+        #if count == 1:
+        #    redis.publish(user_prefix, json.dumps({
+        #        'type': 'UserConnect'
+        #    }))
+        #
         channels = []
         for project in c.user.my_projects():
-            # mark user as connected
-            key = 'project.{}.connected_users'.format(project.shortname)
-            if not redis.sismember(key, c.user.username):
-                redis.publish('project.{}'.format(project.shortname),
-                              json.dumps({
-                                  'type': 'UserConnect',
-                                  'username': c.user.username
-                              }))
-            redis.sadd(key, c.user.username)
             # skip neighborhood projects
             if project.shortname == '__init__':
                 continue
             if project.shortname.startswith('u/'):
                 continue
             channels.append('project.{}'.format(project.shortname))
+        #
         return {
             'username': c.user.username,
+            'user_id': str(c.user._id),
             'channels': channels
         }
 
     @expose('json')
     def end_connection(self):
-        redis = g.cache.redis
-        count_key = 'user.{}.connection_count'.format(c.user.username)
-        connection_count = redis.decr(count_key)
-        if connection_count <= 0:
-            redis.set(count_key, 0)
-            for project in c.user.my_projects():
-                # mark user as disconnected
-                key = 'project.{}.connected_users'.format(project.shortname)
-                redis.srem(key, c.user.username)
-                redis.publish('project.{}'.format(project.shortname),
-                              json.dumps({
-                                  'type': 'UserDisconnect',
-                                  'username': c.user.username
-                              }))
+        #redis = g.cache.redis
+        #user_prefix = 'user.{}'.format(c.user.username)
+        ##
+        #count_key = '{}.connection_count'.format(user_prefix)
+        #connection_count = redis.decr(count_key)
+        #if connection_count <= 0:
+        #    redis.delete(count_key)
+        #    redis.publish(user_prefix, json.dumps({
+        #        'type': 'UserDisconnect'
+        #    }))
         return {}
 
 
@@ -139,6 +138,8 @@ class ChatAPIController(BaseController):
             project_data = project.__json__()
             chat_app_config = project.get_app_configs_by_kind('chat').first()
             project_prefix = 'project.{}'.format(project.shortname)
+            # all users
+            project_data['users'] = [u.username for u in project.users()]
             # connected users
             key = '{}.connected_users'.format(project_prefix)
             project_data['online_users'] = list(redis.smembers(key))
@@ -157,3 +158,18 @@ class ChatAPIController(BaseController):
         return {
             'projects': projects
         }
+
+    @expose('json')
+    def user(self, username):
+        redis = g.cache.redis
+        user = User.by_username(username)
+        if user is None:
+            raise HTTPNotFound()
+        profile = user.get_profile_info()
+        online = redis.exists('user.{username}.connection_count'.format(
+            **profile))
+        profile.update(
+            profileImage=Markup(profile.get('profileImage')),
+            online=online
+        )
+        return profile
