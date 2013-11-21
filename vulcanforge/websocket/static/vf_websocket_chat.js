@@ -62,8 +62,9 @@
                     'error': function () {
                         console.warn(arguments);
                     },
-                    'success': function (projectData) {
-                        that._projectData = projectData.projects;
+                    'success': function (stateData) {
+                        that._projectData = stateData.projects;
+                        that._userProfiles = stateData.users;
                         $.each(that._projectData, function (i, project) {
                             that._projectNameIndex[project.shortname] = i;
                             if (project.chatChannel) {
@@ -112,9 +113,17 @@
                 this.$textarea = $('<textarea name="message">').
                     addClass('vf-chat-textarea').
                     appendTo(this.$form);
+                /*this.$textareaActions = $('<div>').
+                    addClass('vf-chat-textarea-actions').
+                    appendTo(this.$form);*/
                 this.$submit = $('<input type="submit" value="&#xe047;" disabled="disabled">').
                     addClass('vf-chat-submit').
                     appendTo(this.$form);
+
+                /*$('<span><span class="alt_text">attach</span></span>').
+                    addClass('vf-chat-attach-button').
+                    attr('title', 'Attach a file to this message').
+                    appendTo(this.$textareaActions);*/
 
                 $.each(this._projectData, function (i, project) {
                     var $projectContent;
@@ -152,8 +161,13 @@
                     }
                 });
                 this.$container.
-                    bind('click', function () {
+                    on('click', function () {
                         that.$textarea.focus();
+                    }).
+                    on('transitionend webkitTransitionEnd oTransitionEnd', function (e) {
+                        if (that._isOpen) {
+                            that.$textarea.focus();
+                        }
                     }).
                     on('click', '.vf-chat-project-button', function () {
                         that.selectProject.call(that, $(this).attr('data-project'));
@@ -342,6 +356,7 @@
                                 my: 'top right'
                             }
                         });
+                    that.updateUserOnline(username, profile.online);
                 });
             },
             renderUserListWidgetToProject: function (username, projectName) {

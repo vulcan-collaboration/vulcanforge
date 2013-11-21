@@ -125,6 +125,10 @@ def encode_keys(d):
     return dict((k.encode('utf-8'), v) for k, v in d.iteritems())
 
 
+def pretty_print_datetime(dt):
+    return dt.strftime('%Y-%m-%d %H:%M:%S %Z')
+
+
 def ago(start_time, round=True, cutoff=True):
     """
     Return time since starting time as a rounded, human readable string.

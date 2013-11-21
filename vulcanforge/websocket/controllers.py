@@ -129,6 +129,7 @@ class ChatAPIController(BaseController):
     @expose('json')
     def state(self):
         redis = g.cache.redis
+        users = {}
         projects = []
         for project in c.user.my_projects():
             if project.shortname == '__init__':
@@ -139,7 +140,10 @@ class ChatAPIController(BaseController):
             chat_app_config = project.get_app_configs_by_kind('chat').first()
             project_prefix = 'project.{}'.format(project.shortname)
             # all users
-            project_data['users'] = [u.username for u in project.users()]
+            project_data['users'] = []
+            for user in project.users():
+                project_data['users'].append(user.username)
+                users[user.username] = self._get_profile_dict_for_user(user)
             # connected users
             key = '{}.connected_users'.format(project_prefix)
             project_data['online_users'] = list(redis.smembers(key))
@@ -156,15 +160,12 @@ class ChatAPIController(BaseController):
                 ]
             projects.append(project_data)
         return {
-            'projects': projects
+            'projects': projects,
+            'users': users
         }
 
-    @expose('json')
-    def user(self, username):
+    def _get_profile_dict_for_user(self, user):
         redis = g.cache.redis
-        user = User.by_username(username)
-        if user is None:
-            raise HTTPNotFound()
         profile = user.get_profile_info()
         online = redis.exists('user.{username}.connection_count'.format(
             **profile))
@@ -173,3 +174,10 @@ class ChatAPIController(BaseController):
             online=online
         )
         return profile
+
+    @expose('json')
+    def user(self, username):
+        user = User.by_username(username)
+        if user is None:
+            raise HTTPNotFound()
+        return self._get_profile_dict_for_user(user)

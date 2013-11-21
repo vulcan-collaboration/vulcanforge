@@ -24,7 +24,8 @@ class ChatSession(Discussion):
         name = 'chat_session'
         indexes = [
             'app_config_id',
-            'project_id'
+            'project_id',
+            'mod_date'
         ]
 
     type_s = 'ChatChannel'
@@ -50,7 +51,7 @@ class ChatSession(Discussion):
         }
 
     def url(self):
-        return os.path.join(self.app.url, str(self._id))
+        return os.path.join(self.app.url, 'session', str(self._id))
 
 
 class ChatThread(Thread):
@@ -76,7 +77,7 @@ class ChatThread(Thread):
         return ChatPost
 
     def url(self):
-        return self.app.url
+        return self.discussion.url()
 
 
 class ChatPost(AbstractPost):
@@ -103,7 +104,7 @@ class ChatPost(AbstractPost):
         return channels
 
     def url(self):
-        return self.app.url
+        return self.discussion.url()
 
 
 class ChatAttachment(DiscussionAttachment):

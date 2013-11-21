@@ -18,9 +18,9 @@
             _handlers: [],
             _subscriptions: [],
             _retryCount: 0,
+            _initEventFired: false,
             _init: function () {
                 vfSocket._connect();
-                $(window).trigger('VFWebSocketInit', vfSocket);
             },
             _connect: function () {
                 vfSocket._socket = new WebSocket(vfSocket.socketURL);
@@ -36,6 +36,10 @@
             _handleOpen: function (e) {
                 if (vfSocket._subscriptions.length) {
                     vfSocket.subscribe(vfSocket._subscriptions);
+                }
+                if (!vfSocket._initEventFired) {
+                    $(window).trigger('VFWebSocketInit', vfSocket);
+                    vfSocket._initEventFired = true;
                 }
             },
             _handleClose: function (e) {

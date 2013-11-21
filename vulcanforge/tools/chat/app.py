@@ -59,6 +59,11 @@ class ForgeChatApp(Application):
             SitemapEntry(self.config.options.mount_label, self.url)
         ]
 
+    def sidebar_menu(self):
+        return [
+            SitemapEntry('Transcripts', self.url)
+        ]
+
     def install(self, project, acl=None):
         super(ForgeChatApp, self).install(project, acl=acl)
 
