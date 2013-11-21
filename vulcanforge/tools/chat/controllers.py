@@ -20,23 +20,14 @@ LOG = logging.getLogger(__name__)
 
 class RootController(BaseController):
 
-    class Widgets(BaseController.Widgets):
-        thread = ThreadWidget(
-            page=None, limit=None, page_size=None, count=None,
-            style='linear')
-
     def __init__(self):
         self._discuss = AppDiscussionController()
 
     @expose(TEMPLATE_DIR + 'chat.html')
-    def index(self, page=0, limit=10, **kwargs):
+    def index(self, **kwargs):
         session = c.app.get_active_session()
-        c.thread = self.Widgets.thread
         return {
-            'session': session,
-            'thread': session.discussion_thread,
-            'page': page,
-            'limit': limit
+            'session_id': session._id
         }
 
 

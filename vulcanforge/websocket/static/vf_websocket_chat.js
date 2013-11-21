@@ -145,7 +145,9 @@
             bindEvents: function () {
                 var that = this;
                 this.$tab.bind({
-                    'click': function () {
+                    'click': function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         that.toggleChat.call(that);
                     }
                 });
@@ -181,6 +183,12 @@
                         } else {
                             that.$submit.attr('disabled', 'disabled');
                         }
+                    }).
+                    on('UserOnline.vfchat', function (e, username, data) {
+                        that.updateUserOnline(username, true);
+                    }).
+                    on('UserOffline.vfchat', function (e, username, data) {
+                        that.updateUserOnline(username, false);
                     });
                 $('.vf-chat-project-messages').
                     on('scroll', function (e) {
@@ -204,11 +212,7 @@
                     }).
                     addHandler(/^user\.([^\.]+)/, function (match, msg) {
                         var data = JSON.parse(msg.data);
-                        if (data.type === 'UserOnline') {
-                            that.updateUserOnline(match[1], true);
-                        } else if (data.type === 'UserOffline') {
-                            that.updateUserOnline(match[1], false);
-                        }
+                        that.$container.trigger(data.type + '.vfchat', [match[1], data]);
                     });
             },
             // Preference storage/access methods

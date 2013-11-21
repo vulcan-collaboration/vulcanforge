@@ -5,14 +5,5 @@
 {% block header %}{{c.app.config.options.mount_label}}{% endblock %}
 
 {% block content %}
-{% endblock %}
-
-{% block extra_js %}
-{% endblock %}
-
-{% block extra_css %}
-{% endblock %}
-
-{% block after_content %}
-    {{ c.thread.display(value=thread, title=None, page=page, limit=limit, count=thread.post_count) }}
+    <div id="chat_session" data-session-id="{{ session_id }}"></div>
 {% endblock %}
