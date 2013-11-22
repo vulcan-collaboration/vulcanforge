@@ -280,7 +280,7 @@ class SecurityManager(object):
             read_roles.append('authenticated')
             reaching_role_ids = self.credentials.user_roles(
                 user_id=user._id).reaching_ids
-            read_roles = read_roles + map(str, reaching_role_ids)
+            read_roles.extend(map(str, reaching_role_ids))
         return read_roles
 
 

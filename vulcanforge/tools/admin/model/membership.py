@@ -87,7 +87,6 @@ class RegistrationRequest(Artifact):
         name = 'registration_request'
         indexes = ['project_id']
 
-    _id = FieldProperty(S.ObjectId)
     project_id = ForeignIdProperty('Project')
     name = FieldProperty(str)
     email = FieldProperty(str)

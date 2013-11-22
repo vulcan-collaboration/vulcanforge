@@ -29,7 +29,6 @@ class Globals(BaseMappedClass):
         indexes = ['app_config_id']
 
     type_s = 'WikiGlobals'
-    _id = FieldProperty(schema.ObjectId)
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
     root = FieldProperty(str)
