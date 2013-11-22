@@ -61,6 +61,7 @@ class ForgeAppGlobals(object):
     tool_manager = None
     resource_manager = None
     task_queue = None
+    event_queue = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state

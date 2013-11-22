@@ -15,8 +15,8 @@ from vulcanforge.auth.controllers import AuthController, UserDiscoverController
 from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
-    SwiftAuthRestController
-)
+    SwiftAuthRestController,
+    WebServiceRestController)
 from vulcanforge.common.controllers.static import (
     NewForgeController,
     ForgeStaticController
@@ -72,6 +72,7 @@ class ForgeRootController(WsgiDispatchController):
     search = SearchController()
     static_auth = SwiftAuthRestController()
     visualize = VisualizerRootController()
+    webs = WebServiceRestController()
 
     # widgets
     class Widgets(WsgiDispatchController.Widgets):

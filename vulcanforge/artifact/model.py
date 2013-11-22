@@ -231,16 +231,17 @@ class ArtifactApiMixin(object):
 
         @rtype: vulcanforge.discussion.model.Thread
         """
-        from vulcanforge.discussion.model import Thread
-        t = Thread.query.get(ref_id=self.index_id())
+        app = self.app_config.instantiate()
+        thread_class = app.DiscussionClass.thread_class()
+        t = thread_class.query.get(ref_id=self.index_id())
         if t is None and generate_if_missing:
             idx = self.index() or {}
-            t = Thread(
+            t = thread_class(
                 app_config_id=self.app_config_id,
                 discussion_id=self.app_config.discussion_id,
                 ref_id=idx.get('id', self.index_id()),
                 subject='%s discussion' % idx.get('title_s', self.link_text()))
-            session(Thread).flush(t)
+            session(thread_class).flush(t)
         return t
 
     @LazyProperty
@@ -278,7 +279,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     type_s = 'Generic Artifact'
 
     # Artifact base schema
-    _id = FieldProperty(S.ObjectId)
     mod_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
@@ -386,7 +386,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         if getattr(c, 'app', None) and c.app.config._id == self.app_config._id:
             return c.app
         else:
-            return self.app_config.load()(self.project, self.app_config)
+            return self.app_config.instantiate()
 
     def index(self, text_objects=None, use_posts=True, **kwargs):
         """

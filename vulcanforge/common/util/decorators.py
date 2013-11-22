@@ -1,6 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Utilities for working with exceptions, not exceptions themselves
-
+Utility decorators
 """
 
 

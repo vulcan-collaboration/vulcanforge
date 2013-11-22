@@ -1,0 +1,336 @@
+#vf-chat-container {
+    position: fixed;
+    z-index: 99;
+    bottom: 20px;
+    left: 0;
+    display: block;
+    width: 600px;
+    height: 400px;
+    -webkit-transition: bottom 300ms;
+    -moz-transition: bottom 300ms;
+    -ms-transition: bottom 300ms;
+    -o-transition: bottom 300ms;
+    transition: bottom 300ms;
+}
+#vf-chat-container.vf-chat-closed {
+    bottom: -380px;
+}
+#vf-chat-container.vf-chat-open {
+    bottom: 20px;
+}
+
+
+#vf-chat-container ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+#vf-chat-container ::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+#vf-chat-container ::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.3);
+}
+#vf-chat-container :hover::-webkit-scrollbar-track {
+    background-color: rgba(0,0,0,0.2);
+}
+#vf-chat-container :hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.5);
+}
+
+
+#vf-chat-container .vf-chat-tab {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding: 1ex 1em;
+    background: #181818;
+    color: #ddd;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+#vf-chat-container .vf-chat-tab:hover {
+    color: #fff;
+}
+#vf-chat-container .vf-chat-tab::before {
+    margin: 0 1ex 0 0;
+    opacity: 0.5;
+}
+#vf-chat-container .vf-chat-tab:hover::before {
+    margin: 0 1ex 0 0;
+    opacity: 0.75;
+}
+#vf-chat-container.vf-chat-closed .vf-chat-tab::before {
+    content: "\25B2 ";
+}
+#vf-chat-container.vf-chat-open .vf-chat-tab::before {
+    content: "\25BC ";
+}
+
+
+.vf-chat-panel-container {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+#vf-chat-container .vf-chat-panel-container {
+    border-top: 2px solid #181818;
+    border-right: 2px solid #181818;
+    border-left: 2px solid #181818;
+}
+.vf-chat-header {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    background: #181818;
+    color: #ddd;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.vf-chat-content {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    position: relative;
+    background: #eee;
+}
+.vf-chat-form-container {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+}
+.vf-chat-form {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    width: 100%;
+    background: #282828;
+    color: #ddd;
+}
+
+
+.vf-chat-project-button {
+    position: relative;
+    display: inline-block;
+    height: 2em;
+    margin: 0 2px 0 0;
+    cursor: pointer;
+    line-height: 2em;
+    color: #a0a0a0;
+    vertical-align: middle;
+}
+.vf-chat-project-button.vf-chat-project-active {
+    background: #0095da;
+    color: white;
+}
+.vf-chat-project-button-icon {
+    width: 2em;
+    height: 2em;
+}
+.vf-chat-project-button-label {
+    display: inline-block;
+    padding: 0 0.5em;
+    vertical-align: top;
+}
+.vf-chat-project-button[data-unread-count]::after {
+    content: attr(data-unread-count);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2px 4px;
+    font-size: 8px;
+    line-height: 1em;
+    background: #c04;
+    color: white;
+}
+.vf-chat-project-button[data-unread-count] .vf-chat-project-button-label {
+  -webkit-animation: pulseOpacity 2s linear 0s infinite;
+  -moz-animation: pulseOpacity 2s linear 0s infinite;
+  -ms-animation: pulseOpacity 2s linear 0s infinite;
+  -o-animation: pulseOpacity 2s linear 0s infinite;
+}
+
+
+.vf-chat-project-content {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+.vf-chat-project-users {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    padding: 4px;
+    background: #505050;
+    color: #000;
+    overflow: auto;
+    overflow-x: hidden;
+}
+.vf-chat-project-messages {
+    -webkit-flex: 2 1 auto;
+    flex: 2 1 auto;
+    color: #000;
+    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.vf-chat-project-messages:empty::after {
+    content: "no messages";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #d0d0d0;
+    font-size: 3rem;
+    font-weight: lighter;
+}
+
+
+.vf-chat-textarea {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    display: block;
+    padding: 1ex;
+    margin: 1ex;
+    min-height: 3em;
+    border: none;
+    background: white;
+    border-radius: 0;
+    resize: none;
+    line-height: 1em;
+}
+.vf-chat-textarea-actions {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    margin: 1ex 0;
+    background: white;
+}
+input.vf-chat-submit[type="submit"] {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    display: block;
+    padding: 1ex 2em;
+    margin: 1ex 1ex 1ex 0;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    background: #0095da;
+    color: white;
+    resize: none;
+    vertical-align: middle;
+    font-family: ForgeIconicFill;
+}
+input.vf-chat-submit[type="submit"][disabled] {
+    background: #808080;
+    text-shadow: none;
+    color: #c0c0c0;
+}
+
+
+.vf-chat-message-container {
+    position: relative;
+    margin: 1ex;
+    padding: 0 3.5em;
+}
+.vf-chat-message-content {
+    background: #fff;
+}
+
+
+.vf-chat-user-icon.vf-chat-user-online {
+    opacity: 1;
+}
+.vf-chat-user-icon.vf-chat-user-offline {
+    opacity: 0.3;
+}
+
+.vf-chat-project-users .vf-chat-user-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin: 2px;
+    vertical-align: bottom;
+}
+.vf-chat-project-users .vf-chat-user-icon.vf-chat-user-offline {
+    width: 18px;
+    height: 18px;
+}
+
+.vf-chat-message-container .vf-chat-user-icon {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0.5em;
+    width: 3em;
+    height: 3em;
+}
+.vf-chat-message-container.vf-chat-current-user-message .vf-chat-user-icon {
+    right: 0.5em;
+    left: auto;
+}
+
+
+
+span.alt_text {
+    display: none;
+}
+
+.vf-chat-attach-button {
+    display: inline-block;
+    vertical-align: middle;
+}
+.vf-chat-attach-button::after {
+    content: "\e08a";
+    font-family: ForgeIconicFill;
+    font-size: 2rem;
+    line-height: 1em;
+    color: #606060;
+}
+
+
+
+
+@-webkit-keyframes pulseOpacity {
+  0% { opacity: 1 }
+  25% { opacity: 0.5 }
+  50% { opacity: 1 }
+  100% { opacity: 1 }
+}
+
+@-moz-keyframes pulseOpacity {
+  0% { opacity: 1 }
+  25% { opacity: 0.5 }
+  50% { opacity: 1 }
+  100% { opacity: 1 }
+}
+
+@-ms-keyframes pulseOpacity {
+  0% { opacity: 1 }
+  25% { opacity: 0.5 }
+  50% { opacity: 1 }
+  100% { opacity: 1 }
+}
+
+@-o-keyframes pulseOpacity {
+  0% { opacity: 1 }
+  25% { opacity: 0.5 }
+  50% { opacity: 1 }
+  100% { opacity: 1 }
+}

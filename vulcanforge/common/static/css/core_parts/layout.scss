@@ -151,6 +151,8 @@ body.has-project-toolbar #left-toolbar {
 
   padding-top: $main-column-header-height - 1px;
   padding-bottom: 2rem;
+
+  overflow-x: hidden;
 }
 
 body.has-related-artifacts #sidebar {

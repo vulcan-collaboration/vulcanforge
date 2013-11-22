@@ -136,7 +136,6 @@ class Project(SOLRIndexed):
     type_label = 'Project'
 
     # Project schema
-    _id = FieldProperty(S.ObjectId)
     kind = FieldProperty(str, if_missing='project')
     parent_id = FieldProperty(S.ObjectId, if_missing=None)
     neighborhood_id = ForeignIdProperty(Neighborhood)
@@ -692,6 +691,12 @@ class Project(SOLRIndexed):
             'options.mount_point': mount_point
         }).first()
 
+    def get_app_configs_by_kind(self, entrypoint_name):
+        return AppConfig.query.find({
+            'project_id': self._id,
+            'tool_name': entrypoint_name
+        })
+
     def ordered_mounts(self):
         """
         Returns an array of a projects mounts (tools and sub-projects) in
@@ -1146,10 +1151,10 @@ class AppConfig(MappedClass):
             }
         }
 
+
     @LazyProperty
     def discussion_cls(self):
-        from vulcanforge.discussion.model import Discussion
-        return Discussion
+        return self.app.DiscussionClass
 
     @LazyProperty
     def discussion(self):
@@ -1169,13 +1174,12 @@ class AppConfig(MappedClass):
         return None
 
     def load(self):
-        """
-        :returns: the related :class:`Application
-            <vulcanforge.common.app.Application>` instance
-
-        """
         result = g.tool_manager.tools[self.tool_name.lower()]["app"]
         return result
+
+    def instantiate(self):
+        cls = self.load()
+        return cls(self.project, self)
 
     def update_label_counts(self):
         self.label_count_data = self.lookup_label_counts()
@@ -1300,7 +1304,6 @@ class ProjectRole(BaseMappedClass):
         unique_indexes = [('user_id', 'project_id', 'name')]
         indexes = [('user_id',), ('project_id',), ('roles',)]
 
-    _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty('User', if_missing=None)
     project_id = ForeignIdProperty(Project, if_missing=None)
     name = FieldProperty(str)

@@ -1380,7 +1380,7 @@ var SecondaryToolbar = {
     }
   },
 
-  get isOpen() {
+  get _isOpen() {
     return this.opened;
   }
 };
@@ -4233,7 +4233,7 @@ window.addEventListener('mousedown', function mousedown(evt) {
 
 window.addEventListener('click', function click(evt) {
   if (!PDFView.isPresentationMode) {
-    if (SecondaryToolbar.isOpen && PDFView.container.contains(evt.target)) {
+    if (SecondaryToolbar._isOpen && PDFView.container.contains(evt.target)) {
       SecondaryToolbar.close();
     }
   } else if (evt.button === 0) {
@@ -4349,7 +4349,7 @@ window.addEventListener('keydown', function keydown(evt) {
         handled = true;
         break;
       case 27: // esc key
-        if (SecondaryToolbar.isOpen) {
+        if (SecondaryToolbar._isOpen) {
           SecondaryToolbar.close();
           handled = true;
         }
