@@ -14,7 +14,7 @@ class UnifyAppPermissions(BaseMigration):
     def run(self):
 
         # Change old permission names to new ones
-        for app_config in AppConfig.query.find().all():
+        for app_config in AppConfig.query.find():
             # downloads permission: configure -> admin
             if app_config.tool_name == 'downloads':
                 for ace in app_config.acl:
