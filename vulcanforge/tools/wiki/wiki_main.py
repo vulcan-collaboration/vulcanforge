@@ -655,7 +655,7 @@ class PageController(WikiContentBaseController):
     def edit(self, default_content=u'', **kw):
         page_exists = self.page
         if page_exists:
-            g.security.require_access(self.page, 'edit')
+            g.security.require_access(self.page, 'write')
             page = self.page
             attachment_context_id = str(page._id)
         else:
