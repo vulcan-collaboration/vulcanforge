@@ -94,7 +94,7 @@ class ProjectHomeController(BaseController):
     @expose(TEMPLATE_HOME + 'project_index.html')
     def index(self, **kw):
         # project news/description
-        if c.project.short_description:
+        if c.project.description:
             project_description = g.markdown.convert(c.project.description)
         else:
             project_description = ''
