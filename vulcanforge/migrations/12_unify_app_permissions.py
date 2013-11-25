@@ -73,6 +73,9 @@ class UnifyAppPermissions(BaseMigration):
                     if ace.permission == 'edit':
                         ace.permission = 'write'
 
+            # admin tool visible_to_role project.create -> project.admin
+            elif app_config.tool_name == 'admin':
+                app_config.visible_to_role = 'project.admin'
 
         ThreadLocalODMSession.flush_all()
 
