@@ -39,11 +39,12 @@ class ProjectHomeApp(Application):
         48: '{ep_name}/images/home_48.png'
     }
     permissions = dict(
-        read = Application.permissions['read']
+        read=Application.permissions['read']
     )
     default_acl = {
         '*anonymous': ['read']
     }
+    visible_to_role = 'project.read'
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
