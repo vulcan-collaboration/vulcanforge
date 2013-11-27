@@ -169,7 +169,7 @@
                     'class': 'id-user-since'
                 }),
                 $mission = $('<div/>', {
-                    text: data.mission,
+                    html: data.mission,
                     'class': 'id-mission'
                 }),
                 $expertise = $('<div/>', {

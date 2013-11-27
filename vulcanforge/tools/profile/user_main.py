@@ -103,7 +103,7 @@ class WorkspaceTabController(RestController):
     @expose('json')
     def post(self, href=None, title=None, type=None, order=0, state=None,
              **kw):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if href is None or title is None:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -126,7 +126,7 @@ class WorkspaceTabController(RestController):
     # Update
     @expose()
     def put(self, object_id, operation, value, **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         tab = WorkspaceTab.query.get(
             _id=bson.ObjectId(object_id), user_id=c.user._id)
         if not tab:
@@ -147,7 +147,7 @@ class WorkspaceTabController(RestController):
 
     @expose()
     def post_delete(self, object_id, **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         tab = WorkspaceTab.query.get(
             _id=bson.ObjectId(object_id), user_id=c.user._id)
         if not tab:
@@ -168,7 +168,7 @@ class ReferenceBinController(RestController):
     # Create
     @expose('json')
     def post(self, ref_id=None, last_mod='0', **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if not ref_id:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -197,7 +197,7 @@ class ReferenceBinController(RestController):
     def delete_reference(self, ref_id=None, last_mod=None, **kwargs):
         if not last_mod:
             last_mod = '0'
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if not ref_id:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -374,7 +374,7 @@ class UserProfileController(BaseController):
     @require_post()
     def update_configuration(self, divs=None, layout_class=None, new_div=None,
                              **kw):
-        g.security.require_access(c.project, 'update')
+        g.security.require_access(c.project, 'write')
         config = PHM.PortalConfig.current()
         config.layout_class = layout_class
         # Handle updated and deleted divs
@@ -546,7 +546,7 @@ class UserProfileController(BaseController):
         return dict(
             allow_read=g.security.has_access(c.app, 'read', user=self.user),
             allow_write=g.security.has_access(c.app, 'write', user=self.user),
-            allow_create=g.security.has_access(c.app, 'create', user=self.user)
+            allow_create=g.security.has_access(c.app, 'write', user=self.user)
         )
 
     @expose('json')

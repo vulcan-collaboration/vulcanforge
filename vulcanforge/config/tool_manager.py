@@ -56,6 +56,11 @@ class ToolManager(object):
         "calendar": {
             "app_path": TOOLS_DIR + 'calendar.app:ForgeCalendarApp',
             "installable": True
+        },
+        "chat": {
+            "app_path": TOOLS_DIR + 'chat.app:ForgeChatApp',
+            "installable": False,
+            "required": True
         }
     })
 

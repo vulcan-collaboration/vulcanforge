@@ -27,7 +27,7 @@ class Application(object):
     :var status: the status level of this app.  'production' apps are available
         to all projects
     :var bool searchable: toggle if the search box appears in the left menu
-    :var permissions: a list of named permissions used by the app
+    :var permissions: a dictionary of named permissions used by the app, the values describe what the permissions enable
     :var sitemap: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
         to create an app navigation.
     :var bool installable: toggle if the app can be installed in a project
@@ -49,7 +49,11 @@ class Application(object):
     api_root = None  # root rest controller
     static_dir = 'static'
     template_dir = 'templates'
-    permissions = []
+    permissions = dict(
+        admin='Configure this tool and its permissions',
+        write='Create new artifacts or modify old ones',
+        read='View tool artifacts'
+    )
     sitemap = []
     searchable = False
     DiscussionClass = Discussion
@@ -82,6 +86,7 @@ class Application(object):
     }
     default_acl = {}
     is_customizable = True
+    visible_to_role = 'read'
 
     def __init__(self, project, app_config_object):
         self.project = project
@@ -182,13 +187,13 @@ class Application(object):
         # Create the discussion object
         discussion = self.DiscussionClass(
             shortname=self.config.options.mount_point,
-            name='%s Discussion' % self.config.options.mount_point,
-            description='Forum for %s comments' %\
-                        self.config.options.mount_point
+            name='{} Discussion'.format(self.config.options.mount_point),
+            description='Forum for {} comments'.format(
+                self.config.options.mount_point)
         )
         session(discussion).flush()
         self.config.discussion_id = discussion._id
-        self.config.visible_to_role = 'read'
+        self.config.visible_to_role = self.visible_to_role
         self.config.reference_opts = self.reference_opts.copy()
         self.subscribe_admins()
         self.set_acl(acl)

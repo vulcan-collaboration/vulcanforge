@@ -102,7 +102,7 @@ del {
     font-family: "Courier New", Courier;
 }
 
-body[data-pagetype="WIKI"] .markdown_content {
+body[data-pagetype="WIKI"] #main-content-holder .markdown_content {
     padding: 1.4em 2.8em;
     font-size: 1em;
 }

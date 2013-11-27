@@ -15,8 +15,8 @@ from vulcanforge.auth.controllers import AuthController, UserDiscoverController
 from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
-    SwiftAuthRestController
-)
+    SwiftAuthRestController,
+    WebServiceRestController)
 from vulcanforge.common.controllers.static import (
     NewForgeController,
     ForgeStaticController
@@ -74,6 +74,7 @@ class ForgeRootController(WsgiDispatchController):
     static_auth = SwiftAuthRestController()
     s3_proxy = S3ProxyController()
     visualize = VisualizerRootController()
+    webs = WebServiceRestController()
 
     # widgets
     class Widgets(WsgiDispatchController.Widgets):

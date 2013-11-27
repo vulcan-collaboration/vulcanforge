@@ -9006,7 +9006,7 @@ $.widget( "ui.dialog", {
 		});
 	},
 
-	isOpen: function() {
+	_isOpen: function() {
 		return this._isOpen;
 	},
 

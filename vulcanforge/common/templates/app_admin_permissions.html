@@ -20,6 +20,7 @@
             index=i1,
             id=name,
             name=name,
+            description=permission_description[name],
             items=h.get_roles_by_ids(ids)
         )}}
         {% endfor %}

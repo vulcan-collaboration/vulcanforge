@@ -31,7 +31,9 @@ class ForgeVisualizeApp(Application):
     """The definitive Visualize App for VulcanForge"""
     __version__ = "0.1"
     searchable = False
-    permissions = ['read', 'edit', 'admin']
+    permissions = dict(Application.permissions,
+        write='Add new, modify or delete existing visualizer'
+    )
     tool_label = "Visualizers"
     static_folder = 'Visualizers'
     default_mount_label = "Visualizers"
@@ -43,8 +45,8 @@ class ForgeVisualizeApp(Application):
         48: '{ep_name}/images/visualizers-icon_48.png'
     }
     default_acl = {
-        'Admin': permissions,
-        'Developer': ['read', 'edit']
+        'Admin': permissions.keys(),
+        'Developer': ['read', 'write']
     }
 
     def __init__(self, project, config):
@@ -80,14 +82,14 @@ class VisualizerConfigController(BaseController):
             'priority', pymongo.DESCENDING)
         return {
             'visualizers': visualizers,
-            'is_admin': g.security.has_access(self.app, 'edit')
+            'is_admin': g.security.has_access(self.app, 'write')
         }
 
     @expose()
     @validate({'visualizers': validators.UnicodeString(not_empty=True)})
     @require_post()
     def set_priority(self, visualizers=None):
-        g.security.require_access(self.app, 'edit')
+        g.security.require_access(self.app, 'write')
         ordered_ids = visualizers.split(',')
         num = len(ordered_ids)
         for n, vis_id in enumerate(ordered_ids):
@@ -102,7 +104,7 @@ class VisualizerConfigController(BaseController):
     @require_post()
     def update(self, archive=None, visualizer=None, delete=None, active=True,
                **kw):
-        g.security.require_access(self.app, 'edit')
+        g.security.require_access(self.app, 'write')
         if delete == u'Delete':
             visualizer.delete()
         else:
@@ -117,7 +119,7 @@ class VisualizerConfigController(BaseController):
     @validate_form("upload_form", error_handler=index)
     @require_post()
     def do_upload(self, archive=None, **kw):
-        g.security.require_access(self.app, 'edit')
+        g.security.require_access(self.app, 'write')
         if archive is None:
             raise exc.HTTPBadRequest('Must include an archive')
 

@@ -12,3 +12,6 @@ class BaseMappedClass(MappedClass):
 
     class __mongometa__:
         abstract = True
+
+    def flush_self(self):
+        self.query.session.flush(self)

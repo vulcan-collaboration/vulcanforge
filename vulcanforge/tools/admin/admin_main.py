@@ -63,6 +63,7 @@ class AdminApp(Application):
     tool_label = 'admin'
     static_folder = "admin"
     default_mount_label = 'Admin'
+    visible_to_role = 'project.admin'
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
@@ -178,7 +179,7 @@ class AdminApp(Application):
         return []
 
     def install(self, project, subscribe_admins=True, **kw):
-        self.config.visible_to_role = 'project.admin'
+        self.config.visible_to_role = self.visible_to_role
         self.config.reference_opts = Application.reference_opts
         if subscribe_admins:
             self.subscribe_admins()

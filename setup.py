@@ -72,7 +72,10 @@ setup(
         "BeautifulSoup < 4.0",
         "python-markdown-oembed",
         "redis == 2.7.2",
-        "hiredis"
+        "hiredis",
+        "gevent",
+        "gevent-websocket",
+        "jsonschema"
     ],
     setup_requires=["PasteScript >= 1.7"],
     packages=find_packages(exclude=['ez_setup']),
@@ -98,6 +101,7 @@ setup(
     },
     entry_points="""
     [paste.paster_command]
+    eventd = vulcanforge.command.eventd:EventdCommand
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand
     run_migrations = vulcanforge.command.migration:MigrationCommand

@@ -10,10 +10,9 @@ app
 
 from ming.odm import session
 from pylons import app_globals as g, tmpl_context as c
-from tg import expose, redirect, flash
-from tg.decorators import with_trailing_slash, without_trailing_slash
+from tg import redirect
+from tg.decorators import with_trailing_slash
 
-from vulcanforge.common.controllers.decorators import require_post
 from vulcanforge.common.app import (
     Application,
     DefaultAdminController
@@ -28,7 +27,6 @@ from .version import VERSION
 
 class ForgeDownloadsApp(Application):
     __version__ = VERSION
-    permissions = ['read', 'write', 'configure']
     status = 'production'
     tool_label = 'Downloads'
     default_mount_label = 'Downloads'
@@ -42,8 +40,8 @@ class ForgeDownloadsApp(Application):
         48: '{ep_name}/images/downloads_48.png'
     }
     default_acl = {
-        'Admin': permissions,
-        'Developer': ['read', 'write'],
+        'Admin': Application.permissions.keys(),
+        'Developer': ['write', 'read'],
         'Member': ['read'],
         '*authenticated': ['read']
     }
@@ -85,7 +83,7 @@ class ForgeDownloadsApp(Application):
             self.config.options.mount_point + '/'
 
         links = []
-        if self.permissions and g.security.has_access(self, 'configure'):
+        if self.permissions and g.security.has_access(self, 'admin'):
 
             links.extend([
                 SitemapEntry(
@@ -102,9 +100,6 @@ class ForgeDownloadsAdminController(DefaultAdminController):
 
     def __init__(self, app):
         self.app = app
-
-    def _check_security(self):
-        g.security.require_access(self.app, 'configure')
 
     @with_trailing_slash
     def index(self, **kw):
