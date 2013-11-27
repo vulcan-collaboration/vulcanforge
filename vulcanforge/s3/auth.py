@@ -102,7 +102,7 @@ class SwiftAuthorizer(object):
 
         if shortlink:
             # load artifact and check acl
-            artifact = shortlink.ref.artifact
+            return shortlink.ref.artifact
 
     def artifact_access(self, match, user, keyname, method):
         # find shortlink for artifact
@@ -122,10 +122,10 @@ class SwiftAuthorizer(object):
                 permission = 'read'
             else:
                 permission = artifact.app_config.reference_opts['create_perm']
-            LOG.info('checking permission on artifact %s', artifact.index_id())
             has_permission = g.security.has_access(
                 artifact, permission, user=user)
-
+            LOG.info('has_permission:%s for artifact %s', str(has_permission),
+                     artifact.index_id())
         return has_permission
 
     def has_access(self, keyname, method="GET", user=None):

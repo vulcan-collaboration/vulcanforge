@@ -53,11 +53,14 @@ class FileController(BaseTGController):
             raise exc.AJAXNotFound('The requested file does not exist.')
 
         c.related_artifacts_widget = self.Widgets.related_artifacts
+        rendered_file = g.visualize_artifact(fd_file).full_render(
+            on_unvisualizable=lambda fd: redirect(fd_file.raw_url()))
+
         return dict(
             hide_sidebar=True,
             fd_file=fd_file,
             editable=g.security.has_access(c.app, 'write'),
-            force_display=asbool(kwargs.get('force_display', 'false')))
+            rendered_file=rendered_file)
 
 
 class TreeController(TGController):

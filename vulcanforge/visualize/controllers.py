@@ -27,8 +27,7 @@ class VisualizerRootController(BaseController):
         extra_params = {}
         if iframe_query:
             extra_params.update(
-                dict(urlparse.parse_qsl(urllib.unquote(iframe_query)))
-            )
+                dict(urlparse.parse_qsl(urllib.unquote(iframe_query))))
         return {
             "resource_url": resource_url,
             "extra_params": extra_params,

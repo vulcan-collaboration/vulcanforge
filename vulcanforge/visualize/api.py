@@ -1,13 +1,18 @@
+import os
+import posixpath
+import mimetypes
+from urlparse import urlparse
 
-
-from vulcanforge.visualize.resource_interface import (
-    ArtifactResourceInterface,
-    UrlResourceInterface
-)
 from vulcanforge.visualize.widgets import TabbedVisualizers, TabbedDiffs
+from vulcanforge.visualize.exceptions import VisualizerError
+from vulcanforge.visualize.model import VisualizerConfig
 
 
-class VisualizerAPI(object):
+def raise_error(msg):
+    raise VisualizerError(msg)
+
+
+class BaseVisualizerAPI(object):
     """
     VisualizerAPI is the sole entry point throughout the forge to render
     content by the visualizer framework.
@@ -18,9 +23,6 @@ class VisualizerAPI(object):
     full_render_widget = TabbedVisualizers()
     full_diff_widget = TabbedDiffs()
 
-    artifact_interface_cls = ArtifactResourceInterface
-    url_interface_cls = UrlResourceInterface
-
     _additional_text_extensions = {
         '.ini',
         '.gitignore',
@@ -28,102 +30,222 @@ class VisualizerAPI(object):
         'readme'
     }
 
-    def full_render_artifact(self, artifact, **kwargs):
+    def __init__(self, resource):
+        self.resource = resource
+        super(BaseVisualizerAPI, self).__init__()
+
+    @property
+    def url(self):
+        raise NotImplementedError('url')
+
+    @property
+    def download_url(self):
+        raise NotImplementedError('download_url')
+
+    def render_for_visualizer(self, visualizer, **kwargs):
+        raise NotImplementedError('render_for_visualizer')
+
+    def get_content_urls_for_visualizer(self, visualizer, extra_params=None):
+        raise NotImplementedError('get_content_urls_for_visualizer')
+
+    def render_diff_for_visualizer(self, resource, visualizer, **kwargs):
+        raise NotImplementedError('render_diff_for_visualizer')
+
+    def find_visualizers(self):
+        return [vc.load() for vc in self._find_configs()]
+
+    def get_visualizer(self):
+        configs = self._find_configs()
+        if configs:
+            return configs[0].load()
+
+    def _find_configs(self):
+        mtype, extensions = self._get_mimetype_ext()
+        configs = VisualizerConfig.find_for_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return configs
+
+    def full_render(self, shortnames=None, active_shortname=None,
+                    extra_params=None, on_unvisualizable=None, **kwargs):
         """
-        Render artifact with toolbar "chrome" on the top
+        Render resource with toolbar "chrome" on the top
 
         @param shortnames list of visualizer shortnames to use
         @param active_shortname str shortname of visualizer to make active
-        @param kwargs passed on to the render_artifact function on the
+        @param kwargs passed on to the appropriate render function on the
             visualizer
 
         """
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.full_render(**kwargs)
+        specs = []
+        visualizers = self._find_with_optional_shortnames(shortnames)
+        if not visualizers:
+            if on_unvisualizable:
+                return on_unvisualizable(self.resource)
+            else:
+                return ''
 
-    def full_render_url(self, url, **kwargs):
-        """
-        Render artifact with toolbar on the top
+        is_active = False
+        for visualizer in visualizers:
+            # is active visualizer
+            if not active_shortname and not is_active:
+                is_active = True
+            else:
+                is_active = active_shortname == visualizer.config.shortname
 
-        @param shortnames list of visualizer shortnames to use
-        @param active_shortname str shortname of visualizer to make active
-        @param kwargs passed on to the render_url function on the
-            visualizer
+            # get fs_url, src
+            iframe_url, fs_url = self.get_content_urls_for_visualizer(
+                visualizer, extra_params)
+            spec = {
+                "name": visualizer.name,
+                "iframe_url": iframe_url,
+                "fullscreen_url": fs_url,
+                "active": is_active
+            }
+            specs.append(spec)
 
-        """
-        interface = self.url_interface_cls(url, self)
-        return interface.full_render(**kwargs)
+        return self.full_render_widget.display(
+            specs,
+            filename=os.path.basename(self.url),
+            download_url=self.download_url,
+            **kwargs)
 
-    def render_artifact(self, artifact, shortname=None, **kwargs):
-        """Render an artifact with a single visualizer with no toolbar
+    def render(self, shortname=None, on_not_found=raise_error, **kwargs):
+        visualizer = self._get_with_optional_shortname(shortname, on_not_found)
+        return self.render_for_visualizer(visualizer, **kwargs)
 
-        @param shortname: shortname of visualizer to use to render
-        @param kwargs: kwargs to pass on to the render_artifact function of the
-            visualizer
+    def get_icon_url(self, shortname=None):
+        visualizer = self._get_with_optional_shortname(shortname)
+        if visualizer:
+            return visualizer.icon_url
 
-        """
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.render(shortname=shortname, **kwargs)
+    def diff(self, resource, shortname=None, on_not_found=raise_error,
+             **kwargs):
+        visualizer = self._get_with_optional_shortname(shortname, on_not_found)
+        return self.render_diff_for_visualizer(resource, visualizer, **kwargs)
 
-    def render_url(self, url, shortname=None, **kwargs):
-        """Render a url with a single visualizer with no toolbar
+    def full_diff(self, resource, shortnames=None, **kwargs):
+        specs = []
+        visualizers = self._find_with_optional_shortnames(shortnames)
+        for visualizer in visualizers:
+            # get fs_url, src
+            spec = {
+                "name": visualizer.name,
+                "content": self.render_diff_for_visualizer(
+                    resource, visualizer, **kwargs),
+            }
+            specs.append(spec)
 
-        @param shortname: shortname of visualizer to use to render
-        @param kwargs: kwargs to pass on to the render_artifact function of the
-            visualizer
+        return self.full_diff_widget.display(
+            specs,
+            filename=os.path.basename(self.url),
+            **kwargs)
 
-        """
-        interface = self.url_interface_cls(url, self)
-        return interface.render(shortname=shortname, **kwargs)
+    def _find_with_optional_shortnames(self, shortnames=None):
+        # get all visualizers for this resource, or specified shortnames
+        if shortnames:
+            cur = VisualizerConfig.query.find(
+                {"shortname": {"$in": shortnames}})
+            visualizers = [config.load() for config in cur]
+        else:
+            visualizers = self.find_visualizers()
+        return visualizers
 
-    def get_icon_url(self, url, shortname=None):
-        interface = self.url_interface_cls(url, self)
-        return interface.get_icon_url(shortname)
+    def _get_with_optional_shortname(self, shortname=None,
+                                     on_not_found=raise_error):
+        visualizer = None
+        if shortname:
+            config = VisualizerConfig.query.get(shortname=shortname)
+            if config:
+                visualizer = config.load()
+            elif on_not_found:
+                on_not_found()
+        else:
+            visualizer = self.get_visualizer()
+        return visualizer
 
-    def find_visualizers_by_url(self, url):
-        interface = self.url_interface_cls(url, self)
-        return interface.find_visualizers()
+    def _get_mimetype_ext(self):
+        parsed = urlparse(self.url)
+        filename = os.path.basename(parsed.path)
+        extensions = []
+        base = filename.lower()
+        remainder = ''
+        mtype = None
+        while True:
+            base, ext = posixpath.splitext(base)
+            if ext in self._additional_text_extensions or (
+                    not ext and not mtype and
+                        base in self._additional_text_extensions):
+                mtype = 'text/plain'
+            if not ext:
+                break
+            while ext in mimetypes.suffix_map:
+                base, ext = posixpath.splitext(
+                    base + mimetypes.suffix_map[ext])
+            if ext in mimetypes.encodings_map:
+                base, ext = posixpath.splitext(base)
+            extensions.append(ext + remainder)
+            remainder = ext + remainder
 
-    def get_visualizer_by_url(self, url):
-        interface = self.url_interface_cls(url, self)
-        return interface.get_visualizer()
+        if not mtype:
+            mtype = mimetypes.guess_type(filename)[0]
 
-    def find_visualizers_by_artifact(self, artifact):
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.find_visualizers()
+        return mtype, extensions
 
-    def get_visualizer_by_artifact(self, artifact):
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.get_visualizer()
 
-    def find_for_processing(self, artifact):
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.find_for_processing()
+class ArtifactVisualizerInterface(BaseVisualizerAPI):
+    @property
+    def url(self):
+        return self.resource.url()
 
-    def content_urls_for_artifact(self, artifact, visualizer,
-                                  extra_params=None):
-        interface = self.artifact_interface_cls(artifact, self)
-        return interface.get_content_urls_for_visualizer(
-            visualizer, extra_params)
+    @property
+    def download_url(self):
+        return self.resource.raw_url()
 
-    def content_urls_for_url(self, url, visualizer, extra_params=None):
-        interface = self.url_interface_cls(url, self)
-        return interface.get_content_urls_for_visualizer(
-            visualizer, extra_params)
+    def _find_configs(self):
+        # differs from base class in that it finds visualizers with processing
+        # hooks as well
+        mtype, extensions = self._get_mimetype_ext()
+        configs = VisualizerConfig.find_for_all_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return configs
 
-    def full_diff_artifact(self, artifact1, artifact2, shortnames=None,
-                           **kwargs):
-        interface = self.artifact_interface_cls(artifact1, self)
-        return interface.full_diff(artifact2, shortnames=shortnames, **kwargs)
+    def find_for_processing(self):
+        mtype, extensions = self._get_mimetype_ext()
+        cur = VisualizerConfig.find_for_processing_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return [vc.load() for vc in cur]
 
-    def full_diff_url(self, url1, url2, shortnames=None, **kwargs):
-        interface = self.url_interface_cls(url1, self)
-        return interface.full_diff(url2, shortnames=shortnames, **kwargs)
+    def render_for_visualizer(self, visualizer, **kwargs):
+        return visualizer.render_artifact(self.resource, **kwargs)
 
-    def diff_artifact(self, artifact1, artifact2, shortname=None, **kwargs):
-        interface = self.artifact_interface_cls(artifact1, self)
-        return interface.diff(artifact2, shortname=shortname, **kwargs)
+    def get_content_urls_for_visualizer(self, visualizer, extra_params=None):
+        return visualizer.artifact_widget.get_full_urls(
+            self.resource, visualizer, extra_params)
 
-    def diff_url(self, url1, url2, shortname=None, **kwargs):
-        interface = self.url_interface_cls(url1, self)
-        return interface.diff(url2, shortname=shortname, **kwargs)
+    def render_diff_for_visualizer(self, resource, visualizer, **kwargs):
+        return visualizer.render_diff_artifact(
+            self.resource, resource, **kwargs)
+
+
+class UrlVisualizerInterface(BaseVisualizerAPI):
+    @property
+    def url(self):
+        return self.resource
+
+    @property
+    def download_url(self):
+        return self.resource
+
+    def find_for_processing(self):
+        return []  # no processing from urls
+
+    def render_for_visualizer(self, visualizer, **kwargs):
+        return visualizer.render_url(self.resource, **kwargs)
+
+    def get_content_urls_for_visualizer(self, visualizer, extra_params=None):
+        return visualizer.url_widget.get_full_urls(
+            self.resource, visualizer, extra_params)
+
+    def render_diff_for_visualizer(self, resource, visualizer, **kwargs):
+        return visualizer.render_diff_url(
+            self.resource, resource, **kwargs)

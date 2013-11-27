@@ -172,6 +172,8 @@ class ArtifactResourceInterface(BaseResourceInterface):
         return self.resource.raw_url()
 
     def _find_configs(self):
+        # differs from base class in that it finds visualizers with processing
+        # hooks as well
         mtype, extensions = self._get_mimetype_ext()
         configs = VisualizerConfig.find_for_all_mtype_ext(
             mime_type=mtype, extensions=extensions)

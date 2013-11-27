@@ -1,3 +1,4 @@
+import hashlib
 import re
 import logging
 from datetime import datetime
@@ -77,7 +78,7 @@ class VisualizerConfig(BaseMappedClass):
     creator_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     modified_date = FieldProperty(datetime, if_missing=datetime.utcnow)
-    options = FieldProperty({})
+    options = FieldProperty(None)
 
     @staticmethod
     def strip_name(name):
@@ -192,6 +193,12 @@ class _BaseVisualizerFile(File):
     visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
     visualizer = RelationProperty(VisualizerConfig, via="visualizer_id")
 
+    @staticmethod
+    def calculate_hash(data):
+        md5 = hashlib.md5()
+        md5.update(data)
+        return md5.hexdigest()
+
 
 class ProcessedArtifactFile(_BaseVisualizerFile):
     """Represents visualizer-specific synthesized resources typically
@@ -218,6 +225,7 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
 
     query_param = FieldProperty(str, if_missing='resource_url')
     unique_id = FieldProperty(str)
+    origin_hash = FieldProperty(str, if_missing=None)
     ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
     status = FieldProperty(
         schema.OneOf('loading', 'ready', 'error', if_missing='ready'))
@@ -243,19 +251,26 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
                 session(cls).flush(pfile)
             except DuplicateKeyError:  # pragma no cover
                 session(pfile).expunge(pfile)
+                pfile = cls.find_from_visualizable(
+                    visualizable, filename=filename).first()
+            pfile.origin_hash = cls.calculate_hash(visualizable.read())
         kwargs.setdefault('ref_id', visualizable.artifact_ref_id())
         for name, value in kwargs.items():
             setattr(pfile, name, value)
-        session(cls).flush(pfile)  # flush to prevent conflict
         return pfile
 
     @LazyProperty
     def artifact(self):
         from vulcanforge.artifact.model import ArtifactReference
         if self.ref_id:
-            aref = ArtifactReference.query.get(_id=self.ref_id)
-            if aref:
-                return aref.artifact
+            return ArtifactReference.artifact_by_index_id(self.ref_id)
+
+    def find_duplicate(self):
+        duplicate_query = {
+            "origin_hash": self.origin_hash,
+            "_id": {"$ne": self._id}
+        }
+        return self.__class__.query.find(duplicate_query).first()
 
 
 class S3VisualizerFile(_BaseVisualizerFile):
@@ -264,11 +279,29 @@ class S3VisualizerFile(_BaseVisualizerFile):
         name = 's3_visualizer_file'
 
     parent_folder = FieldProperty(str, if_missing=None)
+    content_hash = FieldProperty(str, if_missing=None)
 
     def __init__(self, **kw):
         super(S3VisualizerFile, self).__init__(**kw)
         if self.parent_folder is None:
             self.parent_folder = os.path.dirname(self.filename)
+        self.__calculate_hash = True
+
+    @classmethod
+    def upsert_from_data(cls, filename, visualizer_config_id, data, **kw):
+        obj = cls.query.get(filename=filename,
+                            visualizer_config_id=visualizer_config_id)
+        if not obj:
+            obj = cls.from_data(filename, data,
+                                visualizer_config_id=visualizer_config_id)
+            return obj
+
+        data_hash = cls.calculate_hash(data)
+        if obj.content_hash != data_hash:
+            obj.__calculate_hash = False
+            obj.set_contents_from_string(data)
+            obj.content_hash = data_hash
+        return obj
 
     @property
     def default_keyname(self):
@@ -276,3 +309,10 @@ class S3VisualizerFile(_BaseVisualizerFile):
             'Visualizer',
             str(self.visualizer_config_id),
             super(_BaseVisualizerFile, self).default_keyname)
+
+    def _update_metadata(self):
+        super(S3VisualizerFile, self)._update_metadata()
+        if self.__calculate_hash:
+            self.content_hash = self.calculate_hash(self.read())
+        else:
+            self.__calculate_hash = True

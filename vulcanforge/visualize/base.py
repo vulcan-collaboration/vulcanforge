@@ -1,5 +1,6 @@
 import logging
 
+from ming.odm import session
 from pylons import app_globals as g
 
 from vulcanforge.taskd import model_task
@@ -170,12 +171,6 @@ class _BaseProcessingVisualizer(BaseVisualizer):
         pass
 
 
-class OnUploadProcessingVisualizer(_BaseProcessingVisualizer):
-
-    def on_upload(self, artifact):
-        self.process_artifact(artifact)
-
-
 class OnDemandProcessingVisualizer(_BaseProcessingVisualizer):
 
     def get_query_for_artifact(self, artifact):
@@ -188,6 +183,19 @@ class OnDemandProcessingVisualizer(_BaseProcessingVisualizer):
         super_func = super(
             OnDemandProcessingVisualizer, self).get_query_for_artifact
         return super_func(artifact)
+
+
+class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
+    """
+    Processes files on upload. If the file is not finished processing or
+    for some reason hasn't been processed yet (for example, if the file is
+    older than the visualizer), it reverts to the behavior of the
+    OnDemandProcessingVisualizer.
+
+    """
+
+    def on_upload(self, artifact):
+        self.process_artifact(artifact)
 
 
 # For Visualizable artifacts and mapped classes
@@ -212,7 +220,7 @@ class VisualizableMixIn(object):
 
     @model_task
     def trigger_vis_upload_hook(self):
-        for visualizer in g.visualize.find_for_processing(self):
+        for visualizer in g.visualize_artifact(self).find_for_processing():
             try:
                 visualizer.on_upload(self)
             except Exception:
@@ -221,7 +229,7 @@ class VisualizableMixIn(object):
 
     @model_task
     def trigger_vis_delete_hook(self):
-        for visualizer in g.visualize.find_for_processing(self):
+        for visualizer in g.visualize_artifact(self).find_for_processing():
             try:
                 visualizer.on_delete(self)
             except Exception:
@@ -231,6 +239,7 @@ class VisualizableMixIn(object):
 
 class BaseFileProcessor(object):
     """Generates a single file from an artifact"""
+    check_for_duplicate = True
 
     def __init__(self, artifact, visualizer):
         self.artifact = artifact
@@ -251,20 +260,36 @@ class BaseFileProcessor(object):
             visualizer_config_id=self.visualizer.config._id,
             status=status
         )
+        session(ProcessedArtifactFile).flush(pfile)
         return pfile
 
     def full_run(self):
+        LOG.info("Running file processor %s on %s", self.__class__.__name__,
+                 self.artifact.unique_id())
         pfile = self.make_processed_file()
-        try:
-            result = self.run(pfile)
-        except Exception, e:
-            LOG.info("Error processing {}:{} for {}\n{}".format(
-                self.artifact,
-                self.artifact.unique_id(),
-                self.visualizer,
-                e
-            ))
-            pfile.status = "error"
-        else:
-            pfile.status = "ready"
-            return result
+
+        # check for duplicate files
+        do_run = True
+        if self.check_for_duplicate:
+            duplicate_pfile = pfile.find_duplicate()
+            if duplicate_pfile:
+                pfile.set_contents_from_string(duplicate_pfile.read())
+                pfile.status = 'ready'
+                do_run = False
+
+        # call the run method
+        if do_run:
+            try:
+                self.run(pfile)
+            except Exception, e:
+                LOG.info("Error processing {}:{} for {}\n{}".format(
+                    self.artifact,
+                    self.artifact.unique_id(),
+                    self.visualizer,
+                    e
+                ))
+                pfile.status = "error"
+            else:
+                pfile.status = "ready"
+
+        return pfile

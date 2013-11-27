@@ -8,7 +8,7 @@ from vulcanforge.visualize.model import VisualizerConfig
 
 
 class SyncVisualizersCommand(base.Command):
-    summary = 'Initialize Default Visualizers in the Database'
+    summary = 'Initialize Default (Server-side) Visualizers in the Database'
     parser = base.Command.standard_parser(verbose=True)
     parser.add_option(
         '-s', '--shortname', dest='shortname',

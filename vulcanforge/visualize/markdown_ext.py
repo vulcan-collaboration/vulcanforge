@@ -38,15 +38,21 @@ class VisualizerPattern(StashPattern, markdown.inlinepatterns.LinkPattern):
         return self.display(resource_url, shortname, height=height)
 
     def display(self, resource_url, shortname=None, **kwargs):
-        return g.visualize.render_url(resource_url, shortname, **kwargs)
+        return g.visualize_url(resource_url).render(shortname, **kwargs)
 
 
 class FullVisualizerPattern(VisualizerPattern):
     pattern = FULL_VISUALIZER_RE
+
+    def _unvisualizable(self, url):
+        return '<a href="{url}">{url}</a>'.format(url=url)
 
     def display(self, resource_url, shortname=None, **kwargs):
         if shortname:
             shortnames = ','.split(shortname)
         else:
             shortnames = None
-        return g.visualize.full_render_url(resource_url, shortnames, **kwargs)
+        return g.visualize_url(resource_url).full_render(
+            shortnames,
+            on_unvisualizable=self._unvisualizable,
+            **kwargs)

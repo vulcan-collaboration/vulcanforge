@@ -195,7 +195,6 @@ class TabbedDiffs(Widget):
             "slug": str optional default sluggified name
         }, ...]
 
-
         """
         for spec in diff_specs:
             spec.setdefault('slug', slugify(spec["name"]))

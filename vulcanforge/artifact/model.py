@@ -925,7 +925,7 @@ class BaseAttachment(File, VisualizableMixIn):
     @model_task
     def trigger_vis_upload_hook(self):
         # process attachments immediately
-        for visualizer in g.visualize.find_for_processing(self):
+        for visualizer in g.visualize_artifact(self).find_for_processing():
             try:
                 visualizer.process_artifact(self)
             except Exception:

@@ -12,9 +12,9 @@ LOG = logging.getLogger(__name__)
 
 def get_resource_interface(resource):
     if isinstance(resource, basestring):
-        resource_i = g.visualize.url_interface_cls(resource, g.visualize)
+        resource_i = g.visualize_url(resource)
     else:
-        resource_i = g.visualize.artifact_interface_cls(resource, g.visualize)
+        resource_i = g.visualize_artifact(resource)
     return resource_i
 
 

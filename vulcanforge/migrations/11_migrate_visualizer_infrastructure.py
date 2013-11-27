@@ -7,29 +7,31 @@ from tg import config
 from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.migration.base import BaseMigration
 from vulcanforge.visualize.model import VisualizerConfig, S3VisualizerFile
-from vulcanforge.visualize.s3 import S3Visualizer
+from vulcanforge.visualize.s3hosted import S3HostedVisualizer
 
 
 class MigrateVisualizerInfrastructure(BaseMigration):
     def run(self):
         db, coll = pymongo_db_collection(VisualizerConfig)
         count = 0
+        converted_ids = []
 
         # convert s3 visualizers
         s3visualizer = {
-            "classname": S3Visualizer.__name__,
-            "module": S3Visualizer.__module__
+            "classname": S3HostedVisualizer.__name__,
+            "module": S3HostedVisualizer.__module__
         }
         for doc in coll.find({"widget": "s3"}):
             count += 1
+            converted_ids.append(doc["_id"])
             del doc['widget']
             del doc['thumb']
             del doc['bucket_name']
-            doc['config'] = {
+            doc['options'] = {
                 "entry_point": doc.pop('entry_point', 'index.html')
             }
             if 'teaser_entry_point' in doc:
-                doc['config']["teaser_entry_point"] = doc.pop(
+                doc['options']["teaser_entry_point"] = doc.pop(
                     'teaser_entry_point', None)
             doc['visualizer'] = s3visualizer
             bundle_content = doc.pop('bundle_content')
@@ -44,7 +46,7 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                 s3_file.set_contents_from_string(key.read())
             coll.save(doc)
 
-        # server-side visualizers
+        # convert server-side visualizers
         decoded = variable_decode(config)
         visopts = decoded['visualizer']
         for shortname, path in visopts.items():
@@ -53,6 +55,7 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                 "shortname": shortname,
                 "widget": {"$exists": 1}})
             if doc:
+                converted_ids.append(doc["_id"])
                 split_path = path.split(':')
                 path_spec = {
                     'module': split_path[0],
@@ -60,6 +63,11 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                 }
                 self._convert_serverside(doc, path_spec)
                 coll.save(doc)
+
+        # remove danglers
+        coll.remove({"_id": {"$nin": converted_ids}})
+
+        # add visualizer postcommit hook
 
         self.write_output('Migrated {} visualizers'.format(count))
 

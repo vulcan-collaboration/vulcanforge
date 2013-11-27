@@ -106,7 +106,7 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     border-bottom-width: 0;
 }
 
-.visualizerTabs li.ui-tabs-active{
+.visualizerTabs li.ui-state-active{
     cursor: default;
     @include linearGradient2(top, #fff, #ddd);
     border-bottom-width: 2.5px;
@@ -117,7 +117,7 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     @include linearGradient2(top, #000, #111);
 }
 
-.visualizerTabs li.ui-tabs-active:hover{
+.visualizerTabs li.ui-state-active:hover{
     @include linearGradient2(top, #fff, #ddd);
 }
 
@@ -126,7 +126,7 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     text-shadow: 0 0 1px #000;
 }
 
-.visualizerTabs li.ui-tabs-active a{
+.visualizerTabs li.ui-state-active a{
     cursor: default;
     border-top-left-radius: 1em;
     border-top-right-radius: 1em;

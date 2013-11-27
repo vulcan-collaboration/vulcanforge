@@ -52,7 +52,10 @@ from vulcanforge.s3.auth import SwiftAuthorizer
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
 from vulcanforge.taskd.queue import RedisQueue
-from vulcanforge.visualize.api import VisualizerAPI
+from vulcanforge.visualize.api import (
+    ArtifactVisualizerInterface,
+    UrlVisualizerInterface
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -411,8 +414,15 @@ class ForgeConfig(AppConfig):
         self.render_functions.json = json_renderer.render_json
 
     def setup_visualize(self):
-        if config.get('visualizer_api'):
-            visualizer_api = import_object(config['visualizer_api'])
+        if config.get('visualize.artifact_interface'):
+            visualize_artifcact = import_object(
+                config['visualize.artifact_interface'])
         else:
-            visualizer_api = VisualizerAPI()
-        config['pylons.app_globals'].visualize = visualizer_api
+            visualize_artifcact = ArtifactVisualizerInterface
+        if config.get('visualize.url_interface'):
+            visualize_url = import_object(config['visualize.url_interface'])
+        else:
+            visualize_url = UrlVisualizerInterface
+
+        config['pylons.app_globals'].visualize_artifact = visualize_artifcact
+        config['pylons.app_globals'].visualize_url = visualize_url

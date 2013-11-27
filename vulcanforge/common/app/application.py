@@ -154,9 +154,7 @@ class Application(object):
     @classmethod
     def default_options(cls):
         """:return: the default config options"""
-        return dict(
-            (co.name, co.default)
-                for co in cls.config_options)
+        return {co.name: co.default for co in cls.config_options}
 
     def set_acl(self, acl_spec=None):
         """Install default acl. Note that we cannot modify the config acl

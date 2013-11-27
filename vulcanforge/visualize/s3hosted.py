@@ -40,7 +40,7 @@ class S3HostedVisualizer(BaseVisualizer):
     )
 
     default_options = {
-        "config": {
+        "options": {
             "entry_point": "index.html"
         }
     }
@@ -80,6 +80,10 @@ class S3HostedVisualizer(BaseVisualizer):
         query["visualizer_config_id"] = self.config._id
         return S3VisualizerFile.query.find(query)
 
+    def delete_files(self, query=None):
+        for s3file in self.find_files(query):
+            s3file.delete()
+
     def update_from_archive(self, archive_fp):
         with zipfile.ZipFile(archive_fp) as zip_handle:
             # find the manifest file
@@ -118,19 +122,20 @@ class S3HostedVisualizer(BaseVisualizer):
         for s3_file in cur:
             archive_fp.writestr(s3_file.filename, s3_file.read())
 
-    def _can_upload(self, path):
+    def can_upload(self, path):
         return not any(r.search(path) for r in self.no_upload_extensions)
+
+    def upload_file(self, filename, fp):
+        return S3VisualizerFile.upsert_from_data(
+            filename, self.config._id, fp.read())
 
     def _upload_files(self, zip_handle, root=''):
         for zip_info in zip_handle.filelist:
             filename = zip_info.filename
-            if not filename.endswith('/') and self._can_upload(filename):
+            if not filename.endswith('/') and self.can_upload(filename):
                 with zip_handle.open(filename) as fp:
                     relative_path = os.path.relpath(filename, root)
-                    S3VisualizerFile.from_data(
-                        relative_path, fp.read(),
-                        visualizer_config_id=self.config._id)
+                    self.upload_file(relative_path, fp)
 
     def on_config_delete(self):
-        for s3file in self.find_files():
-            s3file.delete()
+        self.delete_files()
