@@ -24,8 +24,8 @@ def get_remainder_path(args, use_ext=True):
     "/path/to/awesomeness.txt"
 
     """
-    path = '/' + '/'.join(args)
+    path = u'/' + u'/'.join([a.decode('utf8') for a in args])
     if use_ext and request.response_ext:
         if not os.path.basename(request.path) == os.path.basename(path):
-            path += request.response_ext
+            path += request.response_ext.decode('utf8')
     return path
