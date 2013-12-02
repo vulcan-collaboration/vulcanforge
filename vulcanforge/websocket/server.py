@@ -14,10 +14,9 @@ import gevent.baseserver
 import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
-import time
 from vulcanforge.websocket import load_auth_broker
 from vulcanforge.websocket.exceptions import WebSocketException, \
-    LostConnection, InvalidMessageException, NotAuthorized
+    LostConnection, InvalidMessageException, NotAuthorized, NotAuthenticated
 from vulcanforge.websocket.reactor import MessageReactor
 
 
@@ -34,15 +33,23 @@ class WebSocketApp(object):
                                  db=asint(config.get('redis.db', 0)))
 
     def __call__(self, environ, start_response):
+        LOG.debug("new connection")
         websocket = environ.get('wsgi.websocket')
         if websocket is None:
             return self._http_handler(environ, start_response)
         pubsub = self.redis.pubsub()
         auth_broker_class = load_auth_broker(self.config)
         broker = auth_broker_class(environ, self.config)
-        reactor = MessageReactor(environ, self.config, broker, self.redis, pubsub)
-        controller = ConnectionController(environ, self.config, broker, websocket,
-                                          self.redis, pubsub, reactor)
+        reactor = MessageReactor(environ, self.config, broker, self.redis,
+                                 pubsub)
+        controller = ConnectionController(environ, self.config, broker,
+                                          websocket, self.redis, pubsub,
+                                          reactor)
+        try:
+            controller.authenticate()
+        except NotAuthenticated:
+            LOG.debug("closed connection")
+            return
         group = gevent.pool.Group()
         listener = gevent.Greenlet(controller.run_listener)
         speaker = gevent.Greenlet(controller.run_speaker)
@@ -58,15 +65,14 @@ class WebSocketApp(object):
             listener.start()
             speaker.start()
             while controller.is_connected():
-                time.sleep(0.1)
+                group.join(0.1)
         except:
             LOG.exception("unknown exception")
             break_out()
         finally:
             group.kill()
             websocket.close()
-            del listener
-            del speaker
+            LOG.debug("closed connection")
 
     @staticmethod
     def _http_handler(environ, start_response):
@@ -87,23 +93,30 @@ class ConnectionController(object):
         self.pubsub = pubsub
         self.reactor = reactor
         self.connected = True
+        self._authenticated = False
+        self.pubsub.subscribe(['system'])
+
+    def __del__(self):
+        if self._authenticated:
+            self._decrement_count()
+
+    def authenticate(self):
         try:
             self.broker.authenticate()
-        except NotAuthorized, e:
+        except NotAuthenticated, e:
             self._send_exception(e)
+            raise
         else:
+            self._authenticated = True
             self.connection_info = self.broker.start_connection()
-            channels = ['system'] + self.connection_info.get('channels', [])
-            self.pubsub.subscribe(channels)
+            channels = self.connection_info.get('channels', [])
             self._user_count_key = 'user.{username}.connection_count'.format(
                 **self.connection_info)
             self._user_channel_key = 'user.{username}'.format(
                 **self.connection_info)
             self._increment_count()
             self._extend_count_expire()
-
-    def __del__(self):
-        self._decrement_count()
+            self.pubsub.subscribe(channels)
 
     def _loop(self, method):
         try:
@@ -134,7 +147,7 @@ class ConnectionController(object):
             LOG.exception("websocket.receive failed")
             raise LostConnection()
         if message is None:
-            return
+            raise LostConnection()
         self._extend_count_expire()
         try:
             self.reactor.react(message)

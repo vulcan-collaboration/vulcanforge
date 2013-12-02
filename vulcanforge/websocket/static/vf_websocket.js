@@ -14,13 +14,17 @@
     var wsProtocol = (window.location.protocol === 'https:') ? 'wss' : 'ws',
         vfSocket = $vf.webSocket = {
             socketURL: wsProtocol + '://' + window.location.host + '/ws/',
+            _alive: true,
             _socket: null,
             _handlers: [],
             _subscriptions: [],
             _retryCount: 0,
             _initEventFired: false,
             _init: function () {
-                vfSocket._connect();
+                vfSocket._alive = $vf.logged_in_as !== null;
+                if (vfSocket._alive) {
+                    vfSocket._connect();
+                }
             },
             _connect: function () {
                 vfSocket._socket = new WebSocket(vfSocket.socketURL);
@@ -43,9 +47,12 @@
                 }
             },
             _handleClose: function (e) {
-                var delay = Math.pow(2, vfSocket._retryCount) * 1000;
-                vfSocket._retryCount += 1;
-                setTimeout(vfSocket._connect, delay);
+                var delay;
+                if (vfSocket._alive) {
+                    delay = Math.pow(2, vfSocket._retryCount) * 1000;
+                    vfSocket._retryCount += 1;
+                    setTimeout(vfSocket._connect, delay);
+                }
             },
             _handleError: function (e) {
                 console.error(e);
@@ -59,6 +66,9 @@
                 switch (msg.type) {
                 case 'error':
                     console.warn(msg.data.kind + ': ' + msg.data.message);
+                    if (msg.data.kind === 'NotAuthenticated') {
+                        vfSocket._alive = false;
+                    }
                     break;
                 case 'message':
                     $.each(vfSocket._handlers, function (i, handler) {
@@ -132,9 +142,9 @@
                 return vfSocket;
             }
         };
-    if (WebSocket) {
-        $vf.afterInit(vfSocket._init, []);
-    } else {
+    if (typeof WebSocket === 'undefined') {
         console.warn("WebSocket is not available in this browser.");
+    } else {
+        $vf.afterInit(vfSocket._init, []);
     }
 })(jQuery);
