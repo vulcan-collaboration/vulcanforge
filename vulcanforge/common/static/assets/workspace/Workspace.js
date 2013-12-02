@@ -46,7 +46,7 @@ var $ws = $ws || {};
 
         barContainer: null,
         tabDescriptors: [],
-        maxTabs: 10,
+        maxTabs: 32,
 
         tabBarE: null,
         moreTrigger: null,
