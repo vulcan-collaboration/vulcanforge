@@ -19,6 +19,10 @@ class InvalidMessageException(WebSocketException):
     pass
 
 
+class NotAuthenticated(WebSocketException):
+    pass
+
+
 class NotAuthorized(WebSocketException):
     pass
 
