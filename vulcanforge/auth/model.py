@@ -970,8 +970,11 @@ class User(SOLRIndexed):
 
     @property
     def registration_time(self):
-        gt = self._id.generation_time
-        return time.mktime(gt.timetuple())
+        if self._id:
+            reg_time = time.mktime(self._id.generation_time.timetuple())
+        else:
+            reg_time = 1.0
+        return reg_time
 
     def get_profile_info(self):
         return {
