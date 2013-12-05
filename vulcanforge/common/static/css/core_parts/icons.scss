@@ -34,6 +34,8 @@ $icon-font-family: "ForgeIconicFill";
     font-size: 22px;
     line-height: 22px;
     font-family: $icon-font-family;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 .toolbar-icon:before {
     vertical-align: middle;
@@ -110,6 +112,8 @@ a.icon:hover, a.icon:active {
 .action-icon::before
 {
     font-family: $icon-font-family;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .inline-icon:before {
@@ -121,6 +125,8 @@ a.icon:hover, a.icon:active {
 
 .has-icon:before {
     font-family: $icon-font-family;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     line-height: 1em;
     margin: 0 4px 0 0;
 
@@ -146,6 +152,8 @@ a.icon:hover, a.icon:active {
 
 .has-icon-after:after {
     font-family: $icon-font-family;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     line-height: 1em;
     margin: 0 0 0 4px;
     position: relative;
