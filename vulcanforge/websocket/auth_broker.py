@@ -9,7 +9,7 @@ import json
 import requests
 from webob import Request
 from vulcanforge.common.exceptions import ImproperlyConfigured
-from vulcanforge.websocket.exceptions import NotAuthorized
+from vulcanforge.websocket.exceptions import NotAuthorized, NotAuthenticated
 
 
 import logging
@@ -23,7 +23,7 @@ class BaseWebSocketAuthBroker(object):
         self.environ = environ
 
     def authenticate(self):
-        #raise NotAuthorized("Unable to authorize request")
+        #raise NotAuthenticated("Unable to authenticate request")
         pass
 
     def authorize(self, listen_channels=None, publish_channels=None,
@@ -44,13 +44,13 @@ class WebSocketAuthBroker(BaseWebSocketAuthBroker):
     def authenticate(self):
         response = self._call_api_method('authenticate')
         if response.status_code != 200:
-            self.fail("Could not authenticate")
+            raise NotAuthenticated("Could not authenticate")
         try:
             response_data = response.json()
         except ValueError:
-            self.fail("Could not authenticate")
+            raise NotAuthenticated("Could not authenticate")
         if not response_data.get('authenticated'):
-            self.fail("Authentication denied")
+            raise NotAuthenticated("Authentication denied")
         self.environ['user_id'] = response_data.get('user_id')
 
     def authorize(self, listen_channels=None, publish_channels=None,
