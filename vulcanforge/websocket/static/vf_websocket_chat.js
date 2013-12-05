@@ -106,6 +106,48 @@
                 this.$projects = $('<div/>').
                     addClass('vf-chat-projects-list').
                     appendTo(this.$header);
+                this.$toolbar = $('<div/>').
+                    addClass('vf-chat-toolbar').
+                    appendTo(this.$header);
+
+                $('<span/>').
+                    text('\ue062').
+                    attr('title', 'Online users').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    appendTo(this.$toolbar);
+                this.$userListContainer = $('<div/>').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-users-container').
+                    appendTo(this.$toolbar);
+                $('<button/>').
+                    text('\u2302').
+                    attr('title', 'Project Home').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    addClass('vf-chat-toolbar-project-home').
+                    appendTo(this.$toolbar);
+                $('<button/>').
+                    text('\ue055').
+                    attr('title', 'Transcripts').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    addClass('vf-chat-toolbar-chat-transcripts').
+                    appendTo(this.$toolbar);
+                $('<button/>').
+                    text('\ue08a').
+                    attr('title', 'Attach a file').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    addClass('vf-chat-toolbar-attach').
+                    appendTo(this.$toolbar);
+                $('<button/>').
+                    text('\ue068').
+                    attr('title', 'Share current page').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    addClass('vf-chat-toolbar-share-location').
+                    appendTo(this.$toolbar);
 
                 this.$form = $('<form/>').
                     addClass('vf-chat-form').
@@ -113,17 +155,9 @@
                 this.$textarea = $('<textarea name="message">').
                     addClass('vf-chat-textarea').
                     appendTo(this.$form);
-                /*this.$textareaActions = $('<div>').
-                    addClass('vf-chat-textarea-actions').
-                    appendTo(this.$form);*/
                 this.$submit = $('<input type="submit" value="&#xe047;" disabled="disabled">').
                     addClass('vf-chat-submit').
                     appendTo(this.$form);
-
-                /*$('<span><span class="alt_text">attach</span></span>').
-                    addClass('vf-chat-attach-button').
-                    attr('title', 'Attach a file to this message').
-                    appendTo(this.$textareaActions);*/
 
                 $.each(this._projectData, function (i, project) {
                     var $projectContent;
@@ -141,13 +175,9 @@
                         attr('data-project', project.shortname).
                         appendTo(that.$content);
                     $('<div/>').
-                        addClass('vf-chat-project-users').
+                        addClass('vf-chat-users').
                         attr('data-project', project.shortname).
-                        appendTo($projectContent);
-                    $('<div/>').
-                        addClass('vf-chat-project-messages').
-                        attr('data-project', project.shortname).
-                        appendTo($projectContent);
+                        appendTo(that.$userListContainer);
                 });
                 this.$container.appendTo('body');
             },
@@ -198,13 +228,30 @@
                             that.$submit.attr('disabled', 'disabled');
                         }
                     }).
+                    on('click', '.vf-chat-toolbar-share-location', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        that.shareLocationToProject(that._activeProjectName);
+                    }).
+                    on('click', '.vf-chat-toolbar-project-home', function (e) {
+                        var projectData = that.getProjectDataByShortname(that._activeProjectName);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = projectData.url;
+                    }).
+                    on('click', '.vf-chat-toolbar-chat-transcripts', function (e) {
+                        var projectData = that.getProjectDataByShortname(that._activeProjectName);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = projectData.url + 'chat/';
+                    }).
                     on('UserOnline.vfchat', function (e, username, data) {
                         that.updateUserOnline(username, true);
                     }).
                     on('UserOffline.vfchat', function (e, username, data) {
                         that.updateUserOnline(username, false);
                     });
-                $('.vf-chat-project-messages').
+                $('.vf-chat-project-content').
                     on('scroll', function (e) {
                         var $messages = $(this);
                         that._autoScroll = $messages.prop('scrollHeight') - $messages.height() - 2 <= $messages.scrollTop();
@@ -213,15 +260,17 @@
                 vfSocket.
                     addHandler(/^project\.([^\.]+).chat/, function (match, msg) {
                         var data = JSON.parse(msg.data),
-                            shortname = match[1];
+                            projectName = match[1];
                         if (data.type === 'Post') {
-                            that.renderMessageToProject(data.data, shortname);
-                            if (shortname !== that._activeProjectName) {
-                                that._unreadCounts[shortname] += 1;
+                            that.renderMessageToProject(data.data, projectName);
+                            if (projectName !== that._activeProjectName) {
+                                that._unreadCounts[projectName] += 1;
                                 console.log(that.$container.
-                                    find('.vf-chat-project-button[data-project="' + shortname + '"]').
-                                    attr('data-unread-count', that._unreadCounts[shortname]));
+                                    find('.vf-chat-project-button[data-project="' + projectName + '"]').
+                                    attr('data-unread-count', that._unreadCounts[projectName]));
                             }
+                        } else if (data.type === 'LocationShared') {
+                            that.renderSharedLocationToProject(data.data, projectName);
                         }
                     }).
                     addHandler(/^user\.([^\.]+)/, function (match, msg) {
@@ -271,7 +320,7 @@
             scrollToBottom: function () {
                 var $messages;
                 if (this._autoScroll) {
-                    $messages = this.$content.find('.vf-chat-project-messages:visible');
+                    $messages = this.$content.find('.vf-chat-project-content:visible');
                     $messages.scrollTop($messages.prop('scrollHeight'));
                 }
             },
@@ -284,7 +333,7 @@
                 this._autoScroll = true;
                 this._activeProjectName = shortname;
                 this.pref('project', shortname);
-                $('.vf-chat-project-content', this.$container).
+                $('.vf-chat-project-content, .vf-chat-users', this.$container).
                     each(function () {
                         $(this).toggle($(this).attr('data-project') === shortname);
                     });
@@ -315,7 +364,7 @@
             },
             renderMessageToProject: function (messageData, projectName) {
                 var that = this,
-                    $projectMessages = $('.vf-chat-project-messages[data-project="'+projectName+'"]'),
+                    $projectMessages = $('.vf-chat-project-content[data-project="'+projectName+'"]'),
                     $messageContainer = $("<div/>").
                         addClass('vf-chat-message-container').
                         toggleClass('vf-chat-current-user-message', messageData.author === $vf.logged_in_as).
@@ -360,7 +409,7 @@
                 });
             },
             renderUserListWidgetToProject: function (username, projectName) {
-                var $projectUsers = $('.vf-chat-project-users[data-project="'+projectName+'"]');
+                var $projectUsers = $('.vf-chat-users[data-project="'+projectName+'"]');
                     this.renderUserWidget(username, $projectUsers);
             },
             withUserProfile: function (username, callback) {
@@ -401,7 +450,7 @@
             sortUserLists: function () {
                 var that = this;
                 this.$container.
-                    find('.vf-chat-project-users').
+                    find('.vf-chat-users').
                     each(function (i) {
                         $(this).
                             find('.vf-chat-user-icon').
@@ -422,6 +471,47 @@
                             }).
                             appendTo($(this));
                     });
+            },
+            // share location events
+            shareLocationToProject: function(projectName) {
+                var projectData = this.getProjectDataByShortname(projectName);
+                vfSocket.trigger({
+                    'type': 'ShareLocationWithChat',
+                    'targets': [projectData.chatChannel],
+                    'params': {
+                        'title': document.title,
+                        'href': window.location.href,
+                        'timestamp': new Date().toISOString()
+                    }
+                });
+                this._autoScroll = true;
+            },
+            renderSharedLocationToProject: function (msgData, projectName) {
+                var $content = $('<span/>');
+                this.renderUserWidget(msgData.author, $content);
+                $content.append(' shared their location: ');
+                $('<a/>').
+                    attr('href', msgData.href).
+                    text(msgData.title).
+                    appendTo($content);
+                this.renderNotificationToProject($content, msgData, projectName);
+            },
+            renderNotificationToProject: function ($content, msgData, projectName) {
+                var that = this,
+                    $projectContent = $('.vf-chat-project-content[data-project="'+projectName+'"]'),
+                    $notificationContainer = $("<div/>").
+                        addClass('vf-chat-notification-container').
+                        attr('data-timestamp', msgData.timestamp);
+                    $('<div/>').
+                        addClass('vf-chat-notification-content').
+                        appendTo($notificationContainer).
+                        html($content).
+                        find('img').
+                        on('load', function () {
+                            that.scrollToBottom.call(that);
+                        });
+                $projectContent.append($notificationContainer);
+                that.scrollToBottom();
             }
         };
 
