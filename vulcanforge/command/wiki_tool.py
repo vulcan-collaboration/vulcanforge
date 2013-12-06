@@ -66,7 +66,7 @@ class ExportWikiPages(Command):
             dirname = os.getcwd()
         base_filename = self.args[1] + '_' + self.args[2] + '_wikidump'
         zip_filename = os.path.join(dirname, base_filename + '.zip')
-        with zipfile.ZipFile(zip_filename, 'w') as zip_handle:
+        with zipfile.ZipFile(zip_filename, 'w', allowZip64=True) as zip_handle:
             # create page manifest, writing attachments along the way
             pages = []
             for i, page in enumerate(q):
@@ -169,7 +169,7 @@ class ImportWikiPages(Command):
             raise WikiDumpHandlerError("General error: unable to find user!")
 
         with temporary_dir() as dirname:
-            with zipfile.ZipFile(zip_name) as zip_handle:
+            with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
                 zip_handle.extractall(dirname)
 
             # get root
