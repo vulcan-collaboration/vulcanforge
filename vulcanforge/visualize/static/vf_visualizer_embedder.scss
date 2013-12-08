@@ -83,8 +83,9 @@
     margin: 5px 0 0 5px;
 }
 
-div#comment div.visualizerTabs ul.ui-tabs-nav{
-    margin-left: 0;
+div#comment div.visualizerTabs ul.ui-tabs-nav,
+.markdown_content div.visualizerTabs ul.ui-tabs-nav{
+    margin: 0;
     padding-left: 0;
 }
 

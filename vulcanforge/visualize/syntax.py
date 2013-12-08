@@ -1,13 +1,21 @@
 from pylons import app_globals as g
 
 from vulcanforge.common.util.diff import unified_diff
-from vulcanforge.resources.widgets import Widget
+from vulcanforge.resources.widgets import Widget, JSLink, CSSLink
 from vulcanforge.visualize.base import BaseVisualizer
 from vulcanforge.visualize.widgets import BaseContentWidget
 
 
 class SyntaxContent(BaseContentWidget):
     template = 'visualize/widgets/syntax.html'
+
+    def resources(self):
+        for r in super(SyntaxContent, self).resources():
+            yield r
+        yield CSSLink('js/lib/google-code-prettify/prettify.css', scope="page")
+        yield CSSLink('visualize/syntax/syntaxvis.css', scope="page")
+        yield JSLink('js/vf.js', scope="page")
+        yield JSLink('js/lib/google-code-prettify/prettify.js', scope="page")
 
 
 class SyntaxArtifactDiff(Widget):

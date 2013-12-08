@@ -75,7 +75,8 @@ from vulcanforge.taskd.model import MonQTask
 from vulcanforge.visualize.model import (
     VisualizerConfig,
     ProcessedArtifactFile,
-    S3VisualizerFile
+    S3VisualizerFile,
+    ProcessingStatus
 )
 
 from vulcanforge.tools.admin.model import *

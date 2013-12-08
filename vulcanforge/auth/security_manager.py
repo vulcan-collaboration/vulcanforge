@@ -293,7 +293,6 @@ class Credentials(object):
     @classmethod
     def get(cls):
         import vulcanforge.auth
-
         return vulcanforge.auth.credentials
 
     def clear(self):
@@ -424,7 +423,7 @@ class RoleCache(object):
 
     @LazyProperty
     def index(self):
-        return dict((r._id, r) for r in self.q)
+        return {r._id: r for r in self.q}
 
     @LazyProperty
     def named(self):

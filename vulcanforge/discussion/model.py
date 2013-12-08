@@ -658,11 +658,9 @@ class DiscussionAttachment(BaseAttachment):
             app_config_id=post.app_config_id)
 
     def local_url(self):
-        if self.post_id:
-            prefix = self.artifact.absolute_url()
+        artifact = self.artifact
+        if isinstance(artifact, self.PostClass):
+            prefix = artifact.absolute_url()
         else:
-            prefix = self.artifact.url()
+            prefix = artifact.url()
         return prefix + 'attachment/' + urlquote(self.filename)
-
-
-

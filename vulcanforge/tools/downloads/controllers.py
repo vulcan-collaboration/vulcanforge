@@ -216,11 +216,9 @@ class ContentRestController(RestController):
                     'type': entry.type_s
                 }
 
-            vis = VisualizerConfig.get_for_resource(path, cache=True)
-            if vis:
-                # only shows the first visualizer icon for now
-                # should show available visualizers
-                data[path]['extra']['iconURL'] = vis[0].icon_url
+            icon_url = g.visualize_url(path).get_icon_url()
+            if icon_url:
+                data[path]['extra']['iconURL'] = icon_url
 
             if entry.filesize is not None:
                 data[path]['extra']['size'] = h.pretty_print_file_size(

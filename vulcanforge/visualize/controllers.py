@@ -12,7 +12,7 @@ from pylons import tmpl_context as c, app_globals as g
 from tg.decorators import expose, validate
 
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.visualize.model import VisualizerConfig, ProcessedArtifactFile
+from vulcanforge.visualize.model import VisualizerConfig, ProcessedArtifactFile, ProcessingStatus
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
@@ -67,15 +67,25 @@ class VisualizerController(BaseController):
 
     @expose('json')
     def processed_status(self, unique_id, **kwargs):
-        pfile = ProcessedArtifactFile.query.get(
-            visualizer_config_id=self.visualizer.config._id,
-            unique_id=ObjectId("unique_id")
-        )
-        if pfile:
-            result = {"status": pfile.status}
-        else:
-            result = {"status": "unprocessed"}
-        return result
+        status = ProcessingStatus.get_status_str(
+            unique_id, self.visualizer.config)
+        return {"status": status}
+
+    @expose('json')
+    def processed_parameters(self, unique_id, **kwargs):
+        cur = ProcessedArtifactFile.query.find({
+            "unique_id": unique_id,
+            "visualizer_config_id": self.visualizer.config._id
+        })
+        refs_checked = set()
+        parameters = {}
+        for pfile in cur:
+            if pfile.ref_id and pfile.ref_id not in refs_checked:
+                refs_checked.add(pfile.ref_id)
+                artifact = pfile.artifact
+                g.security.require_access(artifact, 'read')
+            parameters[pfile.query_param] = pfile.url()
+        return {"parameters": parameters}
 
     @expose(TEMPLATE_DIR + 'fullscreen.html')
     def fs(self, resource_url=None, iframe_query=None, **kw):

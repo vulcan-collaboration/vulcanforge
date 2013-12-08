@@ -45,8 +45,8 @@ $vf.NewWindowButton.prototype = {
         var newwin,
             url = this.generateUrl ? this.generateUrl(this.activeUrl) : this.activeUrl,
             params  = [
-                'width='+screen.width,
-                'height='+screen.height,
+                'width=' + screen.width,
+                'height=' + screen.height,
                 'top=0, left=0',
                 'fullscreen=yes',
                 'directories=no',
@@ -88,11 +88,11 @@ function renderTabbedVisualizer(config) {
 
     /* --new window button */
     newWindowB = new $vf.NewWindowButton(visualizerSpecs[0].fullscreen_url, {
-        "generateUrl": function(url){
-            var iframeSearchStr = null;
-            iframeSearchStr = $iframeE.location.search;
-            if (iframeSearchStr.charAt(0) === '?'){
-                iframeSearchStr = iframeSearchStr.slice(1);
+        "generateUrl": function (url) {
+            var splitQuery = $iframeE.attr("src").split("?", 1),
+                iframeSearchStr = null;
+            if (splitQuery.length > 1) {
+                iframeSearchStr = splitQuery[1];
                 url += '&iframe_query=' + encodeURIComponent(iframeSearchStr);
             }
             return url;

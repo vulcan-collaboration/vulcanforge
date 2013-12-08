@@ -1397,6 +1397,7 @@ class ProjectRole(BaseMappedClass):
         try:
             obj = cls(**kw)
             session(obj).insert_now(obj, state(obj))
+            g.security.credentials.clear()
         except pymongo.errors.DuplicateKeyError:
             session(obj).expunge(obj)
             obj = cls.query.get(**kw)

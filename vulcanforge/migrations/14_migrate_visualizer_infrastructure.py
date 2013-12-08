@@ -3,6 +3,7 @@ import os
 from formencode.variabledecode import variable_decode
 from pylons import app_globals as g
 from tg import config
+from vulcanforge.common.util.filesystem import import_object
 
 from vulcanforge.common.util.model import pymongo_db_collection
 from vulcanforge.migration.base import BaseMigration
@@ -54,6 +55,7 @@ class MigrateVisualizerInfrastructure(BaseMigration):
             doc = coll.find_one({
                 "shortname": shortname,
                 "widget": {"$exists": 1}})
+            visualizer_obj = import_object(path)
             if doc:
                 converted_ids.append(doc["_id"])
                 split_path = path.split(':')
@@ -62,12 +64,11 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                     'classname': split_path[1]
                 }
                 self._convert_serverside(doc, path_spec)
+                doc.update(visualizer_obj.default_options)
                 coll.save(doc)
 
         # remove danglers
         coll.remove({"_id": {"$nin": converted_ids}})
-
-        # add visualizer postcommit hook
 
         self.write_output('Migrated {} visualizers'.format(count))
 

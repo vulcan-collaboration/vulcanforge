@@ -20,7 +20,7 @@
         <thead>
             <tr>
                 <th></th>
-                <th>Bundle</th>
+                <th>Name</th>
                 <th>Active</th>
                 <th>Short Name</th>
                 <th># Files</th>
@@ -42,15 +42,15 @@
                     <span class="original">{{visualizer.active}}</span>
                 </td>
                 <td>{{visualizer.shortname}}</td>
-                <td>{{visualizer.bundle_content|length}}</td>
+                <td>{{visualizer.num_files}}</td>
                 <td>
-                    Extensions: {{visualizer.extensions|join(', ')}}<br/>
-                    Mimetypes: {{visualizer.mime_types|join(', ')}}</td>
-                <td>{{visualizer.creator.username}}</td>
-                <td>{{visualizer.modified_date.date().isoformat()}}</td>
+                    Extensions: {{visualizer.extensions}}<br/>
+                    Mimetypes: {{visualizer.mime_types}}</td>
+                <td>{{visualizer.author}}</td>
+                <td>{{visualizer.modified}}</td>
                 <td>
                     <span class="visualizer_id" style="display:none">{{visualizer._id}}</span>
-                    {{visualizer.created_date.date().isoformat()}}
+                    {{visualizer.created}}
                 </td>
                 <td class="delete_btn_container"></td>
             </tr>

@@ -1,70 +1,102 @@
-(function(global){
+(function (global) {
+    "use strict";
+    var VIS,
+        $ = global.$;
 
-    var VIS;
-
-    function getParameterByName(name, myFrame){
-        var frame = myFrame || window;
-        name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-        var regexS = "[\\?&]" + name + "=([^&#]*)";
-        var regex = new RegExp(regexS);
-        var results = regex.exec(frame.location.search);
-        if(results == null)
-            return "";
-        else
-            return decodeURIComponent(results[1].replace(/\+/g, " "));
+    function parseQuery(myFrame) {
+        var frame = myFrame || global,
+            query = frame.location.search.substring(1),
+            vars = query.split('&'),
+            parsed = {},
+            pair,
+            i;
+        for (i = 0; i < vars.length; i++) {
+            pair = vars[i].split('=');
+            parsed[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+        }
+        return parsed;
     }
 
-    function _makeVisualizerUrl(method){
-        var visualizerId = getParameterByName("processingVisualizerId") ||
+    function getQueryParameter(name, myFrame) {
+        var frame = myFrame || global;
+        frame.parsedQuery = frame.parsedQuery || parseQuery(frame);
+        if (typeof global.parsedQuery[name] !== "undefined") {
+            return global.parsedQuery[name];
+        }
+        return null;
+    }
+
+    function makeVisualizerUrl(method) {
+        var visualizerId = getQueryParameter("processingVisualizerId") ||
                            global.location.pathname.split('/')[2];
         return '/visualize/' + visualizerId + '/' + method;
     }
 
+    global.parsedQuery = global.parsedQuery || parseQuery();
+
     VIS = {
-        "init": function(){
-            var processingStatus;
+        "init": function () {
+            var processingStatus, p;
             this.processingOverlay = null;
+            this.parameters = {};
+            for (p in global.parsedQuery) {
+                if (global.parsedQuery.hasOwnProperty(p)) {
+                    this.parameters[p] = global.parsedQuery[p];
+                }
+            }
             this.config = {
                 "loadingImg": null,
                 "loadingMsg": "Processing File for Visualization",
-                "processingUrl": null,
-                "processingInitUrl": null,
+                "processingPollUrl": null,
+                "processingParamsUrl": null,
                 "loadingPollInterval": 5000
             };
             $(this).trigger("initConfig", this.config);
             processingStatus = this.getProcessingStatus();
-            if (processingStatus === "loading"){
+            if (processingStatus === "loading") {
                 this.createProcessingOverlay();
                 this.pollProcessing();
-            } else if (processingStatus === "error"){
+            } else if (processingStatus === "error") {
                 this.processingError();
             } else {
                 $(this).trigger("ready");
             }
         },
-        "getProcessingStatus": function(){
-            return getParameterByName("processingStatus");
+        "getParameter": function (name) {
+            if (typeof this.parameters[name] !== "undefined") {
+                return this.parameters[name];
+            }
+            return null;
         },
-        "getResourceUrl": function(){
-            return getParameterByName("resource_url");
+        "getProcessingStatus": function () {
+            return this.getParameter("processingStatus");
         },
-        "getProcessResourceId": function(){
-            return getParameterByName("processingResourceId");
+        "getResourceUrl": function () {
+            return this.getParameter("resource_url");
         },
-        "getProcessingPollUrl": function(){
-            if (this.config.processingPollUrl === null){
-                this.config.processingPollUrl = _makeVisualizerUrl('processed_status');
+        "getProcessResourceId": function () {
+            return getQueryParameter("processingResourceId");
+        },
+        "getProcessingPollUrl": function () {
+            if (this.config.processingPollUrl === null) {
+                this.config.processingPollUrl = makeVisualizerUrl('processed_status');
             }
             return this.config.processingPollUrl;
         },
-        "createProcessingOverlay": function(){
+        "getProcessingParamsUrl": function () {
+             if (this.config.processingParamsUrl === null) {
+                this.config.processingParamsUrl = makeVisualizerUrl('processed_parameters');
+            }
+            return this.config.processingParamsUrl;
+        },
+        "createProcessingOverlay": function () {
             var processingContent;
-            if (this.processingOverlay === null){
+            if (this.processingOverlay === null) {
                 this.processingOverlay = $('<div/>', {
                     "class": "processingOverlay"
                 });
                 processingContent = $('<div/>', {"class": "processingOverlayContent"});
-                if (this.config.loadingImg){
+                if (this.config.loadingImg) {
                     processingContent.append(
                         $('<img/>', {
                             "src": this.config.loadingImg,
@@ -73,7 +105,7 @@
                     );
                 }
                 processingContent.append($('<h3/>', {
-                        "text": this.config.loadingMsg
+                    "text": this.config.loadingMsg
                 }));
                 this.processingOverlay.append(processingContent);
                 $(document).find("body")
@@ -81,24 +113,29 @@
                     .append(this.processingOverlay);
             }
         },
-        "removeProcessingOverlay": function(){
-            this.processingOverlay.remove();
-            this.processingOverlay = null;
+        "removeProcessingOverlay": function () {
+            if (this.processingOverlay !== null) {
+                this.processingOverlay.remove();
+                this.processingOverlay = null;
+            }
         },
-        "pollProcessing": function(){
+        "pollProcessing": function () {
             var that = this;
             $.ajax({
                 url: that.getProcessingPollUrl(),
                 type: "GET",
                 dataType: 'json',
                 data: {"unique_id": that.getProcessResourceId()},
-                success: function(response) {
-                    if ($(that).trigger("pollComplete") === false){
+                success: function (response) {
+                    if ($(that).trigger("pollComplete") === false) {
                         return;
                     }
-                    if (response['status'] == 'loading') {
-                        setTimeout(that.pollProcessing, that.config.loadingPollInterval);
-                    } else if (response['status'] == 'success') {
+                    that.parameters.processingStatus = response.status;
+                    if (response.status === 'loading') {
+                        setTimeout(function () {
+                            global.VIS.pollProcessing.call(global.VIS);
+                        }, that.config.loadingPollInterval);
+                    } else if (response.status === 'ready') {
                         that.processingSuccess();
                     } else {
                         that.processingError();
@@ -106,16 +143,26 @@
                 },
                 error: this.processingError
             });
-            setTimeout(function(){
-                global.VIS.pollProcessing.call(global.VIS);
-            }, this.config.loadingPollInterval);
-            $(this).trigger("processingSuccess");
         },
-        "processingSuccess": function(){
+        "processingSuccess": function () {
             this.removeProcessingOverlay();
-            $(this).trigger("ready");
+            var that = this;
+            $.ajax({
+                url: that.getProcessingParamsUrl(),
+                type: "GET",
+                dataType: 'json',
+                data: {"unique_id": that.getProcessResourceId()},
+                success: function (response) {
+                    var param;
+                    for (param in response.parameters) {
+                        that.parameters[param] = response.parameters[param];
+                    }
+                    $(that).trigger("ready");
+                },
+                "error": that.processingError
+            });
         },
-        "processingError": function(){
+        "processingError": function () {
             this.createProcessingOverlay();
             this.processingOverlay.find(".processingOverlayContent").html(
                 $("<h3/>", {
@@ -138,7 +185,7 @@
 
     global.VIS = VIS;
 
-    $(document).ready(function(){
+    $(document).ready(function () {
         global.VIS.init.call(global.VIS);
     });
 

@@ -1,27 +1,32 @@
 {% extends 'vulcanforge.visualize:templates/widgets/basecontent.html' %}
 
-{% do g.resource_manager.register_css('js/lib/google-code-prettify/prettify.css', scope="page") %}
-{% do g.resource_manager.register_css('visualize/syntax/syntaxvis.css', scope="page") %}
-{% do g.resource_manager.register_js('js/vf.js', scope="page") %}
-{% do g.resource_manager.register_js('js/lib/google-code-prettify/prettify.js', scope="page") %}
-
 {% block content %}
 <pre class="highlight embedded prettyprint"><code id="{{uid}}code"></code></pre>
 {% endblock %}
 
 {% block extra_js %}
 <script type="text/javascript">
-    var codeContainer = $('#{{uid}}code');
-    $.ajax({
-        url: "{{value|safe}}",
-        dataType: "text",
-        xhrFields: {
-            withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
-        },
-        success: function(resp){
-            resp = $vf.xmlEscape(resp);
-            codeContainer.html(prettyPrintOne(resp, null, true));
-        }
-    });
+    (function(global){
+        "use strict";
+
+        var $ = global.jQuery,
+            VIS = global.VIS,
+            codeContainer = $('#{{uid}}code');
+
+        $(VIS).on("ready", function(){
+            $.ajax({
+                url: VIS.getResourceUrl(),
+                dataType: "text",
+                xhrFields: {
+                    withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
+                },
+                success: function(resp){
+                    resp = $vf.xmlEscape(resp);
+                    codeContainer.html(prettyPrintOne(resp, null, true));
+                }
+            });
+        });
+
+    }(window));
 </script>
 {% endblock %}

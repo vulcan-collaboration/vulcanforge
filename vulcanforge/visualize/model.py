@@ -18,7 +18,10 @@ from pymongo.errors import DuplicateKeyError
 
 from vulcanforge.s3.model import File
 from vulcanforge.common.model.base import BaseMappedClass
-from vulcanforge.common.model.session import main_orm_session
+from vulcanforge.common.model.session import (
+    main_orm_session,
+    project_orm_session
+)
 from vulcanforge.auth.model import User
 from vulcanforge.common.util.filesystem import import_object
 
@@ -89,14 +92,16 @@ class VisualizerConfig(BaseMappedClass):
         return stripped
 
     @classmethod
-    def from_visualizer(cls, visualizer, shortname=None):
+    def from_visualizer(cls, visualizer, shortname=None, **kwargs):
+        attrs = visualizer.default_options
+        attrs.update(kwargs)
         vis_config = cls(
             shortname=shortname,
             visualizer={
                 "classname": visualizer.__name__,
                 "module": visualizer.__module__
             },
-            **visualizer.default_options)
+            **attrs)
         if not vis_config.shortname and vis_config.name:
             vis_config.shortname = cls.strip_name(vis_config.name)
         elif not vis_config.name and vis_config.shortname:
@@ -191,13 +196,71 @@ class _BaseVisualizerFile(File):
         name = '_base_visualizer_file'
 
     visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
-    visualizer = RelationProperty(VisualizerConfig, via="visualizer_id")
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
 
     @staticmethod
     def calculate_hash(data):
         md5 = hashlib.md5()
         md5.update(data)
         return md5.hexdigest()
+
+
+class ProcessingStatus(BaseMappedClass):
+    """Represents the status of processing for a visualizable object and
+    visualizer, so that a loading animation can be displayed, an error
+    message, etc.
+
+    """
+    class __mongometa__:
+        name = 'visualizer_processing_status'
+        session = project_orm_session
+        unique_indexes = [('unique_id', 'visualizer_config_id')]
+
+    unique_id = FieldProperty(str)  # unique_id of Visualizable object
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    status = FieldProperty(
+        schema.OneOf('loading', 'ready', 'error', if_missing='loading'))
+
+    @classmethod
+    def get_status_str(cls, unique_id, visualizer_config):
+        st_obj = cls.query.get(unique_id=unique_id,
+                               visualizer_config_id=visualizer_config._id)
+        if st_obj:
+            status = st_obj.status
+        else:
+            status = 'unprocessed'
+        return status
+
+    @classmethod
+    def set_status_str(cls, unique_id, visualizer_config, status):
+        """
+        Immediately sets status to :status  (does not wait for flush)
+
+        """
+        query = {
+            "unique_id": unique_id,
+            "visualizer_config_id": visualizer_config._id
+        }
+        cls.query.update(query, {"$set": {"status": status}}, upsert=True)
+
+    @classmethod
+    def get_or_create(cls, visualizable, visualizer_config):
+        st_obj = cls.query.get(unique_id=visualizable.unique_id(),
+                               visualizer_config_id=visualizer_config._id)
+        is_new = False
+        if st_obj is None:
+            try:
+                st_obj = cls(unique_id=visualizable.unique_id(),
+                             visualizer_config_id=visualizer_config._id)
+                session(cls).flush(st_obj)
+            except DuplicateKeyError:  # pragma no cover
+                session(cls).expunge(st_obj)
+                st_obj = cls.query.get(
+                    unique_id=visualizable.unique_id(),
+                    visualizer_config_id=visualizer_config._id)
+            else:
+                is_new = True
+        return st_obj, is_new
 
 
 class ProcessedArtifactFile(_BaseVisualizerFile):
@@ -227,8 +290,6 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
     unique_id = FieldProperty(str)
     origin_hash = FieldProperty(str, if_missing=None)
     ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
-    status = FieldProperty(
-        schema.OneOf('loading', 'ready', 'error', if_missing='ready'))
 
     @classmethod
     def get_from_visualizable(cls, visualizable, **kwargs):
@@ -261,6 +322,11 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
 
     @LazyProperty
     def artifact(self):
+        """Associated artifact (if any) for access control purposes.
+
+        Note that this is not necessarily the original visualizable object.
+
+        """
         from vulcanforge.artifact.model import ArtifactReference
         if self.ref_id:
             return ArtifactReference.artifact_by_index_id(self.ref_id)
@@ -279,6 +345,7 @@ class S3VisualizerFile(_BaseVisualizerFile):
         name = 's3_visualizer_file'
 
     parent_folder = FieldProperty(str, if_missing=None)
+    # content hash is used to manage updating modified files
     content_hash = FieldProperty(str, if_missing=None)
 
     def __init__(self, **kw):

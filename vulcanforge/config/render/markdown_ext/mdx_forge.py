@@ -220,6 +220,7 @@ class ForgeProcessor(object):
                     link_html = self.artifact_link.display(
                         value=artifact, tag="span")
                 except Exception:  # pragma no cover
+                    # shortlink without artifact reference?
                     LOG.exception("Error rendering artifact link")
             if not link_html:
                 link_html = '<a href="%s">[%s]</a>' % (new_link.url, link)

@@ -2,12 +2,14 @@ import logging
 import cgi
 
 from bson import ObjectId
+from markupsafe import Markup
 import pymongo
 from formencode import validators
 from webob import exc
 from pylons import tmpl_context as c, app_globals as g
 from tg.controllers.util import redirect
 from tg.decorators import expose, validate
+from vulcanforge.auth.widgets import Avatar
 
 from vulcanforge.common.app import Application
 from vulcanforge.common.controllers import BaseController
@@ -18,7 +20,8 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config
 from vulcanforge.common.validators import MingValidator
-from vulcanforge.visualize.model import VisualizerConfig
+from vulcanforge.common.helpers import ago
+from vulcanforge.visualize.model import VisualizerConfig, S3VisualizerFile
 from vulcanforge.visualize.manage_tool.admin import VisualizerUploadForm
 from vulcanforge.visualize.s3hosted import S3HostedVisualizer
 
@@ -66,6 +69,9 @@ class ForgeVisualizeApp(Application):
 
 class VisualizerConfigController(BaseController):
 
+    class Widgets(BaseController.Widgets):
+        avatar = Avatar()
+
     class Forms(BaseController.Forms):
         upload_form = VisualizerUploadForm(action="do_upload")
 
@@ -78,8 +84,38 @@ class VisualizerConfigController(BaseController):
     @expose(TEMPLATE_DIR + 'manage.html')
     def index(self, **kw):
         c.upload_form = self.Forms.upload_form
-        visualizers = VisualizerConfig.query.find({}).sort(
+        cur = VisualizerConfig.query.find().sort(
             'priority', pymongo.DESCENDING)
+        visualizers = []
+        for vis_config in cur:
+            vis = vis_config.load()
+            if isinstance(vis, S3HostedVisualizer):
+                num_files = S3VisualizerFile.query.find({
+                    "visualizer_config_id": vis_config._id}).count()
+            else:
+                num_files = "N/A"
+            creator = vis_config.creator
+            if creator:
+                avatar = Markup(
+                    self.Widgets.avatar.display(creator, size=16, compact=True)
+                )
+            else:
+                avatar = ''
+            visualizers.append({
+                "_id": str(vis_config._id),
+                "name": vis_config.name,
+                "active": vis_config.active,
+                "shortname": vis_config.shortname,
+                "num_files": num_files,
+                "extensions": ', '.join(vis_config.extensions +
+                                        vis_config.processing_extensions),
+                "mime_types": ', '.join(
+                    vis_config.mime_types or [] +
+                    vis_config.processing_mime_types or []),
+                "author": avatar,
+                "modified": ago(vis_config.modified_date, cutoff=True),
+                "created": ago(vis_config.created_date, cutoff=True)
+            })
         return {
             'visualizers': visualizers,
             'is_admin': g.security.has_access(self.app, 'write')

@@ -109,8 +109,13 @@ class BaseVisualizerAPI(object):
             download_url=self.download_url,
             **kwargs)
 
-    def render(self, shortname=None, on_not_found=raise_error, **kwargs):
-        visualizer = self._get_with_optional_shortname(shortname, on_not_found)
+    def render(self, shortname=None, on_unvisualizable=None, **kwargs):
+        visualizer = self._get_with_optional_shortname(shortname)
+        if visualizer is None:
+            if on_unvisualizable:
+                return on_unvisualizable(self.resource)
+            else:
+                return ''
         return self.render_for_visualizer(visualizer, **kwargs)
 
     def get_icon_url(self, shortname=None):
@@ -118,14 +123,25 @@ class BaseVisualizerAPI(object):
         if visualizer:
             return visualizer.icon_url
 
-    def diff(self, resource, shortname=None, on_not_found=raise_error,
-             **kwargs):
-        visualizer = self._get_with_optional_shortname(shortname, on_not_found)
+    def diff(self, resource, shortname=None, on_unvisualizable=None, **kwargs):
+        visualizer = self._get_with_optional_shortname(shortname)
+        if visualizer is None:
+            if on_unvisualizable:
+                return on_unvisualizable(self.resource)
+            else:
+                return ''
         return self.render_diff_for_visualizer(resource, visualizer, **kwargs)
 
-    def full_diff(self, resource, shortnames=None, **kwargs):
+    def full_diff(self, resource, shortnames=None, on_unvisualizable=None,
+                  **kwargs):
         specs = []
         visualizers = self._find_with_optional_shortnames(shortnames)
+        if not visualizers:
+            if on_unvisualizable:
+                return on_unvisualizable(self.resource)
+            else:
+                return ''
+
         for visualizer in visualizers:
             # get fs_url, src
             spec = {
@@ -136,9 +152,7 @@ class BaseVisualizerAPI(object):
             specs.append(spec)
 
         return self.full_diff_widget.display(
-            specs,
-            filename=os.path.basename(self.url),
-            **kwargs)
+            specs, filename=os.path.basename(self.url), **kwargs)
 
     def _find_with_optional_shortnames(self, shortnames=None):
         # get all visualizers for this resource, or specified shortnames
@@ -150,15 +164,12 @@ class BaseVisualizerAPI(object):
             visualizers = self.find_visualizers()
         return visualizers
 
-    def _get_with_optional_shortname(self, shortname=None,
-                                     on_not_found=raise_error):
+    def _get_with_optional_shortname(self, shortname=None):
         visualizer = None
         if shortname:
             config = VisualizerConfig.query.get(shortname=shortname)
             if config:
                 visualizer = config.load()
-            elif on_not_found:
-                on_not_found()
         else:
             visualizer = self.get_visualizer()
         return visualizer

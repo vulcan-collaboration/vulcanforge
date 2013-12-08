@@ -3,8 +3,8 @@ import logging
 from ming.odm import session
 from pylons import app_globals as g
 
-from vulcanforge.taskd import model_task
-from vulcanforge.visualize.model import ProcessedArtifactFile
+from vulcanforge.visualize.model import ProcessedArtifactFile, ProcessingStatus, VisualizerConfig
+from vulcanforge.visualize.tasks import visualizable_task
 from vulcanforge.visualize.widgets import (
     IFrame,
     ArtifactIFrame,
@@ -84,14 +84,16 @@ class BaseVisualizer(object):
         """Fullscreen URL"""
         return '/visualize/{}/fs/'.format(self.config._id)
 
-    def get_query_for_url(self, url):
-        return {
+    def get_query_for_url(self, url, **kwargs):
+        query = {
             "env": "vf",
             "resource_url": url
         }
+        query.update(kwargs)
+        return query
 
-    def get_query_for_artifact(self, artifact):
-        query = self.get_query_for_url(artifact.raw_url())
+    def get_query_for_artifact(self, artifact, **kwargs):
+        query = self.get_query_for_url(artifact.raw_url(), **kwargs)
         query['refId'] = artifact.artifact_ref_id()
         return query
 
@@ -121,50 +123,22 @@ class BaseVisualizer(object):
     def on_config_delete(self):
         pass
 
-    def on_artifact_delete(self, artifact):
-        pass
-
 
 class _BaseProcessingVisualizer(BaseVisualizer):
 
-    def get_query_for_artifact(self, artifact):
+    def get_query_for_artifact(self, artifact, **kwargs):
         query = super(_BaseProcessingVisualizer, self).get_query_for_artifact(
-            artifact)
+            artifact, **kwargs)
+        unique_id = artifact.unique_id()
+        if "processingStatus" not in query:
+            status = ProcessingStatus.get_status_str(unique_id, self.config)
+            query["processingStatus"] = status
+        query["processingResourceId"] = unique_id
         cur = ProcessedArtifactFile.find_from_visualizable(
             artifact, visualizer_config_id=self.config._id)
         for pfile in cur:
             query[pfile.query_param] = pfile.url()
-            if pfile.status == "error":
-                query.update({
-                    "processingStatus": "error",
-                    "processingResourceId": pfile.unique_id
-                })
-            elif pfile.status == "loading" and not query.get(
-                    "processingStatus"):
-                query.update({
-                    "processingStatus": "loading",
-                    "processingResourceId": pfile.unique_id
-                })
         return query
-
-    def get_processing_status(self, artifact):
-        """
-        :return str (unprocessed, loading, ready, error)
-
-        """
-        pfile = ProcessedArtifactFile.get_from_visualizable(
-            artifact, visualizer_config_id=self.config._id)
-        if pfile:
-            status = pfile.status
-        else:
-            status = 'unprocessed'
-        return status
-
-    def on_artifact_delete(self, artifact):
-        cur = ProcessedArtifactFile.find_from_visualizable(
-            artifact, visualizer_config_id=self.config._id)
-        for pfile in cur:
-            pfile.delete()
 
     def process_artifact(self, artifact):
         # subclasses should implement this
@@ -173,16 +147,16 @@ class _BaseProcessingVisualizer(BaseVisualizer):
 
 class OnDemandProcessingVisualizer(_BaseProcessingVisualizer):
 
-    def get_query_for_artifact(self, artifact):
+    def get_query_for_artifact(self, artifact, **kwargs):
         # Looking at the query params means its time to process (it can't be on
         # render_artifact because full_render and visualizer options widget
         # do not call render_artifact
-        status = self.get_processing_status(artifact)
-        if status == 'unprocessed':
-            self.process_artifact(artifact)
-        super_func = super(
-            OnDemandProcessingVisualizer, self).get_query_for_artifact
-        return super_func(artifact)
+        st_obj, is_new = ProcessingStatus.get_or_create(artifact, self.config)
+        if is_new:
+            artifact.process_for_visualizer.post(self.config._id)
+        kwargs["processingStatus"] = st_obj.status
+        func = super(OnDemandProcessingVisualizer, self).get_query_for_artifact
+        return func(artifact, **kwargs)
 
 
 class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
@@ -200,7 +174,6 @@ class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
 
 # For Visualizable artifacts and mapped classes
 class VisualizableMixIn(object):
-
     # subclasses should implement the following not implemented methods
     def unique_id(self):
         """Globally unique identifier across all visualizable documents"""
@@ -218,7 +191,18 @@ class VisualizableMixIn(object):
     def raw_url(self):
         return self.url()
 
-    @model_task
+    def find_processed_files(self, **query):
+        return ProcessedArtifactFile.find_from_visualizable(self, **query)
+
+    @classmethod
+    def find_for_task(cls, _id):
+        # by defualt, assume we are a MappedClass
+        return cls.query.get(_id=_id)
+
+    def get_task_lookup_args(self):
+        return [self._id]
+
+    @visualizable_task
     def trigger_vis_upload_hook(self):
         for visualizer in g.visualize_artifact(self).find_for_processing():
             try:
@@ -227,14 +211,11 @@ class VisualizableMixIn(object):
                 LOG.exception('Error running on_upload hook on %s in %s',
                               self.unique_id(), visualizer.name)
 
-    @model_task
-    def trigger_vis_delete_hook(self):
-        for visualizer in g.visualize_artifact(self).find_for_processing():
-            try:
-                visualizer.on_delete(self)
-            except Exception:
-                LOG.exception('Error running on_delete hook on %s in %s',
-                              self.unique_id(), visualizer.name)
+    @visualizable_task
+    def process_for_visualizer(self, visualizer_config_id):
+        vc = VisualizerConfig.query.get(_id=visualizer_config_id)
+        visualizer = vc.load()
+        visualizer.process_artifact(self)
 
 
 class BaseFileProcessor(object):
@@ -247,49 +228,59 @@ class BaseFileProcessor(object):
         super(BaseFileProcessor, self).__init__()
 
     def run(self, pfile):
+        """Subclasses implement this"""
         raise NotImplementedError('run')
 
     @property
     def processed_filename(self):
         raise NotImplementedError('processed_filename')
 
-    def make_processed_file(self, status="loading"):
+    def make_processed_file(self):
         pfile = ProcessedArtifactFile.upsert_from_visualizable(
             self.artifact,
             self.processed_filename,
-            visualizer_config_id=self.visualizer.config._id,
-            status=status
+            visualizer_config_id=self.visualizer.config._id
         )
         session(ProcessedArtifactFile).flush(pfile)
         return pfile
 
+    def set_status(self, status):
+        ProcessingStatus.set_status_str(
+            self.artifact.unique_id(), self.visualizer.config, status)
+
     def full_run(self):
         LOG.info("Running file processor %s on %s", self.__class__.__name__,
                  self.artifact.unique_id())
+        self.set_status("loading")
         pfile = self.make_processed_file()
 
-        # check for duplicate files
-        do_run = True
-        if self.check_for_duplicate:
-            duplicate_pfile = pfile.find_duplicate()
-            if duplicate_pfile:
-                pfile.set_contents_from_string(duplicate_pfile.read())
-                pfile.status = 'ready'
-                do_run = False
+        try:
+            # check for duplicate files
+            do_run = True
+            if self.check_for_duplicate:
+                duplicate_pfile = pfile.find_duplicate()
+                if duplicate_pfile:
+                    pfile.set_contents_from_string(duplicate_pfile.read())
+                    self.set_status("ready")
+                    do_run = False
 
-        # call the run method
-        if do_run:
-            try:
-                self.run(pfile)
-            except Exception, e:
-                LOG.info("Error processing {}:{} for {}\n{}".format(
-                    self.artifact,
-                    self.artifact.unique_id(),
-                    self.visualizer,
-                    e
-                ))
-                pfile.status = "error"
-            else:
-                pfile.status = "ready"
+            # call the run method
+            if do_run:
+                try:
+                    self.run(pfile)
+                except Exception:
+                    self.set_status("error")
+                    raise
+                else:
+                    self.set_status("ready")
+
+        except Exception:
+            LOG.exception("Error processing {}:{} for {}".format(
+                self.artifact,
+                self.artifact.unique_id(),
+                self.visualizer
+            ))
+            pfile.delete()
+            pfile = None
 
         return pfile

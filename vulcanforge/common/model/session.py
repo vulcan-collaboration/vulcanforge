@@ -138,9 +138,14 @@ class VisualizableSessionExtension(VFSessionExtension):
 
     def after_flush(self, obj=None):
         for obj in self.objects_added + self.objects_modified:
-            obj.trigger_vis_upload_hook()
+            obj.trigger_vis_upload_hook.post()
         for obj in self.objects_deleted:
-            obj.trigger_vis_delete_hook()
+            try:
+                for pfile in obj.find_processed_files():
+                    pfile.delete()
+            except Exception:
+                LOG.exception('Error deleting processed files for %s:%s',
+                              str(obj), str(obj._id))
         super(VisualizableSessionExtension, self).after_flush(obj)
 
 

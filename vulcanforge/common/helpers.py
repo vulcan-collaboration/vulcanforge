@@ -129,7 +129,7 @@ def pretty_print_datetime(dt):
     return dt.strftime('%Y-%m-%d %H:%M:%S %Z')
 
 
-def ago(start_time, round=True, cutoff=True):
+def ago(start_time, round=True, cutoff=True, cutoff_fmt='%Y-%m-%d'):
     """
     Return time since starting time as a rounded, human readable string.
     E.g., "3 hours ago"
@@ -141,7 +141,7 @@ def ago(start_time, round=True, cutoff=True):
                      'minute']
     end_time = datetime.utcnow()
     if cutoff and (end_time - start_time > timedelta(days=7)):
-        return start_time.strftime('%Y-%m-%d')
+        return start_time.strftime(cutoff_fmt)
 
     while True:
         granularity = granularities.pop()
