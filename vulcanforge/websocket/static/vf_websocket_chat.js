@@ -122,25 +122,25 @@
                     appendTo(this.$toolbar);
                 $('<button/>').
                     text('\u2302').
-                    attr('title', 'Project Home').
+                    attr('title', 'View Project Home').
                     addClass('vf-chat-toolbar-item').
                     addClass('vf-chat-toolbar-icon-item').
                     addClass('vf-chat-toolbar-project-home').
                     appendTo(this.$toolbar);
                 $('<button/>').
-                    text('\ue055').
-                    attr('title', 'Transcripts').
+                    text('\ue079').
+                    attr('title', 'Browse Transcripts').
                     addClass('vf-chat-toolbar-item').
                     addClass('vf-chat-toolbar-icon-item').
                     addClass('vf-chat-toolbar-chat-transcripts').
                     appendTo(this.$toolbar);
-                $('<button/>').
+                /*$('<button/>').
                     text('\ue08a').
                     attr('title', 'Attach a file').
                     addClass('vf-chat-toolbar-item').
                     addClass('vf-chat-toolbar-icon-item').
                     addClass('vf-chat-toolbar-attach').
-                    appendTo(this.$toolbar);
+                    appendTo(this.$toolbar);*/
                 $('<button/>').
                     text('\ue068').
                     attr('title', 'Share current page').
@@ -229,9 +229,12 @@
                         }
                     }).
                     on('click', '.vf-chat-toolbar-share-location', function (e) {
+                        var title = document.title,
+                            href = window.location.href;
                         e.preventDefault();
                         e.stopPropagation();
-                        that.shareLocationToProject(that._activeProjectName);
+                        /*that.shareLocationToProject(that._activeProjectName);*/
+                        that.$textarea.val(that.$textarea.val() + ' [' + title + '](' + href + ') ');
                     }).
                     on('click', '.vf-chat-toolbar-project-home', function (e) {
                         var projectData = that.getProjectDataByShortname(that._activeProjectName);
