@@ -1,0 +1,18 @@
+{% extends '_debug_util_/_debug_base.html' %}
+
+{% block title %}SOLR – {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>SOLR</h2>
+    <form action="/_debug_util_/solr" method="get">
+        <p><label for="q">q</label><input type="text" id="q" name="q" value="{{ q }}" size="140"/></p>
+        <p><label for="json_params">Other params (JSON used as solr search kwargs):</label></p>
+        <p><textarea id="json_params" name="json_params" rows="10" cols="140">{{ json_params }}</textarea></p>
+        <input type="submit"/>
+    </form>
+    {% if result %}
+        <hr/>
+        <p>query took: {{ duration }}</p>
+        <pre><code>{{ result }}</code></pre>
+    {% endif %}
+{% endblock %}
