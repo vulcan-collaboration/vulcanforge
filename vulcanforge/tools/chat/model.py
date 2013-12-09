@@ -95,6 +95,9 @@ class ChatPost(AbstractPost):
     def attachment_class(cls):
         return ChatAttachment
 
+    def notify(self):
+        pass
+
     def get_publish_channels(self):
         channels = super(ChatPost, self).get_publish_channels()
         active_session = self.app.get_active_session()
