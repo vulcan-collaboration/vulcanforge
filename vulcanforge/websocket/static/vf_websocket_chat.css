@@ -16,7 +16,7 @@
     bottom: -380px;
 }
 #vf-chat-container.vf-chat-open {
-    bottom: 20px;
+    bottom: 22px;
 }
 
 
@@ -57,18 +57,19 @@
     color: #fff;
 }
 #vf-chat-container .vf-chat-tab::before {
+    content: "\E004 ";
     margin: 0 1ex 0 0;
     opacity: 0.5;
+    vertical-align: middle;
+    font-family: ForgeIconicFill;
+    font-size: 19px;
+    line-height: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
-#vf-chat-container .vf-chat-tab:hover::before {
-    margin: 0 1ex 0 0;
-    opacity: 0.75;
-}
-#vf-chat-container.vf-chat-closed .vf-chat-tab::before {
-    content: "\25B2 ";
-}
+#vf-chat-container .vf-chat-tab:hover::before,
 #vf-chat-container.vf-chat-open .vf-chat-tab::before {
-    content: "\25BC ";
+    opacity: 0.75;
 }
 
 
@@ -153,42 +154,71 @@
     color: white;
 }
 .vf-chat-project-button[data-unread-count] .vf-chat-project-button-label {
-  -webkit-animation: pulseOpacity 2s linear 0s infinite;
-  -moz-animation: pulseOpacity 2s linear 0s infinite;
-  -ms-animation: pulseOpacity 2s linear 0s infinite;
-  -o-animation: pulseOpacity 2s linear 0s infinite;
+    -webkit-animation: pulseOpacity 2s linear 0s infinite;
+    -moz-animation: pulseOpacity 2s linear 0s infinite;
+    -ms-animation: pulseOpacity 2s linear 0s infinite;
+    -o-animation: pulseOpacity 2s linear 0s infinite;
+    animation: pulseOpacity 2s linear 0s infinite;
+}
+
+
+.vf-chat-toolbar {
+    display: -webkit-flex;
+    display: flex;
+    background: #505050;
+}
+.vf-chat-toolbar-item {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    color: #d0d0d0;
+}
+button.vf-chat-toolbar-item {
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    text-shadow: none;
+}
+button.vf-chat-toolbar-item:hover {
+    background: transparent;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    text-shadow: none;
+    color: white;
+}
+.vf-chat-toolbar-icon-item {
+    margin: 2px;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: ForgeIconicFill;
+    font-size: 19px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.vf-chat-users-container {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
 }
 
 
 .vf-chat-project-content {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
     width: 100%;
-}
-.vf-chat-project-users {
-    -webkit-flex: 0 0 auto;
-    flex: 0 0 auto;
-    padding: 4px;
-    background: #505050;
-    color: #000;
     overflow: auto;
     overflow-x: hidden;
-}
-.vf-chat-project-messages {
-    -webkit-flex: 2 1 auto;
-    flex: 2 1 auto;
-    color: #000;
-    overflow: auto;
     overflow-y: auto;
-    overflow-x: hidden;
 }
-.vf-chat-project-messages:empty::after {
+.vf-chat-project-content:empty::after {
     content: "no messages";
     position: absolute;
     top: 50%;
@@ -261,14 +291,14 @@ input.vf-chat-submit[type="submit"][disabled] {
     opacity: 0.3;
 }
 
-.vf-chat-project-users .vf-chat-user-icon {
+.vf-chat-users .vf-chat-user-icon {
     display: inline-block;
     width: 24px;
     height: 24px;
     margin: 2px;
     vertical-align: bottom;
 }
-.vf-chat-project-users .vf-chat-user-icon.vf-chat-user-offline {
+.vf-chat-users .vf-chat-user-icon.vf-chat-user-offline {
     width: 18px;
     height: 18px;
 }
@@ -284,6 +314,22 @@ input.vf-chat-submit[type="submit"][disabled] {
 .vf-chat-message-container.vf-chat-current-user-message .vf-chat-user-icon {
     right: 0.5em;
     left: auto;
+}
+
+
+.vf-chat-notification-container {
+    margin: 2em 4em;
+}
+.vf-chat-notification-content {
+    font-style: italic;
+    color: #808080;
+}
+.vf-chat-notification-container .vf-chat-user-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin: 0;
+    padding: 0;
 }
 
 

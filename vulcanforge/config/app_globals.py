@@ -224,6 +224,9 @@ class ForgeAppGlobals(object):
                 'templates.sidebar_menu', tmpl_master + 'sidebar_menu.html')
         }
 
+        # websocket
+        self.websocket_enabled = asbool(config.get('websocket.enabled', True))
+
     @property
     def header_logo(self):
         return self.resource_manager.absurl(

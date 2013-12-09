@@ -1,6 +1,6 @@
 {% extends g.templates['master'] %}
 
-{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Chat{% endblock %}
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Transcript: {{ h.pretty_print_datetime(chat_session.mod_date) }}{% endblock %}
 
 {% block header %}{{c.app.config.options.mount_label}} Transcript: {{ h.pretty_print_datetime(chat_session.mod_date) }}{% endblock %}
 
