@@ -12,6 +12,7 @@ from vulcanforge.auth.model import User
 from vulcanforge.common.controllers.base import WsgiDispatchController
 from vulcanforge.artifact.controllers import ArtifactReferenceController
 from vulcanforge.auth.controllers import AuthController, UserDiscoverController
+from vulcanforge.common.controllers.debugutil import DebugUtilRootController
 from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
@@ -95,6 +96,8 @@ class ForgeRootController(WsgiDispatchController):
                 continue
             n.bind_controller(self)
         self.browse = ProjectBrowseController()
+        if not g.production_mode:
+            self._debug_util_ = DebugUtilRootController()
         super(ForgeRootController, self).__init__()
 
     def _setup_request(self):
