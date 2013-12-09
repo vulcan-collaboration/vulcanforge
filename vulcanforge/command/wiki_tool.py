@@ -32,6 +32,9 @@ class ExportWikiPages(Command):
     parser.add_option(
         '-r', '--replace_urls', dest='replace_urls', action='store_true',
         default=False, help="Hunt down and replace relative urls")
+    parser.add_option(
+        '-a', '--skip_attachments', dest='skip_attachments',
+        action='store_true', default=False, help="Do not export attachments")
 
     def command(self):
         self.basic_setup()
@@ -66,23 +69,25 @@ class ExportWikiPages(Command):
             dirname = os.getcwd()
         base_filename = self.args[1] + '_' + self.args[2] + '_wikidump'
         zip_filename = os.path.join(dirname, base_filename + '.zip')
-        with zipfile.ZipFile(zip_filename, 'w') as zip_handle:
+        with zipfile.ZipFile(zip_filename, 'w', allowZip64=True) as zip_handle:
             # create page manifest, writing attachments along the way
             pages = []
             for i, page in enumerate(q):
                 attachments = []
-                for attachment in page.attachments:
-                    exp_path = os.path.join(page.title, attachment.filename)
-                    attachments.append({
-                        'filename': attachment.filename,
-                        'exp_path': exp_path,
-                        'content_type': attachment.content_type
-                    })
-                    try:
-                        zip_handle.writestr(exp_path, attachment.read())
-                    except Exception:
-                        LOG.exception("Error writing attachment %S >> %s",
-                                      attachment.filename, page.title)
+                if not self.options.skip_attachments:
+                    for attachment in page.attachments:
+                        exp_path = os.path.join(
+                            page.title, attachment.filename)
+                        attachments.append({
+                            'filename': attachment.filename,
+                            'exp_path': exp_path,
+                            'content_type': attachment.content_type
+                        })
+                        try:
+                            zip_handle.writestr(exp_path, attachment.read())
+                        except Exception:
+                            LOG.exception("Error writing attachment %s >> %s",
+                                          attachment.filename, page.title)
 
                 if self.options.replace_urls:
                     page_text = self.update_relative_urls(page)
@@ -169,7 +174,7 @@ class ImportWikiPages(Command):
             raise WikiDumpHandlerError("General error: unable to find user!")
 
         with temporary_dir() as dirname:
-            with zipfile.ZipFile(zip_name) as zip_handle:
+            with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
                 zip_handle.extractall(dirname)
 
             # get root
