@@ -47,10 +47,11 @@ def get_client_ip(request=None):
 
 
 def set_download_headers(filename=None, content_type=None, set_ctype=True,
-                         file_pointer=None):
-    response.headers.add(
-        'Content-Disposition',
-        'attachment;filename=' + filename.encode('utf-8').replace(' ', '_'))
+                         set_disposition=True, file_pointer=None):
+    if set_disposition:
+        response.headers.add(
+            'Content-Disposition',
+            'attachment;filename=' + filename.encode('utf-8').replace(' ', '_'))
     if set_ctype:
         if not content_type:
             content_type = guess_mime_type(filename).encode('utf-8')
