@@ -98,7 +98,7 @@ class MonQTask(MappedClass):
     @LazyProperty
     def function(self):
         """The function that is called by this task"""
-        smod, sfunc = self.task_name.rsplit('.', 1)
+        smod, sfunc = str(self.task_name).rsplit('.', 1)
         cur = __import__(smod, fromlist=[sfunc])
         return getattr(cur, sfunc)
 

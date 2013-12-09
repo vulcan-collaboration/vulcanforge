@@ -232,7 +232,6 @@ class ContentRestController(RestController):
         if request.url.endswith('/'):
             return self._folder(*args)
         else:
-            override_template(self.get_one, '')
             return self._file(*args, **kwargs)
 
     @expose('json')

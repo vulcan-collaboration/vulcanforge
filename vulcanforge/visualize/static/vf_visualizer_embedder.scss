@@ -10,8 +10,18 @@
     background-color: #fff;
 }
 
-.visualizerHalfWidth .visualizerContainer {
-    width: 49%;
+.visualizerDiffWrapper {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.visualizerDiffWrapper td {
+    padding: 0;
+}
+
+.visualizerDiffWrapper h3.diffTitle {
+    margin: 0;
+    padding: 0;
 }
 
 .visualizerWrapper .visualizerToolbar {
@@ -25,6 +35,10 @@
 
 .visualizerWrapper .visualizerContainer {
     height: 100%;
+}
+
+.visualizerDiffWrapper iframe.visualizerContainer {
+    height: auto;
 }
 
 .visualizerFooter {

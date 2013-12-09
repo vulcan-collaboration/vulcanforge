@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import string
 import urllib
@@ -163,9 +164,23 @@ class UrlDiff(Widget):
         url2 = base_url + urllib.urlencode(query2)
         return url1, url2
 
-    def display(self, value, value2, visualizer, extra_params=None, **kwargs):
+    def get_filename_from_value(self, value):
+        parsed = urlparse(value)
+        return os.path.basename(parsed.path)
+
+    def display(self, value, value2, visualizer, extra_params=None,
+                filename1=None, filename2=None, **kwargs):
         url1, url2 = self.get_src_urls(value, value2, visualizer, extra_params)
-        return super(UrlDiff, self).display(url1=url1, url2=url2)
+        if filename1 is None:
+            filename1 = self.get_filename_from_value(value)
+        if filename2 is None:
+            filename2 = self.get_filename_from_value(value2)
+        return super(UrlDiff, self).display(
+            url1=url1,
+            filename1=filename1,
+            url2=url2,
+            filename2=filename2
+        )
 
 
 class ArtifactDiff(UrlDiff):
@@ -176,6 +191,9 @@ class ArtifactDiff(UrlDiff):
             query1.update(extra_params)
             query2.update(extra_params)
         return query1, query2
+
+    def get_filename_from_value(self, value):
+        return super(ArtifactDiff, self).get_filename_from_value(value.url())
 
 
 class TabbedDiffs(Widget):

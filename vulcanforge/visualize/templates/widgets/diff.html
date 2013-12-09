@@ -1,8 +1,16 @@
-<div class="visualizerWrapper visualizerDiffWrapper visualizerHalfWidth">
-    <iframe class="visualizerContainer" src="{{ url1 }}">
-        {{ no_iframe_msg }}
-    </iframe>
-    <iframe class="visualizerContainer" src="{{ url2 }}">
-        {{ no_iframe_msg }}
-    </iframe>
-</div>
+<table class="visualizerDiffWrapper visualizerHalfWidth">
+    <tbody><tr>
+        <td>
+            <h3 class="diffTitle">{{ h.really_unicode(filename1) }}</h3>
+            <iframe class="visualizerContainer" src="{{ url1 }}">
+                {{ no_iframe_msg }}
+            </iframe>
+        </td>
+        <td>
+            <h3 class="diffTitle">{{ h.really_unicode(filename2) }}</h3>
+            <iframe class="visualizerContainer" src="{{ url2 }}">
+                {{ no_iframe_msg }}
+            </iframe>
+        </td>
+    </tr></tbody>
+</table>

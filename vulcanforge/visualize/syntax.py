@@ -3,7 +3,7 @@ from pylons import app_globals as g
 from vulcanforge.common.util.diff import unified_diff
 from vulcanforge.resources.widgets import Widget, JSLink, CSSLink
 from vulcanforge.visualize.base import BaseVisualizer
-from vulcanforge.visualize.widgets import BaseContentWidget
+from vulcanforge.visualize.widgets import BaseContentWidget, ArtifactDiff
 
 
 class SyntaxContent(BaseContentWidget):
@@ -18,18 +18,24 @@ class SyntaxContent(BaseContentWidget):
         yield JSLink('js/lib/google-code-prettify/prettify.js', scope="page")
 
 
-class SyntaxArtifactDiff(Widget):
+class SyntaxArtifactDiff(ArtifactDiff):
     template = 'visualize/widgets/diff_syntax.html'
 
-    def display(self, value1, value2, visualizer, extra_params=None, **kwargs):
+    def display(self, value1, value2, visualizer, extra_params=None,
+                filename1=None, filename2=None, **kwargs):
+        if filename1 is None:
+            filename1 = self.get_filename_from_value(value1)
+        if filename2 is None:
+            filename2 = self.get_filename_from_value(value2)
         diff_list = unified_diff(
             value1.read().split('\n'),
             value2.read().split('\n'),
             ('a' + value1.url()).encode('utf-8'),
             ('b' + value2.url()).encode('utf-8'))
         diff = g.highlight('\n'.join(diff_list), lexer='diff')
-        return super(SyntaxArtifactDiff, self).display(
-            diff=diff, value1=value1, value2=value2, **kwargs)
+        return Widget.display(
+            self, diff=diff, value1=value1, value2=value2, filename1=filename1,
+            filename2=filename2, **kwargs)
 
 
 class SyntaxVisualizer(BaseVisualizer):
@@ -55,6 +61,5 @@ class SyntaxVisualizer(BaseVisualizer):
         ],
         "extensions": ['*'],
         "description": "Visualizes code and markup documents",
-        "icon": "FILE_TEXT",
-        "priority": -1
+        "icon": "FILE_TEXT"
     }

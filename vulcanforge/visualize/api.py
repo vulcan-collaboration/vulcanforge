@@ -85,9 +85,10 @@ class BaseVisualizerAPI(object):
                 return ''
 
         is_active = False
+        is_first = True
         for visualizer in visualizers:
             # is active visualizer
-            if not active_shortname and not is_active:
+            if not active_shortname and is_first:
                 is_active = True
             else:
                 is_active = active_shortname == visualizer.config.shortname
@@ -102,6 +103,7 @@ class BaseVisualizerAPI(object):
                 "active": is_active
             }
             specs.append(spec)
+            is_first = False
 
         return self.full_render_widget.display(
             specs,

@@ -591,13 +591,11 @@ class ProjectAdminController(BaseController):
             flash("User already {}".format(req.status), "warn")
         else:
             if send_mail != "no":
-                template_file = self._relative_path(
-                    "templates/mail/deny_new_user.txt")
-                with open(template_file, 'r') as fp:
-                    text = fp.read()
-
-                text = text.format(
-                    forge_name=config.get('forge_name', 'the forge'))
+                template = g.jinja2_env.get_template(
+                    'admin/mail/deny_new_user.txt')
+                text = template.render({
+                    "forge_name": config.get('forge_name', 'the forge')
+                })
                 mail_tasks.sendmail.post(
                     fromaddr=g.forgemail_return_path,
                     destinations=[req.email],

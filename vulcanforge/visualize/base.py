@@ -260,6 +260,8 @@ class BaseFileProcessor(object):
             if self.check_for_duplicate:
                 duplicate_pfile = pfile.find_duplicate()
                 if duplicate_pfile:
+                    LOG.info("Duplicate file found, using contents from %s",
+                             duplicate_pfile.url())
                     pfile.set_contents_from_string(duplicate_pfile.read())
                     self.set_status("ready")
                     do_run = False

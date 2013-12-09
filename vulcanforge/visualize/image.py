@@ -20,6 +20,5 @@ class ImageVisualizer(BaseVisualizer):
         "mime_types": ['^image'],
         "extensions": ['*'],
         "description": "Visualizes images, with nifty zoom functionality",
-        "icon": "FILE_IMAGE",
-        "priority": -1
+        "icon": "FILE_IMAGE"
     }
