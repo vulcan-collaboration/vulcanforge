@@ -6,6 +6,7 @@ app
 """
 from datetime import datetime, timedelta
 from pylons import app_globals as g
+import pymongo
 from vulcanforge.common.app import Application
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.tools import chat
@@ -75,7 +76,9 @@ class ForgeChatApp(Application):
                     '$gte': datetime.utcnow() - timedelta(hours=12)
                 }
             }
-            session = chat_model.ChatSession.query.get(**query)
+            cursor = chat_model.ChatSession.query.find(query)
+            cursor.sort('mod_date', pymongo.DESCENDING)
+            session = cursor.first()
             if session is None:
                 session = chat_model.ChatSession()
                 session.flush_self()
