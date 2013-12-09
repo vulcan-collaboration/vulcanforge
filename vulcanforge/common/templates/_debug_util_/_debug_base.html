@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}VF DEBUG{% endblock %}</title>
+    {% block head %}
+
+    {% endblock %}
+</head>
+<body>
+    <h1><a href="/">VF</a> – <a href="/_debug_util_/">DEBUG</a></h1>
+    <ul>
+        <li><a href="/_debug_util_/redis">redis</a></li>
+        <li><a href="/_debug_util_/solr">solr</a></li>
+    </ul>
+    <hr/>
+{% block content %}
+
+{% endblock %}
+</body>
+</html>

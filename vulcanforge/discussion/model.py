@@ -526,7 +526,6 @@ class AbstractPost(Message, VersionedArtifact):
         super(AbstractPost, self).delete()
 
     def approve(self):
-        from vulcanforge.notification.model import Notification
         if self.status == 'ok': return
         self.status = 'ok'
         if self.parent_id is None:
@@ -543,8 +542,7 @@ class AbstractPost(Message, VersionedArtifact):
                 c.project.project_role(author)._id,
                 'unmoderated_post')
         g.post_event('discussion.new_post', self.thread_id, self._id)
-        artifact = self.thread.artifact or self.thread
-        Notification.post(artifact, 'message', post=self)
+        self.notify()
         session(self).flush()
         self.publish_to_redis()
         self.thread.last_post_date = max(
@@ -566,6 +564,11 @@ class AbstractPost(Message, VersionedArtifact):
                 'src="?{}"?'.format(att.filename),
                 'src="{}"'.format(att.url(absolute=True)),
                 self.text)
+
+    def notify(self):
+        from vulcanforge.notification.model import Notification
+        artifact = self.thread.artifact or self.thread
+        Notification.post(artifact, 'message', post=self)
 
     def get_publish_channels(self):
         return [

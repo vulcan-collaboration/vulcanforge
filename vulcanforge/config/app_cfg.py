@@ -83,7 +83,8 @@ class ForgeConfig(AppConfig):
         'neighborhood': ['vulcanforge:neighborhood/templates'],
         'notification': ['vulcanforge:notification/templates'],
         'project': ['vulcanforge:project/templates'],
-        'visualize': ['vulcanforge:visualize/templates']
+        'visualize': ['vulcanforge:visualize/templates'],
+        '_debug_util': ['vulcanforge:common/templates/_debug_util_']
     }
     vulcan_packages = ['vulcanforge']
 

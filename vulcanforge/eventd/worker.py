@@ -136,29 +136,51 @@ class EventdWorker(AbstractEventdWorker):
 
     def make_handler_map(self):
         return {
-            'PostChatMessage': self.handle_post_chat_message
+            'PostChatMessage': self.handle_post_chat_message,
+            'ShareLocationWithChat': self.handle_share_location
         }
 
     def handle_post_chat_message(self, name, targets, params):
-        try:
-            from vulcanforge.project.model import Project
-            message_text = params.get('message', None)
-            if message_text is None or message_text == '':
-                self.log.warn("invalid message params: %r", params)
-            for target in targets:
-                match = re.match(r'^project\.([^\.]+).chat$', target)
-                shortname = match.group(1)
-                project = Project.query.get(shortname=shortname)
-                if project is None:
-                    self.log.warn("No project found with shortname: %s", shortname)
-                    continue
-                chat_app_config = project.get_app_configs_by_kind('chat').first()
-                if chat_app_config is None:
-                    self.log.warn("No chat app found for project: %s", shortname)
-                    continue
-                with g.context_manager.push(app_config_id=chat_app_config._id):
-                    chat_app = chat_app_config.app(project, chat_app_config)
-                    thread = chat_app.get_active_thread()
-                    thread.post(message_text)
-        except:
-            self.log.exception('nooooooooo!')
+        from vulcanforge.project.model import Project
+        message_text = params.get('message', None)
+        if message_text is None or message_text == '':
+            self.log.warn("invalid message params: %r", params)
+        for target in targets:
+            match = re.match(r'^project\.([^\.]+).chat$', target)
+            shortname = match.group(1)
+            project = Project.query.get(shortname=shortname)
+            if project is None:
+                self.log.warn("No project found with shortname: %s", shortname)
+                continue
+            chat_app_config = project.get_app_configs_by_kind('chat').first()
+            if chat_app_config is None:
+                self.log.warn("No chat app found for project: %s", shortname)
+                continue
+            with g.context_manager.push(app_config_id=chat_app_config._id):
+                chat_app = chat_app_config.app(project, chat_app_config)
+                thread = chat_app.get_active_thread()
+                thread.post(message_text)
+
+    def handle_share_location(self, name, targets, params):
+        from vulcanforge.project.model import Project
+        expected_keys = {'title', 'href', 'timestamp'}
+        if expected_keys.difference(params):
+            self.log.warn("invalid message params: %r", params)
+        for target in targets:
+            match = re.match(r'^project\.([^\.]+).chat$', target)
+            shortname = match.group(1)
+            project = Project.query.get(shortname=shortname)
+            if project is None:
+                self.log.warn("No project found with shortname: %s", shortname)
+                continue
+            chat_app_config = project.get_app_configs_by_kind('chat').first()
+            if chat_app_config is None:
+                self.log.warn("No chat app found for project: %s", shortname)
+                continue
+            redis = g.cache.redis
+            params.update(author=c.user.username)
+            msg = json.dumps({
+                'type': 'LocationShared',
+                'data': params
+            })
+            redis.publish(target, msg)

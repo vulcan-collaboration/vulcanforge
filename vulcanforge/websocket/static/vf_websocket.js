@@ -60,7 +60,7 @@
             _handleMessage: function (e) {
                 var msg = JSON.parse(e.data);
                 vfSocket._retryCount = 0;  // TODO: find a better way to reset the retry count
-                if (DEBUG) {
+                if (typeof DEBUG !== 'undefined' && DEBUG) {
                     console.debug(msg);
                 }
                 switch (msg.type) {
