@@ -34,37 +34,6 @@ class BaseVisualizerAPI(object):
         self.resource = resource
         super(BaseVisualizerAPI, self).__init__()
 
-    @property
-    def url(self):
-        raise NotImplementedError('url')
-
-    @property
-    def download_url(self):
-        raise NotImplementedError('download_url')
-
-    def render_for_visualizer(self, visualizer, **kwargs):
-        raise NotImplementedError('render_for_visualizer')
-
-    def get_content_urls_for_visualizer(self, visualizer, extra_params=None):
-        raise NotImplementedError('get_content_urls_for_visualizer')
-
-    def render_diff_for_visualizer(self, resource, visualizer, **kwargs):
-        raise NotImplementedError('render_diff_for_visualizer')
-
-    def find_visualizers(self):
-        return [vc.load() for vc in self._find_configs()]
-
-    def get_visualizer(self):
-        configs = self._find_configs()
-        if configs:
-            return configs[0].load()
-
-    def _find_configs(self):
-        mtype, extensions = self._get_mimetype_ext()
-        configs = VisualizerConfig.find_for_mtype_ext(
-            mime_type=mtype, extensions=extensions)
-        return configs
-
     def full_render(self, shortnames=None, active_shortname=None,
                     extra_params=None, on_unvisualizable=None, **kwargs):
         """
@@ -84,7 +53,6 @@ class BaseVisualizerAPI(object):
             else:
                 return ''
 
-        is_active = False
         is_first = True
         for visualizer in visualizers:
             # is active visualizer
@@ -119,6 +87,14 @@ class BaseVisualizerAPI(object):
             else:
                 return ''
         return self.render_for_visualizer(visualizer, **kwargs)
+
+    def find_visualizers(self):
+        return [vc.load() for vc in self._find_configs()]
+
+    def get_visualizer(self):
+        configs = self._find_configs()
+        if configs:
+            return configs[0].load()
 
     def get_icon_url(self, shortname=None):
         visualizer = self._get_with_optional_shortname(shortname)
@@ -155,6 +131,12 @@ class BaseVisualizerAPI(object):
 
         return self.full_diff_widget.display(
             specs, filename=os.path.basename(self.url), **kwargs)
+
+    def _find_configs(self):
+        mtype, extensions = self._get_mimetype_ext()
+        configs = VisualizerConfig.find_for_mtype_ext(
+            mime_type=mtype, extensions=extensions)
+        return configs
 
     def _find_with_optional_shortnames(self, shortnames=None):
         # get all visualizers for this resource, or specified shortnames
@@ -203,6 +185,23 @@ class BaseVisualizerAPI(object):
             mtype = mimetypes.guess_type(filename)[0]
 
         return mtype, extensions
+
+    @property
+    def url(self):
+        raise NotImplementedError('url')
+
+    @property
+    def download_url(self):
+        raise NotImplementedError('download_url')
+
+    def render_for_visualizer(self, visualizer, **kwargs):
+        raise NotImplementedError('render_for_visualizer')
+
+    def get_content_urls_for_visualizer(self, visualizer, extra_params=None):
+        raise NotImplementedError('get_content_urls_for_visualizer')
+
+    def render_diff_for_visualizer(self, resource, visualizer, **kwargs):
+        raise NotImplementedError('render_diff_for_visualizer')
 
 
 class ArtifactVisualizerInterface(BaseVisualizerAPI):
