@@ -6,7 +6,7 @@ import urllib
 from urlparse import urlparse
 
 from pylons import app_globals as g
-from vulcanforge.common.helpers import slugify
+from vulcanforge.common.helpers import slugify, urlquote
 
 from vulcanforge.resources.widgets import Widget, JSLink, CSSLink, JSScript
 from vulcanforge.visualize.model import ProcessedArtifactFile
@@ -75,9 +75,12 @@ class IFrame(Widget):
 
     def get_full_urls(self, value, visualizer, extra_params=None):
         query = self.get_query(value, visualizer, extra_params)
-        encoded_params = urllib.urlencode(query)
-        src_url = visualizer.src_url + '?' + encoded_params
-        fs_url = visualizer.fs_url + '?' + encoded_params
+        src_url = visualizer.src_url + '?' + urllib.urlencode(query)
+        fs_query = {
+            "resource_url": query.pop("resource_url"),
+            "iframe_query": urlquote(urllib.urlencode(query))
+        }
+        fs_url = visualizer.fs_url + '?' + urllib.urlencode(fs_query)
         return src_url, fs_url
 
     def display(self, value, visualizer, extra_params=None,
