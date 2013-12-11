@@ -33,12 +33,10 @@
     padding-bottom: 6px;
 }
 
-.visualizerWrapper .visualizerContainer {
-    height: 100%;
-}
-
-.visualizerDiffWrapper iframe.visualizerContainer {
+.visualizerDiffWrapper iframe.visualizerContainer,
+.repoVisualizerContainer iframe.visualizerContainer {
     height: auto;
+    min-height: 700px;
 }
 
 .visualizerFooter {
@@ -162,8 +160,26 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     display: inline-block;
 }
 
-iframe.visualizerContainer{
-    min-height: 700px;
+.fullHeightVisualizer .visualizerWrapper{
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.fullHeightVisualizer .visualizerToolbar {
+    flex: 0 0 auto;
+}
+
+.fullHeightVisualizer .visualizerContainer {
+    flex: 1 1 auto;
+}
+
+.fullHeightVisualizer .visualizerFooter {
+    flex: 0 0 auto;
 }
 
 .new-window-button {

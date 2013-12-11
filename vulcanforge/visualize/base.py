@@ -180,6 +180,7 @@ class VisualizableMixIn(object):
         raise NotImplementedError('unique_id')
 
     def artifact_ref_id(self):
+        """For access control purposes"""
         pass
 
     def read(self):
@@ -262,6 +263,7 @@ class BaseFileProcessor(object):
                 if duplicate_pfile:
                     LOG.info("Duplicate file found, using contents from %s",
                              duplicate_pfile.url())
+                    # NOTE: could optimize with in-server copy
                     pfile.set_contents_from_string(duplicate_pfile.read())
                     self.set_status("ready")
                     do_run = False

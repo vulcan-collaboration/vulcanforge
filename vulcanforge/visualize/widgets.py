@@ -64,7 +64,8 @@ class IFrame(Widget):
             'Please install iframes in your browser to view this content'),
         fs_url=None,
         src=None,
-        new_window_button=False
+        new_window_button=False,
+        height="700px"
     )
 
     def get_query(self, value, visualizer, extra_params=None):
@@ -84,12 +85,14 @@ class IFrame(Widget):
         return src_url, fs_url
 
     def display(self, value, visualizer, extra_params=None,
-                new_window_button=False, **kwargs):
+                new_window_button=False, height="700px", **kwargs):
         src_url, fs_url = self.get_full_urls(value, visualizer, extra_params)
         kwargs['src'] = src_url
         if new_window_button:
             kwargs['fs_url'] = fs_url
-        return Widget.display(self, **kwargs)
+        if height and height.isdigit():
+            height += "px"
+        return Widget.display(self, height=height, **kwargs)
 
 
 class ArtifactIFrame(IFrame):
@@ -109,7 +112,8 @@ class TabbedVisualizers(Widget):
         $("#visualizerTabs_{{uid}}").tabbedVisualizer({
             visualizerSpecs: JSON.parse('{{ visualizer_specs }}'),
             downloadUrl: "{{ download_url }}",
-            filename: "{{ filename }}"
+            filename: "{{ filename }}",
+            height: "{{ height }}"
         });
     });
     '''
@@ -118,13 +122,14 @@ class TabbedVisualizers(Widget):
         Widget.defaults,
         filename='',
         download_url='',
-        new_window_button=True
+        new_window_button=True,
+        height="700px"
     )
 
     def resources(self):
         yield JSLink('visualize/js/tabbed_visualizer.js')
 
-    def display(self, visualizer_specs, uid=None, **kw):
+    def display(self, visualizer_specs, uid=None, height="700px", **kw):
         """
         @param visualizer_specs list of dictoniaries:
         [{
@@ -139,8 +144,10 @@ class TabbedVisualizers(Widget):
         if uid is None:
             uid = ''.join(random.sample(string.ascii_lowercase, 8))
         visualizer_specs = json.dumps(visualizer_specs).replace('\\', '\\\\')
+        if height and height.isdigit():
+            height += "px"
         return super(TabbedVisualizers, self).display(
-            visualizer_specs=visualizer_specs, uid=uid, **kw)
+            visualizer_specs=visualizer_specs, uid=uid, height=height, **kw)
 
 
 class UrlDiff(Widget):

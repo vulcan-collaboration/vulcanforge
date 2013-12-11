@@ -1,5 +1,5 @@
 <div class="visualizerWrapper" {% if new_window_button %} data-add-new-window-button-to="{{ fs_url|safe}}" {% endif %}>
-    <iframe class="visualizerContainer" src="{{ src }}">
+    <iframe class="visualizerContainer" src="{{ src }}"{% if height %} style="height:{{ height }}"{% endif %}>
         {{ no_iframe_msg }}
     </iframe>
 </div>

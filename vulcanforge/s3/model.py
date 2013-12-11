@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 
 import os
 from contextlib import contextmanager
@@ -16,7 +17,7 @@ from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.util import set_download_headers, set_cache_headers
 from vulcanforge.common.util.filesystem import guess_mime_type, temporary_file
 
-
+LOG = logging.getLogger(__name__)
 SUPPORTED_BY_PIL = {
     'image/jpg',
     'image/jpeg',

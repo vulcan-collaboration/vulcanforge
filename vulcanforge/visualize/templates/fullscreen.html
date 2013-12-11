@@ -49,7 +49,7 @@
             </div>
             <div style="clear: both"></div>
         </div>
-        {{ visualizer.render_url(resource_url) }}
+        {{ visualizer.render_url(resource_url, extra_params=extra_params) }}
         <div id="right-toolbar">
             <div class="toolbar-upper">
                 {{ theme_macros.project_floating_details() }}

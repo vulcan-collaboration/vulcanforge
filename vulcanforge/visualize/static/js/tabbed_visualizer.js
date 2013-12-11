@@ -81,6 +81,10 @@ function renderTabbedVisualizer(config) {
         visualizerWrapper,
         visualizerWrapperE;
 
+    if (typeof config.height !== "undefined") {
+        $iframeE.css("height", config.height);
+    }
+
     /* generate toolbar */
     visualizerToolbarE = $('<div/>', {
         'class': 'visualizerToolbar'

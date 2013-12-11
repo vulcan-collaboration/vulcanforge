@@ -91,7 +91,6 @@ class VisualizerController(BaseController):
     def fs(self, resource_url=None, iframe_query=None, **kw):
         # get iframe query, if exists
         query_params = {'mode': 'fullscreen', 'resource_url': resource_url}
-        base_query = query_params.copy()
         if iframe_query:
             parsed = urlparse.parse_qsl(urllib.unquote(iframe_query))
             query_params.update(dict(parsed))
@@ -106,9 +105,8 @@ class VisualizerController(BaseController):
             logo_url=g.home_url,
             visualizer=self.visualizer,
             filename=filename,
-            query_str=urllib.urlencode(query_params, doseq=True),
-            base_query=urllib.urlencode(base_query, doseq=True),
             resource_url=resource_url.replace('#', '%23'),
+            extra_params=query_params,
             context='fullscreen',
             workspace_references=json.dumps(c.user.get_workspace_references())
         )

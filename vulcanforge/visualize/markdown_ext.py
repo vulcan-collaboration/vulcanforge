@@ -27,19 +27,21 @@ class VisualizerPattern(StashPattern, markdown.inlinepatterns.LinkPattern):
         if group:
             args = group.strip().split()
             if len(args) == 1:
-                try:
-                    height = int(args[0])
-                except ValueError:
+                if args[0].isdigit():
+                    height = args[0]
+                else:
                     shortname = args[0]
             else:
                 shortname, height = args
-                height = int(height)
         return shortname, height
 
     def convertPattern(self, mo):
         resource_url = mo.group(2).strip()
         shortname, height = self.parseArgs(mo.group(3))
-        return self.display(resource_url, shortname, height=height)
+        kwargs = {}
+        if height:
+            kwargs["height"] = height
+        return self.display(resource_url, shortname, **kwargs)
 
     def display(self, resource_url, shortname=None, **kwargs):
         return g.visualize_url(resource_url).render(
