@@ -855,6 +855,7 @@ class PageController(WikiContentBaseController):
         else:
             g.security.require_access(self.page, 'edit')
         name_conflict = None
+        title = title.strip('/ \t\n')
         if self.page.title != title:
             name_conflict = self._rename_page(title, rename_descendants)
         self.page.text = text
