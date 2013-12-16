@@ -25,6 +25,8 @@ TEMPLATE_DIR = 'jinja:vulcanforge.tools.neighborhood_home:templates/'
 
 class NeighborhoodHomeRootController(BaseController):
 
+    monitor_controller_cls = NeighborhoodMonitorController
+
     def __init__(self, project, app_config):
         super(NeighborhoodHomeRootController, self).__init__()
         self.neighborhood = project.neighborhood
@@ -34,7 +36,7 @@ class NeighborhoodHomeRootController(BaseController):
             neighborhood=self.neighborhood,
             hide_sidebar=False
         )
-        self.monitor = NeighborhoodMonitorController(self.neighborhood)
+        self.monitor = self.monitor_controller_cls(self.neighborhood)
         if self.neighborhood.enable_marketplace:
             self.market = NeighborhoodMarketplaceController(
                 self.neighborhood

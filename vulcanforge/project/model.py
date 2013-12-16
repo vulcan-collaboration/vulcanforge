@@ -1152,7 +1152,6 @@ class AppConfig(MappedClass):
             }
         }
 
-
     @LazyProperty
     def discussion_cls(self):
         return self.app.DiscussionClass

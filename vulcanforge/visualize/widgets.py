@@ -9,7 +9,6 @@ from pylons import app_globals as g
 from vulcanforge.common.helpers import slugify, urlquote
 
 from vulcanforge.resources.widgets import Widget, JSLink, CSSLink, JSScript
-from vulcanforge.visualize.model import ProcessedArtifactFile
 
 
 class BaseContentWidget(Widget):
