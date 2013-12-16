@@ -103,5 +103,6 @@ class WebSocketAuthBroker(BaseWebSocketAuthBroker):
         url = '{}/{}?_session_id={}'.format(self.auth_api_root,
                                             method_name,
                                             session_id)
-        return requests.post(url, headers=self._get_headers(), data=data)
+        return requests.post(url, headers=self._get_headers(), data=data,
+                             verify=False)
 

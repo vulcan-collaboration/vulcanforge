@@ -28,7 +28,7 @@
         <div class="vf-field">
             <label for="show_table_of_contents">Show Table of Contents:</label>
             {% if allow_config %}
-            <input type="checkbox" name="'" id="show_table_of_contents"{% if app.show_table_of_contents %} checked="checked"{% endif %}/>
+            <input type="checkbox" name="show_table_of_contents" id="show_table_of_contents"{% if app.show_table_of_contents %} checked="checked"{% endif %}/>
             {% else %}
             <span>{{app.show_table_of_contents}}</span>
             {% endif %}

@@ -12,7 +12,6 @@ from tg import expose
 from webob.exc import HTTPNotFound
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.discussion.controllers import AppDiscussionController
-from vulcanforge.discussion.widgets import ThreadWidget
 from vulcanforge.tools.chat import TEMPLATE_DIR
 
 
