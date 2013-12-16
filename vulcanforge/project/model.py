@@ -183,6 +183,8 @@ class Project(SOLRIndexed):
     disable_notification_emails = FieldProperty(bool, if_missing=False)
     # end special case options
 
+    _home_tools = ['home', 'neighborhood_home']
+
     def __json__(self):
         return {
             '_id': str(self._id),
@@ -747,10 +749,8 @@ class Project(SOLRIndexed):
 
     @LazyProperty
     def home_ac(self):
-        home_tools = {'home', 'team_home', 'neighborhood_home',
-                      'competition_home'}
         for ac in self.app_configs:
-            if ac.tool_name in home_tools:
+            if ac.tool_name in self._home_tools:
                 return ac
         return None
 
