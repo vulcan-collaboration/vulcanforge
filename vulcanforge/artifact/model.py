@@ -107,11 +107,6 @@ class ArtifactApiMixin(object):
         """
         return self.link_text()
 
-    @classmethod
-    def get_pymongo_db_and_collection(cls):
-        db = session(cls).impl.bind.db
-        return db, db[cls.__mongometa__.name]
-
     def parent_security_context(self):
         """ACL processing should continue at the  AppConfig object. This lets
         AppConfigs provide a 'default' ACL for all artifacts in the tool."""
@@ -233,16 +228,16 @@ class ArtifactApiMixin(object):
         """
         app = self.app_config.instantiate()
         thread_class = app.DiscussionClass.thread_class()
-        t = thread_class.query.get(ref_id=self.index_id())
-        if t is None and generate_if_missing:
+        thread = thread_class.query.get(ref_id=self.index_id())
+        if thread is None and generate_if_missing:
             idx = self.index() or {}
-            t = thread_class(
+            thread = thread_class(
                 app_config_id=self.app_config_id,
                 discussion_id=self.app_config.discussion_id,
                 ref_id=idx.get('id', self.index_id()),
                 subject='%s discussion' % idx.get('title_s', self.link_text()))
-            session(thread_class).flush(t)
-        return t
+            thread.flush_self()
+        return thread
 
     @LazyProperty
     def discussion_thread(self):
