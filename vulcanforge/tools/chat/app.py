@@ -14,6 +14,10 @@ from vulcanforge.tools.chat import model as chat_model,\
     controllers as chat_controllers
 
 
+import logging
+LOG = logging.getLogger(__name__)
+
+
 class ForgeChatApp(Application):
     __version__ = chat.__version__
     status = 'alpha'
@@ -72,19 +76,20 @@ class ForgeChatApp(Application):
         with g.context_manager.push(app_config_id=self.config._id):
             query = {
                 'app_config_id': self.config._id,
-                'mod_date': {
+                'last_post_datetime': {
                     '$gte': datetime.utcnow() - timedelta(hours=12)
                 }
             }
             cursor = chat_model.ChatSession.query.find(query)
-            cursor.sort('mod_date', pymongo.DESCENDING)
-            session = cursor.first()
-            if session is None:
-                session = chat_model.ChatSession()
-                session.flush_self()
-            return session
+            cursor.sort('last_post_datetime', pymongo.DESCENDING)
+            chat_session = cursor.first()
+            if chat_session is None:
+                chat_session = chat_model.ChatSession()
+                chat_session.flush_self()
+        return chat_session
 
     def get_active_thread(self):
         with g.context_manager.push(app_config_id=self.config._id):
             session = self.get_active_session()
-            return session.get_discussion_thread()
+            thread = session.get_discussion_thread()
+        return thread
