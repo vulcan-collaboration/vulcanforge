@@ -281,7 +281,7 @@
                 return text.replace(rePattern, '');
             });
             this.converter.hooks.chain("postBlockGamut", function(text, runBlockGamut) {
-                var rePattern = /\/\*(?:.*?\n?)*?\*\//gm;
+                var rePattern = /\/\*[.\n]*?\*\//gm;
                 return text.replace(rePattern, '');
             });
 
