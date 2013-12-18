@@ -142,7 +142,8 @@ class _BaseProcessingVisualizer(BaseVisualizer):
         cur = ProcessedArtifactFile.find_from_visualizable(
             artifact, visualizer_config_id=self.config._id)
         for pfile in cur:
-            query[pfile.query_param] = pfile.url()
+            if pfile.query_param:
+                query[pfile.query_param] = pfile.url()
         return query
 
     def process_artifact(self, artifact):
