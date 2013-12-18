@@ -18,39 +18,6 @@ LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
 
 
-class VisualizerRootController(BaseController):
-
-    @expose(TEMPLATE_DIR + 'render_resource.html')
-    @validate({"height": validators.Int()})
-    def render_resource(self, resource_url, iframe_query=None, height=None,
-                        **kw):
-        extra_params = {}
-        if iframe_query:
-            extra_params.update(
-                dict(urlparse.parse_qsl(urllib.unquote(iframe_query))))
-        return {
-            "resource_url": resource_url,
-            "extra_params": extra_params,
-            "height": height
-        }
-
-    @expose()
-    def _lookup(self, key, *remainder):
-        try:
-            vis_id = ObjectId(key)
-        except InvalidId:
-            raise exc.HTTPNotFound
-
-        # try to find a matching id
-        visualizer = VisualizerConfig.query.get(_id=vis_id)
-        if visualizer is None:
-            raise exc.HTTPNotFound
-
-        vc = VisualizerController(visualizer.load())
-
-        return vc, remainder
-
-
 class VisualizerController(BaseController):
 
     def __init__(self, visualizer):
@@ -110,3 +77,38 @@ class VisualizerController(BaseController):
             context='fullscreen',
             workspace_references=json.dumps(c.user.get_workspace_references())
         )
+
+
+class VisualizerRootController(BaseController):
+
+    visualizer_controller_cls = VisualizerController
+
+    @expose(TEMPLATE_DIR + 'render_resource.html')
+    @validate({"height": validators.Int()})
+    def render_resource(self, resource_url, iframe_query=None, height=None,
+                        **kw):
+        extra_params = {}
+        if iframe_query:
+            extra_params.update(
+                dict(urlparse.parse_qsl(urllib.unquote(iframe_query))))
+        return {
+            "resource_url": resource_url,
+            "extra_params": extra_params,
+            "height": height
+        }
+
+    @expose()
+    def _lookup(self, key, *remainder):
+        try:
+            vis_id = ObjectId(key)
+        except InvalidId:
+            raise exc.HTTPNotFound
+
+        # try to find a matching id
+        visualizer = VisualizerConfig.query.get(_id=vis_id)
+        if visualizer is None:
+            raise exc.HTTPNotFound
+
+        vc = self.visualizer_controller_cls(visualizer.load())
+
+        return vc, remainder

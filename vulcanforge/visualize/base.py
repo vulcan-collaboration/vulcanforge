@@ -3,13 +3,18 @@ import logging
 from ming.odm import session
 from pylons import app_globals as g
 
-from vulcanforge.visualize.model import ProcessedArtifactFile, ProcessingStatus, VisualizerConfig
+from vulcanforge.visualize.model import (
+    ProcessedArtifactFile,
+    ProcessingStatus,
+    VisualizerConfig
+)
 from vulcanforge.visualize.tasks import visualizable_task
 from vulcanforge.visualize.widgets import (
     IFrame,
     ArtifactIFrame,
     ArtifactDiff,
-    UrlDiff)
+    UrlDiff
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -129,7 +134,7 @@ class _BaseProcessingVisualizer(BaseVisualizer):
     def get_query_for_artifact(self, artifact, **kwargs):
         query = super(_BaseProcessingVisualizer, self).get_query_for_artifact(
             artifact, **kwargs)
-        unique_id = artifact.unique_id()
+        unique_id = artifact.get_unique_id()
         if "processingStatus" not in query:
             status = ProcessingStatus.get_status_str(unique_id, self.config)
             query["processingStatus"] = status
@@ -175,7 +180,7 @@ class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
 # For Visualizable artifacts and mapped classes
 class VisualizableMixIn(object):
     # subclasses should implement the following not implemented methods
-    def unique_id(self):
+    def get_unique_id(self):
         """Globally unique identifier across all visualizable documents"""
         raise NotImplementedError('unique_id')
 
@@ -197,10 +202,18 @@ class VisualizableMixIn(object):
 
     @classmethod
     def find_for_task(cls, _id):
-        # by defualt, assume we are a MappedClass
+        """Initialize this object with the arguments from get_task_lookup_args
+
+        By default, assumes this is a MappedClass and uses the _id to query
+
+        """
         return cls.query.get(_id=_id)
 
     def get_task_lookup_args(self):
+        """Used in conjunction with find_for_task to reinitialize this object
+        for asynchronous operations
+
+        """
         return [self._id]
 
     @visualizable_task
@@ -210,7 +223,7 @@ class VisualizableMixIn(object):
                 visualizer.on_upload(self)
             except Exception:
                 LOG.exception('Error running on_upload hook on %s in %s',
-                              self.unique_id(), visualizer.name)
+                              self.get_unique_id(), visualizer.name)
 
     @visualizable_task
     def process_for_visualizer(self, visualizer_config_id):
@@ -220,71 +233,123 @@ class VisualizableMixIn(object):
 
 
 class BaseFileProcessor(object):
-    """Generates a single file from an artifact"""
-    check_for_duplicate = True
 
     def __init__(self, artifact, visualizer):
         self.artifact = artifact
         self.visualizer = visualizer
         super(BaseFileProcessor, self).__init__()
 
-    def run(self, pfile):
+    def run(self):
         """Subclasses implement this"""
         raise NotImplementedError('run')
 
-    @property
-    def processed_filename(self):
-        raise NotImplementedError('processed_filename')
-
-    def make_processed_file(self):
+    def make_processed_file(self, filename, **kwargs):
         pfile = ProcessedArtifactFile.upsert_from_visualizable(
             self.artifact,
-            self.processed_filename,
-            visualizer_config_id=self.visualizer.config._id
+            filename,
+            visualizer_config_id=self.visualizer.config._id,
+            **kwargs
         )
         session(ProcessedArtifactFile).flush(pfile)
         return pfile
 
     def set_status(self, status):
         ProcessingStatus.set_status_str(
-            self.artifact.unique_id(), self.visualizer.config, status)
+            self.artifact.get_unique_id(), self.visualizer.config, status)
+
+    def check_for_duplicates(self):
+        """
+        Find duplicates and copy if found
+
+        Return true if duplicates found (will skip run)
+
+        """
+        return False
 
     def full_run(self):
         LOG.info("Running file processor %s on %s", self.__class__.__name__,
-                 self.artifact.unique_id())
+                 self.artifact.get_unique_id())
         self.set_status("loading")
-        pfile = self.make_processed_file()
 
         try:
-            # check for duplicate files
-            do_run = True
-            if self.check_for_duplicate:
-                duplicate_pfile = pfile.find_duplicate()
-                if duplicate_pfile:
-                    LOG.info("Duplicate file found, using contents from %s",
-                             duplicate_pfile.url())
-                    # NOTE: could optimize with in-server copy
-                    pfile.set_contents_from_string(duplicate_pfile.read())
-                    self.set_status("ready")
-                    do_run = False
+            self.pre_duplicate_check()
+            has_duplicate = self.check_for_duplicates()
 
-            # call the run method
-            if do_run:
+            if not has_duplicate:
                 try:
-                    self.run(pfile)
-                except Exception:
-                    self.set_status("error")
+                    self.run()
+                except Exception as exc:
+                    self.on_error(exc)
                     raise
                 else:
-                    self.set_status("ready")
+                    LOG.info("Finished Running file processor %s on %s",
+                             self.__class__.__name__,
+                             self.artifact.get_unique_id())
+                    self.on_success()
 
-        except Exception:
+                self.post_run()
+
+        except Exception as exc:
             LOG.exception("Error processing {}:{} for {}".format(
                 self.artifact,
-                self.artifact.unique_id(),
+                self.artifact.get_unique_id(),
                 self.visualizer
             ))
-            pfile.delete()
-            pfile = None
 
-        return pfile
+    # hooks
+    def pre_duplicate_check(self):
+        pass
+
+    def post_run(self):
+        pass
+
+    def on_error(self, exc):
+        self.set_status('error')
+
+    def on_success(self):
+        self.set_status("ready")
+
+
+class SingleFileProcessor(BaseFileProcessor):
+    """Generates a single file from an artifact
+
+    Will auto-create the ProcessedArtifact instance for you based on property
+    `processed_filename`. Access through `self.result_file`
+
+    """
+    query_param = 'resource_url'
+
+    def __init__(self, artifact, visualizer):
+        super(SingleFileProcessor, self).__init__(artifact, visualizer)
+        self.result_file = None
+
+    @property
+    def processed_filename(self):
+        raise NotImplementedError('processed_filename')
+
+    def make_result_file(self):
+        self.result_file = self.make_processed_file(
+            self.processed_filename,
+            query_param=self.query_param)
+        return self.result_file
+
+    def pre_duplicate_check(self):
+        self.make_result_file()
+
+    def check_for_duplicates(self):
+        duplicate_pfile = self.result_file.find_duplicates().first()
+        if duplicate_pfile:
+            has_duplicate = True
+            LOG.info("Duplicate file found, using contents from %s",
+                     duplicate_pfile.url())
+            # NOTE: could optimize with in-server copy
+            self.result_file.set_contents_from_string(duplicate_pfile.read())
+            self.set_status("ready")
+        else:
+            has_duplicate = False
+        return has_duplicate
+
+    def on_error(self, exc):
+        super(SingleFileProcessor, self).on_error(exc)
+        if self.result_file:
+            self.result_file.delete()

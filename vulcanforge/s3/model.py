@@ -183,6 +183,14 @@ class File(BaseMappedClass):
         if thumb:
             return thumb.url()
 
+    def temp_url(self, **kwargs):
+        full_keyname = g.make_s3_keyname(self.keyname, self.artifact)
+        if self.bucket_name:
+            bucket = g.s3.get_bucket(self.bucket_name)
+        else:
+            bucket = None
+        return g.s3_temp_url(full_keyname, bucket=bucket, **kwargs)
+
     def read(self):
         return self.key.read()
 

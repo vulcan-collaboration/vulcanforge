@@ -216,10 +216,11 @@ class ProcessingStatus(BaseMappedClass):
         session = project_orm_session
         unique_indexes = [('unique_id', 'visualizer_config_id')]
 
-    unique_id = FieldProperty(str)  # unique_id of Visualizable object
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
     visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
     status = FieldProperty(
         schema.OneOf('loading', 'ready', 'error', if_missing='loading'))
+    reason = FieldProperty(str, if_missing=None)
 
     @classmethod
     def get_status_str(cls, unique_id, visualizer_config):
@@ -232,7 +233,7 @@ class ProcessingStatus(BaseMappedClass):
         return status
 
     @classmethod
-    def set_status_str(cls, unique_id, visualizer_config, status):
+    def set_status_str(cls, unique_id, visualizer_config, status, reason=None):
         """
         Immediately sets status to :status  (does not wait for flush)
 
@@ -241,54 +242,32 @@ class ProcessingStatus(BaseMappedClass):
             "unique_id": unique_id,
             "visualizer_config_id": visualizer_config._id
         }
-        cls.query.update(query, {"$set": {"status": status}}, upsert=True)
+        cls.query.update(query, {"$set": {"status": status, "reason": reason}},
+                         upsert=True)
 
     @classmethod
     def get_or_create(cls, visualizable, visualizer_config):
-        st_obj = cls.query.get(unique_id=visualizable.unique_id(),
+        st_obj = cls.query.get(unique_id=visualizable.get_unique_id(),
                                visualizer_config_id=visualizer_config._id)
         is_new = False
         if st_obj is None:
             try:
-                st_obj = cls(unique_id=visualizable.unique_id(),
+                st_obj = cls(unique_id=visualizable.get_unique_id(),
                              visualizer_config_id=visualizer_config._id)
                 session(cls).flush(st_obj)
             except DuplicateKeyError:  # pragma no cover
                 session(cls).expunge(st_obj)
                 st_obj = cls.query.get(
-                    unique_id=visualizable.unique_id(),
+                    unique_id=visualizable.get_unique_id(),
                     visualizer_config_id=visualizer_config._id)
             else:
                 is_new = True
         return st_obj, is_new
 
 
-class ProcessedArtifactFile(_BaseVisualizerFile):
-    """Represents visualizer-specific synthesized resources typically
-    generated from processing a resource. For example, the STEP visualizer
-    will generate meshes for visualization in the forge.
-
-    By default (using `vulcanforge.visualize.widgets.IFrame`), the url of any
-    these files will be included in the query str of the iframe src for use
-    by the visualizer, with the parameter name determined by `query_param`.
-    To hide the url of the original resource, provide `resource_url` as the
-    value of `query_param`.
-
-    `unique_id` uniquely identifies a given resource within the forge, and is
-    used to map a resource to its processed files (the reverse lookup is
-    currently unnecessary).
-
-    `ref_id` associates a resource with a corresponding Artifact (if any)
-    for access control purposes.
-
-    """
-    class __mongometa__:
-        name = 'visualizer_processed_artifact'
-        unique_indexes = [('unique_id', 'filename')]
-
-    query_param = FieldProperty(str, if_missing='resource_url')
-    unique_id = FieldProperty(str)
-    origin_hash = FieldProperty(str, if_missing=None)
+class BaseVisualizableFile(_BaseVisualizerFile):
+    """File associated with a Visualizable object"""
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
     ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
 
     @classmethod
@@ -297,7 +276,7 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
 
     @classmethod
     def find_from_visualizable(cls, visualizable, **kwargs):
-        kwargs['unique_id'] = visualizable.unique_id()
+        kwargs['unique_id'] = visualizable.get_unique_id()
         return cls.query.find(kwargs)
 
     @classmethod
@@ -307,7 +286,7 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
         if not pfile:
             try:
                 pfile = cls(
-                    unique_id=visualizable.unique_id(),
+                    unique_id=visualizable.get_unique_id(),
                     filename=filename)
                 session(cls).flush(pfile)
             except DuplicateKeyError:  # pragma no cover
@@ -331,12 +310,66 @@ class ProcessedArtifactFile(_BaseVisualizerFile):
         if self.ref_id:
             return ArtifactReference.artifact_by_index_id(self.ref_id)
 
-    def find_duplicate(self):
+    # the following are implemented for process chaining
+    def get_unique_id(self):
+        return self.unique_id
+
+    def artifact_ref_id(self):
+        return self.ref_id
+
+
+class ProcessedArtifactFile(BaseVisualizableFile):
+    """Represents visualizer-specific synthesized resources
+    generated from processing a resource. For example, the STEP visualizer
+    will generate meshes for visualization in the forge.
+
+    By default (using `vulcanforge.visualize.widgets.IFrame`), the url of any
+    these files will be included in the query str of the iframe src for use
+    by the visualizer, with the parameter name determined by `query_param`.
+    To hide the url of the original resource, provide `resource_url` as the
+    value of `query_param`. If `query_param` is None, it will not show up in
+    the iframe query.
+
+    `unique_id` uniquely identifies a given resource within the forge, and is
+    used to map a resource to its processed files (the reverse lookup is
+    currently unnecessary).
+
+    `ref_id` associates a resource with a corresponding Artifact (if any)
+    for access control purposes.
+
+    """
+    class __mongometa__:
+        name = 'visualizer_processed_artifact'
+        unique_indexes = [('unique_id', 'filename')]
+
+    query_param = FieldProperty(None, if_missing='resource_url')
+    origin_hash = FieldProperty(str, if_missing=None)
+
+    @classmethod
+    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+        pfile = super(ProcessedArtifactFile, cls).upsert_from_visualizable(
+            visualizable, filename, **kwargs)
+        if not pfile.origin_hash:
+            pfile.origin_hash = cls.calculate_hash(visualizable.read())
+        return pfile
+
+    @LazyProperty
+    def artifact(self):
+        """Associated artifact (if any) for access control purposes.
+
+        Note that this is not necessarily the original visualizable object.
+
+        """
+        from vulcanforge.artifact.model import ArtifactReference
+        if self.ref_id:
+            return ArtifactReference.artifact_by_index_id(self.ref_id)
+
+    def find_duplicates(self):
         duplicate_query = {
             "origin_hash": self.origin_hash,
             "_id": {"$ne": self._id}
         }
-        return self.__class__.query.find(duplicate_query).first()
+        return self.__class__.query.find(duplicate_query)
 
 
 class S3VisualizerFile(_BaseVisualizerFile):

@@ -913,7 +913,7 @@ class BaseAttachment(File, VisualizableMixIn):
             'artifact_id': self.artifact_id
         }
 
-    def unique_id(self):
+    def get_unique_id(self):
         return 'attachment.{}.{}.{}'.format(
             self.attachment_type,
             self.artifact.index_id(),
@@ -931,7 +931,7 @@ class BaseAttachment(File, VisualizableMixIn):
                 visualizer.process_artifact(self)
             except Exception:
                 LOG.exception('Error running on_upload hook on %s in %s',
-                              self.unique_id(), visualizer.name)
+                              self.get_unique_id(), visualizer.name)
 
 
 # Ephemeral Functions for ArtifactReference
@@ -1327,7 +1327,7 @@ class VisualizableArtifact(Artifact, VisualizableMixIn):
     class __mongometa__:
         session = visualizable_artifact_session
 
-    def unique_id(self):
+    def get_unique_id(self):
         return self.index_id()
 
     def artifact_ref_id(self):

@@ -314,6 +314,7 @@ class ForgeAppGlobals(object):
 
     def s3_temp_url(self, keyname, bucket=None, temp_url_key=None,
                     expires=None, account_name=None, method="GET"):
+        """Note that this uses the full keyname of the s3 object"""
         if bucket is None:
             bucket = self.s3_bucket
         if temp_url_key is None:

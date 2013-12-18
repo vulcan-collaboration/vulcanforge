@@ -3,13 +3,13 @@ import re
 import os
 
 from vulcanforge.visualize.base import (
-    BaseFileProcessor,
+    SingleFileProcessor,
     OnDemandProcessingVisualizer
 )
 from vulcanforge.visualize.syntax import SyntaxContent
 
 
-class XKCDSubstitutionProcessor(BaseFileProcessor):
+class XKCDSubstitutionProcessor(SingleFileProcessor):
     """See http://xkcd.com/1288/"""
 
     CONVERSION_TABLE = {
@@ -34,11 +34,11 @@ class XKCDSubstitutionProcessor(BaseFileProcessor):
         basefile, _ = os.path.splitext(os.path.basename(self.artifact.url()))
         return basefile + '.xkcd'
 
-    def run(self, pfile):
+    def run(self):
         txt = self.artifact.read()
         for pattern, sub in self.CONVERSION_TABLE.items():
             txt = re.sub(pattern, sub, txt, flags=re.IGNORECASE)
-        pfile.set_contents_from_string(txt)
+        self.result_file.set_contents_from_string(txt)
 
 
 class XKCDVisualizer(OnDemandProcessingVisualizer):
