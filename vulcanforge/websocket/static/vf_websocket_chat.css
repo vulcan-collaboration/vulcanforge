@@ -16,7 +16,7 @@
     bottom: -380px;
 }
 #vf-chat-container.vf-chat-open {
-    bottom: 22px;
+    bottom: 20px;
 }
 
 
@@ -74,6 +74,8 @@
 
 
 .vf-chat-panel-container {
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
@@ -123,15 +125,26 @@
     position: relative;
     display: inline-block;
     height: 2em;
-    margin: 0 2px 0 0;
+    margin: 2px;
     cursor: pointer;
     line-height: 2em;
     color: #a0a0a0;
     vertical-align: middle;
+    -webkit-transition: color 100ms;
+    -moz-transition: color 100ms;
+    -ms-transition: color 100ms;
+    -o-transition: color 100ms;
+    transition: color 100ms;
+}
+.vf-chat-project-button:hover {
+    color: white;
 }
 .vf-chat-project-button.vf-chat-project-active {
     background: #0095da;
     color: white;
+}
+.vf-chat-active-project-container .vf-chat-project-button.vf-chat-project-active {
+    background: transparent;
 }
 .vf-chat-project-button-icon {
     width: 2em;
@@ -142,6 +155,8 @@
     padding: 0 0.5em;
     vertical-align: top;
 }
+
+.vf-chat-toolbar-project-select[data-unread-count]::after,
 .vf-chat-project-button[data-unread-count]::after {
     content: attr(data-unread-count);
     position: absolute;
@@ -153,7 +168,8 @@
     background: #c04;
     color: white;
 }
-.vf-chat-project-button[data-unread-count] .vf-chat-project-button-label {
+.vf-chat-toolbar-project-select[data-unread-count],
+.vf-chat-project-button[data-unread-count] {
     -webkit-animation: pulseOpacity 2s linear 0s infinite;
     -moz-animation: pulseOpacity 2s linear 0s infinite;
     -ms-animation: pulseOpacity 2s linear 0s infinite;
@@ -161,16 +177,65 @@
     animation: pulseOpacity 2s linear 0s infinite;
 }
 
+.vf-chat-projects-list-container {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.5rem;
+    background: #282828;
+    text-align: left;
+    overflow-y: auto;
+    -webkit-transition: top 300ms;
+    -moz-transition: top 300ms;
+    -ms-transition: top 300ms;
+    -o-transition: top 300ms;
+    transition: top 300ms;
+}
+.vf-chat-project-list-container-open {
+    top: 0;
+}
+.vf-chat-projects-list-container h2 {
+    display: block;
+    margin: 0;
+    padding: 2px;
+    font-size: 1rem;
+    color: #c0c0c0;
+    border: none;
+    line-height: 24px;
+    height: auto;
+    font-weight: lighter;
+    letter-spacing: 0.125em;
+}
+.vf-chat-projects-list {
+    padding: 0.5rem;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 
 .vf-chat-toolbar {
     display: -webkit-flex;
     display: flex;
+}
+.vf-chat-project-toolbar {
     background: #505050;
 }
 .vf-chat-toolbar-item {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     color: #d0d0d0;
+}
+.vf-chat-toolbar-stretchy-item {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
 }
 button.vf-chat-toolbar-item {
     padding: 0;
@@ -181,6 +246,11 @@ button.vf-chat-toolbar-item {
     -moz-box-shadow: none;
     box-shadow: none;
     text-shadow: none;
+    -webkit-transition: color 100ms;
+    -moz-transition: color 100ms;
+    -ms-transition: color 100ms;
+    -o-transition: color 100ms;
+    transition: color 100ms;
 }
 button.vf-chat-toolbar-item:hover {
     background: transparent;
@@ -201,10 +271,6 @@ button.vf-chat-toolbar-item:hover {
     line-height: 24px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
-.vf-chat-users-container {
-    -webkit-flex: 1 1 auto;
-    flex: 1 1 auto;
 }
 
 
@@ -355,28 +421,28 @@ span.alt_text {
 
 @-webkit-keyframes pulseOpacity {
   0% { opacity: 1 }
-  25% { opacity: 0.5 }
-  50% { opacity: 1 }
+  10% { opacity: 0.3 }
+  20% { opacity: 1 }
   100% { opacity: 1 }
 }
 
 @-moz-keyframes pulseOpacity {
   0% { opacity: 1 }
-  25% { opacity: 0.5 }
-  50% { opacity: 1 }
+  10% { opacity: 0.3 }
+  20% { opacity: 1 }
   100% { opacity: 1 }
 }
 
 @-ms-keyframes pulseOpacity {
   0% { opacity: 1 }
-  25% { opacity: 0.5 }
-  50% { opacity: 1 }
+  10% { opacity: 0.3 }
+  20% { opacity: 1 }
   100% { opacity: 1 }
 }
 
 @-o-keyframes pulseOpacity {
   0% { opacity: 1 }
-  25% { opacity: 0.5 }
-  50% { opacity: 1 }
+  10% { opacity: 0.3 }
+  20% { opacity: 1 }
   100% { opacity: 1 }
 }
