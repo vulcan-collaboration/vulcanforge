@@ -219,7 +219,7 @@
                             }
                         }
                     }).
-                    on('keyup change focus blur', '.vf-chat-textarea', function (e) {
+                    on('keyup change focus blur refreshInputEnabled.vfChat', '.vf-chat-textarea', function (e) {
                         var value;
                         value = that.$textarea.val();
                         if (value.trim().length > 0) {
@@ -234,7 +234,9 @@
                         e.preventDefault();
                         e.stopPropagation();
                         /*that.shareLocationToProject(that._activeProjectName);*/
-                        that.$textarea.val(that.$textarea.val() + ' [' + title + '](' + href + ') ');
+                        that.$textarea.
+                            val(that.$textarea.val() + ' [' + title + '](' + href + ') ').
+                            trigger('refreshInputEnabled.vfChat');
                     }).
                     on('click', '.vf-chat-toolbar-project-home', function (e) {
                         var projectData = that.getProjectDataByShortname(that._activeProjectName);

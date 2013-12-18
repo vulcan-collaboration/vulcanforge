@@ -5,10 +5,12 @@ model
 
 @author: U{tannern<tannern@gmail.com>}
 """
+from datetime import datetime
 import os
 import logging
 from bson import ObjectId
-from ming.odm import FieldProperty, RelationProperty
+from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
+import pymongo
 from vulcanforge.common.model.session import artifact_orm_session
 from vulcanforge.discussion.model import Discussion, \
     PostHistory, DiscussionAttachment, AbstractPost, Thread
@@ -30,6 +32,7 @@ class ChatSession(Discussion):
 
     type_s = 'ChatChannel'
 
+    last_post_datetime = FieldProperty(datetime, if_missing=datetime.utcnow)
     threads = RelationProperty('ChatThread')
     posts = RelationProperty('ChatPost')
 
@@ -53,13 +56,42 @@ class ChatSession(Discussion):
     def url(self):
         return os.path.join(self.app.url, 'session', str(self._id))
 
+    def get_discussion_thread(self, data=None, generate_if_missing=True):
+        """
+        Return the discussion thread for this artifact (possibly made more
+        specific by the message_data)
+        """
+        thread_class = self.thread_class()
+        thread = thread_class.query.get(ref_id=self.index_id())
+        if thread is None and generate_if_missing:
+            idx = self.index() or {}
+            thread = thread_class(
+                app_config_id=self.app_config_id,
+                discussion_id=self._id,
+                ref_id=idx.get('id', self.index_id()),
+                subject='%s discussion' % idx.get('title_s', self.link_text()))
+            thread.flush_self()
+        return thread
+
 
 class ChatThread(Thread):
 
     class __mongometa__:
+        name = 'thread'
+        polymorphic_on = 'kind'
         polymorphic_identity = 'chat_thread'
+        indexes = [
+            ('ref_id',),
+            ('ref_id', 'app_config_id'),
+            (
+                ('app_config_id', pymongo.ASCENDING),
+                ('last_post_date', pymongo.DESCENDING),
+                ('mod_date', pymongo.DESCENDING)
+            )
+        ]
 
     kind = FieldProperty(str, if_missing='chat_thread')
+    discussion_id = ForeignIdProperty(ChatSession)
     discussion = RelationProperty(ChatSession)
     posts = RelationProperty('ChatPost', via='thread_id')
     type_s = 'ChatThread'
@@ -108,6 +140,10 @@ class ChatPost(AbstractPost):
 
     def url(self):
         return self.discussion.url()
+
+    def approve(self):
+        super(ChatPost, self).approve()
+        self.discussion.last_post_datetime = self.timestamp
 
 
 class ChatAttachment(DiscussionAttachment):
