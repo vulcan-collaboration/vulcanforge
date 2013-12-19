@@ -329,13 +329,13 @@ class ForgeAppGlobals(object):
             bucket=bucket.name,
             key=keyname
         )
-        hmac_body = '%s\n%s\n%s' % (method, expires, path)
+        hmac_body = '%s\n%s\n%s' % (method, expires, h.urlquote(path))
         sig = hmac.new(temp_url_key, hmac_body, hashlib.sha1).hexdigest()
         url = '{protocol}://{host}:{port}{path}?{query}'.format(
             protocol=bucket.connection.protocol,
             host=bucket.connection.host,
             port=bucket.connection.port,
-            path=path,
+            path=h.urlquote(h.urlquote(path)),
             query=urllib.urlencode({
                 'temp_url_sig': sig,
                 'temp_url_expires': expires
