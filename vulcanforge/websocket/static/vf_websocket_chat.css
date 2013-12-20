@@ -192,9 +192,9 @@
     top: 100%;
     left: 0;
     right: 0;
-    bottom: 0;
+    height: 100%;
     padding: 0.5rem;
-    background: #282828;
+    background: rgba(0,0,0,0.8);
     text-align: left;
     overflow-y: auto;
     -webkit-transition: top 300ms;
@@ -211,7 +211,7 @@
     margin: 0;
     padding: 2px;
     font-size: 1rem;
-    color: #c0c0c0;
+    color: white;
     border: none;
     line-height: 24px;
     height: auto;
@@ -352,9 +352,22 @@ input.vf-chat-submit[type="submit"][disabled] {
     position: relative;
     margin: 1ex;
     padding: 0 3.5em;
+    -webkit-animation: messageAppear 400ms ease-out;
+    -moz-animation: messageAppear 400ms ease-out;
+    -ms-animation: messageAppear 400ms ease-out;
+    -o-animation: messageAppear 400ms ease-out;
+    animation: messageAppear 400ms ease-out;
+}
+.vf-chat-message-container.vf-chat-current-user-message {
+    -webkit-animation: messageAppearCurrentUser 400ms ease-out;
+    -moz-animation: messageAppearCurrentUser 400ms ease-out;
+    -ms-animation: messageAppearCurrentUser 400ms ease-out;
+    -o-animation: messageAppearCurrentUser 400ms ease-out;
+    animation: messageAppearCurrentUser 400ms ease-out;
 }
 .vf-chat-message-content {
     background: #fff;
+    box-shadow: 0 1px 1px #ddd;
 }
 
 
@@ -488,4 +501,44 @@ span.alt_text {
   10% { color: rgba(255,255,255,0.3) }
   20% { color: rgba(255,255,255,1) }
   100% { color: rgba(255,255,255,1) }
+}
+
+
+
+@-webkit-keyframes messageAppear {
+    0% {
+        -webkit-transform: translateX(-100%);
+        -moz-transform: translateX(-100%);
+        -ms-transform: translateX(-100%);
+        -o-transform: translateX(-100%);
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    100% {
+        -webkit-transform: translateX(0);
+        -moz-transform: translateX(0);
+        -ms-transform: translateX(0);
+        -o-transform: translateX(0);
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes messageAppearCurrentUser {
+    0% {
+        -webkit-transform: translateX(100%);
+        -moz-transform: translateX(100%);
+        -ms-transform: translateX(100%);
+        -o-transform: translateX(100%);
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        -webkit-transform: translateX(0);
+        -moz-transform: translateX(0);
+        -ms-transform: translateX(0);
+        -o-transform: translateX(0);
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
