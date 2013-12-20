@@ -156,6 +156,7 @@
     vertical-align: top;
 }
 
+#vf-chat-container.vf-chat-closed .vf-chat-tab[data-unread-count]::after,
 .vf-chat-toolbar-project-select[data-unread-count]::after,
 .vf-chat-project-button[data-unread-count]::after {
     content: attr(data-unread-count);
@@ -175,6 +176,13 @@
     -ms-animation: pulseOpacity 2s linear 0s infinite;
     -o-animation: pulseOpacity 2s linear 0s infinite;
     animation: pulseOpacity 2s linear 0s infinite;
+}
+#vf-chat-container.vf-chat-closed .vf-chat-tab[data-unread-count] {
+    -webkit-animation: pulseTextOpacity 2s linear 0s infinite;
+    -moz-animation: pulseTextOpacity 2s linear 0s infinite;
+    -ms-animation: pulseTextOpacity 2s linear 0s infinite;
+    -o-animation: pulseTextOpacity 2s linear 0s infinite;
+    animation: pulseTextOpacity 2s linear 0s infinite;
 }
 
 .vf-chat-projects-list-container {
@@ -425,24 +433,59 @@ span.alt_text {
   20% { opacity: 1 }
   100% { opacity: 1 }
 }
-
 @-moz-keyframes pulseOpacity {
   0% { opacity: 1 }
   10% { opacity: 0.3 }
   20% { opacity: 1 }
   100% { opacity: 1 }
 }
-
 @-ms-keyframes pulseOpacity {
   0% { opacity: 1 }
   10% { opacity: 0.3 }
   20% { opacity: 1 }
   100% { opacity: 1 }
 }
-
 @-o-keyframes pulseOpacity {
   0% { opacity: 1 }
   10% { opacity: 0.3 }
   20% { opacity: 1 }
   100% { opacity: 1 }
+}
+@keyframes pulseOpacity {
+  0% { opacity: 1 }
+  10% { opacity: 0.3 }
+  20% { opacity: 1 }
+  100% { opacity: 1 }
+}
+
+
+@-webkit-keyframes pulseTextOpacity {
+  0% { color: rgba(255,255,255,1) }
+  10% { color: rgba(255,255,255,0.3) }
+  20% { color: rgba(255,255,255,1) }
+  100% { color: rgba(255,255,255,1) }
+}
+@-moz-keyframes pulseTextOpacity {
+  0% { color: rgba(255,255,255,1) }
+  10% { color: rgba(255,255,255,0.3) }
+  20% { color: rgba(255,255,255,1) }
+  100% { color: rgba(255,255,255,1) }
+}
+@-ms-keyframes pulseTextOpacity {
+  0% { color: rgba(255,255,255,1) }
+  10% { color: rgba(255,255,255,0.3) }
+  20% { color: rgba(255,255,255,1) }
+  100% { color: rgba(255,255,255,1) }
+}
+@-o-keyframes pulseTextOpacity {
+  0% { color: rgba(255,255,255,1) }
+  10% { color: rgba(255,255,255,0.3) }
+  20% { color: rgba(255,255,255,1) }
+  100% { color: rgba(255,255,255,1) }
+}
+@keyframes pulseTextOpacity {
+  0% { color: rgba(255,255,255,1) }
+  10% { color: rgba(255,255,255,0.3) }
+  20% { color: rgba(255,255,255,1) }
+  100% { color: rgba(255,255,255,1) }
 }

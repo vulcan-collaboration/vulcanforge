@@ -328,10 +328,7 @@
                             that.renderMessageToProject(data.data, projectName);
                             if (projectName !== that._activeProjectName) {
                                 that._unreadCounts[projectName] += 1;
-                                that.$container.
-                                    find('.vf-chat-project-button[data-project="' + projectName + '"]').
-                                    attr('data-unread-count', that._unreadCounts[projectName]);
-                                that.updateTotalUnreadCount();
+                                that.updateUnreadCountAttributes();
                             }
                         } else if (data.type === 'LocationShared') {
                             that.renderSharedLocationToProject(data.data, projectName);
@@ -426,18 +423,27 @@
                     removeAttr('data-unread-count');
                 this.scrollToBottom();
                 this.closeProjectList();
-                this.updateTotalUnreadCount();
+                this.updateUnreadCountAttributes();
             },
-            updateTotalUnreadCount: function () {
-                var total = 0;
-                $.each(this._unreadCounts, function (key, value) {
-                    total += value;
+            updateUnreadCountAttributes: function () {
+                var that = this, total = 0;
+                $.each(this._unreadCounts, function (projectName, count) {
+                    var $projectButtons = that.$container.
+                        find('.vf-chat-project-button[data-project="' + projectName + '"]');
+                    total += count;
+                    if (count > 0) {
+                        $projectButtons.attr('data-unread-count', that._unreadCounts[projectName]);
+                    } else {
+                        $projectButtons.removeAttr('data-unread-count');
+                    }
                 });
                 if (total > 0) {
                     this.$projectSelect.
+                        add(this.$tab).
                         attr('data-unread-count', total);
                 } else {
                     this.$projectSelect.
+                        add(this.$tab).
                         removeAttr('data-unread-count');
                 }
             },
