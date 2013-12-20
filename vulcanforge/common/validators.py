@@ -117,7 +117,6 @@ class JSONSchema(Schema):
         try:
             payload = json.loads(request.body)
         except ValueError:
-            LOG.debug('Error parsing JSON: %s with params', request.body)
             raise fev.Invalid(
                 self.message('invalid', state), value_dict, state)
         value_dict.update(Schema._to_python(self, payload, state))

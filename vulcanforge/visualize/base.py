@@ -271,6 +271,7 @@ class BaseFileProcessor(object):
         LOG.info("Running file processor %s on %s", self.__class__.__name__,
                  self.artifact.get_unique_id())
         self.set_status("loading")
+        success = False
 
         try:
             self.pre_duplicate_check()
@@ -287,6 +288,7 @@ class BaseFileProcessor(object):
                              self.__class__.__name__,
                              self.artifact.get_unique_id())
                     self.on_success()
+                    success = True
 
                 self.post_run()
 
@@ -296,6 +298,8 @@ class BaseFileProcessor(object):
                 self.artifact.get_unique_id(),
                 self.visualizer
             ))
+
+        return success
 
     # hooks
     def pre_duplicate_check(self):
