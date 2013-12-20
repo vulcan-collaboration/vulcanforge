@@ -187,6 +187,8 @@
 
 .vf-chat-projects-list-container {
     display: block;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
     position: absolute;
     z-index: 1;
     top: 100%;

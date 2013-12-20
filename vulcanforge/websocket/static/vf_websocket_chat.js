@@ -170,7 +170,7 @@
                 // Project Toolbar
                 $('<span/>').
                     text('\ue062').
-                    attr('title', 'Online users').
+                    attr('title', 'Users').
                     addClass('vf-chat-toolbar-item').
                     addClass('vf-chat-toolbar-icon-item').
                     appendTo(this.$projectToolbar);
