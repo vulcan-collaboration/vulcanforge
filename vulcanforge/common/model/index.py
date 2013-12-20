@@ -82,7 +82,6 @@ class SOLRIndexed(BaseMappedClass):
     type_s = 'Indexed Object'
 
     # Base schema
-    _id = FieldProperty(S.ObjectId)
 
     def index_id(self, cls=None):
         """

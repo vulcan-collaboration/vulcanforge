@@ -136,7 +136,6 @@ class Project(SOLRIndexed):
     type_label = 'Project'
 
     # Project schema
-    _id = FieldProperty(S.ObjectId)
     kind = FieldProperty(str, if_missing='project')
     parent_id = FieldProperty(S.ObjectId, if_missing=None)
     neighborhood_id = ForeignIdProperty(Neighborhood)
@@ -1300,7 +1299,6 @@ class ProjectRole(BaseMappedClass):
         unique_indexes = [('user_id', 'project_id', 'name')]
         indexes = [('user_id',), ('project_id',), ('roles',)]
 
-    _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty('User', if_missing=None)
     project_id = ForeignIdProperty(Project, if_missing=None)
     name = FieldProperty(str)

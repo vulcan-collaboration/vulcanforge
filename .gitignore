@@ -2,6 +2,7 @@ tags
 *.db
 *.egg-info
 *-py2.6.egg
+*-py2.7.egg
 *.log
 *.pyc
 *.orig
