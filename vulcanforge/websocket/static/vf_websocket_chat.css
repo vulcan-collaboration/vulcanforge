@@ -194,7 +194,7 @@
     right: 0;
     height: 100%;
     padding: 0.5rem;
-    background: rgba(0,0,0,0.8);
+    background: #282828;
     text-align: left;
     overflow-y: auto;
     -webkit-transition: top 300ms;
@@ -211,7 +211,7 @@
     margin: 0;
     padding: 2px;
     font-size: 1rem;
-    color: white;
+    color: #c0c0c0;
     border: none;
     line-height: 24px;
     height: auto;
