@@ -48,7 +48,7 @@ $button-active-border-color: #aaa;
 $icon-button-color: #bbb;
 $icon-button-hover-color: $link-hover-color;
 
-$header-background-color: #000;
+$header-background-color: #181818;
 
 $panel-dark-gradient-start: #404040;
 $panel-dark-gradient-end: #202020;
@@ -141,7 +141,6 @@ $user-list-margin-top: $pu;
 
 @mixin header-wrapper-skin {
     background: $header-background-color;
-    @include panel-dark(0);
 }
 
 @mixin main-column-header-skin {

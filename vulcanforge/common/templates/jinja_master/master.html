@@ -84,14 +84,6 @@
 </div>
 <!-- // header-wrapper -->
 <div id="content-areas-wrapper">
-    <div id="left-toolbar">
-        <div class="toolbar-upper">
-            {% if not hide_project_toolbar and c.project %}
-            {% include g.templates['project_toolbar'] %}
-            {% endif %}
-        </div>
-        <div class="toolbar-lower"></div>
-    </div>
     <div id="main-content-holder">
         {% block main_content_holder %}
         <div id="content-columns"{% if hide_header %} style="padding-top:0px;"{% endif %}>
@@ -137,13 +129,6 @@
         {% endif %}
     </div>
     {% endblock %}
-</div>
-<div id="right-toolbar">
-    <div class="toolbar-upper">
-        {{ theme_macros.project_floating_details() }}
-    </div>
-    <div class="toolbar-lower">
-    </div>
 </div>
 {% if session['userid'] and c.user.get_swift_cookies %}
 <div style="position: absolute; left: -10000px;"><iframe name="invisiframe" src="{{ c.user.swift_cookie_url() | safe}}"></iframe></div>

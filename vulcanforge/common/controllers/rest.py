@@ -16,6 +16,7 @@ import urllib
 import os
 
 import oauth2 as oauth
+import pymongo
 from webob import exc
 from tg import expose, flash, redirect, config, TGController
 from pylons import tmpl_context as c, app_globals as g, request, response
@@ -439,7 +440,10 @@ class WebAPIController(TGController):
 
         hood_items = []
 
-        for hood in Neighborhood.query.find():
+        hood_query_params = {
+            'allow_browse': True
+        }
+        for hood in Neighborhood.query.find(hood_query_params):
             if not g.security.has_access(hood, 'read'):
                 continue
             hood_data = {
@@ -448,13 +452,14 @@ class WebAPIController(TGController):
                 'icon': hood.icon_url(),
                 'shortname': hood.url_prefix,
                 'children': [],
+                'tools': [],
                 'actions': []
             }
             hood_id_map[hood._id] = hood_data
             hood_items.append(hood_data)
             if hood.user_can_register(c.user):
                 hood_data['actions'].append({
-                    'label': 'Create Project',
+                    'label': 'Start a new Project',
                     'url': '{}add_project'.format(hood.url())
                 })
 
@@ -471,17 +476,20 @@ class WebAPIController(TGController):
                 'url': project.url(),
                 'icon': project.icon_url,
                 'shortname': project.shortname,
-                'children': [],
+                'tools': [],
                 'actions': []
             }
             project_id_map[project._id] = project_data
-            hood_id_map[project.neighborhood_id]['children'].append(project_data)
+            hood_id_map[project.neighborhood_id]['children'].\
+                append(project_data)
 
         app_config_query_params = {
             'project_id': {'$in': project_id_map.keys()}
         }
-        for app_config in AppConfig.query.find(app_config_query_params):
-            if not g.security.has_access(app_config, 'read'):
+        app_config_cursor = AppConfig.query.find(app_config_query_params)
+        app_config_cursor.sort('ordinal', pymongo.ASCENDING)
+        for app_config in app_config_cursor:
+            if not app_config.is_visible_to(c.user):
                 continue
             app_config_data = {
                 'label': app_config.options.mount_label,
@@ -490,26 +498,32 @@ class WebAPIController(TGController):
                 'shortname': app_config.options.mount_point,
                 'actions': []
             }
-            project_id_map[app_config.project_id]['children'].append(app_config_data)
+            project_id_map[app_config.project_id]['tools'].\
+                append(app_config_data)
+            if app_config.project.shortname == '--init--':
+                hood_data = hood_id_map[app_config.project.neighborhood_id]
+                hood_data['tools'].append(app_config_data)
 
+        PROJ_IMG = 'images/forge_toolbar_icons/projects_icon_on.png'
+        USER_IMG = 'images/forge_toolbar_icons/designers_icon_on.png'
         return {
-            'hoods': {
-                'children': hood_items,
-                'actions': []
-            },
+            'hoods': hood_items,
             'globals': {
                 'children': [
                     {
-                        'label': 'Browse Projects',
-                        'url': g.url('/browse/'),
-                        'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/projects_icon_on.png'))
+                        'label': 'Browse All Projects',
+                        'url': '/browse/',
+                        'icon': g.resource_manager.absurl(PROJ_IMG)
                     },
                     {
-                        'label': 'Browse Designers',
-                        'url': g.url('/designers/'),
-                        'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/designers_icon_on.png'))
+                        'label': 'Browse All Designers',
+                        'url': '/designers/',
+                        'icon': g.resource_manager.absurl(USER_IMG)
                     }
                 ],
                 'actions': global_actions
-            }
+            },
+            "label": "",
+            "url": "/",
+            "icon": g.resource_manager.absurl('images/vf_logo_icon.png')
         }

@@ -8,6 +8,7 @@ $reference-bin-on-width: 212px;
 
 .workspace-tab-bar-container {
     position: absolute;
+    z-index: 900;
     bottom: 1px;
     left: 0;
     right: 0;

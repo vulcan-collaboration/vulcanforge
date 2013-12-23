@@ -10,21 +10,22 @@ ul.masternav, ul.masternav-popup {
 
 ul.masternav {
     position: absolute;
+    z-index: 1000;
     left: -500px;
 }
 
 li.masternav-item {
     display: inline-block;
     position: relative;
-    min-width: 100px;
     padding: 4px 0.5rem 4px 2rem;
     min-height: 32px;
     line-height: 32px;
-    background: -webkit-linear-gradient(left, #101010, #383838 3rem);
-    background: -moz-linear-gradient(left, #101010, #383838 3rem);
-    background: -o-linear-gradient(left, #101010, #383838 3rem);
-    background: -ms-linear-gradient(left, #101010, #383838 3rem);
-    background: linear-gradient(to right, #101010, #383838 3rem);
+    color: #d0d0d0;
+    background: -webkit-linear-gradient(left, #202020, #383838 3rem);
+    background: -moz-linear-gradient(left, #202020, #383838 3rem);
+    background: -o-linear-gradient(left, #202020, #383838 3rem);
+    background: -ms-linear-gradient(left, #202020, #383838 3rem);
+    background: linear-gradient(to right, #202020, #383838 3rem);
 }
 
 li.masternav-item:first-child {
@@ -39,11 +40,15 @@ li.masternav-item:nth-child(4) {z-index: 1;}
 
 li.masternav-item:hover {
     background: #0095da;
-    background: -webkit-linear-gradient(left, #036, #0095da 3rem);
-    background: -moz-linear-gradient(left, #036,#0095da 3rem);
-    background: -o-linear-gradient(left, #036, #0095da 3rem);
-    background: -ms-linear-gradient(left, #036, #0095da 3rem);
-    background: linear-gradient(to right, #036, #0095da 3rem);
+    background: -webkit-linear-gradient(left, #369, #0095da 3rem);
+    background: -moz-linear-gradient(left, #369,#0095da 3rem);
+    background: -o-linear-gradient(left, #369, #0095da 3rem);
+    background: -ms-linear-gradient(left, #369, #0095da 3rem);
+    background: linear-gradient(to right, #369, #0095da 3rem);
+    color: white;
+}
+li.masternav-item:first-child:hover {
+    background: #0095da;
 }
 
 li.masternav-item::after {
@@ -63,14 +68,15 @@ li.masternav-item:hover::after {
     background-image: url(../images/main-nav-chevron-hover.svg);
 }
 
-li.masternav-item > img {
-    height: 32px;
+li.masternav-item .masternav-item-icon {
+    max-height: 32px;
     vertical-align: top;
 }
 
 li.masternav-item > a {
     display: inline-block;
     position: relative;
+    color: inherit;
 }
 
 ul.masternav span {
@@ -88,14 +94,14 @@ ul.masternav span {
 li.masternav-item > a span {
     letter-spacing: 0.125rem;
     text-decoration: none;
-    color: #d0d0d0;
     font-weight: lighter;
 }
 
 /**********************************************************/
 
 .popup-container {
-    position: absolute;
+    position: fixed;
+    z-index: 16000;
     display: block;
     background: #202020;
     background: -webkit-linear-gradient(left, #101010, #202020 3rem);
@@ -144,11 +150,6 @@ ul.masternav-popup > li {
     font-size: 14px;
 }
 
-ul.masternav-popup > li:hover {
-    color: white;
-    background: #0095da;
-}
-
 ul.masternav-popup a {
     display: block;
     position: relative;
@@ -164,8 +165,17 @@ ul.masternav-popup a {
 ul.masternav-popup a.action {
     padding: 0 1rem;
     line-height: 1.5rem;
+    color: #a0a0a0;
+}
+ul.masternav-popup a:hover,
+ul.masternav-popup a.action:hover {
+    color: white;
+    background: #0095da;
 }
 
+ul.masternav-popup a.children {
+    padding-right: 2em;
+}
 ul.masternav-popup a.children::after {
     position: absolute;
     display: block;
@@ -174,18 +184,16 @@ ul.masternav-popup a.children::after {
     width: 1em;
     font-family: "ForgeIconicFill";
     content: "\e047";
+    opacity: 0.5;
 }
 
 ul.masternav-popup hr {
     border: 0;
     height: 1px;
-    background-image: -webkit-linear-gradient(left, rgba(1,1,1,0), #404040, #404040);
-    background-image:    -moz-linear-gradient(left, rgba(1,1,1,0), #404040, #404040);
-    background-image:     -ms-linear-gradient(left, rgba(1,1,1,0), #404040, #404040);
-    background-image:      -o-linear-gradient(left, rgba(1,1,1,0), #404040, #404040);
+    background: rgba(255,255,255,0.1);
 }
 
-ul.masternav-popup img {
+ul.masternav-popup .masternav-item-icon {
     display: inline-block;
     vertical-align: middle;
     width: 30px;
@@ -194,7 +202,6 @@ ul.masternav-popup img {
 
 ul.masternav-popup a.action span {
     font-size: 1em;
-    color: #a0a0a0;
     font-weight: normal;
     letter-spacing: 0;
 }
