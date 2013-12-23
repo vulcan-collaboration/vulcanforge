@@ -39,7 +39,9 @@
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.idletimer.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/json/json2.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/progress-polyfill.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/underscore-min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/vf.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/masternav.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.qtip.js', scope='forge') %}
 {% do g.resource_manager.register_js('artifact/Artifact.js', scope='forge') %}
 {% do g.resource_manager.register_js('artifact/subscription_popup_menu.js', scope='forge') %}
@@ -73,12 +75,11 @@
       data-user="{% if c.user._id %}authenticated{% else %}anonymous{% endif %}"
       data-title-postfix="{{ g.title_postfix }}">
 <div id="header-wrapper">
-    <div id="header-logo-holder"><a href="{{ g.home_url }}" title="Go to front page"><img src="{{ g.header_logo }}" alt="" /></a></div>
+    <ul class="masternav" data-url="/rest/webapi/navdata"></ul>
     {{theme_macros.headerNavi(c.user.username, c.user._id, c.user.display_name, g.login_url, '/auth/logout', c.user.icon_url())}}
-    {{theme_macros.forgeToolbar()}}
     <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>
     {% if not g.production_mode %}
-    <div id="dev-mode-banner">development mode</div>
+    <!-- <div id="dev-mode-banner">development mode</div> -->
     {% endif %}
 </div>
 <!-- // header-wrapper -->
