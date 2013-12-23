@@ -493,18 +493,23 @@ class WebAPIController(TGController):
             project_id_map[app_config.project_id]['children'].append(app_config_data)
 
         return {
-            'hoods': hood_items,
-            'globals': [
-                {
-                    'label': 'Browse Projects',
-                    'url': g.url('/browse/'),
-                    'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/projects_icon_on.png'))
-                },
-                {
-                    'label': 'Browse Designers',
-                    'url': g.url('/designers/'),
-                    'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/designers_icon_on.png'))
-                }
-            ],
-            'actions': global_actions
+            'hoods': {
+                'children': hood_items,
+                'actions': []
+            },
+            'globals': {
+                'children': [
+                    {
+                        'label': 'Browse Projects',
+                        'url': g.url('/browse/'),
+                        'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/projects_icon_on.png'))
+                    },
+                    {
+                        'label': 'Browse Designers',
+                        'url': g.url('/designers/'),
+                        'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/designers_icon_on.png'))
+                    }
+                ],
+                'actions': global_actions
+            }
         }
