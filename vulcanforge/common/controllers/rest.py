@@ -35,6 +35,7 @@ from vulcanforge.auth.oauth.model import (
     OAuthAccessToken,
     OAuthRequestToken
 )
+from vulcanforge.cache.decorators import cache_rendered
 from vulcanforge.common.controllers.decorators import require_authenticated
 from vulcanforge.common.util import (
     nonce,
@@ -419,6 +420,7 @@ class SwiftAuthRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
+    @cache_rendered(timeout=60)
     def navdata(self, **kwargs):
 
         global_actions = []
@@ -445,13 +447,21 @@ class WebAPIController(TGController):
                 'url': hood.url(),
                 'icon': hood.icon_url(),
                 'shortname': hood.url_prefix,
-                'children': []
+                'children': [],
+                'actions': []
             }
             hood_id_map[hood._id] = hood_data
             hood_items.append(hood_data)
+            if hood.user_can_register(c.user):
+                hood_data['actions'].append({
+                    'label': 'Create Project',
+                    'url': '{}add_project'.format(hood.url())
+                })
 
         project_query_params = {
-            'neighborhood_id': {'$in': hood_id_map.keys()}
+            'neighborhood_id': {
+                '$in': hood_id_map.keys()
+            }
         }
         for project in Project.query.find(project_query_params):
             if not g.security.has_access(project, 'read'):
@@ -461,7 +471,8 @@ class WebAPIController(TGController):
                 'url': project.url(),
                 'icon': project.icon_url,
                 'shortname': project.shortname,
-                'children': []
+                'children': [],
+                'actions': []
             }
             project_id_map[project._id] = project_data
             hood_id_map[project.neighborhood_id]['children'].append(project_data)
@@ -476,10 +487,10 @@ class WebAPIController(TGController):
                 'label': app_config.options.mount_label,
                 'url': app_config.url(),
                 'icon': app_config.icon_url(48),
-                'shortname': app_config.options.mount_point
+                'shortname': app_config.options.mount_point,
+                'actions': []
             }
             project_id_map[app_config.project_id]['children'].append(app_config_data)
-
 
         return {
             'hoods': hood_items,
