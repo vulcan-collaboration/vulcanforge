@@ -14,14 +14,15 @@
  * @static
  */
 
-var $vf = $vf || {
+var $vf = $vf || {};
+$.extend($vf, {
     page_state: null,
     currentPage: null,
     refreshId: null,
     tb: null,
     toolBar: null,
     linkBin: null
-};
+});
 
 (function (global) {
     "use strict";

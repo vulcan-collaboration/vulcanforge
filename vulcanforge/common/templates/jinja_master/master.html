@@ -165,11 +165,22 @@
 {% endblock %}
 <div id="bottom-bg-container"></div>
 <div id="messages"></div>
-{% if not g.production_mode %}
+
 <script language="JavaScript">
-    var DEBUG = true;
+    var DEBUG = {{ 'true' if not g.production_mode else 'false'}},
+        $vf = {};
+    $vf.nav_context = [];
+    {% if c.app %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+        $vf.nav_context.push('{{ c.project.shortname }}');
+        $vf.nav_context.push('{{ c.app.config.options.mount_point }}');
+    {% elif c.project %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+        $vf.nav_context.push('{{ c.project.shortname }}');
+    {% elif c.neighborhood %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+    {% endif %}
 </script>
-{% endif %}
 
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}
