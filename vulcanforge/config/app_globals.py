@@ -481,17 +481,22 @@ class ForgeAppGlobals(object):
     def set_app(self, name):
         c.app = c.project.app_instance(name)
 
-    def url(self, base, **kw):
+    def url(self, uri, **kw):
         try:
             url = "{}://{}".format(self.url_scheme, request.host)
         except TypeError:
             url = self.base_url
-        if not base.startswith('/'):
+        if not uri.startswith('/'):
             url += '/'
-        url += base
+        url += uri
         params = urllib.urlencode(kw)
         if params:
             url += '?{}'.format(params)
+        return url
+
+    def cloud_url(self, uri):
+        base_url = config.get('cloud_url', self.base_url)
+        url = base_url.rstrip('/') + '/' + uri.lstrip('/')
         return url
 
     def postload_contents(self):
