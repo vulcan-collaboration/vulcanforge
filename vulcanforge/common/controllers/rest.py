@@ -45,7 +45,7 @@ from vulcanforge.common.util import (
 from vulcanforge.artifact.controllers import ArtifactRestController
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.exceptions import NoSuchProjectError
-from vulcanforge.project.model import AppConfig
+from vulcanforge.project.model import AppConfig, Project
 
 LOG = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ class RestController(TGController):
     def __init__(self):
         self.user = UserRestController()
         self.artifact = ArtifactRestController(index_only=True)
+        self.webapi = WebAPIController()
 
     def _check_security(self):
         api_token = self._authenticate_request()
@@ -413,3 +414,86 @@ class SwiftAuthRestController(object):
             'has_permission is %s to resource %s for %s',
             str(has_permission), path, c.user.username)
         return {"has_permission": has_permission}
+
+
+class WebAPIController(TGController):
+
+    @expose('json')
+    def navdata(self, **kwargs):
+
+        global_actions = []
+        if c.user == User.anonymous():
+            global_actions.append({
+                'label': 'Register',
+                'url': g.user_register_url
+            })
+            global_actions.append({
+                'label': 'Sign In',
+                'url': g.login_url
+            })
+
+        hood_id_map = {}
+        project_id_map = {}
+
+        hood_items = []
+
+        for hood in Neighborhood.query.find():
+            if not g.security.has_access(hood, 'read'):
+                continue
+            hood_data = {
+                'label': hood.name,
+                'url': hood.url(),
+                'icon': hood.icon_url(),
+                'shortname': hood.url_prefix,
+                'children': []
+            }
+            hood_id_map[hood._id] = hood_data
+            hood_items.append(hood_data)
+
+        project_query_params = {
+            'neighborhood_id': {'$in': hood_id_map.keys()}
+        }
+        for project in Project.query.find(project_query_params):
+            if not g.security.has_access(project, 'read'):
+                continue
+            project_data = {
+                'label': project.name,
+                'url': project.url(),
+                'icon': project.icon_url,
+                'shortname': project.shortname,
+                'children': []
+            }
+            project_id_map[project._id] = project_data
+            hood_id_map[project.neighborhood_id]['children'].append(project_data)
+
+        app_config_query_params = {
+            'project_id': {'$in': project_id_map.keys()}
+        }
+        for app_config in AppConfig.query.find(app_config_query_params):
+            if not g.security.has_access(app_config, 'read'):
+                continue
+            app_config_data = {
+                'label': app_config.options.mount_label,
+                'url': app_config.url(),
+                'icon': app_config.icon_url(48),
+                'shortname': app_config.options.mount_point
+            }
+            project_id_map[app_config.project_id]['children'].append(app_config_data)
+
+
+        return {
+            'hoods': hood_items,
+            'globals': [
+                {
+                    'label': 'Browse Projects',
+                    'url': g.url('/browse/'),
+                    'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/projects_icon_on.png'))
+                },
+                {
+                    'label': 'Browse Designers',
+                    'url': g.url('/designers/'),
+                    'icon': g.url(g.resource_manager.absurl('images/forge_toolbar_icons/designers_icon_on.png'))
+                }
+            ],
+            'actions': global_actions
+        }
