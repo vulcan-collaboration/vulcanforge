@@ -132,10 +132,10 @@ class BaseVisualizerAPI(object):
         return self.full_diff_widget.display(
             specs, filename=os.path.basename(self.url), **kwargs)
 
-    def _find_configs(self):
+    def _find_configs(self, **kwargs):
         mtype, extensions = self._get_mimetype_ext()
-        configs = VisualizerConfig.find_for_mtype_ext(
-            mime_type=mtype, extensions=extensions)
+        configs = VisualizerConfig.find_for_visualization(
+            mime_type=mtype, extensions=extensions, **kwargs)
         return configs
 
     def _find_with_optional_shortnames(self, shortnames=None):
@@ -213,17 +213,16 @@ class ArtifactVisualizerInterface(BaseVisualizerAPI):
     def download_url(self):
         return self.resource.raw_url()
 
-    def _find_configs(self):
-        # differs from base class in that it finds visualizers with processing
-        # hooks as well
-        mtype, extensions = self._get_mimetype_ext()
-        configs = VisualizerConfig.find_for_all_mtype_ext(
-            mime_type=mtype, extensions=extensions)
-        return configs
+    def _find_configs(self, processing_on=True, **kwargs):
+        # find matching visualizers with processing hooks too
+        if processing_on:
+            kwargs["unique_id"] = self.resource.get_unique_id()
+        return super(ArtifactVisualizerInterface, self)._find_configs(
+            processing_on=processing_on, **kwargs)
 
     def find_for_processing(self):
         mtype, extensions = self._get_mimetype_ext()
-        cur = VisualizerConfig.find_for_processing_mtype_ext(
+        cur = VisualizerConfig.find_for_processing(
             mime_type=mtype, extensions=extensions)
         return [vc.load() for vc in cur]
 

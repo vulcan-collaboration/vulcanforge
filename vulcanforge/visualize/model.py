@@ -45,6 +45,10 @@ class VisualizerConfig(BaseMappedClass):
         visualizers pre-processing hooks
     :param processing_extensions: list of extensions to match to invoke the
         visualizers pre-processing hooks
+    :param processing_status_exclude: list of `ProcessingStatus.status`
+        values for a given visualizable that will prevent the visualizer from
+        being invoked (e.g. set to ["error"] to not invoke visualizer if there
+        is a processing error)
     :param priority: determines order for tabbed visualizer display
     :param active: bool
     :param creator_id: user_id
@@ -75,7 +79,8 @@ class VisualizerConfig(BaseMappedClass):
     mime_types = FieldProperty([str])
     extensions = FieldProperty([str], if_missing=['*'])
     processing_mime_types = FieldProperty([str], if_missing=None)
-    processing_extensions = FieldProperty([str], if_missing=['*'])
+    processing_extensions = FieldProperty([str], if_missing=[])
+    processing_status_exclude = FieldProperty([str], if_missing=[])
     priority = FieldProperty(int, if_missing=0)
     active = FieldProperty(bool, if_missing=True)
     creator_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
@@ -114,47 +119,38 @@ class VisualizerConfig(BaseMappedClass):
         return cls.query.find(query).sort('priority', pymongo.DESCENDING)
 
     @classmethod
-    def find_for_mtype_ext(cls, mime_type=None, extensions=None):
+    def find_for_visualization(cls, mime_type=None, extensions=None,
+                               processing_on=False, unique_id=None, **query):
         if extensions is None:
             extensions = []
-        configs = []
-        query = {"extensions": {"$in": extensions + ['*']}}
+        query["extensions"] = {"$in": extensions + ['*']}
         cur = cls.find_active(query)
 
-        if mime_type:
-            configs = [vc for vc in cur if cls._matches_mime_type(
-                mime_type, vc.mime_types)]
-        elif extensions:
-            configs = [vc for vc in cur if cls._matches_extensions(
-                extensions, vc.extensions)]
+        configs = [vc for vc in cur
+                   if vc.matches_for_visualization(mime_type, extensions)]
+
+        if processing_on:
+            seen_ids = set(v._id for v in configs)
+            for vc in cls.find_for_processing(mime_type, extensions):
+                if unique_id and vc.processing_status_exclude:
+                    status = ProcessingStatus.get_status_str(unique_id, vc)
+                    if status in vc.processing_status_exclude:
+                        continue
+                if vc._id not in seen_ids:
+                    configs.append(vc)
 
         return configs
 
     @classmethod
-    def find_for_processing_mtype_ext(cls, mime_type=None, extensions=None):
+    def find_for_processing(cls, mime_type=None, extensions=None, **query):
         if extensions is None:
             extensions = []
-        configs = []
-        query = {"processing_extensions": {"$in": extensions + ['*']}}
+        query["processing_extensions"] = {"$in": extensions + ['*']}
         cur = cls.find_active(query)
 
-        if mime_type:
-            configs = [vc for vc in cur
-                       if vc.processing_mime_types and cls._matches_mime_type(
-                           mime_type, vc.processing_mime_types)]
-        elif extensions:
-            configs = [vc for vc in cur if cls._matches_extensions(
-                extensions, vc.processing_extensions)]
+        configs = [vc for vc in cur
+                   if vc.matches_for_processing(mime_type, extensions)]
 
-        return configs
-
-    @classmethod
-    def find_for_all_mtype_ext(cls, mime_type=None, extensions=None):
-        configs = cls.find_for_mtype_ext(mime_type, extensions)
-        seen_ids = set(v._id for v in configs)
-        for vc in cls.find_for_processing_mtype_ext(mime_type, extensions):
-            if vc._id not in seen_ids:
-                configs.append(vc)
         return configs
 
     @property
@@ -176,19 +172,37 @@ class VisualizerConfig(BaseMappedClass):
             inst = None
         return inst
 
-    @staticmethod
-    def _matches_extensions(extensions, ext_opts):
-        # no * matching
-        return any(ext in ext_opts for ext in extensions)
+    def matches_for_visualization(self, mtype, extensions):
+        """Does not include processing mimetypes, extensions"""
+        return self._matches_mtype_ext(
+            mtype, extensions, self.mime_types, self.extensions)
+
+    def matches_for_processing(self, mtype, extensions):
+        if self.processing_mime_types or self.processing_extensions:
+            return self._matches_mtype_ext(
+                mtype, extensions,
+                self.processing_mime_types,
+                self.processing_extensions)
+        else:
+            return False
 
     @staticmethod
-    def _matches_mime_type(mime_type, mime_types):
-        if not mime_types:  # matches any
+    def _matches_mtype_ext(mtype, extensions, mime_types, ext_opts):
+        if not mtype or not mime_types:
+            # mimetype unspecified or unknown, match extensions (but not *)
+            match_star_ext = False
+        else:
+            # mimetype specified and determined, insist on a match
+            match_star_ext = True
+            for pattern in mime_types:  # find explicit match
+                if re.search(pattern, mtype):
+                    break
+            else:
+                return False
+        if match_star_ext and '*' in ext_opts:
             return True
-        for pattern in mime_types:  # find explicit match
-            if re.search(pattern, mime_type):
-                return True
-        return False
+        else:
+            return any(ext in ext_opts for ext in extensions)
 
 
 class _BaseVisualizerFile(File):

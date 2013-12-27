@@ -50,7 +50,7 @@ class BaseVisualizer(object):
         "extensions": ['*'],
         "description": None,
         "processing_mime_types": None,
-        "processing_extensions": None,
+        "processing_extensions": [],
         "icon": None,
         "priority": 0
     }
@@ -129,10 +129,11 @@ class BaseVisualizer(object):
         pass
 
 
-class _BaseProcessingVisualizer(BaseVisualizer):
+class BaseProcessingVisualizer(BaseVisualizer):
+    """Does not implement processing hooks"""
 
     def get_query_for_artifact(self, artifact, **kwargs):
-        query = super(_BaseProcessingVisualizer, self).get_query_for_artifact(
+        query = super(BaseProcessingVisualizer, self).get_query_for_artifact(
             artifact, **kwargs)
         unique_id = artifact.get_unique_id()
         if "processingStatus" not in query:
@@ -151,7 +152,7 @@ class _BaseProcessingVisualizer(BaseVisualizer):
         pass
 
 
-class OnDemandProcessingVisualizer(_BaseProcessingVisualizer):
+class OnDemandProcessingVisualizer(BaseProcessingVisualizer):
 
     def get_query_for_artifact(self, artifact, **kwargs):
         # Looking at the query params means its time to process (it can't be on
