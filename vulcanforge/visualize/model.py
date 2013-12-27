@@ -132,12 +132,18 @@ class VisualizerConfig(BaseMappedClass):
         if processing_on:
             seen_ids = set(v._id for v in configs)
             for vc in cls.find_for_processing(mime_type, extensions):
+                if vc._id in seen_ids:
+                    continue
                 if unique_id and vc.processing_status_exclude:
                     status = ProcessingStatus.get_status_str(unique_id, vc)
                     if status in vc.processing_status_exclude:
                         continue
-                if vc._id not in seen_ids:
-                    configs.append(vc)
+                i = 0
+                for vco in enumerate(configs):
+                    if vc.priority > vco:
+                        break
+                    i += 1
+                configs.insert(i, vc)
 
         return configs
 
