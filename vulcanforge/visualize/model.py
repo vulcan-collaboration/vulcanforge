@@ -139,8 +139,8 @@ class VisualizerConfig(BaseMappedClass):
                     if status in vc.processing_status_exclude:
                         continue
                 i = 0
-                for vco in enumerate(configs):
-                    if vc.priority > vco:
+                for vco in configs:
+                    if vc.priority > vco.priority:
                         break
                     i += 1
                 configs.insert(i, vc)
