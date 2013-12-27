@@ -74,6 +74,7 @@
       data-pagetitle="{% block pageTitle %}{% endblock %}"
       data-user="{% if c.user._id %}authenticated{% else %}anonymous{% endif %}"
       data-title-postfix="{{ g.title_postfix }}">
+
 <div id="header-wrapper">
     <ul class="masternav" data-url="/rest/webapi/navdata"></ul>
     {{theme_macros.headerNavi(c.user.username, c.user._id, c.user.display_name, g.login_url, '/auth/logout', c.user.icon_url())}}
@@ -82,6 +83,7 @@
     <!-- <div id="dev-mode-banner">development mode</div> -->
     {% endif %}
 </div>
+
 <!-- // header-wrapper -->
 <div id="content-areas-wrapper">
     <div id="main-content-holder">

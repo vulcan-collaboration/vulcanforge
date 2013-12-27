@@ -60,6 +60,18 @@ $.extend($vf, {
     };
 
     /**
+     * Preload image utilities
+     * @param url
+     */
+    $vf.preloadImageFromURL = function (url) {
+        var image = new Image();
+        image.src = url;
+    };
+    $vf.preloadImagesFromURLs = function (urls) {
+        $.map(urls, $vf.preloadImageFromURL);
+    };
+
+    /**
      * Method to add a task which will bw invoked when $vf is intialized
      *
      * @param task

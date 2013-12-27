@@ -110,7 +110,7 @@ $user-list-margin-top: $pu;
     $middleColor = darken($color, 4%);
     $bottomColor = lighten($color, 16%);
     background: $topColor; /* Old browsers */
-    @include linearGradient4(top, $topColor 0%, $middleColor 50%, $color 51%, $bottomColor 100%)
+    @include linearGradient4(top, $topColor 0%, $middleColor 50%, $color 51%, $bottomColor 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$topColor', endColorstr='$bottomColor',GradientType=0 ); /* IE6-9 */
 }
 

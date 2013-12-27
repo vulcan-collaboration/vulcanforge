@@ -12,12 +12,13 @@ ul.masternav {
     position: absolute;
     z-index: 1000;
     left: -500px;
+    text-align: left;
 }
 
 li.masternav-item {
     display: inline-block;
     position: relative;
-    padding: 4px 0.5rem 4px 2rem;
+    padding: 4px 0.5rem 4px 1.5rem;
     min-height: 32px;
     line-height: 32px;
     color: #d0d0d0;
@@ -68,30 +69,30 @@ li.masternav-item:hover::after {
     background-image: url(../images/main-nav-chevron-hover.svg);
 }
 
-li.masternav-item .masternav-item-icon {
-    max-height: 32px;
-    vertical-align: top;
-}
-
-li.masternav-item > a {
+li.masternav-item .masternav-item-link {
     display: inline-block;
     position: relative;
     color: inherit;
 }
 
-ul.masternav span {
+li.masternav-item .masternav-item-icon {
+    max-height: 24px;
+    vertical-align: middle;
+}
+li.masternav-item[data-shortname="_globals"] .masternav-item-icon {
+    max-height: none;
+}
+
+ul.masternav .masternav-item-label {
     display: inline-block;
     max-width: 200px;
     margin-left: 0.5rem;
     font-size: 1rem;
-    vertical-align: top;
+    vertical-align: middle;
     text-rendering: optimizeLegibility;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-li.masternav-item > a span {
     letter-spacing: 0.125rem;
     text-decoration: none;
     font-weight: lighter;
@@ -196,7 +197,8 @@ ul.masternav-popup hr {
 ul.masternav-popup .masternav-item-icon {
     display: inline-block;
     vertical-align: middle;
-    width: 30px;
+    min-width: 30px;
+    max-height: 30px;
     padding-left: 0.5em;
 }
 
@@ -204,4 +206,31 @@ ul.masternav-popup a.action span {
     font-size: 1em;
     font-weight: normal;
     letter-spacing: 0;
+}
+
+
+
+
+@media handheld {
+    /* TODO: fix nested popups for touch interfaces */
+    li.masternav-item {
+        padding-left: 1.5rem;
+    }
+    li.masternav-item.has-menu::before,
+    ul.masternav-popup a.children::after {
+        content: "";
+        display: inline-block;
+        width: 23px;
+        height: 23px;
+        margin-right: 0.5rem;
+        background: url(../images/menu_icon_button.svg) no-repeat center;
+        vertical-align: middle;
+        opacity: 0.7;
+    }
+    li.masternav-item.has-menu:hover::before {
+        opacity: 1;
+    }
+    ul.masternav-popup a.children::after {
+        height: 100%;
+    }
 }

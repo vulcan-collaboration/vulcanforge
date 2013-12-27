@@ -421,8 +421,15 @@ class SwiftAuthRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    @cache_rendered(timeout=60)
+    #@cache_rendered(timeout=60)
     def navdata(self, **kwargs):
+
+        SPECIAL_ICONS = {
+            '/projects/': g.resource_manager.absurl('images/fang_logo.png')
+        }
+        SPECIAL_LABELS = {
+            '/projects/': ""
+        }
 
         global_actions = []
         if c.user == User.anonymous():
@@ -447,9 +454,9 @@ class WebAPIController(TGController):
             if not g.security.has_access(hood, 'read'):
                 continue
             hood_data = {
-                'label': hood.name,
+                'label': SPECIAL_LABELS.get(hood.url_prefix, hood.name),
                 'url': hood.url(),
-                'icon': hood.icon_url(),
+                'icon': SPECIAL_ICONS.get(hood.url_prefix, hood.icon_url()),
                 'shortname': hood.url_prefix,
                 'children': [],
                 'tools': [],
@@ -468,7 +475,9 @@ class WebAPIController(TGController):
                 '$in': hood_id_map.keys()
             }
         }
-        for project in Project.query.find(project_query_params):
+        project_cursor = Project.query.find(project_query_params)
+        project_cursor.sort('sortable_name', pymongo.ASCENDING)
+        for project in project_cursor:
             if not g.security.has_access(project, 'read'):
                 continue
             project_data = {
@@ -487,7 +496,7 @@ class WebAPIController(TGController):
             'project_id': {'$in': project_id_map.keys()}
         }
         app_config_cursor = AppConfig.query.find(app_config_query_params)
-        app_config_cursor.sort('ordinal', pymongo.ASCENDING)
+        app_config_cursor.sort('options.ordinal', pymongo.ASCENDING)
         for app_config in app_config_cursor:
             if not app_config.is_visible_to(c.user):
                 continue
@@ -498,12 +507,18 @@ class WebAPIController(TGController):
                 'shortname': app_config.options.mount_point,
                 'actions': []
             }
-            project_id_map[app_config.project_id]['tools'].\
-                append(app_config_data)
+            # special behavior for "home" mount point
+            if app_config.options.get('mount_point', None) == 'home':
+                project_id_map[app_config.project_id]['tools'].\
+                    insert(0, app_config_data)
+            else:
+                project_id_map[app_config.project_id]['tools'].\
+                    append(app_config_data)
             if app_config.project.shortname == '--init--':
                 hood_data = hood_id_map[app_config.project.neighborhood_id]
                 hood_data['tools'].append(app_config_data)
 
+        # compile output
         PROJ_IMG = 'images/forge_toolbar_icons/projects_icon_on.png'
         USER_IMG = 'images/forge_toolbar_icons/designers_icon_on.png'
         return {
@@ -524,6 +539,6 @@ class WebAPIController(TGController):
                 'actions': global_actions
             },
             "label": "",
-            "url": "/",
-            "icon": g.resource_manager.absurl('images/vf_logo_icon.png')
+            "url": "/dashboard/activity_feed/",
+            "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
         }

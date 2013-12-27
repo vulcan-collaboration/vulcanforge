@@ -8,6 +8,12 @@
 
     $vf.afterInit(function () {
         var current = $vf.nav_context;
+
+        $vf.preloadImagesFromURLs([
+            $vf.resourceURL + "images/main-nav-chevron.svg",
+            $vf.resourceURL + "images/main-nav-chevron-hover.svg"
+        ]);
+
         config = config || {};
         config = _.defaults(config, {
             timeoutDuration: 10,
@@ -62,29 +68,65 @@
                     $master.css("left", "auto");
                 }
 
-                $("li.masternav-item").bind("mouseenter", function(event) {
-                    var $this = $(this), $target = $(event.delegateTarget);
-                    clearTimeout(masterTimeout);
-                    clearTimeout(submenuTimeout);
-                    _popState(0);
-                    var content = data.globals;
-                    switch ($target.attr('data-shortname')) {
-                    case current[0]:
-                        content = hood;
-                        break;
-                    case current[1]:
-                        content = project;
-                        break;
-                    case current[2]:
-                        content = {};
-                        break;
-                    default:
-                    }
-                    _renderPopup($master, 0, event.delegateTarget.id, content, $target.outerHeight(), $target.position().left, $this);
-                })
-                .bind("mouseleave", function() {
-                    masterTimeout = setTimeout(_checkHover, config.timeoutDuration);
-                });
+                $("li.masternav-item").
+                    each(function (i, element) {
+                        var $element = $(element),
+                            items = [],
+                            content;
+                        switch ($element.attr('data-shortname')) {
+                        case current[0]:
+                            content = hood;
+                            break;
+                        case current[1]:
+                            content = project;
+                            break;
+                        case current[2]:
+                            content = {};
+                            break;
+                        default:
+                            content = data.globals;
+                            items = items.concat(data.hoods);
+                        }
+                        if (isNonEmptyArray(content.tools)) {
+                            items = items.concat(content.tools);
+                        }
+                        if (isNonEmptyArray(content.children)) {
+                            if (items.length > 0) {
+                                items.push('-');
+                            }
+                            items = items.concat(content.children);
+                        }
+                        if (items.length > 0) {
+                            $element.addClass('has-menu');
+                        }
+                    }).
+                    bind("mouseenter",function (event) {
+                        var $this = $(this), $target = $(event.delegateTarget);
+                        clearTimeout(masterTimeout);
+                        clearTimeout(submenuTimeout);
+                        _popState(0);
+                        var content;
+                        switch ($target.attr('data-shortname')) {
+                        case current[0]:
+                            content = hood;
+                            break;
+                        case current[1]:
+                            content = project;
+                            break;
+                        case current[2]:
+                            content = {};
+                            break;
+                        default:
+                            content = data.globals;
+                        }
+                        _renderPopup($master, 0, event.delegateTarget.id,
+                            content, $target.outerHeight(),
+                            $target.position().left, $this);
+                    }).
+                    bind("mouseleave", function () {
+                        masterTimeout =
+                            setTimeout(_checkHover, config.timeoutDuration);
+                    });
             };
 
             var _renderPopup = function($container, depth, name, content, top, left, $triggeredBy) {
@@ -192,7 +234,7 @@
 
             var _master = _.template(
                 '<li data-shortname="<%= shortname %>" class="masternav-item">' +
-                '<a href="<%= url %>">' +
+                '<a class="masternav-item-link" href="<%= url %>">' +
                 '<% if (icon) { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
                 '<% if (label) { %><span class="masternav-item-label"><%= label %></span><% } %>' +
                 '</a>' +
@@ -203,7 +245,7 @@
                 '<ul id="<%= id %>" class="masternav-popup"></ul>' +
                 '</div>');
             var _popupLink = _.template(
-                '<li data-shortname="<%= shortname %>">' +
+                '<li class="<% if (hasChildren) { %> children<% } %>" data-shortname="<%= shortname %>">' +
                 '<a class="link<% if (hasChildren) { %> children<% } %>" href="<%= url %>">' +
                 '<% if (icon) { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
                 '<% if (label) { %><span class="masternav-item-label"><%= label %></span><% } %>' +
@@ -219,11 +261,9 @@
 
             var data = { globals: [], hoods:[], state: [] };
             if (config.preferREST) {
-    //            console.log("$master.url: " + $master.data("url"));
                 $.ajax({ url: $master.data("url") }).then(
                     function(fetch) {
                         data = _.defaults(fetch || {}, data);
-    //                    console.log("Data: " + JSON.stringify(data));
                         _renderMaster(data);
                     }
                 );
