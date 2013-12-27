@@ -181,11 +181,13 @@
                         $item.bind("mouseenter", function() {
                             // Adjust for the 0.5em on the top of the overall list
                             var subTop = top + $item.position().top - config.submenuNudge;
-                            var width = left + $item.width();
+                            var width = left + $item.outerWidth();
                             var subcontent = _.findWhere(items, { shortname: link.shortname });
                             _renderPopup($container, depth+1, link.shortname, subcontent, subTop, width, $item);
                         });
-                    } else $item.bind("mouseenter", function() { _popState(depth + 1); });
+                    } else {
+                        $item.bind("mouseenter", function() { _popState(depth + 1); });
+                    }
                 });
                 // Add a separator if there are Actions
                 if (content.actions && content.actions.length > 0) {
@@ -227,7 +229,9 @@
             };
 
             var _popState = function(depth) {
-                while (data.state.length > depth) data.state.pop().remove();
+                while (data.state.length > depth) {
+                    data.state.pop().remove();
+                }
             };
 
             /***************************** Initialization ******************************/
@@ -245,8 +249,8 @@
                 '<ul id="<%= id %>" class="masternav-popup"></ul>' +
                 '</div>');
             var _popupLink = _.template(
-                '<li class="<% if (hasChildren) { %> children<% } %>" data-shortname="<%= shortname %>">' +
-                '<a class="link<% if (hasChildren) { %> children<% } %>" href="<%= url %>">' +
+                '<li class="masternav-popup-item<% if (hasChildren) { %> children<% } %>" data-shortname="<%= shortname %>">' +
+                '<a class="masternav-item-link" href="<%= url %>">' +
                 '<% if (icon) { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
                 '<% if (label) { %><span class="masternav-item-label"><%= label %></span><% } %>' +
                 '</a>' +

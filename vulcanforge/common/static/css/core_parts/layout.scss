@@ -79,10 +79,6 @@ body {
   @extend .bbs;
 }
 
-body.authenticated #content-areas-wrapper {
-  padding-top: $header-wrapper-height + $forge-toolbar-height + 1;
-}
-
 /* Side toolbars */
 
 .toolbar {
@@ -150,10 +146,6 @@ body.has-related-artifacts #sidebar {
   height: 100%;
 
   @extend .bbs;
-}
-
-body.authenticated .toolbar {
-  top: $header-wrapper-height + $forge-toolbar-height + 1;
 }
 
 #content-columns {

@@ -141,6 +141,7 @@ $user-list-margin-top: $pu;
 
 @mixin header-wrapper-skin {
     background: $header-background-color;
+    background: linear-gradient(to bottom, #303030, #202020);
 }
 
 @mixin main-column-header-skin {

@@ -76,11 +76,34 @@
       data-title-postfix="{{ g.title_postfix }}">
 
 <div id="header-wrapper">
-    <ul class="masternav" data-url="/rest/webapi/navdata"></ul>
-    {{theme_macros.headerNavi(c.user.username, c.user._id, c.user.display_name, g.login_url, '/auth/logout', c.user.icon_url())}}
-    <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>
+    <div id="header-primary-toolbar" class="toolbar-container">
+        <ul class="masternav toolbar-item toolbar-item-stretchy" data-url="/rest/webapi/navdata"></ul>
+        <div id="global-search" class="toolbar-item toolbar-item-margin">
+            <form id="keyword-search-form" action="/search/" method="get">
+                <input id="global-search-field" {% if not c.search_query %} class="empty" {% endif %} name="q" type="text" value="{{c.search_query}}" title="Click to enter search keyword"/>
+            </form>
+        </div>
+        {% if c.user._id %}
+            <a href="/dashboard" class="toolbar-item toolbar-item-margin toolbar-icon" title="Activity Feed">
+                <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
+                <span class="hidden">Activity Feed</span>
+            </a>
+            <a href="/dashboard/messages" class="toolbar-item toolbar-item-margin toolbar-icon ico-inbox" title="Conversations">
+                <span class="hidden">Conversations</span>
+                <span id="header-unread-count" class="toolbar-item-counter" title="unread messages">0</span>
+            </a>
+            <a href="/auth/logout" class="toolbar-item toolbar-item-margin toolbar-icon ico-logout" title="Log out">
+                <span class="hidden">Log Out</span>
+            </a>
+        {% else %}
+            <a href="{{ g.user_register_url }}" class="toolbar-item toolbar-item-margin" title="Register">Register</a>
+            <a href="{{ g.login_url }}" class="toolbar-item toolbar-item-margin" title="Log in">Log In</a>
+        {% endif %}
+    </div>
+
+{#    <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>#}
     {% if not g.production_mode %}
-    <!-- <div id="dev-mode-banner">development mode</div> -->
+{#     <div id="dev-mode-banner">development mode</div>#}
     {% endif %}
 </div>
 

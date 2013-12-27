@@ -1,5 +1,21 @@
+.toolbar-container {
+    display: -webkit-flex;
+    display: flex;
+}
+
 .toolbar-item {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
     position: relative;
+}
+
+.toolbar-item.toolbar-item-stretchy {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+}
+
+.toolbar-item.toolbar-item-margin {
+    margin: 8px;
 }
 
 .toolbar-item-counter {

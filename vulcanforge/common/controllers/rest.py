@@ -438,9 +438,12 @@ class WebAPIController(TGController):
                 'url': g.user_register_url
             })
             global_actions.append({
-                'label': 'Sign In',
+                'label': 'Log In',
                 'url': g.login_url
             })
+            root_href = "/"
+        else:
+            root_href = "/dashboard/activity_feed/"
 
         hood_id_map = {}
         project_id_map = {}
@@ -539,6 +542,6 @@ class WebAPIController(TGController):
                 'actions': global_actions
             },
             "label": "",
-            "url": "/dashboard/activity_feed/",
+            "url": root_href,
             "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
         }
