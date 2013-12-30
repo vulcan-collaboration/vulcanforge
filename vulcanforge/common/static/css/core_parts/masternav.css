@@ -24,6 +24,7 @@ li.masternav-item {
     background: -o-linear-gradient(left, #202020, #383838 3rem);
     background: -ms-linear-gradient(left, #202020, #383838 3rem);
     background: linear-gradient(to right, #202020, #383838 3rem);
+    letter-spacing: 0.1em;
 }
 
 li.masternav-item:first-child {
@@ -36,7 +37,8 @@ li.masternav-item:nth-child(2) {z-index: 3;}
 li.masternav-item:nth-child(3) {z-index: 2;}
 li.masternav-item:nth-child(4) {z-index: 1;}
 
-li.masternav-item:hover {
+li.masternav-item:hover,
+li.masternav-item.masternav-menu-open {
     background: #0095da;
     background: -webkit-linear-gradient(left, #369, #0095da 3rem);
     background: -moz-linear-gradient(left, #369,#0095da 3rem);
@@ -60,7 +62,8 @@ li.masternav-item::after {
     background-image: url(../images/main-nav-chevron.svg);
     background-size: 100% 100%;
 }
-li.masternav-item:hover::after {
+li.masternav-item:hover::after,
+li.masternav-item.masternav-menu-open::after {
     background-image: url(../images/main-nav-chevron-hover.svg);
 }
 
@@ -87,15 +90,11 @@ ul.masternav .masternav-item-label {
     display: inline-block;
     max-width: 200px;
     margin-left: 0.5rem;
-    font-size: 1rem;
     vertical-align: middle;
-    text-rendering: optimizeLegibility;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    letter-spacing: 0.125rem;
     text-decoration: none;
-    font-weight: lighter;
     line-height: 24px;
 }
 
@@ -160,8 +159,7 @@ ul.masternav-popup a {
     vertical-align: 8px;
     padding-right: 1em;
     color: #d0d0d0;
-    letter-spacing: 0.125rem;
-    font-weight: lighter;
+    letter-spacing: 0.1rem;
 }
 
 ul.masternav-popup a.action {
@@ -170,7 +168,9 @@ ul.masternav-popup a.action {
     color: #a0a0a0;
 }
 ul.masternav-popup a:hover,
+ul.masternav-popup a.masternav-menu-open,
 li.masternav-popup-item.children:hover,
+li.masternav-popup-item.children.masternav-menu-open,
 ul.masternav-popup a.action:hover {
     color: white;
     background: #0095da;
