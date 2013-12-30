@@ -8,6 +8,7 @@ $reference-bin-on-width: 212px;
 
 .workspace-tab-bar-container {
     position: absolute;
+    z-index: 900;
     bottom: 1px;
     left: 0;
     right: 0;
@@ -318,7 +319,6 @@ li.workspace-tab.intellitrigger{
     z-index: 61;
     width: $right-toolbar-width;
     height: 200px;
-    left: 0;
 
     overflow: hidden;
 
@@ -332,7 +332,6 @@ li.workspace-tab.intellitrigger{
 }
 
 .referenceBin.on {
-    left: -1 * ($reference-bin-on-width - $right-toolbar-width);
     width: $reference-bin-on-width;
     opacity: 1;
     -moz-box-shadow: 0 0 5px #333;

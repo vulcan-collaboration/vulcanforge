@@ -40,7 +40,9 @@
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.idletimer.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/json/json2.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/progress-polyfill.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/underscore-min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/vf.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/masternav.js', scope='forge') %}
 {% if g.websocket_enabled %}
     {% do g.resource_manager.register_js('websocket/vf_websocket.js', scope='forge') %}
     {% do g.resource_manager.register_js('websocket/vf_websocket_chat.js', scope='forge') %}
@@ -77,25 +79,44 @@
       data-pagetitle="{% block pageTitle %}{% endblock %}"
       data-user="{% if c.user._id %}authenticated{% else %}anonymous{% endif %}"
       data-title-postfix="{{ g.title_postfix }}">
+
 <div id="header-wrapper">
-    <div id="header-logo-holder"><a href="{{ g.home_url }}" title="Go to front page"><img src="{{ g.header_logo }}" alt="" /></a></div>
-    {{theme_macros.headerNavi(c.user.username, c.user._id, c.user.display_name, g.login_url, '/auth/logout', c.user.icon_url())}}
-    {{theme_macros.forgeToolbar()}}
-    <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>
+    <div id="header-primary-toolbar" class="toolbar-container">
+        <ul class="masternav toolbar-item toolbar-item-stretchy" data-url="/rest/webapi/navdata"></ul>
+        <div id="global-search" class="toolbar-item toolbar-item-margin">
+            <form id="keyword-search-form" action="/search/" method="get">
+                <input id="global-search-field" {% if not c.search_query %} class="empty" {% endif %} name="q" type="text" value="{{c.search_query}}" title="Click to enter search keyword"/>
+            </form>
+        </div>
+        {% if c.user._id %}
+            <a href="/dashboard" class="toolbar-item toolbar-item-button toolbar-icon" title="Activity Feed">
+                <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
+                <span class="hidden">Activity Feed</span>
+            </a>
+            <a href="/dashboard/messages" class="toolbar-item toolbar-item-button toolbar-icon ico-inbox" title="Conversations">
+                <span class="hidden">Conversations</span>
+                <span id="header-unread-count" class="toolbar-item-counter" title="unread messages">0</span>
+            </a>
+            <!--<div class="toolbar-item toolbar-item-button toolbar-icon ico-bookmark" title="Bookmarks">
+                <span class="hidden">Bookmarks</span>
+            </div>-->
+            <a href="/auth/logout" class="toolbar-item toolbar-item-button toolbar-icon ico-logout" title="Log out">
+                <span class="hidden">Log Out</span>
+            </a>
+        {% else %}
+            <a href="{{ g.user_register_url }}" class="toolbar-item toolbar-item-button">Register</a>
+            <a href="{{ g.login_url }}" class="toolbar-item toolbar-item-button">Log In</a>
+        {% endif %}
+    </div>
+
+{#    <div id="workspace-tab-bar-container" class="workspace-tab-bar-container"></div>#}
     {% if not g.production_mode %}
-    <div id="dev-mode-banner">development mode</div>
+{#     <div id="dev-mode-banner">development mode</div>#}
     {% endif %}
 </div>
+
 <!-- // header-wrapper -->
 <div id="content-areas-wrapper">
-    <div id="left-toolbar">
-        <div class="toolbar-upper">
-            {% if not hide_project_toolbar and c.project %}
-            {% include g.templates['project_toolbar'] %}
-            {% endif %}
-        </div>
-        <div class="toolbar-lower"></div>
-    </div>
     <div id="main-content-holder">
         {% block main_content_holder %}
         <div id="content-columns"{% if hide_header %} style="padding-top:0px;"{% endif %}>
@@ -142,13 +163,6 @@
     </div>
     {% endblock %}
 </div>
-<div id="right-toolbar">
-    <div class="toolbar-upper">
-        {{ theme_macros.project_floating_details() }}
-    </div>
-    <div class="toolbar-lower">
-    </div>
-</div>
 {% if session['userid'] and c.user.get_swift_cookies %}
 <div style="position: absolute; left: -10000px;"><iframe name="invisiframe" src="{{ c.user.swift_cookie_url() | safe}}"></iframe></div>
 {% endif %}
@@ -170,11 +184,25 @@
 {% endblock %}
 <div id="bottom-bg-container"></div>
 <div id="messages"></div>
-{% if not g.production_mode %}
-<script language="JavaScript">
-    var DEBUG = true;
-</script>
+{% if c.user._id %}
+<div id="referenceBinContainer"></div>
 {% endif %}
+
+<script language="JavaScript">
+    var DEBUG = {{ 'true' if not g.production_mode else 'false'}},
+        $vf = {};
+    $vf.nav_context = [];
+    {% if c.app %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+        $vf.nav_context.push('{{ c.project.shortname }}');
+        $vf.nav_context.push('{{ c.app.config.options.mount_point }}');
+    {% elif c.project %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+        $vf.nav_context.push('{{ c.project.shortname }}');
+    {% elif c.neighborhood %}
+        $vf.nav_context.push('{{ c.neighborhood.url_prefix }}');
+    {% endif %}
+</script>
 
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}
@@ -207,13 +235,6 @@
         $vf.logged_in_as = null;
         {% endif %}
         $vf.init(userURL, workspaceTabs, referenceBinConfig);
-        $('#project-toolbar > ul.links').intelliMore({
-            orientation: 'vertical',
-            triggerE: $('#project-toolbar > ul.links > li.intellitrigger'),
-            hiddenClass: 'project-toolbar-hidden',
-            neverHide: '.selected,.no-more-hide',
-            heightSource: $('#left-toolbar')
-        });
     });
 </script>
 {% if not hide_header %}

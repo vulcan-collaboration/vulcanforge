@@ -705,12 +705,13 @@ class Project(SOLRIndexed):
 
         """
         result = []
-        for sub in self.direct_subprojects:
-            result.append({
-                'ordinal': int(sub.ordinal),
-                'sub': sub,
-                'rank': 1
-            })
+        # NOTE: commented for speed because we do not allow subprojects
+        #for sub in self.direct_subprojects:
+        #    result.append({
+        #        'ordinal': int(sub.ordinal),
+        #        'sub': sub,
+        #        'rank': 1
+        #    })
         for ac in self.app_configs:
             ordinal = ac.options.get('ordinal', 0)
             rank = 0 if ac.options.get('mount_point', None) == 'home' \

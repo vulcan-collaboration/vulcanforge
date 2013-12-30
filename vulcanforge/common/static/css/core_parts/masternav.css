@@ -1,0 +1,233 @@
+ul.masternav, ul.masternav-popup {
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+    list-style-type: none;
+    -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+    -webkit-padding-start: 0;
+}
+
+ul.masternav {
+    text-align: left;
+}
+
+li.masternav-item {
+    display: inline-block;
+    position: relative;
+    padding: 4px 0.5rem 4px 1.5rem;
+    min-height: 32px;
+    line-height: 32px;
+    letter-spacing: 0.1em;
+    color: inherit;
+    background: -webkit-linear-gradient(left, #303030, #404040 3rem);
+    background: -moz-linear-gradient(left, #303030, #404040 3rem);
+    background: -o-linear-gradient(left, #303030, #404040 3rem);
+    background: -ms-linear-gradient(left, #303030, #404040 3rem);
+    background: linear-gradient(to right, #303030, #404040 3rem);
+    /*background: linear-gradient(to bottom, #e0e0e0, #c0c0c0 4%, #b0b0b0 96%, #808080);*/
+}
+
+li.masternav-item:first-child {
+    padding-left: 1em;
+    background: #404040;
+}
+
+li.masternav-item:nth-child(1) {z-index: 4;}
+li.masternav-item:nth-child(2) {z-index: 3;}
+li.masternav-item:nth-child(3) {z-index: 2;}
+li.masternav-item:nth-child(4) {z-index: 1;}
+
+li.masternav-item:hover,
+li.masternav-item.masternav-menu-open {
+    background: #0095da;
+    background: -webkit-linear-gradient(left, #369, #0095da 3rem);
+    background: -moz-linear-gradient(left, #369,#0095da 3rem);
+    background: -o-linear-gradient(left, #369, #0095da 3rem);
+    background: -ms-linear-gradient(left, #369, #0095da 3rem);
+    background: linear-gradient(to right, #369, #0095da 3rem);
+    color: white;
+}
+li.masternav-item:first-child:hover,
+li.masternav-item.masternav-menu-open:first-child {
+    background: #0095da;
+}
+
+li.masternav-item::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    bottom: 0;
+    width: 0.75rem;
+    background-image: url(../images/main-nav-chevron.svg);
+    background-size: 100% 100%;
+}
+li.masternav-item:hover::after,
+li.masternav-item.masternav-menu-open::after {
+    background-image: url(../images/main-nav-chevron-hover.svg);
+}
+
+li.masternav-item .masternav-item-link {
+    display: inline-block;
+    position: relative;
+    color: inherit;
+}
+
+li.masternav-item .masternav-item-icon {
+    max-height: 24px;
+    vertical-align: middle;
+}
+li.masternav-item .masternav-item-icon.special-icon {
+    max-height: 32px;
+}
+
+ul.masternav .masternav-item-label {
+    display: inline-block;
+    max-width: 200px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+    line-height: 24px;
+}
+
+/**********************************************************/
+
+.popup-container {
+    position: fixed;
+    z-index: 16000;
+    display: block;
+    background: #202020;
+    background: -webkit-linear-gradient(left, #101010, #202020 3rem);
+    background: -moz-linear-gradient(left, #101010, #202020 3rem);
+    background: -o-linear-gradient(left, #101010, #202020 3rem);
+    background: -ms-linear-gradient(left, #101010, #202020 3rem);
+    background: linear-gradient(to right, #101010, #202020 3rem);
+    line-height: 3em;
+    border: none;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    opacity: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+}
+
+.popup-container.scrollable-top::before, .popup-container.scrollable-bottom::after {
+    width: 100%;
+    background: rgba(100, 70, 50, .5);
+    position: absolute;
+    color: rgba(255, 255, 255, 0.25);
+    line-height: 15px;
+    font-size: 20px;
+    left: 0;
+    font-family: "ForgeIconicFill";
+    text-align: center;
+}
+
+.popup-container.scrollable-top::before {
+    top: 0;
+    content: "\25b2";
+}
+
+.popup-container.scrollable-bottom::after {
+    bottom: 0;
+    content: "\25bc";
+}
+
+ul.masternav-popup {
+    overflow-y: auto;
+}
+
+ul.masternav-popup > li {
+    min-width: 150px;
+    position: relative;
+    text-align: left;
+    font-size: 14px;
+}
+
+ul.masternav-popup a {
+    display: block;
+    position: relative;
+    max-width: 270px;
+    white-space: nowrap;
+    vertical-align: 8px;
+    padding-right: 1em;
+    color: #d0d0d0;
+    letter-spacing: 0.1rem;
+}
+
+ul.masternav-popup a.action {
+    padding: 0 1rem;
+    line-height: 1.5rem;
+    color: #a0a0a0;
+}
+ul.masternav-popup a:hover,
+ul.masternav-popup a.masternav-menu-open,
+li.masternav-popup-item.children:hover,
+li.masternav-popup-item.children.masternav-menu-open,
+ul.masternav-popup a.action:hover {
+    color: white;
+    background: #0095da;
+}
+
+.masternav-popup-item.children {
+    padding-right: 2em;
+}
+.masternav-popup-item.children::after {
+    position: absolute;
+    display: block;
+    top: 0;
+    right: 0;
+    width: 1em;
+    font-family: "ForgeIconicFill";
+    content: "\e047";
+    opacity: 0.5;
+    color: white;
+}
+
+ul.masternav-popup hr {
+    border: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+ul.masternav-popup .masternav-item-icon {
+    display: inline-block;
+    vertical-align: middle;
+    min-width: 30px;
+    max-height: 30px;
+    padding-left: 0.5em;
+}
+
+ul.masternav-popup a.action span {
+    font-size: 1em;
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
+
+
+
+@media handheld {
+    /* TODO: fix nested popups for touch interfaces */
+    li.masternav-item {
+        padding-left: 1.5rem;
+    }
+    li.masternav-item.has-menu::before,
+    li.masternav-popup-item.children::after {
+        content: "";
+        display: inline-block;
+        width: 23px;
+        height: 23px;
+        margin-right: 0.5rem;
+        background: url(../images/menu_icon_button.svg) no-repeat center;
+        vertical-align: middle;
+        opacity: 0.7;
+    }
+    li.masternav-item.has-menu:hover::before {
+        opacity: 1;
+    }
+}

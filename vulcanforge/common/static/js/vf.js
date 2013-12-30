@@ -14,14 +14,15 @@
  * @static
  */
 
-var $vf = $vf || {
+var $vf = $vf || {};
+$.extend($vf, {
     page_state: null,
     currentPage: null,
     refreshId: null,
     tb: null,
     toolBar: null,
     linkBin: null
-};
+});
 
 (function (global) {
     "use strict";
@@ -56,6 +57,18 @@ var $vf = $vf || {
                 }
             }
         }
+    };
+
+    /**
+     * Preload image utilities
+     * @param url
+     */
+    $vf.preloadImageFromURL = function (url) {
+        var image = new Image();
+        image.src = url;
+    };
+    $vf.preloadImagesFromURLs = function (urls) {
+        $.map(urls, $vf.preloadImageFromURL);
     };
 
     /**
@@ -264,7 +277,7 @@ var $vf = $vf || {
                             addSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "POST"),
                             removeSL: new $vf.ServiceLocation(userURL + "profile/reference_bin/delete_reference", "POST"),
                             getSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "GET"),
-                            containerE: $('#right-toolbar .toolbar-lower'),
+                            containerE: $('#referenceBinContainer'),
                             referenceDescriptors: referenceBin.contents,
                             lastMod: referenceBin.last_mod
                         });
