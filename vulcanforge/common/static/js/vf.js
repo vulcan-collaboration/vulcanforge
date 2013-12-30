@@ -277,7 +277,7 @@ $.extend($vf, {
                             addSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "POST"),
                             removeSL: new $vf.ServiceLocation(userURL + "profile/reference_bin/delete_reference", "POST"),
                             getSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "GET"),
-                            containerE: $('#right-toolbar .toolbar-lower'),
+                            containerE: $('#referenceBinContainer'),
                             referenceDescriptors: referenceBin.contents,
                             lastMod: referenceBin.last_mod
                         });

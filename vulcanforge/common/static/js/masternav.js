@@ -39,7 +39,13 @@
                 var project = {};
                 var tool = {};
                 // Render default rootIcon
-                $master.append(_master({ label: data.label, icon: data.icon, shortname: "_globals", url: data.url }));
+                $master.append(_master({
+                    label: data.label,
+                    icon: data.icon,
+                    shortname: "_globals",
+                    url: data.url,
+                    specialIcon: true
+                }));
                 if (current.length > 0) {
                     hood = _.findWhere(data.hoods, { shortname: current[0] });
                     if (typeof hood !== 'undefined') {
@@ -119,6 +125,7 @@
                         default:
                             content = data.globals;
                         }
+                        $('.masternav-menu-open').removeClass('masternav-menu-open');
                         _renderPopup($master, 0, event.delegateTarget.id,
                             content, $target.outerHeight(),
                             $target.position().left, $this);
@@ -149,6 +156,8 @@
                 var $list = $popup.children("ul")
                     .css("max-height", maxHeight);
 
+                $popup.css('z-index', $popup.css('z-index') + (4-depth));
+
                 clearTimeout(submenuTimeout);
                 _pushState($popup, depth);
 
@@ -177,17 +186,20 @@
                     // Create the Link element
                     var $item = $(_popupLink(link)).appendTo($list);
                     // Handle going to a submenu - if there is content for it
-                    if (hasChildren) {
-                        $item.bind("mouseenter", function() {
+                    $item.bind("mouseenter", function() {
+                        $list.
+                            find('.masternav-menu-open').
+                            removeClass('masternav-menu-open');
+                        if (hasChildren) {
                             // Adjust for the 0.5em on the top of the overall list
                             var subTop = top + $item.position().top - config.submenuNudge;
                             var width = left + $item.outerWidth();
                             var subcontent = _.findWhere(items, { shortname: link.shortname });
                             _renderPopup($container, depth+1, link.shortname, subcontent, subTop, width, $item);
-                        });
-                    } else {
-                        $item.bind("mouseenter", function() { _popState(depth + 1); });
-                    }
+                        } else {
+                            _popState(depth + 1);
+                        }
+                    });
                 });
                 // Add a separator if there are Actions
                 if (content.actions && content.actions.length > 0) {
@@ -195,7 +207,14 @@
                 }
                 // Render each Action element - And respond to its mounterenter event
                 _.each(content.actions, function(action) {
-                    $(_popupAction(action)).appendTo($list).bind("mouseenter", function() { _popState(depth + 1); });
+                    $(_popupAction(action)).
+                        appendTo($list).
+                        bind("mouseenter", function() {
+                            $list.
+                                find('.masternav-menu-open').
+                                removeClass('masternav-menu-open');
+                            _popState(depth + 1);
+                        });
                 });
                 // Is it scrollable
                 if ($list.prop("scrollHeight") > maxHeight) {
@@ -215,12 +234,16 @@
                     submenuTimeout = setTimeout(_checkHover, config.timeoutDuration);
                 })
                 .animate({ opacity: 1 }, config.popupDelay);
+                $triggeredBy.addClass('masternav-menu-open');
             };
 
             var _checkHover = function () {
                 if (!_.some(data.state, function($menu) {
                     return $menu.is(":hover");
-                })) _popState(0);
+                })) {
+                    _popState(0);
+                    $('.masternav-menu-open').removeClass('masternav-menu-open');
+                }
             };
 
             var _pushState = function($item, depth) {
@@ -237,9 +260,9 @@
             /***************************** Initialization ******************************/
 
             var _master = _.template(
-                '<li data-shortname="<%= shortname %>" class="masternav-item">' +
+                '<li data-shortname="<%= shortname %>" class="masternav-item<% if (typeof specialIcon !== "undefined" && specialIcon) { %> has-special-icon<% } %>">' +
                 '<a class="masternav-item-link" href="<%= url %>">' +
-                '<% if (icon) { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
+                '<% if (icon) { %><img class="masternav-item-icon<% if (typeof specialIcon !== "undefined" && specialIcon) { %> special-icon<% } %>" src="<%= icon %>" /><% } %>' +
                 '<% if (label) { %><span class="masternav-item-label"><%= label %></span><% } %>' +
                 '</a>' +
                 '</li>'

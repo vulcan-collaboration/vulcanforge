@@ -319,7 +319,6 @@ li.workspace-tab.intellitrigger{
     z-index: 61;
     width: $right-toolbar-width;
     height: 200px;
-    left: 0;
 
     overflow: hidden;
 
@@ -333,7 +332,6 @@ li.workspace-tab.intellitrigger{
 }
 
 .referenceBin.on {
-    left: -1 * ($reference-bin-on-width - $right-toolbar-width);
     width: $reference-bin-on-width;
     opacity: 1;
     -moz-box-shadow: 0 0 5px #333;

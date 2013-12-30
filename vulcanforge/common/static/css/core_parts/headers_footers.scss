@@ -61,35 +61,47 @@ h4 {
   @include header-wrapper-skin;
 }
 
-#header-primary-toolbar .toolbar-item {
-    color: #cfd0d9;
+#header-primary-toolbar {
+    background: linear-gradient(to bottom, #303030, #202020);
+    //background: linear-gradient(to bottom, #e0e0e0, #c0c0c0 4%, #b0b0b0 96%, #808080);
 }
-#header-primary-toolbar a.toolbar-item:hover {
-    color: #f06;
+
+#header-primary-toolbar .toolbar-item {
+    color: #fff;
+}
+#header-primary-toolbar .toolbar-item-button:hover,
+#header-primary-toolbar .toolbar-item-button.hover {
+    color: white;
+    background: #0095da;
+}
+#header-primary-toolbar .toolbar-item:last-child {
+    margin-right: 1rem;
 }
 #header-primary-toolbar .toolbar-icon {
     width: 24px;
     height: 24px;
 }
-#header-primary-toolbar .toolbar-item-margin {
+#header-primary-toolbar .toolbar-item-button {
     line-height: 24px;
+}
+#header-primary-toolbar .toolbar-item-counter {
+    display: none;
+    top: 1ex;
+    right: 1ex;
+}
+#header-primary-toolbar .toolbar-item-counter.unread {
+    display: block;
 }
 
 #header-unread-count {
     display: inline-block;
-    background-color: #aaa;
-    color: #333;
+    background-color: #606060;
     border-radius: 2px;
     font-style: normal;
 }
 
-#header-unread-count:hover {
-    opacity: 1;
-}
-
 #header-unread-count.unread {
     background-color: #f50;
-    color: #fff;
 }
 
 /* Content header elements */

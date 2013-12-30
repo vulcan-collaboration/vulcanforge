@@ -267,26 +267,20 @@ $user-list-margin-top: $pu;
 
 /* Global searchfield skins */
 @mixin global-search-field-skin {
-    border: 1px solid $accent-color;
-    outline: none;
-
-    border: 2px solid #ccc;
-    box-shadow: none;
+    padding: 0 1em;
+    background-color: #fff;
+    border: none;
     border-radius: 15px;
+    box-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.3);
 }
 
 @mixin global-search-field-empty-skin {
     width: 37px;
     background-repeat: no-repeat;
-    background-position: 10px 3px;
-
-    background-color: #333;
-    border: 2px solid #eee;
+    background-position: 10px center;
 }
 
 @mixin global-search-field-empty-hover-skin {
-    border-color: #fff;
-    background-color: #555;
 }
 
 /* Panel skinks */

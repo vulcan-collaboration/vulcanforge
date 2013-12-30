@@ -11,6 +11,7 @@ https://B{<domain>}/rest/
 
 @undocumented
 """
+import json
 import logging
 import urllib
 import os
@@ -423,27 +424,36 @@ class WebAPIController(TGController):
     @expose('json')
     #@cache_rendered(timeout=60)
     def navdata(self, **kwargs):
+        """
+        Special icons and labels configuration:
 
-        SPECIAL_ICONS = {
-            '/projects/': g.resource_manager.absurl('images/fang_logo.png')
-        }
-        SPECIAL_LABELS = {
-            '/projects/': ""
-        }
-
-        global_actions = []
-        if c.user == User.anonymous():
-            global_actions.append({
-                'label': 'Register',
-                'url': g.user_register_url
-            })
-            global_actions.append({
-                'label': 'Log In',
-                'url': g.login_url
-            })
-            root_href = "/"
+        config parameter:`masternav.special_neighborhoods`
+        config value: JSON structure, example (expanded to show structure)
+            {
+                "/projects/": {
+                    "label": "",
+                    "icon": "images/fang_logo.png",
+                    "icon_is_resource": true
+                }
+            }
+        """
+        SPECIAL_ICONS = {}
+        SPECIAL_LABELS = {}
+        specials_key = 'masternav.special_neighborhoods'
+        try:
+            specials_config = json.loads(config.get(specials_key, '{}'))
+        except ValueError:
+            LOG.exception("Could not parse config parameter %r", specials_key)
         else:
-            root_href = "/dashboard/activity_feed/"
+            for k, v in specials_config.items():
+                if 'icon' in v:
+                    if v.get('icon_is_resource', False):
+                        SPECIAL_ICONS[k] = g.resource_manager.\
+                            absurl(v.get('icon'))
+                    else:
+                        SPECIAL_ICONS[k] = v.get('icon')
+                if 'label' in v:
+                    SPECIAL_LABELS[k] = v.get('label')
 
         hood_id_map = {}
         project_id_map = {}
@@ -456,22 +466,19 @@ class WebAPIController(TGController):
         for hood in Neighborhood.query.find(hood_query_params):
             if not g.security.has_access(hood, 'read'):
                 continue
+            project = hood.neighborhood_project
             hood_data = {
                 'label': SPECIAL_LABELS.get(hood.url_prefix, hood.name),
                 'url': hood.url(),
                 'icon': SPECIAL_ICONS.get(hood.url_prefix, hood.icon_url()),
                 'shortname': hood.url_prefix,
                 'children': [],
-                'tools': [],
-                'actions': []
+                'tools': self._get_global_nav_tools_for_project(project),
+                'actions': self._get_global_nav_actions_for_hood(hood),
+                'specialIcon': hood.url_prefix in SPECIAL_ICONS
             }
             hood_id_map[hood._id] = hood_data
             hood_items.append(hood_data)
-            if hood.user_can_register(c.user):
-                hood_data['actions'].append({
-                    'label': 'Start a new Project',
-                    'url': '{}add_project'.format(hood.url())
-                })
 
         project_query_params = {
             'neighborhood_id': {
@@ -488,20 +495,78 @@ class WebAPIController(TGController):
                 'url': project.url(),
                 'icon': project.icon_url,
                 'shortname': project.shortname,
-                'tools': [],
-                'actions': []
+                'tools': self._get_global_nav_tools_for_project(project),
+                'actions': self._get_global_nav_actions_for_project(project)
             }
             project_id_map[project._id] = project_data
             hood_id_map[project.neighborhood_id]['children'].\
                 append(project_data)
 
-        app_config_query_params = {
-            'project_id': {'$in': project_id_map.keys()}
+        # compile output
+        return {
+            'hoods': hood_items,
+            'globals': {
+                'children': self._get_global_nav_children(),
+                'actions': self._get_global_nav_actions()
+            },
+            "label": "",
+            "url": self._get_global_nav_root_href(),
+            "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
         }
-        app_config_cursor = AppConfig.query.find(app_config_query_params)
-        app_config_cursor.sort('options.ordinal', pymongo.ASCENDING)
-        for app_config in app_config_cursor:
-            if not app_config.is_visible_to(c.user):
+
+    def _get_global_nav_children(self):
+        proj_img = 'images/forge_toolbar_icons/projects_icon_on.png'
+        user_img = 'images/forge_toolbar_icons/designers_icon_on.png'
+        return [
+            {
+                'label': 'Browse All Projects',
+                'url': '/browse/',
+                'icon': g.resource_manager.absurl(proj_img)
+            },
+            {
+                'label': 'Browse All Designers',
+                'url': '/designers/',
+                'icon': g.resource_manager.absurl(user_img)
+            }
+        ]
+
+    def _get_global_nav_actions(self):
+        global_actions = []
+        if c.user == User.anonymous():
+            global_actions.append({
+                'label': 'Register',
+                'url': g.user_register_url
+            })
+            global_actions.append({
+                'label': 'Log In',
+                'url': g.login_url
+            })
+        return global_actions
+
+    def _get_global_nav_root_href(self):
+        if c.user == User.anonymous():
+            return "/"
+        else:
+            return "/dashboard/activity_feed/"
+
+    def _get_global_nav_actions_for_hood(self, hood):
+        actions = []
+        if hood.user_can_register(c.user):
+            actions.append({
+                'label': 'Start a new Project',
+                'url': '{}add_project'.format(hood.url())
+            })
+        return actions
+
+    def _get_global_nav_tools_for_project(self, project):
+        tools = []
+        i = 0
+        for mount in project.ordered_mounts():
+            i += 1
+            if i == 1:  # skip the first mount for listing
+                continue
+            app_config = mount.get('ac', None)
+            if app_config is None or not app_config.is_visible_to(c.user):
                 continue
             app_config_data = {
                 'label': app_config.options.mount_label,
@@ -512,36 +577,10 @@ class WebAPIController(TGController):
             }
             # special behavior for "home" mount point
             if app_config.options.get('mount_point', None) == 'home':
-                project_id_map[app_config.project_id]['tools'].\
-                    insert(0, app_config_data)
+                tools.insert(0, app_config_data)
             else:
-                project_id_map[app_config.project_id]['tools'].\
-                    append(app_config_data)
-            if app_config.project.shortname == '--init--':
-                hood_data = hood_id_map[app_config.project.neighborhood_id]
-                hood_data['tools'].append(app_config_data)
+                tools.append(app_config_data)
+        return tools
 
-        # compile output
-        PROJ_IMG = 'images/forge_toolbar_icons/projects_icon_on.png'
-        USER_IMG = 'images/forge_toolbar_icons/designers_icon_on.png'
-        return {
-            'hoods': hood_items,
-            'globals': {
-                'children': [
-                    {
-                        'label': 'Browse All Projects',
-                        'url': '/browse/',
-                        'icon': g.resource_manager.absurl(PROJ_IMG)
-                    },
-                    {
-                        'label': 'Browse All Designers',
-                        'url': '/designers/',
-                        'icon': g.resource_manager.absurl(USER_IMG)
-                    }
-                ],
-                'actions': global_actions
-            },
-            "label": "",
-            "url": root_href,
-            "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
-        }
+    def _get_global_nav_actions_for_project(self, project):
+        return []

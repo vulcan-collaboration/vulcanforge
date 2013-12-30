@@ -138,6 +138,13 @@ body.has-related-artifacts #sidebar {
   padding-top: $main-column-header-height + $related-artifacts-height;
 }
 
+#referenceBinContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    z-index: 100;
+}
+
 /* Content areas */
 
 #main-content-holder {

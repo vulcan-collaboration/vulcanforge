@@ -1,18 +1,26 @@
 <?xml version="1.0" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" pointer-events="none" viewBox="0 0 1 1" preserveAspectRatio="none">
+<svg pointer-events="none" viewBox="0 0 1 1" preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink">
 
     <filter id="Shadow">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="0.05"/>
+        <feGaussianBlur in="SourceAlpha" stdDeviation="0.1"/>
+        <!--<feComponentTransfer>
+            <feFuncA type="linear" slope="0.6"/>
+        </feComponentTransfer>-->
         <feMerge>
             <feMergeNode/>
             <feMergeNode in="SourceGraphic"/>
         </feMerge>
     </filter>
 
-    <path id="Chevron"
-          d="M -0.1 -0.052  L 0.95 0.5  L -0.1 1.052"
+    <path d="M -0.1 -0.0625  L 0.8 0.5  L -0.1 1.0625"
+          fill="none"
+          stroke="black" stroke-width="0.05"
+          opacity="0.2"/>
+
+    <path d="M -0.1 -0.0625  L 0.8 0.5  L -0.1 1.0625"
           fill="#0095da"
-          stroke="none" stroke-width="0"
           filter="url(#Shadow)"/>
 
 </svg>
