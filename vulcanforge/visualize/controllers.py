@@ -109,6 +109,6 @@ class VisualizerRootController(BaseController):
         if visualizer is None:
             raise exc.HTTPNotFound
 
-        vc = self.visualizer_controller_cls(visualizer.load())
+        controller = self.visualizer_controller_cls(visualizer.load())
 
-        return vc, remainder
+        return controller, remainder

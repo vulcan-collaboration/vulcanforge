@@ -49,7 +49,7 @@
             </div>
             <div style="clear: both"></div>
         </div>
-        <iframe src="/visualize/{{visualizer._id}}/src/?{{query_str}}" class="visualizerContainer" id="visualizerContainer"></iframe>
+        {{ visualizer.render_url(resource_url, extra_params=extra_params, height="100%") }}
         <div class="visualizerFooter" id="visualizerFooter">
             <div class="visualizerFilename">Source: {{filename}}</div>
         </div>
@@ -62,16 +62,6 @@
 {% endfor %}
 <script type="text/javascript">
     $(document).ready(function () {
-        var visualizerContainerE = $('.visualizerWrapper');
-        var lessHeight = $('#visualizerToolbar').outerHeight() + $('#visualizerFooter').outerHeight()+2;
-
-        visualizerContainerE.height($(window).height() - lessHeight);
-        visualizerContainerE.width($(window).width() - 20);
-
-        $(window).resize(function() {
-            visualizerContainerE.height($(window).height() - lessHeight);
-            visualizerContainerE.width($(window).width() - 20);
-        });
 
         {% for n in h.pop_user_notifications() %}
             $('#messages').notify("{{ n.text }}");

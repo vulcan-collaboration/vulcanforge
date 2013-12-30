@@ -31,6 +31,10 @@ body.fullscreen-vis{
     border-bottom: none;
 }
 
+.vis-fullscreen {
+    height: 100%;
+}
+
 .vis-fullscreen .visualizerFooter, .vis-fullscreen .visualizerToolbar{
     width: 100%;
     background-color: #000;
@@ -38,6 +42,14 @@ body.fullscreen-vis{
 
 .vis-fullscreen .visualizerToolbar{
     height: 36px;
+}
+
+.vis-fullscreen .visualizerWrapper {
+    height: 100%;
+}
+
+.vis-fullscreen .visualizerContainer {
+    height: 100%;
 }
 
 body.vis-fullscreen .visualizerTabs {
