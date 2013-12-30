@@ -112,8 +112,7 @@ class Neighborhood(MappedClass):
 
     @LazyProperty
     def neighborhood_project(self):
-        from vulcanforge.project.model import Project
-        return Project.query.get(
+        return self.project_cls.query.get(
             neighborhood_id=self._id,
             shortname='--init--'
         )
@@ -121,7 +120,7 @@ class Neighborhood(MappedClass):
     @LazyProperty
     def projects(self):
         from vulcanforge.project.model import Project
-        return Project.query.find(
+        return self.project_cls.query.find(
             {'neighborhood_id': self._id}
         ).all()
 
