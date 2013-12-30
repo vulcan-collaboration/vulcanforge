@@ -49,18 +49,14 @@
             </div>
             <div style="clear: both"></div>
         </div>
-        {{ visualizer.render_url(resource_url, extra_params=extra_params) }}
-        <div id="right-toolbar">
-            <div class="toolbar-upper">
-                {{ theme_macros.project_floating_details() }}
-            </div>
-            <div class="toolbar-lower">
-            </div>
-        </div>
+        <iframe src="/visualize/{{visualizer._id}}/src/?{{query_str}}" class="visualizerContainer" id="visualizerContainer"></iframe>
         <div class="visualizerFooter" id="visualizerFooter">
             <div class="visualizerFilename">Source: {{filename}}</div>
         </div>
     </div>
+    {% if c.user._id %}
+    <div id="referenceBinContainer"></div>
+    {% endif %}
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}
 {% endfor %}
