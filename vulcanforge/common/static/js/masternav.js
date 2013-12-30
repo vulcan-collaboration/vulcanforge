@@ -156,7 +156,7 @@
                 var $list = $popup.children("ul")
                     .css("max-height", maxHeight);
 
-                $popup.css('z-index', $popup.css('z-index') + (4-depth));
+                //$popup.css('z-index', $popup.css('z-index') + (4-depth));
 
                 clearTimeout(submenuTimeout);
                 _pushState($popup, depth);
