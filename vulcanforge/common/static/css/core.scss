@@ -67,6 +67,8 @@
 /* Forums */
 @import "css/core_parts/forums.scss";
 
+/* Master Navigation */
+@import "css/core_parts/masternav.css";
 
 /* For print */
 @import "css/core_parts/for_print.scss";
@@ -150,10 +152,6 @@ li > ul > li > ul {
     height: 22px;
     line-height: 22px;
     display: inline-block;
-}
-
-#header-navi .links li:hover img {
-    opacity: 1;
 }
 
 #copyRight {

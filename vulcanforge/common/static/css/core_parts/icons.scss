@@ -38,7 +38,6 @@ $icon-font-family: "ForgeIconicFill";
     -moz-osx-font-smoothing: grayscale;
 }
 .toolbar-icon:before {
-    vertical-align: middle;
 }
 
 $icon-button-width = $icon-button-size+10px;
@@ -396,6 +395,7 @@ a.icon:hover, a.icon:active {
 .ico-document_fill:before {content:"\e066";}
 .ico-pin:before {content:"\e067";}
 .ico-map_pin_fill:before {content:"\e068";}
+.ico-bookmark:before {content:"\e069";}
 .ico-book:before {content:"\e069";}
 .ico-book_alt2:before {content:"\e06a";}
 .ico-box:before {content:"\e06b";}

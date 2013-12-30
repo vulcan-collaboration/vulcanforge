@@ -7,9 +7,10 @@
                 </form>
             </li>
             {% if userid %}
-                <li>{{ g.avatar.display(user=c.user, size=24, compact=True) }}</li>
+{#                <li>{{ g.avatar.display(user=c.user, size=24, compact=True) }}</li>#}
                 <li>
-                    <a href="/dashboard" class="toolbar-item toolbar-icon ico-activity" title="Activity Feed">
+                    <a href="/dashboard" class="toolbar-item" title="Activity Feed">
+                        <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
                         <span class="hidden">Activity Feed</span>
                     </a>
                 </li>
@@ -59,42 +60,4 @@
 
 {%- macro extra_header() %}
 
-{%- endmacro %}
-
-{%- macro project_floating_details() %}
-{% if c.project %}
-
-    {# TODO: Turn this back on as part of ticket [#195] #}
-    {% set showWatch = False %}
-
-    {% if showWatch %}
-        {% if c.user.dashboard %}
-            {% set watched = c.user.dashboard.is_watching_project(c.project._id) %}
-        {% else %}
-            {% set watched = False %}
-        {% endif %}
-    {% endif %}
-
-    <div id="project-floating-details" {% if watched %}class="watched"{% endif %} data-project-id="{{ c.project._id }}">
-
-        <h1><span class="verticalText">{{ c.project.get_display_name() }}</span></h1>
-
-        {% if showWatch %}
-            <div class="actions">
-                <div class="action watch">
-                    <button class="icon-button borderless-button" title="{% if watched %}unwatch{% else %}watch{% endif %}">
-                        <span class="label">{% if watched %}unwatch{% else %}watch{% endif %}</span>
-                    </button>
-                    <span class="counter">{{ watcher_count }}</span>
-                </div>
-            </div>
-            <script type="text/javascript">
-                $(function(){
-                });
-            </script>
-        {% endif %}
-
-    </div>
-
-{% endif %}
 {%- endmacro %}

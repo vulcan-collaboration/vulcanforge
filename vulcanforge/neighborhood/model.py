@@ -11,9 +11,9 @@ from ming.odm import (
     ThreadLocalODMSession,
     state
 )
-from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 from pylons import request, tmpl_context as c, app_globals as g
+from vulcanforge.common.model.base import BaseMappedClass
 
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.s3.model import File
@@ -53,7 +53,7 @@ class NeighborhoodFile(File):
         return self.neighborhood.url() + 'icon'
 
 
-class Neighborhood(MappedClass):
+class Neighborhood(BaseMappedClass):
     """Provide a grouping of related projects.
 
     url_prefix - location of neighborhood (may include scheme and/or host)
