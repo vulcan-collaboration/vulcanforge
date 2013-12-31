@@ -20,6 +20,7 @@ li.masternav-item {
     line-height: 32px;
     letter-spacing: 0.1em;
     color: inherit;
+    background: #404040;
     background: -webkit-linear-gradient(left, #303030, #404040 3rem);
     background: -moz-linear-gradient(left, #303030, #404040 3rem);
     background: -o-linear-gradient(left, #303030, #404040 3rem);
