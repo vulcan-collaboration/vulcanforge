@@ -467,7 +467,6 @@ class WebAPIController(TGController):
         hood_items = []
 
         hood_query_params = {
-            'allow_browse': True
         }
         for hood in Neighborhood.query.find(hood_query_params):
             if not g.security.has_access(hood, 'read'):

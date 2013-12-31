@@ -25,7 +25,6 @@ li.masternav-item {
     background: -o-linear-gradient(left, #303030, #404040 3rem);
     background: -ms-linear-gradient(left, #303030, #404040 3rem);
     background: linear-gradient(to right, #303030, #404040 3rem);
-    /*background: linear-gradient(to bottom, #e0e0e0, #c0c0c0 4%, #b0b0b0 96%, #808080);*/
 }
 
 li.masternav-item:first-child {
