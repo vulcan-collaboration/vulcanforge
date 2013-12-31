@@ -139,6 +139,7 @@ ul.masternav .masternav-item-label {
 
 ul.masternav-popup {
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 ul.masternav-popup > li {
@@ -165,7 +166,7 @@ ul.masternav-popup a.action {
     color: #a0a0a0;
 }
 ul.masternav-popup a:hover,
-ul.masternav-popup a.masternav-menu-open,
+ul.masternav-popup .masternav-menu-open a,
 li.masternav-popup-item.children:hover,
 li.masternav-popup-item.children.masternav-menu-open,
 ul.masternav-popup a.action:hover {
