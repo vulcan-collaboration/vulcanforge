@@ -325,9 +325,12 @@ class SingleFileProcessor(BaseFileProcessor):
     """
     query_param = 'resource_url'
 
-    def __init__(self, artifact, visualizer):
+    def __init__(self, artifact, visualizer, result_kwargs=None):
         super(SingleFileProcessor, self).__init__(artifact, visualizer)
         self.result_file = None
+        if result_kwargs is None:
+            result_kwargs = {}
+        self.result_kwargs = result_kwargs
 
     @property
     def processed_filename(self):
@@ -336,7 +339,8 @@ class SingleFileProcessor(BaseFileProcessor):
     def make_result_file(self):
         self.result_file = self.make_processed_file(
             self.processed_filename,
-            query_param=self.query_param)
+            query_param=self.query_param,
+            **self.result_kwargs)
         return self.result_file
 
     def pre_duplicate_check(self):

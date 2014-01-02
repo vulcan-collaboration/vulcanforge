@@ -313,7 +313,6 @@ class BaseVisualizableFile(_BaseVisualizerFile):
                 session(pfile).expunge(pfile)
                 pfile = cls.find_from_visualizable(
                     visualizable, filename=filename).first()
-            pfile.origin_hash = cls.calculate_hash(visualizable.read())
         kwargs.setdefault('ref_id', visualizable.artifact_ref_id())
         for name, value in kwargs.items():
             setattr(pfile, name, value)
@@ -372,17 +371,6 @@ class ProcessedArtifactFile(BaseVisualizableFile):
         if not pfile.origin_hash:
             pfile.origin_hash = cls.calculate_hash(visualizable.read())
         return pfile
-
-    @LazyProperty
-    def artifact(self):
-        """Associated artifact (if any) for access control purposes.
-
-        Note that this is not necessarily the original visualizable object.
-
-        """
-        from vulcanforge.artifact.model import ArtifactReference
-        if self.ref_id:
-            return ArtifactReference.artifact_by_index_id(self.ref_id)
 
     def find_duplicates(self):
         duplicate_query = {
