@@ -6,13 +6,9 @@ from itertools import islice
 import pymongo
 from webhelpers.text import truncate
 from pylons import app_globals as g, tmpl_context as c, request
-from tg import expose, redirect, flash
-from tg.decorators import with_trailing_slash
-from bson import ObjectId
+from tg import expose
 from ming import schema
 
-from vulcanforge.common.controllers.decorators import (
-    require_post, validate_form, vardec)
 from vulcanforge.common.app import (
     Application, DefaultAdminController)
 from vulcanforge.common.types import SitemapEntry, ConfigOption
@@ -22,16 +18,19 @@ from vulcanforge.auth.model import User
 from vulcanforge.resources import Icon
 from vulcanforge.tools.forum import model as DM, util, version
 from .controllers import RootController, RootRestController, TEMPLATE_DIR
-from widgets.admin import OptionsAdmin, AddForum
+from widgets.admin import OptionsAdmin
 
 LOG = logging.getLogger(__name__)
 
 
 class ForgeDiscussionApp(Application):
     __version__ = version.__version__
-    permissions = [
-        'configure', 'read', 'unmoderated_post', 'post', 'moderate', 'admin'
-    ]
+    permissions = dict(Application.permissions,
+        write='Create forums and admin them',
+        moderate='Moderate comments',
+        unmoderated_post='Add comments without moderation',
+        post='Create new topics and add comments'
+    )
     config_options = Application.config_options + [
         ConfigOption(
             'PostingPolicy',
@@ -68,13 +67,8 @@ class ForgeDiscussionApp(Application):
         },
         "View Forums": {"url": ""}
     }
-    permission_descriptions = dict(Application.permission_descriptions,
-        post="create new posts",
-        moderate="moderate new content",
-        unmoderated_post="add content without moderation"
-    )
     default_acl = {
-        'Admin': permissions,
+        'Admin': permissions.keys(),
         'Developer': ['moderate'],
         '*authenticated': ['post', 'unmoderated_post'],
         '*anonymous': ['read']
@@ -141,13 +135,6 @@ class ForgeDiscussionApp(Application):
         cursor.sort('ordinal', pymongo.ASCENDING)
         return cursor.all()
 
-    def admin_menu(self):
-        admin_url = c.project.url()+'admin/'+self.config.options.mount_point+'/'
-        links = super(ForgeDiscussionApp, self).admin_menu()
-        if g.security.has_access(self, 'configure'):
-            links.append(SitemapEntry('Forums', admin_url + 'forums'))
-        return links
-
     def sidebar_menu(self):
         try:
             l = []
@@ -182,7 +169,7 @@ class ForgeDiscussionApp(Application):
                         ui_icon=Icon('', 'ico-plus')
                     )
                 )
-            if g.security.has_access(c.app, 'configure'):
+            if g.security.has_access(c.app, 'write'):
                 l.append(
                     SitemapEntry(
                         'Add Forum',
@@ -193,8 +180,7 @@ class ForgeDiscussionApp(Application):
                 l.append(
                     SitemapEntry(
                         'Admin Forums',
-                        c.project.url() + 'admin/' + \
-                            self.config.options.mount_point + '/forums',
+                        c.app.url + 'forums',
                         ui_icon=Icon('', 'ico-cog')
                     )
                 )
@@ -216,7 +202,7 @@ class ForgeDiscussionApp(Application):
                     ))
             recent_threads = (
                 t for t in recent_threads 
-                if (g.security.has_access(t, 'configure') or
+                if (g.security.has_access(t, 'write') or
                     not t.discussion.deleted))
             recent_threads = ( t for t in recent_threads if t.status == 'ok' )
             # Limit to 3 threads
@@ -274,14 +260,9 @@ class ForumAdminController(DefaultAdminController):
 
     class Forms(DefaultAdminController.Forms):
         options_admin = OptionsAdmin()
-        add_forum = AddForum()
 
     def _check_security(self):
         g.security.require_access(self.app, 'admin')
-
-    @with_trailing_slash
-    def index(self, **kw):
-        redirect('forums')
 
     @expose(TEMPLATE_DIR + 'admin_options.html')
     def options(self):
@@ -291,45 +272,3 @@ class ForumAdminController(DefaultAdminController):
             form_value=dict(
                 PostingPolicy=self.app.config.options.get('PostingPolicy')
         ))
-
-    @expose(TEMPLATE_DIR + 'admin_forums.html')
-    def forums(self, add_forum=None, **kw):
-        c.add_forum = self.Forms.add_forum
-        return dict(
-            app=self.app,
-            allow_config=g.security.has_access(self.app, 'configure'),
-            add_forum=add_forum
-        )
-
-    @vardec
-    @expose()
-    @require_post()
-    def update_forums(self, forum=None, **kw):
-        if forum is None:
-            forum = []
-        for f in forum:
-            forum = DM.Forum.query.get(_id=ObjectId(str(f['id'])))
-            if f.get('delete'):
-                forum.deleted=True
-            elif f.get('undelete'):
-                forum.deleted=False
-            else:
-                if any(s in f['shortname'] for s in ('.', '/', ' ')):
-                    flash('Shortname cannot contain space . or /', 'error')
-                    redirect('.')
-                forum.name = f['name']
-                forum.shortname = f['shortname']
-                forum.description = f['description']
-                forum.ordinal = int(f['ordinal'])
-                if 'icon' in f and f['icon'] is not None and f['icon'] != '':
-                    util.save_forum_icon(forum, f['icon'])
-        flash('Forums updated')
-        redirect(request.referrer or 'forums')
-
-    @vardec
-    @expose()
-    @require_post()
-    @validate_form("add_forum", error_handler=forums)
-    def add_forum(self, add_forum=None, **kw):
-        f = util.create_forum(self.app, add_forum)
-        redirect(f.url())

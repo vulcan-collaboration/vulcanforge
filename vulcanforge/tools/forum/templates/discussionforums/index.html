@@ -10,7 +10,7 @@
     {% endif %}
 {% endblock %}
 
-{% if g.security.has_access(c.app, 'configure') and (not hide_forum) %}
+{% if g.security.has_access(c.app, 'write') and (not hide_forum) %}
   {% block edit_box %}
     <div id="add_forum_form"{% if hide_forum %} style="display:none"{% endif %} class="editbox">
       {{c.add_forum.display(method='POST', action=c.project.url() + c.app.config.options.mount_point + '/add_forum_short', app=c.app, value=add_forum)}}
@@ -43,7 +43,7 @@
             </thead>
             <tbody>
             {% for forum in forums %}
-            {% if not forum.deleted or g.security.has_access(c.app, 'configure') %}
+            {% if not forum.deleted or g.security.has_access(c.app, 'write') %}
             <tr class="discussion_forum">
                 <td>
                     <a href="{{forum.url()}}">
@@ -76,7 +76,7 @@
 {% endblock %}
 
 {% block extra_js %}
-  {% if g.security.has_access(c.app, 'configure') %}
+  {% if g.security.has_access(c.app, 'write') %}
     <script type="text/javascript">
       $(function() {
         $("#add_forum").click(function(){

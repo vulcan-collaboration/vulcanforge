@@ -84,9 +84,16 @@ search_validators = dict(
 
 class ForgeTrackerApp(Application):
     __version__ = version.__version__
-    permissions = ['configure', 'read', 'write', 'save_searches',
-                   'unmoderated_post', 'post', 'moderate', 'admin',
-                   'edit_protected']
+    permissions = dict(Application.permissions,
+        admin='Configure this tool, add new ticket properties and configure milestones',
+        read='View tickets',
+        write='Create and modify tickets',
+        moderate='Moderate comments',
+        unmoderated_post='Add comments without moderation',
+        post='Add comments',
+        save_searches='Persist custom searches',
+        edit_protected='Edit ticket fields marked as protected'
+    )
     searchable = True
     tool_label = 'Tickets'
     static_folder = 'Tickets'
@@ -116,19 +123,11 @@ class ForgeTrackerApp(Application):
         "View Issues": {"url": ""},
         "Edit Milestones": {
             "url": "milestones",
-            "permission": "configure"
+            "permission": "admin"
         }
     }
-    permission_descriptions = dict(Application.permission_descriptions,
-        write="create new tickets",
-        configure="configure milestones",
-        save_searches="persist custom searches",
-        moderate="moderate new content",
-        unmoderated_post="add content without moderation",
-        edit_protected="edit fields marked as protected",
-    )
     default_acl = {
-        'Admin': permissions,
+        'Admin': permissions.keys(),
         'Developer': ['write', 'moderate', 'save_searches'],
         '*authenticated': ['post', 'unmoderated_post'],
         '*anonymous': ['read']
@@ -182,7 +181,7 @@ class ForgeTrackerApp(Application):
         admin_url = c.project.url() + 'admin/' + \
             self.config.options.mount_point + '/'
         links = [SitemapEntry('Field Management', admin_url + 'fields')]
-        if self.permissions and g.security.has_access(self, 'configure'):
+        if self.permissions and g.security.has_access(self, 'admin'):
             links.append(SitemapEntry(
                 'Permissions',
                 admin_url + 'permissions',
@@ -300,7 +299,7 @@ class ForgeTrackerApp(Application):
             # '{0}new/?super_id={1}'.format(self.config.url(), ticket._id),
             # className='nav_child'))
 
-        if g.security.has_access(self, 'configure'):
+        if g.security.has_access(self, 'admin'):
             admin_url = c.project.url() + 'admin/' + \
                         self.config.options.mount_point + '/'
             links.extend([
@@ -689,7 +688,7 @@ class RootController(BaseTrackerController):
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'milestones.html')
     def milestones(self, **kw):
-        g.security.require_access(c.app, 'configure')
+        g.security.require_access(c.app, 'admin')
         milestones = []
         c.date_field = self.Widgets.date_field
         for fld in c.app.globals.milestone_fields:
@@ -720,7 +719,7 @@ class RootController(BaseTrackerController):
         "milestones": ForEach(MilestoneSchema())
     })
     def update_milestones(self, field_name=None, milestones=None, **kw):
-        g.security.require_access(c.app, 'configure')
+        g.security.require_access(c.app, 'admin')
         update_counts = False
         # TODO: fix this mess
         for fld in c.app.globals.milestone_fields:
@@ -1316,7 +1315,7 @@ class TrackerAdminController(DefaultAdminController):
         #     self.app.globals.milestone_names = ''
 
     def _check_security(self):
-        g.security.require_access(self.app, 'configure')
+        g.security.require_access(self.app, 'admin')
 
     @expose()
     @with_trailing_slash

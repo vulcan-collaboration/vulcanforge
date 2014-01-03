@@ -201,7 +201,7 @@ class PostController(BaseController):
     @expose()
     @require_post()
     def attach(self, file_info=None):
-        g.security.require_access(self.post, 'moderate')
+        g.security.require_access(self.post, 'post')
         if hasattr(file_info, 'file'):
             mime_type = file_info.type
             # If mime type was not passed or bogus, guess it

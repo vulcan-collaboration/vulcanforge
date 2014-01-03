@@ -2,7 +2,6 @@ from formencode.validators import String, OneOf, Int
 from pylons import app_globals as g, tmpl_context as c
 from tg import expose, validate
 
-from vulcanforge.common.app import DefaultAdminController
 from vulcanforge.common.controllers.base import BaseController
 from vulcanforge.common.validators import (
     TimestampValidator,
@@ -47,9 +46,3 @@ class CalendarRootController(BaseController):
         for app in apps:
             events.extend(app.get_calendar_events(start, end))
         return {"events": events}
-
-
-class ForgeCalendarAdminController(DefaultAdminController):
-
-    def _check_security(self):
-        g.security.require_access(self.app, 'admin')
