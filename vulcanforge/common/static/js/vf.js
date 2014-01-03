@@ -1431,14 +1431,19 @@ $.extend($vf, {
                     adjust: {
                         method: 'shift'
                     },
-                    my: 'top left',
-                    at: 'bottom left'
+                    my: 'top right',
+                    at: 'bottom right'
                 },
                 show: {
                     event: 'click mouseenter',
-                    solo: true
+                    solo: true,
+                    modal: {
+                        on: false,
+                        escape: true
+                    }
                 },
                 hide: {
+                    event: 'click unfocus',
                     fixed: true,
                     delay: 400
                 },
@@ -1467,9 +1472,7 @@ $.extend($vf, {
 
     $vf.initializeBookmarkTabsMenu = function (tabs) {
         var $button = $('#vf-bookmarks-menu-button'),
-            $menuContainer,
-            currentHREF = window.location.pathname + window.location.search + window.location.hash,
-            currentIsBookmarked = false;
+            $menuContainer;
 
         if (!tabs || !$button) {
             return;
@@ -1488,67 +1491,17 @@ $.extend($vf, {
             tabDescriptors: tabs
         });
 
-//
-//        $.each(tabs, function (i,tab) {
-//            var $tab = $('<div/>').
-//                addClass('vf-bookmarksmenu-tab').
-//                addClass('popup-menu-item').
-//                addClass('popup-menu-item-link').
-//                addClass('toolbar-container').
-//                attr('data-tab-type', tab.type).
-//                appendTo($menuContainer),
-//            $link = $('<a/>').
-//                attr('href', tab.href).
-//                addClass('toolbar-item').
-//                addClass('toolbar-item-stretchy').
-//                text(tab.title).
-//                appendTo($tab);
-//            $('<span/>').
-//                addClass('inline-icon ico-edit').
-//                addClass('toolbar-item').
-//                appendTo($tab);
-//            $('<span/>').
-//                addClass('inline-icon ico-delete').
-//                addClass('toolbar-item').
-//                appendTo($tab);
-//            if (currentHREF === tab.href) {
-//                currentIsBookmarked = true;
-//            }
-//        });
-//
-//        if (!currentIsBookmarked) {
-//            $('<span/>').
-//                addClass('popup-menu-item-seperator').
-//                prependTo($menuContainer);
-//            $('<span/>').
-//                text('Bookmark this page').
-//                addClass('popup-menu-item').
-//                addClass('popup-menu-item-button').
-//                addClass('inline-icon ico-bookmark').
-//                prependTo($menuContainer).
-//                bind('click', function () {
-//                    $(this).remove();
-//                    $.ajax({
-//                        'url': userURL + "profile/workspace_tabs",
-//                        'type': 'POST',
-//                        'data': {
-//                            'href': currentHREF,
-//                            'title': window.title
-//                        },
-//                        'success': function () {
-//                            $vf.reloadBookmarkTabsMenu();
-//                        }
-//                    });
-//                });
-//        }
-//
-//        $button.qtip('destroy', true);
         $vf.masternavQtip($button, {
             content: {
                 title: "My Bookmarks",
                 text: $menuContainer
             }
         });
+
+        /*$(document).
+            on('DOMSubtreeModified', function () {
+                $button.qtip('reposition');
+            });*/
     };
 
     $vf.initializeUserMenu = function () {
