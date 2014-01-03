@@ -16,7 +16,7 @@
 
         config = config || {};
         config = _.defaults(config, {
-            timeoutDuration: 10,
+            timeoutDuration: 400,
             smartFilter: false,
             bottomBuffer: 64,
             scrollBuffer: 10,
@@ -111,7 +111,7 @@
                         var $this = $(this), $target = $(event.delegateTarget);
                         clearTimeout(masterTimeout);
                         clearTimeout(submenuTimeout);
-                        _popState(0);
+                        _popState(0, true);
                         var content;
                         switch ($target.attr('data-shortname')) {
                         case current[0]:
@@ -248,13 +248,24 @@
             };
 
             var _pushState = function($item, depth) {
-                _popState(depth);
+                _popState(depth, true);
                 data.state.push($item);
             };
 
-            var _popState = function(depth) {
+            var _popState = function(depth, opt_skipAnimate) {
+                var skipAnimate = typeof opt_skipAnimate !== 'undefined' && opt_skipAnimate;
                 while (data.state.length > depth) {
-                    data.state.pop().remove();
+                    (function ($item) {
+                        if (skipAnimate) {
+                            $item.remove();
+                        } else {
+                            $item.
+                                fadeOut(100).
+                                queue(function () {
+                                    $(this).remove();
+                                });
+                        }
+                    })(data.state.pop());
                 }
             };
 
