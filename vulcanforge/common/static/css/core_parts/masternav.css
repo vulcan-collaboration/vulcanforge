@@ -1,4 +1,4 @@
-ul.masternav, ul.masternav-popup {
+.masternav, .masternav-context-items, ul.masternav-popup {
     margin: 0;
     padding: 0;
     vertical-align: middle;
@@ -8,7 +8,7 @@ ul.masternav, ul.masternav-popup {
     -webkit-padding-start: 0;
 }
 
-ul.masternav {
+.masternav {
     text-align: left;
 }
 
@@ -32,6 +32,16 @@ li.masternav-item:first-child {
     padding-left: 1em;
     background: #404040;
 }
+li.masternav-item:last-child {
+    background: transparent;
+}
+li.masternav-item:last-child::after {
+    content: none;
+}
+li.masternav-item:hover:last-child::after,
+li.masternav-item.masternav-menu-open:last-child::after {
+    content: "";
+}
 
 li.masternav-item:nth-child(1) {z-index: 4;}
 li.masternav-item:nth-child(2) {z-index: 3;}
@@ -40,17 +50,17 @@ li.masternav-item:nth-child(4) {z-index: 1;}
 
 li.masternav-item:hover,
 li.masternav-item.masternav-menu-open {
-    background: #0095da;
-    background: -webkit-linear-gradient(left, #369, #0095da 3rem);
-    background: -moz-linear-gradient(left, #369,#0095da 3rem);
-    background: -o-linear-gradient(left, #369, #0095da 3rem);
-    background: -ms-linear-gradient(left, #369, #0095da 3rem);
-    background: linear-gradient(to right, #369, #0095da 3rem);
+    background: #0086FF;
+    background: -webkit-linear-gradient(left, #369, #0086FF 3rem);
+    background: -moz-linear-gradient(left, #369,#0086FF 3rem);
+    background: -o-linear-gradient(left, #369, #0086FF 3rem);
+    background: -ms-linear-gradient(left, #369, #0086FF 3rem);
+    background: linear-gradient(to right, #369, #0086FF 3rem);
     color: white;
 }
 li.masternav-item:first-child:hover,
 li.masternav-item.masternav-menu-open:first-child {
-    background: #0095da;
+    background: #0086FF;
 }
 
 li.masternav-item::after {
@@ -83,7 +93,7 @@ li.masternav-item .masternav-item-icon.special-icon {
     max-height: 32px;
 }
 
-ul.masternav .masternav-item-label {
+.masternav .masternav-item-label {
     display: inline-block;
     max-width: 200px;
     margin-left: 0.5rem;
@@ -101,12 +111,12 @@ ul.masternav .masternav-item-label {
     position: fixed;
     z-index: 16000;
     display: block;
-    background: #202020;
-    background: -webkit-linear-gradient(left, #101010, #202020 3rem);
-    background: -moz-linear-gradient(left, #101010, #202020 3rem);
-    background: -o-linear-gradient(left, #101010, #202020 3rem);
-    background: -ms-linear-gradient(left, #101010, #202020 3rem);
-    background: linear-gradient(to right, #101010, #202020 3rem);
+    background: #282828;
+    background: -webkit-linear-gradient(left, #181818, #282828 3rem);
+    background: -moz-linear-gradient(left, #181818, #282828 3rem);
+    background: -o-linear-gradient(left, #181818, #282828 3rem);
+    background: -ms-linear-gradient(left, #181818, #282828 3rem);
+    background: linear-gradient(to right, #181818, #282828 3rem);
     line-height: 3em;
     border: none;
     padding-top: 8px;
@@ -139,6 +149,7 @@ ul.masternav .masternav-item-label {
 
 ul.masternav-popup {
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 ul.masternav-popup > li {
@@ -165,12 +176,12 @@ ul.masternav-popup a.action {
     color: #a0a0a0;
 }
 ul.masternav-popup a:hover,
-ul.masternav-popup a.masternav-menu-open,
+ul.masternav-popup .masternav-menu-open a,
 li.masternav-popup-item.children:hover,
 li.masternav-popup-item.children.masternav-menu-open,
 ul.masternav-popup a.action:hover {
     color: white;
-    background: #0095da;
+    background: #0086FF;
 }
 
 .masternav-popup-item.children {
@@ -230,4 +241,25 @@ ul.masternav-popup a.action span {
     li.masternav-item.has-menu:hover::before {
         opacity: 1;
     }
+}
+
+
+/* --- popup menu overrides (see toolbar.scss for base) --- */
+.masternav-popup-menu.qtip {
+    z-index: -1;
+    min-width: 200px;
+}
+.masternav-item-menu {
+    position: relative;
+}
+.masternav-item-menu.active::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: 0.5rem;
+    background-image: url(../images/popup-menu-title-chevron.svg);
+    background-size: 100% 100%;
 }

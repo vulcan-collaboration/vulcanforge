@@ -15,6 +15,10 @@
     flex: 1 1 auto;
 }
 
+.toolbar-item.toolbar-item-spacer {
+    width: 2rem;
+}
+
 .toolbar-item.toolbar-item-button {
     padding: 8px;
 }
@@ -37,4 +41,83 @@
     text-align: center;
     font-family: monospace;
     vertical-align: baseline;
+}
+
+
+/* --- generic popup menu --- */
+
+#forge-toolbar-popup-menu-viewport {
+    display: block;
+    position: absolute;
+    z-index: -10000;
+    top: 40px;
+    right: 0;
+    left: 0;
+    bottom: 20px;
+}
+
+.popup-menu-content-prerendered {
+    display: none;
+}
+.popup-menu {
+    color: #ddd;
+    background: #282828;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+.popup-menu.qtip {
+    font-size: 1rem;
+    line-height: normal;
+    overflow: auto;
+}
+
+.popup-menu .qtip-title {
+    padding: 1ex 1em;
+    letter-spacing: 0.1em;
+    font-weight: lighter;
+    color: #ccc;
+    background: #404040;
+}
+.popup-menu .qtip-content {
+    font-size: 13px;
+    padding: 0;
+}
+
+.popup-menu a,
+.popup-menu a:hover {
+    color: inherit;
+}
+
+.popup-menu-item,
+.popup-menu-item-button,
+.popup-menu-item-link a {
+    display: block;
+    padding: 1ex 1em;
+}
+.popup-menu-item-link {
+    padding: 0;
+}
+.popup-menu-item-button {
+    cursor: pointer;
+}
+.popup-menu-item-button:hover,
+.popup-menu-item-button.active,
+.popup-menu-item-link:hover,
+.popup-menu-item-link.active {
+    color: white;
+    background: #0086FF;
+}
+.popup-menu-item-seperator {
+    display: block;
+    padding: 0;
+    margin: 1ex;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+.popup-menu-items-container {
+    padding: 1ex 0;
+}
+.popup-menu-item.toolbar-container {
+    display: -webkit-flex;
+    display: flex;
 }

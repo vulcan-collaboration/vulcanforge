@@ -559,7 +559,7 @@ class WebAPIController(TGController):
         actions = []
         if hood.user_can_register(c.user):
             actions.append({
-                'label': 'Start a new Project',
+                'label': 'Start a {}'.format(hood.project_cls.type_label),
                 'url': '{}add_project'.format(hood.url())
             })
         return actions

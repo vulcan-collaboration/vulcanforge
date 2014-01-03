@@ -16,20 +16,20 @@ class UnifyAppPermissions(BaseMigration):
         # Change old permission names to new ones
         for app_config in AppConfig.query.find():
             # downloads permission: configure -> admin
-            if app_config.tool_name == 'downloads':
+            if app_config.tool_name.lower() == 'downloads':
                 for ace in app_config.acl:
                     if ace.permission == 'configure':
                         ace.permission = 'admin'
 
             # discussions permission: configure -> write
-            elif app_config.tool_name == 'discussion':
+            elif app_config.tool_name.lower() == 'discussion':
                 for ace in app_config.acl:
                     if ace.permission == 'configure':
                         ace.permission = 'write'
 
             # wiki permission: configure, admin -> admin
             #                       create, edit, delete -> write
-            elif app_config.tool_name == 'wiki':
+            elif app_config.tool_name.lower() == 'wiki':
                 new_acl = []
                 admin_role_id_set = set()
                 write_role_id_set = set()
@@ -52,7 +52,7 @@ class UnifyAppPermissions(BaseMigration):
                 app_config.acl = new_acl
 
             # ticket permission: configure, admin -> admin
-            elif app_config.tool_name == 'tickets':
+            elif app_config.tool_name.lower() == 'tickets':
                 new_acl = []
                 admin_role_id_set = set()
                 for ace in app_config.acl:
@@ -68,13 +68,13 @@ class UnifyAppPermissions(BaseMigration):
                 app_config.acl = new_acl
 
             # visualize permission: edit -> write
-            elif app_config.tool_name == 'Visualize':
+            elif app_config.tool_name.lower() == 'visualize':
                 for ace in app_config.acl:
                     if ace.permission == 'edit':
                         ace.permission = 'write'
 
             # admin tool visible_to_role project.create -> project.admin
-            elif app_config.tool_name == 'admin':
+            elif app_config.tool_name.lower() == 'admin':
                 app_config.visible_to_role = 'project.admin'
 
         ThreadLocalODMSession.flush_all()

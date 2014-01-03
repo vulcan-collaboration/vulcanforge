@@ -29,8 +29,9 @@
             filterShortname: "--init--"
         });
 
-        var $master = $("ul.masternav");
-        if (!$master.length) { console.log("Masternav Error: No ul.masternav found");
+        var $master = $(".masternav");
+        var $masterlist = $master.find('.masternav-context-items');
+        if (!$master.length) { console.log("Masternav Error: No .masternav found");
         } else {
             var masterTimeout, submenuTimeout;
 
@@ -39,7 +40,7 @@
                 var project = {};
                 var tool = {};
                 // Render default rootIcon
-                $master.append(_master({
+                $masterlist.append(_master({
                     label: data.label,
                     icon: data.icon,
                     shortname: "_globals",
@@ -49,18 +50,18 @@
                 if (current.length > 0) {
                     hood = _.findWhere(data.hoods, { shortname: current[0] });
                     if (typeof hood !== 'undefined') {
-                        $master.append(_master(hood));
+                        $masterlist.append(_master(hood));
                         // Do we render the current project
                         if (current.length > 1) {
                             project = _.findWhere(hood.children, { shortname: current[1] });
                             if (typeof project !== 'undefined') {
                                 if (current[1] !== '--init--') {
-                                    $master.append(_master(project));
+                                    $masterlist.append(_master(project));
                                 }
                                 if (current.length > 2) {
                                     tool = _.findWhere(project.tools, { shortname: current[2] });
                                     if (typeof tool !== 'undefined') {
-                                        $master.append(_master(tool));
+                                        $masterlist.append(_master(tool));
                                     }
                                 }
                             }
@@ -69,9 +70,9 @@
                 }
                 // Is the root menu animated?
                 if (config.animateIntro) {
-                    $master.animate({ left: 0 }, config.animateIntro);
+                    $masterlist.animate({ left: 0 }, config.animateIntro);
                 } else {
-                    $master.css("left", "auto");
+                    $masterlist.css("left", "auto");
                 }
 
                 $("li.masternav-item").

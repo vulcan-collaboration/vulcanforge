@@ -34,6 +34,7 @@ from vulcanforge.notification.model import Notification
 from vulcanforge.project.widgets import ProjectListWidget
 from vulcanforge.project.model import Project, ProjectFile
 from vulcanforge.notification.widgets import ActivityFeed
+from vulcanforge.resources import Icon
 from vulcanforge.tools.admin import model as AM
 from vulcanforge.tools.home import model as PHM
 from vulcanforge.tools.home.project_main import ProjectHomeController
@@ -62,19 +63,46 @@ class UserProfileApp(Application):
     def sitemap(self):
         return []
 
-    @exceptionless([], LOG)
     def sidebar_menu(self):
+        is_mine = c.user._id == self.user._id
+
         menu = []
+
+        if is_mine:
+            reg_nbhd = c.user.registration_neighborhood()
+            if reg_nbhd and reg_nbhd.user_can_register():
+                menu.extend([
+                    SitemapEntry(
+                        'Start a {}'.format(reg_nbhd.project_cls.type_label),
+                        reg_nbhd.url() + 'add_project',
+                        ui_icon=Icon('', 'ico-plus')
+                    ),
+                    SitemapEntry('')
+                ])
+            menu.append(SitemapEntry('Activity Feed',
+                                     '/dashboard/activity_feed',
+                                     ui_icon=Icon('', 'ico-activity')))
+
+        menu.append(SitemapEntry('Profile', self.url,
+                                 ui_icon=Icon('', 'ico-user')))
+
+        if is_mine:
+            menu.append(SitemapEntry('Conversations', '/dashboard/messages',
+                                     ui_icon=Icon('', 'ico-inbox')))
+
         if g.security.has_access(c.project, 'admin'):
             menu.extend([
-                SitemapEntry('Profile', self.url),
+                SitemapEntry(''),
                 SitemapEntry('Settings'),
-                SitemapEntry('Edit Profile Info', self.url + 'edit_profile')
+                SitemapEntry('Edit Profile Info', self.url + 'edit_profile',
+                             ui_icon=Icon('', 'ico-edit'))
             ])
-        if c.user._id == self.user._id:
+        if is_mine:
             menu.extend([
-                SitemapEntry('Preferences', '/auth/prefs/'),
-                SitemapEntry('Subscriptions', "/auth/prefs/subscriptions")
+                SitemapEntry('Preferences', '/auth/prefs/',
+                             ui_icon=Icon('', 'ico-settings')),
+                SitemapEntry('Subscriptions', "/auth/prefs/subscriptions",
+                             ui_icon=Icon('', 'ico-mail'))
             ])
         return menu
 

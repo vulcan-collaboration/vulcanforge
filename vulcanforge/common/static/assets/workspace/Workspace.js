@@ -44,17 +44,15 @@ var $ws = $ws || {};
         removeSL: null,
         getSL: null,
 
-        barContainer: null,
         tabDescriptors: [],
         maxTabs: 32,
 
-        tabBarE: null,
+        tabContainer: null,
         moreTrigger: null,
         tabs: {},
-        adderE: null,
+        $addButton: null,
         tabsN: 0,
         disableEdit: false,
-        moreObject: null,
 
         render: function () {
             var i,
@@ -62,17 +60,9 @@ var $ws = $ws || {};
                 host = this,
                 descriptor;
 
-            if (this.barContainer) {
+            if (this.tabContainer) {
 
-                if (this.tabBarE) {
-                    this.remove();
-                }
-
-                this.tabBarE = $('<ul/>', {
-                    'class': 'workspace-tab-bar'
-                });
-
-                this.barContainer.append(this.tabBarE);
+                this.tabContainer.empty();
 
                 if ($.isArray(this.tabDescriptors) && this.tabDescriptors.length) {
 
@@ -92,11 +82,11 @@ var $ws = $ws || {};
                     this.showAdder();
                 }
 
-                this.tabBarE.sortable({
-                    axis: 'x',
-                    cancel: '.adder,.intellitrigger',
+                this.tabContainer.sortable({
+                    axis: 'y',
+                    cancel: '.adder, .popup-menu-item-seperator, .popup-menu-item-button',
                     start: function (e, ui) {
-                        ui.placeholder.width(ui.helper.width());
+                        ui.placeholder.height(ui.helper.height());
                     },
                     update: function ( event, ui ) {
                         host.reSort.call(host);
@@ -105,13 +95,13 @@ var $ws = $ws || {};
                     distance: 16
                 });
 
-                this.tabBarE.disableSelection();
+                this.tabContainer.disableSelection();
                 this.renderTabs(true);
             }
         },
 
         orderedIds: function () {
-            return this.tabBarE.find('.workspace-tab').map(function(){
+            return this.tabContainer.find('.bookmark-element ').map(function(){
                 return $(this).attr("data-id");
             }).get()
         },
@@ -180,7 +170,7 @@ var $ws = $ws || {};
                 $vf.page_state = tab.state;
             }
 
-            tab.tabBarE = that.tabBarE;
+            tab.tabContainer = that.tabContainer;
             that.tabsN++;
 
             return tab;
@@ -194,25 +184,6 @@ var $ws = $ws || {};
                 tab = this.tabs[desc.id];
                 tab.render();
             }
-
-            if (this.moreTrigger){
-                this.moreTrigger.remove();
-            }
-
-            /* Intellimore */
-            this.moreTrigger = $('<li/>', {
-                "class":"workspace-tab intellitrigger"
-            }).append('<a href="#">. . .</a>');
-            this.moreTrigger.hide();
-            this.tabBarE.append(this.moreTrigger);
-
-            this.moreObject = this.tabBarE.intelliMore({
-                triggerE: this.moreTrigger,
-                hiddenClass: 'workspace-tabbar-hidden',
-                autoPosition: false,
-                bufferLen: 35,
-                neverHide: '.no-more-hide,.selected,.adder'
-            });
 
             if (!this.doesTabExist(document.location.pathname, $vf.page_state, initial)) {
                 this.showAdder();
@@ -231,26 +202,34 @@ var $ws = $ws || {};
         },
 
         showAdder: function () {
-            if (this.tabBarE && window.location.pathname !== '/') {
-                if (!this.adderE) {
+            if (this.tabContainer && window.location.pathname !== '/') {
+                if (!this.$addButton) {
                     var host = this;
-                    this.adderE = $('<li/>', {
-                        'class': 'workspace-tab adder',
-                        text: "",
-                        title: "Create tab for this page",
+                    this.$addButton = $('<div/>', {
+                        'class': 'popup-menu-item popup-menu-item-button inline-icon ico-bookmark',
+                        text: "Bookmark this page",
                         click: function () {
                             host.addTabForCurrent();
                         }
                     });
                 }
-                this.adderE.appendTo(this.tabBarE);
+                if (!this.$addSpacer) {
+                    this.$addSpacer = $('<div/>').
+                        addClass('popup-menu-item-seperator');
+                }
+                this.$addSpacer.prependTo(this.tabContainer);
+                this.$addButton.prependTo(this.tabContainer);
             }
         },
 
         hideAdder: function () {
-            if (this.adderE) {
-                this.adderE.remove();
-                this.adderE = null;
+            if (this.$addButton) {
+                this.$addButton.remove();
+                this.$addButton = null;
+            }
+            if (this.$addSpacer) {
+                this.$addSpacer.remove();
+                this.$addSpacer = null;
             }
         },
 
@@ -292,7 +271,7 @@ var $ws = $ws || {};
                 }
             }
             this.tabs = {};
-            this.tabBarE.remove();
+            this.tabContainer.remove();
         },
 
         closeTab: function (id) {
@@ -303,7 +282,6 @@ var $ws = $ws || {};
             this.doesTabExist(document.location.pathname, $vf.page_state, false);
             this.updateTabDescriptors();
             this.renderTabs(false);
-            this.moreObject.check();
             /*this.updateSize(false);*/
         },
 
@@ -337,7 +315,6 @@ var $ws = $ws || {};
                         that.addTab.call(that, descriptor);
                         that.updateTabDescriptors.call(that);
                         that.renderTabs.call(that,false);
-                        that.moreObject.check.call(that);
 
                     },
                     error: function(error, textStatus, errorThrown) {
@@ -386,7 +363,7 @@ var $ws = $ws || {};
         href: null,
         state: null,
 
-        tabBarE: null,
+        tabContainer: null,
 
         tabE: null,
         linkE: null,
@@ -403,13 +380,13 @@ var $ws = $ws || {};
                 tabId = this.id,
                 cssString;
 
-            if (this.tabBarE) {
+            if (this.tabContainer) {
 
                 if (this.tabE) {
                     this.tabE.remove();
                 }
 
-                cssString = 'workspace-tab ';
+                cssString = 'bookmark-element popup-menu-item popup-menu-item-link toolbar-container ';
 
                 if (this.type) {
                     cssString += this.type;
@@ -418,23 +395,18 @@ var $ws = $ws || {};
                 }
 
                 if (this.selected) {
-                    cssString += ' selected';
+                    cssString += ' active';
                 }
 
-                this.tabE = $('<li/>', {
+                this.tabE = $('<div/>', {
                     'class': cssString,
                     title: this.title,
                     'data-id': this.id
                 });
 
-                if (this.type !== 'default') {
-                    $('<div/>', {
-                        'class': 'flag'
-                    }).appendTo(this.tabE);
-                }
-
                 this.linkE = $('<a/>', {
                     text: this.title,
+                    'class': 'bookmark-link toolbar-item toolbar-item-stretchy',
                     href: this.href,
                     title: this.title,
                     mousedown: function (e) {
@@ -442,11 +414,17 @@ var $ws = $ws || {};
                     }
                 });
 
+                if (this.type !== 'default') {
+                    $('<span/>', {
+                        'class': 'flag'
+                    }).prependTo(this.linkE);
+                }
+
                 this.closeButtonE = $('<div/>', {
                     text: '',
                     href: '',
                     title: 'Remove this tab',
-                    'class': 'tabClose',
+                    'class': 'toolbar-item inline-icon ico-x',
                     click: function () {
                         host.closeTab.call(host, tabId);
                     }
@@ -456,27 +434,18 @@ var $ws = $ws || {};
                     text: '',
                     href: '',
                     title: 'Edit Tab Title',
-                    'class': 'tabEdit',
+                    'class': 'toolbar-item inline-icon ico-edit',
                     click: function () {
                         t.triggerEdit();
                     }
                 });
 
-                if (host.adderE) {
-                    host.adderE.before(
-                        this.tabE
-                            .append(this.linkE)
-                            .append(this.closeButtonE)
-                            .append(this.editButtonE)
-                    );
-                } else {
-                    this.tabBarE.append(
-                        this.tabE
-                            .append(this.linkE)
-                            .append(this.closeButtonE)
-                            .append(this.editButtonE)
-                    );
-                }
+                this.tabContainer.append(
+                    this.tabE
+                        .append(this.linkE)
+                        .append(this.editButtonE)
+                        .append(this.closeButtonE)
+                );
 
             }
         },
@@ -484,8 +453,8 @@ var $ws = $ws || {};
         triggerEdit: function () {
             if (this.host.disableEdit === false) {
                 var t = this;
-                t.tabBarE.enableSelection();
-                t.tabBarE.sortable("disable");
+                t.tabContainer.enableSelection();
+                t.tabContainer.sortable("disable");
                 t.editTitleE = $('<input/>', {
                     "name": "ws-title",
                     "class": "ws-title-input",
@@ -503,8 +472,6 @@ var $ws = $ws || {};
                 });
                 this.editButtonE.css('display', 'none');
                 t.editing = true;
-                t.host.moreObject.check();
-                t.host.moreObject.updateHidden();
             }
         },
 
@@ -530,18 +497,15 @@ var $ws = $ws || {};
             this.host.updateTabDescriptors();
             this.cancelEdit();
             this.host.renderTabs(false);
-            this.host.moreObject.check();
-            this.host.moreObject.updateHidden();
             /*this.host.updateSize(false);*/
         },
 
         cancelEdit: function () {
             this.editTitleE.after(this.linkE).remove();
             this.editing = false;
-            this.tabBarE.sortable("enable");
-            this.tabBarE.disableSelection();
+            this.tabContainer.sortable("enable");
+            this.tabContainer.disableSelection();
             this.editButtonE.css('display', '');
-            this.host.moreObject.updateHidden();
         },
         remove: function (cb, cb_ctx) {
             var tab = this;
@@ -564,7 +528,6 @@ var $ws = $ws || {};
                             cb.call(cb_ctx);
                         }
                     });
-                    tab.host.moreObject.updateHidden();
                 },
                 error: function(error, textStatus, errorThrown) {
                     flash('Problem during tab removing: ' + errorThrown, 'error')

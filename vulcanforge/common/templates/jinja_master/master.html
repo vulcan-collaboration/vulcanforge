@@ -80,29 +80,71 @@
       data-user="{% if c.user._id %}authenticated{% else %}anonymous{% endif %}"
       data-title-postfix="{{ g.title_postfix }}">
 
+<div id="forge-toolbar-popup-menu-viewport"></div>
+
 <div id="header-wrapper">
     <div id="header-primary-toolbar" class="toolbar-container">
-        <ul class="masternav toolbar-item toolbar-item-stretchy" data-url="/rest/webapi/navdata"></ul>
+        <div class="masternav toolbar-item toolbar-item-stretchy" data-url="/rest/webapi/navdata">
+            <ul class="masternav-context-items"></ul>
+        </div>
         <div id="global-search" class="toolbar-item toolbar-item-margin">
             <form id="keyword-search-form" action="/search/" method="get">
                 <input id="global-search-field" {% if not c.search_query %} class="empty" {% endif %} name="q" type="text" value="{{c.search_query}}" title="Click to enter search keyword"/>
             </form>
         </div>
         {% if c.user._id %}
-            <a href="/dashboard" class="toolbar-item toolbar-item-button toolbar-icon" title="Activity Feed">
-                <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
-                <span class="hidden">Activity Feed</span>
-            </a>
-            <a href="/dashboard/messages" class="toolbar-item toolbar-item-button toolbar-icon ico-inbox" title="Conversations">
+            <div id="vf-bookmarks-menu-button" class="toolbar-item toolbar-item-button toolbar-icon ico-bookmark" title="Bookmarks">
+                <span class="hidden">Bookmarks</span>
+            </div>
+            <!--<a href="/dashboard/messages" class="toolbar-item toolbar-item-button toolbar-icon ico-inbox" title="Conversations">
                 <span class="hidden">Conversations</span>
                 <span id="header-unread-count" class="toolbar-item-counter" title="unread messages">0</span>
+            </a>-->
+            <div id="vf-user-menu-button" class="toolbar-item toolbar-item-button toolbar-icon" data-counter="10">
+                <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
+            </div>
+            <div id="vf-user-menu-content" class="popup-menu-content-prerendered">
+                <div class="popup-menu-items-container">
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="{{ c.user.url() }}" class="inline-icon ico-user">View Profile</a>
+                    </div>
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="/dashboard" class="inline-icon ico-activity">Activity Feed</a>
+                    </div>
+                    <div class="popup-menu-item popup-menu-item-link" data-counter="10">
+                        <a href="/dashboard/messages" class="inline-icon ico-inbox">Conversations</a>
+                    </div>
+
+                    <div class="popup-menu-item-seperator"></div>
+
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="{{ c.user.url() }}profile/edit_profile" class="inline-icon ico-edit">Edit Profile</a>
+                    </div>
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="/auth/prefs" class="inline-icon ico-wrench">Preferences</a>
+                    </div>
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="/auth/prefs/subscriptions" class="inline-icon ico-mail">Subscriptions</a>
+                    </div>
+
+                    <div class="popup-menu-item-seperator"></div>
+
+                    <div class="popup-menu-item popup-menu-item-link">
+                        <a href="/auth/logout" class="inline-icon ico-logout">Log Out</a>
+                    </div>
+                </div>
+            </div>
+            <!--
+            <a href="{{ c.user.url() }}" class="toolbar-item toolbar-item-button toolbar-icon" title="My Profile">
+                <img src="{{ c.user.icon_url() }}" class="x24 ico-user"/>
+                <span class="hidden">My Profile</span>
             </a>
-            <!--<div class="toolbar-item toolbar-item-button toolbar-icon ico-bookmark" title="Bookmarks">
-                <span class="hidden">Bookmarks</span>
-            </div>-->
+            <a href="/dashboard" class="toolbar-item toolbar-item-button toolbar-icon ico-activity" title="Activity Feed">
+                <span class="hidden">Activity Feed</span>
+            </a>
             <a href="/auth/logout" class="toolbar-item toolbar-item-button toolbar-icon ico-logout" title="Log out">
                 <span class="hidden">Log Out</span>
-            </a>
+            </a>-->
         {% else %}
             <a href="{{ g.user_register_url }}" class="toolbar-item toolbar-item-button">Register</a>
             <a href="{{ g.login_url }}" class="toolbar-item toolbar-item-button">Log In</a>

@@ -70,12 +70,13 @@ h4 {
     color: #fff;
 }
 #header-primary-toolbar .toolbar-item-button:hover,
-#header-primary-toolbar .toolbar-item-button.hover {
+#header-primary-toolbar .toolbar-item-button.active {
     color: white;
-    background: #0095da;
+    background: #0086FF;
 }
+
 #header-primary-toolbar .toolbar-item:last-child {
-    margin-right: 1rem;
+    margin-right: 0.5rem;
 }
 #header-primary-toolbar .toolbar-icon {
     width: 24px;

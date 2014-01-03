@@ -5,21 +5,18 @@
 
     <filter id="Shadow">
         <feGaussianBlur in="SourceAlpha" stdDeviation="0.1"/>
-        <!--<feComponentTransfer>
-            <feFuncA type="linear" slope="0.6"/>
-        </feComponentTransfer>-->
         <feMerge>
             <feMergeNode/>
             <feMergeNode in="SourceGraphic"/>
         </feMerge>
     </filter>
 
-    <path d="M -0.1 -0.0625  L 0.8 0.5  L -0.1 1.0625"
+    <path d="M -0.0625 -0.1  L 0.5 0.8  L 1.0625 -0.1"
           fill="none"
           stroke="black" stroke-width="0.05"
           opacity="0.2"/>
 
-    <path d="M -0.1 -0.0625  L 0.8 0.5  L -0.1 1.0625"
+    <path d="M -0.0625 -0.1  L 0.5 0.8  L 1.0625 -0.1"
           fill="#0086FF"
           filter="url(#Shadow)"/>
 
