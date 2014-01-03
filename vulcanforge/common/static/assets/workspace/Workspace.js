@@ -56,7 +56,7 @@ var $ws = $ws || {};
 
         render: function () {
             var i,
-                curUrl = document.location.pathname + document.location.search,
+                curUrl = this.getCurrentHREF(),
                 host = this,
                 descriptor;
 
@@ -185,7 +185,7 @@ var $ws = $ws || {};
                 tab.render();
             }
 
-            if (!this.doesTabExist(document.location.pathname, $vf.page_state, initial)) {
+            if (!this.doesTabExist(this.getCurrentHREF(), $vf.page_state, initial)) {
                 this.showAdder();
             } else {
                 this.hideAdder();
@@ -203,7 +203,7 @@ var $ws = $ws || {};
         },
 
         showAdder: function () {
-            if (this.tabContainer && window.location.pathname !== '/') {
+            if (this.tabContainer && this.getCurrentHREF() !== '/') {
                 if (!this.$addButton) {
                     var host = this;
                     this.$addButton = $('<div/>', {
@@ -280,10 +280,14 @@ var $ws = $ws || {};
         },
 
         reRender: function () {
-            this.doesTabExist(document.location.pathname, $vf.page_state, false);
+            this.doesTabExist(this.getCurrentHREF(), $vf.page_state, false);
             this.updateTabDescriptors();
             this.renderTabs(false);
             /*this.updateSize(false);*/
+        },
+
+        getCurrentHREF: function () {
+            return location.pathname + location.search + location.hash;
         },
 
         addTabForCurrent: function () {
@@ -291,7 +295,7 @@ var $ws = $ws || {};
             var descriptor = {
                     title: $vf.currentPage.pageTitle,
                     type: $vf.currentPage.pageType,
-                    href: location.pathname + location.search,
+                    href: this.getCurrentHREF(),
                     selected: true,
                     order: this.tabDescriptors.length,
                     state: undefined
@@ -377,7 +381,7 @@ var $ws = $ws || {};
 
         render: function () {
             var host = this.host,
-                t = this,
+                that = this,
                 tabId = this.id,
                 cssString;
 
@@ -409,7 +413,7 @@ var $ws = $ws || {};
                     'class': 'bookmark-link toolbar-item toolbar-item-stretchy',
                     href: this.href,
                     mousedown: function (e) {
-                        t.md_time = e.timeStamp;
+                        that.md_time = e.timeStamp;
                     }
                 });
 
@@ -426,7 +430,7 @@ var $ws = $ws || {};
                     text: '',
                     href: '',
                     title: 'Remove this bookmark',
-                    'class': 'toolbar-item inline-icon ico-x',
+                    'class': 'bookmark-action-icon toolbar-item inline-icon ico-x',
                     click: function () {
                         host.closeTab.call(host, tabId);
                     }
@@ -436,9 +440,9 @@ var $ws = $ws || {};
                     text: '',
                     href: '',
                     title: 'Rename this bookmark',
-                    'class': 'toolbar-item inline-icon ico-edit',
+                    'class': 'bookmark-action-icon toolbar-item inline-icon ico-edit',
                     click: function () {
-                        t.triggerEdit();
+                        that.triggerEdit();
                     }
                 });
 
@@ -453,7 +457,7 @@ var $ws = $ws || {};
         },
 
         triggerEdit: function () {
-            var that = this;
+            var that = this, unfocusTimout;
             if (this.host.disableEdit === false) {
                 this.tabContainer.enableSelection();
                 this.tabContainer.sortable("disable");
@@ -477,17 +481,26 @@ var $ws = $ws || {};
                 this.linkE.after(this.$editInput).detach();
                 this.$editInput.
                     focus().
-                    select();
+                    select().
+                    on('blur', function () {
+                        unfocusTimout = setTimeout(function () {
+                            if (that.editing) {
+                                that.cancelEdit();
+                            }
+                        }, 200);
+                    });
                 this.$editAcceptButton = $('<span/>').
+                    addClass('bookmark-action-icon').
                     addClass('toolbar-item').
-                    addClass('inline-icon ico-check').
+                    addClass('inline-icon ico-check_alt').
                     on('click', function () {
                         that.updateTitle(String(that.$editInput.val()));
                     }).
                     appendTo(this.tabE);
                 this.$editCancelButton = $('<span/>').
+                    addClass('bookmark-action-icon').
                     addClass('toolbar-item').
-                    addClass('inline-icon ico-x').
+                    addClass('inline-icon ico-x_alt').
                     on('click', function () {
                         that.cancelEdit();
                     }).
@@ -496,6 +509,7 @@ var $ws = $ws || {};
                     add(this.$deleteButton).
                     css('display', 'none');
                 this.editing = true;
+                this.tabE.addClass('editing');
             }
         },
 
@@ -535,6 +549,7 @@ var $ws = $ws || {};
             $(this.$editAcceptButton).
                 add(this.$editCancelButton).
                 remove();
+            this.tabE.removeClass('editing');
         },
         remove: function (cb, cb_ctx) {
             var tab = this;

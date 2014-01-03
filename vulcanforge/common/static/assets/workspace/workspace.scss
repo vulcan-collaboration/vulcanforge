@@ -7,6 +7,9 @@ $reference-bin-on-width: 212px;
 .bookmark-element.selected {
     background: #404040;
 }
+.bookmark-element.editing {
+    background: black;
+}
 
 .bookmark-link.toolbar-item {
     padding: 1ex;
@@ -16,7 +19,7 @@ $reference-bin-on-width: 212px;
 }
 
 .bookmark-flag-container {
-    padding: 1ex 0 1ex 1ex;
+    padding: 6px 0 6px 6px;
     width: 14px;
     text-align: center;
 }
@@ -27,8 +30,10 @@ $reference-bin-on-width: 212px;
     vertical-align: middle;
 }
 
-.bookmark-element .inline-icon {
-    margin: 1ex 0;
+.bookmark-action-icon {
+    margin: 4px 0;
+    font-size: 16px;
+    text-align: center;
     cursor: pointer;
 }
 
