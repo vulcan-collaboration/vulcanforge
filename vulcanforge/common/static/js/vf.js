@@ -265,22 +265,22 @@ $.extend($vf, {
                 $vf.preloadImagesFromURLs([
                     $vf.resourceURL + "images/popup-menu-title-chevron.svg",
                 ]);
-            }
 
-            headerUnreadCountE = $('#header-unread-count');
+                headerUnreadCountE = $('#header-unread-count');
 
-            if ( headerUnreadCountE.length ) {
+                if ( headerUnreadCountE.length ) {
 
-                $vf.updateService.subscribe('dashboard_unread_count',
-                    function(unreadCount) {
+                    $vf.updateService.subscribe('dashboard_unread_count',
+                        function(unreadCount) {
 
-                        headerUnreadCountE.text(unreadCount);
-                        if (unreadCount > 0) {
-                            headerUnreadCountE.addClass('unread');
-                        } else {
-                            headerUnreadCountE.removeClass('unread');
-                        }
-                    }, 0);
+                            headerUnreadCountE.text(unreadCount);
+                            if (unreadCount > 0) {
+                                headerUnreadCountE.addClass('unread');
+                            } else {
+                                headerUnreadCountE.removeClass('unread');
+                            }
+                        }, 0);
+                }
             }
 
             // Search related stuff
