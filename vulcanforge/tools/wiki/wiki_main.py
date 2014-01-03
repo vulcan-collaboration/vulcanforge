@@ -344,11 +344,15 @@ class ForgeWikiApp(Application):
                                             project_id=project_id)
 
 
-def get_page_title_from_request(req_url=None, prefix=None):
-    if req_url is None:
-        req_url = request.path_info
+def get_page_title_from_request(req_url_utf=None, prefix=None):
+
+    if req_url_utf is None:
+        req_url_utf = request.path_info
     if prefix is None:
         prefix = c.app.url
+
+    req_url = req_url_utf.decode('utf-8')
+
     rest = filter(None, req_url.split(prefix)[-1].split('/'))
     title = rest[0]
     rest = rest[1:]
@@ -902,8 +906,8 @@ class PageController(WikiContentBaseController):
         self.page.hide_attachments = hide_attachments
 
         redirect(
-            c.app.url + really_unicode(self.page.title).encode('utf-8') +
-            ('/' if not name_conflict else '/edit')
+            really_unicode(c.app.url + self.page.title +(u'/' if not name_conflict else u'/edit')).encode('utf-8')
+
         )
 
     @expose()
@@ -932,17 +936,17 @@ class PageController(WikiContentBaseController):
         hierarchy_items.append({
             'label': c.app.config.options.mount_label,
             'prefix': '',
-            'href': c.app.url,
+            'href': c.app.url.decode('utf-8'),
             'children': root_cursor.all(),
             'child_count': root_cursor.count(),
-            'more_href': c.app.url + 'browse_pages'
+            'more_href': (c.app.url + 'browse_pages').decode('utf-8')
         })
 
         # get children along path
         title_segments = self.page.title.split('/')
         for i in range(0, len(title_segments)):
             end_title = title_segments[i]
-            title_prefix = '/'.join(title_segments[:i + 1])
+            title_prefix = ('/'.join(title_segments[:i + 1])).encode('utf-8')
             child_regex = r'^{}/[^/]+$'.format(title_prefix)
             child_cursor = Page.query.find({
                 'app_config_id': self.page.app_config_id,
@@ -954,11 +958,11 @@ class PageController(WikiContentBaseController):
             hierarchy_items.append({
                 'label': end_title,
                 'prefix': title_prefix,
-                'href': '{}{}'.format(c.app.url, title_prefix),
+                'href': ('{}{}'.format(c.app.url, title_prefix)).decode('utf-8'),
                 'children': child_cursor.all(),
                 'child_count': child_cursor.count(),
                 'more_href': "{}search/search/?tool_q=title_s:*'{}'".format(
-                    c.app.url, title_prefix)
+                    c.app.url, title_prefix).decode('utf-8')
             })
         return hierarchy_items
 
