@@ -190,6 +190,7 @@ var $ws = $ws || {};
             } else {
                 this.hideAdder();
             }
+            $('#vf-bookmarks-menu-button').qtip('reposition');
         },
 
         removeTab: function (tabId) {
@@ -206,7 +207,7 @@ var $ws = $ws || {};
                 if (!this.$addButton) {
                     var host = this;
                     this.$addButton = $('<div/>', {
-                        'class': 'popup-menu-item popup-menu-item-button inline-icon ico-bookmark',
+                        'class': 'bookmark-this-page-button popup-menu-item popup-menu-item-button inline-icon ico-bookmark',
                         text: "Bookmark this page",
                         click: function () {
                             host.addTabForCurrent();
@@ -367,12 +368,12 @@ var $ws = $ws || {};
 
         tabE: null,
         linkE: null,
-        closeButtonE: null,
+        $deleteButton: null,
         host: null,
         selected: false,
         editing: false,
-        editTitleE: null,
-        editButtonE: null,
+        $editInput: null,
+        $editButton: null,
 
         render: function () {
             var host = this.host,
@@ -395,12 +396,11 @@ var $ws = $ws || {};
                 }
 
                 if (this.selected) {
-                    cssString += ' active';
+                    cssString += ' selected';
                 }
 
                 this.tabE = $('<div/>', {
                     'class': cssString,
-                    title: this.title,
                     'data-id': this.id
                 });
 
@@ -408,32 +408,34 @@ var $ws = $ws || {};
                     text: this.title,
                     'class': 'bookmark-link toolbar-item toolbar-item-stretchy',
                     href: this.href,
-                    title: this.title,
                     mousedown: function (e) {
                         t.md_time = e.timeStamp;
                     }
                 });
 
+                this.$flagContainer = $('<span/>').
+                    addClass('bookmark-flag-container toolbar-item').
+                    prependTo(this.tabE);
                 if (this.type !== 'default') {
-                    $('<span/>', {
-                        'class': 'flag'
-                    }).prependTo(this.linkE);
+                    $('<span/>').
+                        addClass('flag').
+                        appendTo(this.$flagContainer);
                 }
 
-                this.closeButtonE = $('<div/>', {
+                this.$deleteButton = $('<div/>', {
                     text: '',
                     href: '',
-                    title: 'Remove this tab',
+                    title: 'Remove this bookmark',
                     'class': 'toolbar-item inline-icon ico-x',
                     click: function () {
                         host.closeTab.call(host, tabId);
                     }
                 });
 
-                this.editButtonE = $('<div/>', {
+                this.$editButton = $('<div/>', {
                     text: '',
                     href: '',
-                    title: 'Edit Tab Title',
+                    title: 'Rename this bookmark',
                     'class': 'toolbar-item inline-icon ico-edit',
                     click: function () {
                         t.triggerEdit();
@@ -443,35 +445,57 @@ var $ws = $ws || {};
                 this.tabContainer.append(
                     this.tabE
                         .append(this.linkE)
-                        .append(this.editButtonE)
-                        .append(this.closeButtonE)
+                        .append(this.$editButton)
+                        .append(this.$deleteButton)
                 );
 
             }
         },
 
         triggerEdit: function () {
+            var that = this;
             if (this.host.disableEdit === false) {
-                var t = this;
-                t.tabContainer.enableSelection();
-                t.tabContainer.sortable("disable");
-                t.editTitleE = $('<input/>', {
+                this.tabContainer.enableSelection();
+                this.tabContainer.sortable("disable");
+                this.$editInput = $('<input/>', {
                     "name": "ws-title",
-                    "class": "ws-title-input",
-                    "val": t.title,
+                    "class": "rename-bookmark-title-input toolbar-item toolbar-item-stretchy",
+                    "val": this.title,
                     "keydown": function (e) {
                         var newValue = String($(this).val());
                         if (e.which === 13 && newValue.length) {
-                            t.updateTitle(newValue);
+                            that.updateTitle(newValue);
+                        } else if (e.which === 27) {
+                            that.cancelEdit();
                         }
                     }
-                });
-                t.linkE.after(t.editTitleE).detach();
-                t.editTitleE.focus().select().focusout(function () {
-                    t.cancelEdit();
-                });
-                this.editButtonE.css('display', 'none');
-                t.editing = true;
+                }).
+                    css({
+                        'width': this.linkE.width(),
+                        'height': this.linkE.outerHeight()
+                    });
+                this.linkE.after(this.$editInput).detach();
+                this.$editInput.
+                    focus().
+                    select();
+                this.$editAcceptButton = $('<span/>').
+                    addClass('toolbar-item').
+                    addClass('inline-icon ico-check').
+                    on('click', function () {
+                        that.updateTitle(String(that.$editInput.val()));
+                    }).
+                    appendTo(this.tabE);
+                this.$editCancelButton = $('<span/>').
+                    addClass('toolbar-item').
+                    addClass('inline-icon ico-x').
+                    on('click', function () {
+                        that.cancelEdit();
+                    }).
+                    appendTo(this.tabE);
+                this.$editButton.
+                    add(this.$deleteButton).
+                    css('display', 'none');
+                this.editing = true;
             }
         },
 
@@ -501,16 +525,21 @@ var $ws = $ws || {};
         },
 
         cancelEdit: function () {
-            this.editTitleE.after(this.linkE).remove();
+            this.$editInput.after(this.linkE).remove();
             this.editing = false;
             this.tabContainer.sortable("enable");
             this.tabContainer.disableSelection();
-            this.editButtonE.css('display', '');
+            this.$editButton.
+                add(this.$deleteButton).
+                css('display', '');
+            $(this.$editAcceptButton).
+                add(this.$editCancelButton).
+                remove();
         },
         remove: function (cb, cb_ctx) {
             var tab = this;
             this.tabE.unbind('click');
-            this.closeButtonE.unbind('click');
+            this.$deleteButton.unbind('click');
 
             $.ajax({
                 url: this.host.removeSL.url + this.id,
@@ -521,7 +550,7 @@ var $ws = $ws || {};
                 },
                 success: function() {
                     tab.tabE.hide("slide", {direction: "down"}, 200, function () {
-                        tab.closeButtonE.remove();
+                        tab.$deleteButton.remove();
                         tab.linkE.remove();
                         tab.tabE.remove();
                         if (cb && cb_ctx) {

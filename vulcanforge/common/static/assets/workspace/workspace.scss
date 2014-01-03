@@ -3,71 +3,74 @@
 $workspace-icons: sprite-map("assets/workspace/images/*.png");
 $reference-bin-on-width: 212px;
 
+
+.bookmark-element.selected {
+    background: #404040;
+}
+
+.bookmark-link.toolbar-item {
+    padding: 1ex;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bookmark-flag-container {
+    padding: 1ex 0 1ex 1ex;
+    width: 14px;
+    text-align: center;
+}
 .bookmark-element .flag {
     display: inline-block;
     width: 14px;
     height: 14px;
-    margin: 0 1ex 0 0;
+    vertical-align: middle;
 }
 
 .bookmark-element .inline-icon {
     margin: 1ex 0;
+    cursor: pointer;
+}
+
+input.rename-bookmark-title-input {
+    margin: 0 1ex;
+    color: inherit;
+    border-radius: 0;
+    border: none;
+    background-color: transparent;
+    background-image: url(../../images/white-rect.svg), url(../../images/white-rect.svg), url(../../images/white-rect.svg);
+    background-position: bottom left, bottom center, bottom right;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-size: 2px 4px, 100% 2px, 2px 4px;
+    box-shadow: none;
 }
 
 .bookmark-element.COMPONENT .flag {
     background: sprite($workspace-icons, component_icon) no-repeat ;
 }
 
-.bookmark-element.COMPONENT.active .flag {
-    background: sprite($workspace-icons, component_icon_selected) no-repeat;
-}
-
 .bookmark-element.WIKI .flag {
     background: sprite($workspace-icons, wiki_icon) no-repeat;
-}
-
-.bookmark-element.WIKI.active .flag {
-    background: sprite($workspace-icons, wiki_icon_selected) no-repeat;
 }
 
 .bookmark-element.CLOUD .flag {
     background: sprite($workspace-icons, cloud_icon) no-repeat;
 }
 
-.bookmark-element.CLOUD.active .flag {
-    background: sprite($workspace-icons, cloud_icon_selected) no-repeat;
-}
-
 .bookmark-element.TICKETS .flag {
     background: sprite($workspace-icons, tickets_icon) no-repeat;
-}
-
-.bookmark-element.TICKETS.active .flag {
-    background: sprite($workspace-icons, tickets_icon_selected) no-repeat;
 }
 
 .bookmark-element.ADMIN .flag {
     background: sprite($workspace-icons, admin_icon) no-repeat;
 }
 
-.bookmark-element.ADMIN.active .flag {
-    background: sprite($workspace-icons, admin_icon_selected) no-repeat;
-}
-
 .bookmark-element.FORUMS .flag {
     background: sprite($workspace-icons, forums_icon) no-repeat;
 }
 
-.bookmark-element.FORUMS.active .flag {
-    background: sprite($workspace-icons, forums_icon_selected) no-repeat;
-}
-
 .bookmark-element.DISCOVERY .flag {
     background: sprite($workspace-icons, search_icon) no-repeat;
-}
-
-.bookmark-element.DISCOVERY.active .flag {
-    background: sprite($workspace-icons, search_icon_selected) no-repeat;
 }
 
 
