@@ -97,6 +97,8 @@ $.extend($vf, {
         isSet = global.isSet;
         $ws = global.$ws;
 
+        $vf.userURL = userURL;
+
         trace('Initializing VF App...');
 
         if (!initialized) {
@@ -248,43 +250,21 @@ $.extend($vf, {
                     trace('User is active again.');
                 });
 
-                switch ( $vf.currentPage.pageType ) {
+                $vf.referenceBin = new $ws.ReferenceBin({
+                    addSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "POST"),
+                    removeSL: new $vf.ServiceLocation(userURL + "profile/reference_bin/delete_reference", "POST"),
+                    getSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "GET"),
+                    containerE: $('#referenceBinContainer'),
+                    referenceDescriptors: referenceBin.contents,
+                    lastMod: referenceBin.last_mod
+                });
 
-                    case 'visualizerFullScreen':
-                        $vf.referenceBin = new $ws.ReferenceBin({
-                            addSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "POST"),
-                            removeSL: new $vf.ServiceLocation(userURL + "profile/reference_bin/delete_reference", "POST"),
-                            getSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "GET"),
-                            containerE: $('#right-toolbar .toolbar-lower'),
-                            referenceDescriptors: referenceBin.contents,
-                            lastMod: referenceBin.last_mod
-                        });
+                $vf.initializeBookmarkTabsMenu(tabs);
+                $vf.initializeUserMenu();
 
-                        break;
-
-                    default:
-
-                        $vf.workspaceTabBar = new $ws.WorkspaceTabBar({
-                            addSL: new $vf.ServiceLocation(userURL + "profile/workspace_tabs", "POST"),
-                            updateSL: new $vf.ServiceLocation(userURL + "profile/workspace_tabs", "PUT"),
-                            removeSL: new $vf.ServiceLocation(userURL + "profile/workspace_tabs/", "DELETE"),
-                            getSL: new $vf.ServiceLocation(userURL + "profile/workspace_tabs", "GET"),
-                            barContainer: $('#workspace-tab-bar-container'),
-                            tabDescriptors: tabs
-                        });
-
-                        $vf.referenceBin = new $ws.ReferenceBin({
-                            addSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "POST"),
-                            removeSL: new $vf.ServiceLocation(userURL + "profile/reference_bin/delete_reference", "POST"),
-                            getSL: new $vf.ServiceLocation(userURL + "profile/reference_bin", "GET"),
-                            containerE: $('#referenceBinContainer'),
-                            referenceDescriptors: referenceBin.contents,
-                            lastMod: referenceBin.last_mod
-                        });
-
-                        break;
-                }
-
+                $vf.preloadImagesFromURLs([
+                    $vf.resourceURL + "images/popup-menu-title-chevron.svg",
+                ]);
             }
 
             headerUnreadCountE = $('#header-unread-count');
@@ -1441,5 +1421,151 @@ $.extend($vf, {
     $vf.test_toRelativeURL('/a/b/c/d', '/a/b/e', '../c/d');
     $vf.test_toRelativeURL('/a/b', '/a/b', '.');
     */
+
+
+    $vf.masternavQtip = function ($target, config) {
+        var qtipConfig = $.extend(true, {}, {
+                position: {
+                    container: $('#header-wrapper'),
+                    viewport: $(window),
+                    adjust: {
+                        method: 'shift'
+                    },
+                    my: 'top left',
+                    at: 'bottom left'
+                },
+                show: {
+                    event: 'click mouseenter',
+                    solo: true
+                },
+                hide: {
+                    fixed: true,
+                    delay: 400
+                },
+                style: {
+                    classes: 'popup-menu masternav-popup-menu',
+                    tip: false
+                },
+                events: {
+                    move: function (event, api) {
+                        api.elements.tooltip.css('z-index', '');
+                    },
+                    show: function (event, api) {
+                        $target.
+                            addClass('active');
+                    },
+                    hide: function (event, api) {
+                        $target.
+                            removeClass('active');
+                    }
+                }
+            }, config);
+        $target.
+            addClass('masternav-item-menu').
+            qtip(qtipConfig);
+    };
+
+    $vf.initializeBookmarkTabsMenu = function (tabs) {
+        var $button = $('#vf-bookmarks-menu-button'),
+            $menuContainer,
+            currentHREF = window.location.pathname + window.location.search + window.location.hash,
+            currentIsBookmarked = false;
+
+        if (!tabs || !$button) {
+            return;
+        }
+
+        $menuContainer = $('<div/>').
+            addClass('vf-bookmarksmenu-container').
+            addClass('popup-menu-items-container');
+
+        $vf.workspaceTabBar = new $ws.WorkspaceTabBar({
+            addSL: new $vf.ServiceLocation($vf.userURL + "profile/workspace_tabs", "POST"),
+            updateSL: new $vf.ServiceLocation($vf.userURL + "profile/workspace_tabs", "PUT"),
+            removeSL: new $vf.ServiceLocation($vf.userURL + "profile/workspace_tabs/", "DELETE"),
+            getSL: new $vf.ServiceLocation($vf.userURL + "profile/workspace_tabs", "GET"),
+            tabContainer: $menuContainer,
+            tabDescriptors: tabs
+        });
+
+//
+//        $.each(tabs, function (i,tab) {
+//            var $tab = $('<div/>').
+//                addClass('vf-bookmarksmenu-tab').
+//                addClass('popup-menu-item').
+//                addClass('popup-menu-item-link').
+//                addClass('toolbar-container').
+//                attr('data-tab-type', tab.type).
+//                appendTo($menuContainer),
+//            $link = $('<a/>').
+//                attr('href', tab.href).
+//                addClass('toolbar-item').
+//                addClass('toolbar-item-stretchy').
+//                text(tab.title).
+//                appendTo($tab);
+//            $('<span/>').
+//                addClass('inline-icon ico-edit').
+//                addClass('toolbar-item').
+//                appendTo($tab);
+//            $('<span/>').
+//                addClass('inline-icon ico-delete').
+//                addClass('toolbar-item').
+//                appendTo($tab);
+//            if (currentHREF === tab.href) {
+//                currentIsBookmarked = true;
+//            }
+//        });
+//
+//        if (!currentIsBookmarked) {
+//            $('<span/>').
+//                addClass('popup-menu-item-seperator').
+//                prependTo($menuContainer);
+//            $('<span/>').
+//                text('Bookmark this page').
+//                addClass('popup-menu-item').
+//                addClass('popup-menu-item-button').
+//                addClass('inline-icon ico-bookmark').
+//                prependTo($menuContainer).
+//                bind('click', function () {
+//                    $(this).remove();
+//                    $.ajax({
+//                        'url': userURL + "profile/workspace_tabs",
+//                        'type': 'POST',
+//                        'data': {
+//                            'href': currentHREF,
+//                            'title': window.title
+//                        },
+//                        'success': function () {
+//                            $vf.reloadBookmarkTabsMenu();
+//                        }
+//                    });
+//                });
+//        }
+//
+//        $button.qtip('destroy', true);
+        $vf.masternavQtip($button, {
+            content: {
+                title: "My Bookmarks",
+                text: $menuContainer
+            }
+        });
+    };
+
+    $vf.initializeUserMenu = function () {
+        var $button = $('#vf-user-menu-button'),
+            $menuContainer;
+
+        $menuContainer = $('#vf-user-menu-content').
+            remove().
+            removeClass('popup-menu-content-prerendered');
+
+        $vf.masternavQtip($button, {
+            content: {
+                title: "My Account",
+                text: $menuContainer
+            }
+        });
+    };
+
 
 }(window));

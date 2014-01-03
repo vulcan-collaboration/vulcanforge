@@ -1,315 +1,76 @@
 @import "css/init.scss";
 
-$tab-height: 26px;
-$tab-max-width: 250px;
-
 $workspace-icons: sprite-map("assets/workspace/images/*.png");
 $reference-bin-on-width: 212px;
 
-.workspace-tab-bar-container {
-    position: absolute;
-    z-index: 900;
-    bottom: 1px;
-    left: 0;
-    right: 0;
-    padding: 0 32px 0 0;
-}
-
-.workspace-tab-bar,
-.workspace-tabbar-hidden ul {
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
-    font-size: 10px;
-    text-transform: uppercase;
-}
-
-.workspace-tab-bar{
-    width: 100%;
-    height: 28px;
-    /* overflow: hidden; */
-}
-
-.workspace-tabbar-hidden {
-    top: 26px;
-    right: 0;
-    padding-top: 14px;
-}
-
-.workspace-tab {
-    min-width: 15px;
-    display: block;
-    padding: 1px 0 0 $pu;
-    @include vertical-gradient-simple(#333, darken(#333, 8%));
-    margin-right: 0;
-    margin-bottom: 0;
-    position: relative;
-    overflow: hidden;
-    float: left;
-    border-right: 1px solid #000;
-    height: $tab-height;
-    line-height: $tab-height;
-    border-top: 1px solid #3d3d3d;  
-    border-left: 1px solid #4a4a4a;
-   
-    -webkit-transition-property:color, background;
-    -webkit-transition-duration: .4s, .2s; 
-    -webkit-transition-timing-function: linear, ease-out;
-    
-    -moz-transition-property:color, background; 
-    -moz-transition-duration: .4s, .2s; 
-    -moz-transition-timing-function: linear, ease-out;
-
-    -o-transition-property:color, background; 
-    -o-transition-duration: .4s, .2s; 
-    -o-transition-timing-function: linear, ease-out;
-
-    transition-property:color, background, background-image; 
-    transition-duration: .4s, .2s; 
-    transition-timing-function: linear, ease-out;
-
-/*    border-top-left-radius: 5px 5px; */
-/*    border-top-right-radius: 10px 10px;*/
-
-}
-
-.workspace-tab.selected {
-    @include vertical-gradient-simple(#ffffff, $column-header-footer-color);
-    border-left: none;
-    border-top: none;
-    top: 1px;
-    height: $tab-height+1;
-    line-height: $tab-height+1;
-}
-
-.workspace-tab.selected:hover {
-    @include vertical-gradient-simple(#ffffff, $column-header-footer-color);
-}
-
-.workspace-tab:hover {
-    @include vertical-gradient-simple(#555, darken(#333, 3%));
-    cursor:pointer;
-}
-
-.workspace-tab a {
-    text-overflow: ellipsis;
-    vertical-align: bottom;
-}
-
-.workspace-tab a,
-.workspace-tab .ws-title-input {
-    text-decoration: none;
-    white-space:nowrap;
+.bookmark-element .flag {
     display: inline-block;
-    margin: 0 $pu 0 3*$pu;
-    max-width: $tab-max-width;
-    overflow: hidden;
-}
-
-.workspace-tab.default a,
-.workspace-tab.default .ws-title-input {
-    margin-left: 0px;
-}
-
-li.workspace-tab.intellitrigger{
-    overflow: visible;
-    padding: 0 $pu;
-    text-align: center;
-}
-.workspace-tab.intellitrigger > a {
-    margin-left: 0;
-}
-
-
-.workspace-tab .ws-title-input {
-    text-transform: uppercase;
-    font-size: 10px;
-    background-color: #f2f2f2;
-    top: 3px;
-    box-shadow: none;
-    padding-right: 6px;
-    margin-right: 2*$pu;
-}
-
-.workspace-tab a:link,
-.workspace-tab a:visited {
-    color: #eee;
-}
-
-.workspace-tab.selected a:link,
-.workspace-tab.selected a:visited {
-    color: #333;
-}
-
-.workspace-tab a:hover,
-.workspace-tab a:active {
-    color: #fff;
-    text-decoration: none;
-}
-
-.more-hidden-container .workspace-tab {
-    float: none;
-}
-
-.workspace-tabbar-hidden .more-callout-container {
-  position: absolute;
-  top: 4px;
-  right: 0;
-  height: 12px;
-}
-
-.workspace-tabbar-hidden .more-callout-container svg {
-  fill: #333;
-  width: 20px;
-}
-
-.tabClose {
-    width: 10px;
-    height: 10px;
-    background: sprite($workspace-icons, tab_close_off) no-repeat;
-    position: absolute;
-    top: -1px;
-    right: -1px;
-    display: none;
-}
-
-.workspace-tab:hover .tabClose, .workspace-tab:hover .tabEdit {
-    display: block;    
-}
-
-.tabClose:hover {
-    background: sprite($workspace-icons, tab_close_on) no-repeat;
-}
-
-.selected .tabClose {
-    background: sprite($workspace-icons, tab_close_selected_off) no-repeat;
-}
-
-.selected .tabClose:hover {
-    background: sprite($workspace-icons, tab_close_selected_on) no-repeat;
-}
-
-.tabEdit {
-    width: 10px;
-    height: 10px;
-    background: sprite($workspace-icons, tab_edit_off) no-repeat;
-    position: absolute;
-    top: -1px;
-    right: 9px;
-    display: none;
-}
-
-.tabEdit:hover {
-    background: sprite($workspace-icons, tab_edit_on) no-repeat;
-}
-
-.selected .tabEdit {
-    background: sprite($workspace-icons, tab_edit_selected_off) no-repeat;
-}
-
-.selected .tabEdit:hover {
-    background: sprite($workspace-icons, tab_edit_selected_on) no-repeat;
-}
-
-.workspace-tab .flag{
     width: 14px;
     height: 14px;
-    position: absolute;
-    top: 7px;
-    left: 5px;
+    margin: 0 1ex 0 0;
 }
 
-.workspace-tab.COMPONENT .flag {
-    background: sprite($workspace-icons, component_icon) no-repeat;
+.bookmark-element .inline-icon {
+    margin: 1ex 0;
 }
 
-.workspace-tab.COMPONENT.selected .flag {
+.bookmark-element.COMPONENT .flag {
+    background: sprite($workspace-icons, component_icon) no-repeat ;
+}
+
+.bookmark-element.COMPONENT.active .flag {
     background: sprite($workspace-icons, component_icon_selected) no-repeat;
 }
 
-.workspace-tab.WIKI .flag {
+.bookmark-element.WIKI .flag {
     background: sprite($workspace-icons, wiki_icon) no-repeat;
 }
 
-.workspace-tab.WIKI.selected .flag {
+.bookmark-element.WIKI.active .flag {
     background: sprite($workspace-icons, wiki_icon_selected) no-repeat;
 }
 
-.workspace-tab.CLOUD .flag {
+.bookmark-element.CLOUD .flag {
     background: sprite($workspace-icons, cloud_icon) no-repeat;
 }
 
-.workspace-tab.CLOUD.selected .flag {
+.bookmark-element.CLOUD.active .flag {
     background: sprite($workspace-icons, cloud_icon_selected) no-repeat;
 }
 
-.workspace-tab.TICKETS .flag {
+.bookmark-element.TICKETS .flag {
     background: sprite($workspace-icons, tickets_icon) no-repeat;
 }
 
-.workspace-tab.TICKETS.selected .flag {
+.bookmark-element.TICKETS.active .flag {
     background: sprite($workspace-icons, tickets_icon_selected) no-repeat;
 }
 
-.workspace-tab.ADMIN .flag {
+.bookmark-element.ADMIN .flag {
     background: sprite($workspace-icons, admin_icon) no-repeat;
 }
 
-.workspace-tab.ADMIN.selected .flag {
+.bookmark-element.ADMIN.active .flag {
     background: sprite($workspace-icons, admin_icon_selected) no-repeat;
 }
 
-.workspace-tab.FORUMS .flag {
+.bookmark-element.FORUMS .flag {
     background: sprite($workspace-icons, forums_icon) no-repeat;
 }
 
-.workspace-tab.FORUMS.selected .flag {
+.bookmark-element.FORUMS.active .flag {
     background: sprite($workspace-icons, forums_icon_selected) no-repeat;
 }
 
-.workspace-tab.DISCOVERY .flag {
+.bookmark-element.DISCOVERY .flag {
     background: sprite($workspace-icons, search_icon) no-repeat;
 }
 
-.workspace-tab.DISCOVERY.selected .flag {
+.bookmark-element.DISCOVERY.active .flag {
     background: sprite($workspace-icons, search_icon_selected) no-repeat;
 }
 
-.workspace-tab.adder {
-    float: none;
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    margin: 0;
-    padding: 0;
-    height: 23px;
-    width: 23px;
-    background: sprite($workspace-icons, workspace-adder-button_off) no-repeat;
-    background-color: transparent;
-    border: none;
-    border-top-left-radius: 0 0;
 
-    -webkit-transition-property:color, background;
-    -webkit-transition-duration: .0s, .0s;
-
-    -moz-transition-property:color, background;
-    -moz-transition-duration: .0s, .0s;
-
-    -o-transition-property:color, background;
-    -o-transition-duration: .0s, .0s;
-
-    transition-property:color, background, background-image;
-    transition-duration: .0s, .0s;
-}
-
-.workspace-tab.adder:hover {
-    background: sprite($workspace-icons, workspace-adder-button_on) no-repeat;
-    background-color: transparent;
-}
-
-.workspace-tab-bar > .workspace-tab:last-child {
-    border-right: none;
-}
 
 .referenceBin {
     background: rgb(69,72,77); /* Old browsers */
