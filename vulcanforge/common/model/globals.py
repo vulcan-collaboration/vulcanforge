@@ -25,4 +25,7 @@ class ForgeGlobals(BaseMappedClass):
         """Get current user counter and increment by 1"""
         _, coll = pymongo_db_collection(cls)
         doc = coll.find_and_modify(update={"$inc": {"user_counter": 1}})
-        return doc["user_counter"]
+        if doc:
+            return doc["user_counter"]
+        else:
+            coll.insert({'user_counter': 1})

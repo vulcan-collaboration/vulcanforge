@@ -204,7 +204,7 @@ class NeighborhoodController(BaseTGController):
 
         c.project = project
         if project is None or (project.deleted and
-                               not g.security.has_access(c.project, 'update')):
+                               not g.security.has_access(c.project, 'write')):
             raise exc.HTTPNotFound, pname
         if project.neighborhood.name != self.neighborhood_name:
             redirect(project.url())

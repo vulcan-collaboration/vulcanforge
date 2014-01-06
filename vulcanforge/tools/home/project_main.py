@@ -38,7 +38,9 @@ class ProjectHomeApp(Application):
         32: '{ep_name}/images/home_32.png',
         48: '{ep_name}/images/home_48.png'
     }
-    permissions = ['read']
+    permissions = dict(
+        read = Application.permissions['read']
+    )
     default_acl = {
         '*anonymous': ['read']
     }
@@ -139,16 +141,17 @@ class ProjectHomeController(BaseController):
                     app = App(c.project, ac)
                     # permission descriptions
                     perm_descriptions = []
-                    for p in app.permissions:
-                        if g.security.has_access(app, p):
-                            if p in app.permission_descriptions:
-                                perm_descriptions.append(
-                                    'You can {}'.format(
-                                        app.permission_descriptions[p])
-                                )
-                            else:
-                                perm_descriptions.append(
-                                    'You have the {} permission'.format(p))
+                    if type(app.permissions) is dict:
+                        for p in app.permissions:
+                            if g.security.has_access(app, p):
+                                if p in app.permissions and app.permissions[p]:
+                                    perm_descriptions.append(
+                                        'You can {}'.format(
+                                            app.permissions[p].lower())
+                                    )
+                                else:
+                                    perm_descriptions.append(
+                                        'You have the {} permission'.format(p))
                     # tool infos
                     tool_actions = {
                         k: ac.url() + v['url']
@@ -296,7 +299,7 @@ class ProjectHomeController(BaseController):
     @require_post()
     def update_configuration(self, divs=None, layout_class=None, new_div=None,
                              **kw):
-        g.security.require_access(c.project, 'update')
+        g.security.require_access(c.project, 'write')
         config = PortalConfig.current()
         config.layout_class = layout_class
         # Handle updated and deleted divs

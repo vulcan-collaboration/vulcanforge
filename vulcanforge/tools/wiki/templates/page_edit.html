@@ -50,7 +50,7 @@
                 <p>When selected, attachments will not be shown below page contents but will still be accessible for embedding in pages.</p>
             </fieldset>
         </li>
-        {% if not page_exists or g.security.has_access(page, 'edit') %}
+        {% if not page_exists or g.security.has_access(page, 'write') %}
         <li>
             <label>Attach Files:</label>
             {{c.attachments_field.display(name='new_attachments')}}
