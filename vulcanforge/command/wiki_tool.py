@@ -13,6 +13,7 @@ from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
 
 from .base import Command
+from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 LOG = logging.getLogger(__name__)
 WIKI_DUMP_EXTENSION = '.wikidump.json'
@@ -228,3 +229,42 @@ class ImportWikiPages(Command):
                     page.commit()
 
         ThreadLocalODMSession.flush_all()
+
+
+class FindBrokenLinks(Command):
+    usage = '<ini file> project mount_point'
+    parser = Command.standard_parser(verbose=True)
+    parser.add_option("-n", "--neighborhood", dest="neighborhood",
+                      help="Neighborhood url prefix (if necessary)")
+    parser.add_option("-u", "--user", dest="user",
+                      help="Make requests as user with this username")
+
+    def command(self):
+        self.basic_setup()
+        neighborhood = None
+        if self.options.neighborhood:
+            neighborhood = Neighborhood.by_prefix(self.options.neighborhood)
+            if not neighborhood:
+                raise RuntimeError("Unable to find neighborhood {}".format(
+                    self.options.neighborhood))
+
+        g.context_manager.set(self.args[1], self.args[2],
+                              neighborhood=neighborhood)
+
+        if self.options.user:
+            user = User.by_username(self.options.user)
+        else:
+            user = None
+        broken_finder = BrokenLinkFinder(user=user)
+
+        print "{:^25} {:^25} {:^25} {:^25}".format(
+            "Page (url)", "Broken Link", "Html Str", "Reason")
+
+        fmt = "{:25} {:25} {:25} {}"
+        for error_spec in broken_finder.find_broken_links_by_app():
+            print fmt.format(
+                error_spec["page"].url(),
+                error_spec["link"],
+                error_spec["html"],
+                error_spec["msg"]
+            )
