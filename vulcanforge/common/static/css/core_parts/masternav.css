@@ -11,6 +11,10 @@
 .masternav {
     text-align: left;
 }
+.masternav-context-items {
+    position: relative;
+    z-index: 11;
+}
 
 li.masternav-item {
     display: inline-block;
@@ -32,13 +36,14 @@ li.masternav-item:first-child {
     padding-left: 1em;
     background: #404040;
 }
-li.masternav-item:last-child {
+li.masternav-item:last-child,
+li.masternav-item:last-child:hover {
     background: transparent;
 }
 li.masternav-item:last-child::after {
     content: none;
 }
-li.masternav-item:hover:last-child::after,
+li.masternav-item.has-menu:hover:last-child::after,
 li.masternav-item.masternav-menu-open:last-child::after {
     content: "";
 }
@@ -48,17 +53,20 @@ li.masternav-item:nth-child(2) {z-index: 3;}
 li.masternav-item:nth-child(3) {z-index: 2;}
 li.masternav-item:nth-child(4) {z-index: 1;}
 
-li.masternav-item:hover,
-li.masternav-item.masternav-menu-open {
-    background: #0086FF;
-    background: -webkit-linear-gradient(left, #369, #0086FF 3rem);
-    background: -moz-linear-gradient(left, #369,#0086FF 3rem);
-    background: -o-linear-gradient(left, #369, #0086FF 3rem);
-    background: -ms-linear-gradient(left, #369, #0086FF 3rem);
-    background: linear-gradient(to right, #369, #0086FF 3rem);
+li.masternav-item:hover {
     color: white;
 }
-li.masternav-item:first-child:hover,
+
+li.masternav-item.has-menu:hover,
+li.masternav-item.masternav-menu-open {
+    background: #0086FF;
+    background: -webkit-linear-gradient(left, #05c, #0086FF 3rem);
+    background: -moz-linear-gradient(left, #05c,#0086FF 3rem);
+    background: -o-linear-gradient(left, #05c, #0086FF 3rem);
+    background: -ms-linear-gradient(left, #05c, #0086FF 3rem);
+    background: linear-gradient(to right, #05c, #0086FF 3rem);
+}
+li.masternav-item.has-menu:first-child:hover,
 li.masternav-item.masternav-menu-open:first-child {
     background: #0086FF;
 }
@@ -109,7 +117,7 @@ li.masternav-item .masternav-item-icon.special-icon {
 
 .popup-container {
     position: fixed;
-    z-index: 16000;
+    z-index: 10;
     display: block;
     background: #282828;
     background: -webkit-linear-gradient(left, #181818, #282828 3rem);
@@ -119,35 +127,57 @@ li.masternav-item .masternav-item-icon.special-icon {
     background: linear-gradient(to right, #181818, #282828 3rem);
     line-height: 3em;
     border: none;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding: 0;
     opacity: 0;
     box-shadow: 0 4px 8px rgba(0,0,0,0.6);
 }
 
-.popup-container.scrollable-top::before, .popup-container.scrollable-bottom::after {
-    width: 100%;
-    background: rgba(100, 70, 50, .5);
+.popup-container::before,
+.popup-container::after {
+    content: "";
+    z-index: 2;
     position: absolute;
-    color: rgba(255, 255, 255, 0.25);
-    line-height: 15px;
-    font-size: 20px;
     left: 0;
-    font-family: "ForgeIconicFill";
+    width: 100%;
+    height: 0;
+    transition: height 400ms;
+    /*font-family: "ForgeIconicFill";
+    font-size: 20px;
     text-align: center;
+    line-height: 15px;
+    color: rgba(255, 255, 255, 0.7);*/
 }
 
-.popup-container.scrollable-top::before {
-    top: 0;
-    content: "\25b2";
-}
-
+.popup-container.scrollable-top::before,
 .popup-container.scrollable-bottom::after {
+    height: 16px;
+    transition: height 400ms;
+}
+
+.popup-container::before {
+    top: 0;
+    /*content: "\25b2";*/
+    background: rgba(0, 0, 0, 0.5);
+    background: -webkit-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -moz-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -o-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -ms-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: linear-gradient(to top, rgba(0,0,0,0), black);
+}
+
+.popup-container::after {
     bottom: 0;
-    content: "\25bc";
+    /*content: "\25bc";*/
+    background: rgba(0, 0, 0, 0.5);
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -moz-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -o-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -ms-linear-gradient(top, rgba(0,0,0,0), black);
+    background: linear-gradient(to bottom, rgba(0,0,0,0), black);
 }
 
 ul.masternav-popup {
+    padding: 8px 0;
     overflow-y: auto;
     overflow-x: hidden;
 }
