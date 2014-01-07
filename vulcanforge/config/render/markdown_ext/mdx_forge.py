@@ -217,12 +217,12 @@ class ForgeProcessor(object):
                 except Exception:  # pragma no cover
                     LOG.exception("Error rendering artifact link")
             if not link_html:
-                link_html = '<a href="%s">[%s]</a>' % (new_link.url, link)
+                link_html = u'<a href="%s">[%s]</a>' % (new_link.url, link)
             return link_html
 
         # if we're on a wiki then link to a non-existant page
-        if self._use_wiki and ':' not in link:
-            return '<a href="{}" class="notfound">[{}]</a>'.format(
+        if self._use_wiki and u':' not in link:
+            return u'<a href="{}" class="notfound">[{}]</a>'.format(
                 urlquote(link), link)
 
         ###
@@ -240,12 +240,12 @@ class ForgeProcessor(object):
                 if app_config:
                     url_method = app_config.url
         if callable(url_method):
-            return '<a href="{}" class="notfound">[{}]</a>'.format(
+            return u'<a href="{}" class="notfound">[{}]</a>'.format(
                 url_method(), link)
         ###
 
         # fallback is to print the link as it was formatted
-        return "[{}]".format(link)
+        return u"[{}]".format(link)
 
     def _expand_link(self, link):
         if link.startswith('#'):
