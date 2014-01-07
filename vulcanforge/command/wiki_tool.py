@@ -232,6 +232,8 @@ class ImportWikiPages(Command):
 
 
 class FindBrokenLinks(Command):
+    min_args = 3
+    max_args = 3
     usage = '<ini file> project mount_point'
     summary = 'Finds broken links and images in a wiki tool.'
     parser = Command.standard_parser(verbose=True)
