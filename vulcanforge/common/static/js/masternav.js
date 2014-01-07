@@ -16,10 +16,10 @@
 
         config = config || {};
         config = _.defaults(config, {
-            timeoutDuration: 10,
+            timeoutDuration: 400,
             smartFilter: false,
             bottomBuffer: 64,
-            scrollBuffer: 10,
+            scrollBuffer: 16,
             rootIcon: $vf.resourceURL + "images/vf_plus_fang_logo.png",
             hoodsIcon: $vf.resourceURL + "images/project_default.png",
             submenuNudge: 8,
@@ -31,7 +31,8 @@
 
         var $master = $(".masternav");
         var $masterlist = $master.find('.masternav-context-items');
-        if (!$master.length) { console.log("Masternav Error: No .masternav found");
+        if (!$master.length) {
+            console.log("Masternav Error: No .masternav found");
         } else {
             var masterTimeout, submenuTimeout;
 
@@ -107,11 +108,12 @@
                             $element.addClass('has-menu');
                         }
                     }).
+                    filter('.has-menu').
                     bind("mouseenter",function (event) {
                         var $this = $(this), $target = $(event.delegateTarget);
                         clearTimeout(masterTimeout);
                         clearTimeout(submenuTimeout);
-                        _popState(0);
+                        _popState(0, true);
                         var content;
                         switch ($target.attr('data-shortname')) {
                         case current[0]:
@@ -138,6 +140,7 @@
             };
 
             var _renderPopup = function($container, depth, name, content, top, left, $triggeredBy) {
+                $('#header-wrapper *').qtip('hide');
                 // Filter out those things that are already visible in the menu
                 //if (config.smartFilter && depth == 0) {
                 //    content.children = _.reject(content.children, function(item) {
@@ -222,11 +225,11 @@
                     $popup.addClass("scrollable-bottom");
                     $list.bind("scroll", function() {
                         // Check if top scroll arrow is needed
-                        if ($list.prop("scrollTop") > config.scrollBuffer) $popup.addClass("scrollable-top");
+                        if ($list.prop("scrollTop") >= config.scrollBuffer) $popup.addClass("scrollable-top");
                         else $popup.removeClass("scrollable-top");
                         // Check if top scroll arrow is needed
                         var scrollBottom = $list.prop("scrollHeight") - $list.prop("scrollTop") - $list.height();
-                        if (scrollBottom < config.scrollBuffer) $popup.removeClass("scrollable-bottom");
+                        if (scrollBottom <= config.scrollBuffer) $popup.removeClass("scrollable-bottom");
                         else $popup.addClass("scrollable-bottom");
                         // TODO: Allow overall page to scroll
                     })
@@ -248,13 +251,24 @@
             };
 
             var _pushState = function($item, depth) {
-                _popState(depth);
+                _popState(depth, true);
                 data.state.push($item);
             };
 
-            var _popState = function(depth) {
+            var _popState = function(depth, opt_skipAnimate) {
+                var skipAnimate = typeof opt_skipAnimate !== 'undefined' && opt_skipAnimate;
                 while (data.state.length > depth) {
-                    data.state.pop().remove();
+                    (function ($item) {
+                        if (skipAnimate) {
+                            $item.remove();
+                        } else {
+                            $item.
+                                fadeOut(100).
+                                queue(function () {
+                                    $(this).remove();
+                                });
+                        }
+                    })(data.state.pop());
                 }
             };
 
