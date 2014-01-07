@@ -233,6 +233,7 @@ class ImportWikiPages(Command):
 
 class FindBrokenLinks(Command):
     usage = '<ini file> project mount_point'
+    summary = 'Finds broken links and images in a wiki tool.'
     parser = Command.standard_parser(verbose=True)
     parser.add_option("-n", "--neighborhood", dest="neighborhood",
                       help="Neighborhood url prefix (if necessary)")
