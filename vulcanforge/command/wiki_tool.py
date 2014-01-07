@@ -265,7 +265,7 @@ class FindBrokenLinks(Command):
                 s = s[:max_len-3] + '...'
             return s
 
-        print "{:^80} {:^80} {:^80} {:^80}".format(
+        print "{:^80} {:^80} {:^80} {:^33}".format(
             "Page (url)", "Broken Link", "Html Str", "Reason")
 
         fmt = "{:80} {:80} {:80} {}"
