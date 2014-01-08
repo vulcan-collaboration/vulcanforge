@@ -9,11 +9,12 @@ from ming.odm import ThreadLocalODMSession
 from tg import config
 from vulcanforge.auth.model import User
 from vulcanforge.common.util import temporary_dir
+from vulcanforge.common.util.context import register_widget_context
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
+from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 from .base import Command
-from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 LOG = logging.getLogger(__name__)
 WIKI_DUMP_EXTENSION = '.wikidump.json'
@@ -244,6 +245,7 @@ class FindBrokenLinks(Command):
 
     def command(self):
         self.basic_setup()
+        register_widget_context()
         neighborhood = None
         if self.options.neighborhood:
             neighborhood = Neighborhood.by_prefix(self.options.neighborhood)
@@ -262,17 +264,18 @@ class FindBrokenLinks(Command):
 
         def text_overflow(s, max_len):
             if len(s) > max_len:
-                s = s[:max_len-3] + '...'
+                half_max = max_len / 2
+                s = s[:half_max-3] + '...' + s[-half_max:]
             return s
 
-        print "{:^80} {:^80} {:^80} {:^80}".format(
+        print "{:^80} {:^100} {:^80} {:^33}".format(
             "Page (url)", "Broken Link", "Html Str", "Reason")
 
-        fmt = "{:80} {:80} {:80} {}"
+        fmt = "{:80} {:100} {:80} {}"
         for error_spec in broken_finder.find_broken_links_by_app():
             print fmt.format(
                 error_spec["page"].url(),
-                text_overflow(error_spec["link"], 80),
+                text_overflow(error_spec["link"], 100),
                 text_overflow(error_spec["html"], 80),
                 text_overflow(error_spec["msg"], 80)
             )

@@ -2,6 +2,7 @@ import os
 import logging
 
 import requests
+from requests.exceptions import Timeout
 from urlparse import urlparse
 from pylons import tmpl_context as c, app_globals as g
 from BeautifulSoup import BeautifulSoup
@@ -9,20 +10,23 @@ from BeautifulSoup import BeautifulSoup
 from vulcanforge.auth.requester import ForgeRequester
 from vulcanforge.tools.wiki.model import Page
 
-
 LOG = logging.getLogger(__name__)
 
 
 class BrokenLinkFinder(object):
 
-    def __init__(self, user=None):
+    def __init__(self, user=None, follow_redirects=2):
         self.requester = ForgeRequester()
         if user:
             self.requester.set_user(user)
         self.user = user
+        self.follow_redirects = follow_redirects
 
-    def make_request_for_page(self, url, page, follow_redirects=True):
+    def make_request_for_page(self, url, page, follow_redirects=None):
+        if follow_redirects is None:
+            follow_redirects = self.follow_redirects
         parsed = urlparse(url)
+        request_kwargs = {"stream": True, "allow_redirects": False}
         if not parsed.netloc:
             path = parsed.path
             if not path.startswith('/'):
@@ -30,22 +34,21 @@ class BrokenLinkFinder(object):
             url = g.base_url + path
             if parsed.query:
                 url += '?' + parsed.query
-            head_func = self.requester.head
+            request_func = self.requester.get
         else:
             domain = parsed.scheme + '://' + parsed.netloc
             if domain == g.base_url:
-                head_func = self.requester.head
+                request_func = self.requester.get
             elif self.user and domain == g.base_s3_url.rstrip('/'):
-                cookies = self.user.get_swift_params()
-                head_func = lambda u, **kw: requests.head(
-                    u, cookies=cookies, **kw)
+                request_kwargs['cookies'] = self.user.get_swift_params()
+                request_func = requests.get
             else:
-                head_func = requests.head
+                request_func = requests.get
         LOG.info("Making request to %s", url)
-        resp = head_func(url)
+        resp = request_func(url, **request_kwargs)
         if follow_redirects and resp.status_code == 302:
             resp = self.make_request_for_page(
-                resp.headers["location"], page, False)
+                resp.headers["location"], page, follow_redirects - 1)
         return resp
 
     def find_broken_links_by_page(self, page):
@@ -58,19 +61,26 @@ class BrokenLinkFinder(object):
         for img in soup.findAll("img"):
             src = img.get("src")
             if src:
-                resp = self.make_request_for_page(src, page)
+                try:
+                    resp = self.make_request_for_page(src, page)
+                except Timeout:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Request timed out"
+                    }
+                except Exception as e:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Unknown Error: {}".format(str(e))
+                    }
                 if resp.status_code != 200:
                     yield {
                         "link": src,
                         "html": str(img),
                         "msg": "HTML Request Failure Response {}".format(
                             resp.status_code)
-                    }
-                elif not resp.headers["content-type"].startswith("image/"):
-                    yield {
-                        "link": src,
-                        "html": str(img),
-                        "msg": "Load Failure: Inappropriate content type"
                     }
             else:
                 yield {
@@ -82,7 +92,20 @@ class BrokenLinkFinder(object):
         for a in soup.findAll('a'):
             href = a.get("href")
             if href:
-                resp = self.make_request_for_page(href, page)
+                try:
+                    resp = self.make_request_for_page(href, page)
+                except Timeout:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Request timed out"
+                    }
+                except Exception as e:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Unknown Error: {}".format(str(e))
+                    }
                 if resp.status_code != 200:
                     yield {
                         "link": href,
@@ -100,7 +123,8 @@ class BrokenLinkFinder(object):
             "app_config_id": app_config_id,
             "deleted": False
         }
-        for page in Page.query.find(query):
+        # keep all() below to prevent timeout
+        for page in Page.query.find(query).all():
             LOG.debug("Searching for links for %s", page.url())
             for err_json in self.find_broken_links_by_page(page):
                 err_json["page"] = page
