@@ -23,6 +23,7 @@ class BrokenLinkFinder(object):
 
     def make_request_for_page(self, url, page, follow_redirects=True):
         parsed = urlparse(url)
+        request_kwargs = {"stream": True}
         if not parsed.netloc:
             path = parsed.path
             if not path.startswith('/'):
@@ -30,19 +31,18 @@ class BrokenLinkFinder(object):
             url = g.base_url + path
             if parsed.query:
                 url += '?' + parsed.query
-            head_func = self.requester.head
+            request_func = self.requester.get
         else:
             domain = parsed.scheme + '://' + parsed.netloc
             if domain == g.base_url:
-                head_func = self.requester.head
+                request_func = self.requester.get
             elif self.user and domain == g.base_s3_url.rstrip('/'):
-                cookies = self.user.get_swift_params()
-                head_func = lambda u, **kw: requests.head(
-                    u, cookies=cookies, **kw)
+                request_kwargs['cookies'] = self.user.get_swift_params()
+                request_func = requests.get
             else:
-                head_func = requests.head
+                request_func = requests.get
         LOG.info("Making request to %s", url)
-        resp = head_func(url)
+        resp = request_func(url, **request_kwargs)
         if follow_redirects and resp.status_code == 302:
             resp = self.make_request_for_page(
                 resp.headers["location"], page, False)
