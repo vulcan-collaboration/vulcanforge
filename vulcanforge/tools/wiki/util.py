@@ -9,7 +9,6 @@ from BeautifulSoup import BeautifulSoup
 from vulcanforge.auth.requester import ForgeRequester
 from vulcanforge.tools.wiki.model import Page
 
-
 LOG = logging.getLogger(__name__)
 
 

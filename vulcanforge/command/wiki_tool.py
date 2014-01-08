@@ -9,11 +9,12 @@ from ming.odm import ThreadLocalODMSession
 from tg import config
 from vulcanforge.auth.model import User
 from vulcanforge.common.util import temporary_dir
+from vulcanforge.common.util.context import register_widget_context
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
+from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 from .base import Command
-from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 LOG = logging.getLogger(__name__)
 WIKI_DUMP_EXTENSION = '.wikidump.json'
@@ -244,6 +245,7 @@ class FindBrokenLinks(Command):
 
     def command(self):
         self.basic_setup()
+        register_widget_context()
         neighborhood = None
         if self.options.neighborhood:
             neighborhood = Neighborhood.by_prefix(self.options.neighborhood)
