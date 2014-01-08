@@ -57,7 +57,7 @@ def main():
                      "".format(os.getpid()))
             sys.exit(0)
 
-    def cleanup_and_quit():
+    def cleanup_and_quit(*args):
         LOG.info("Stopping server...")
         for process in processes:
             process.terminate()
