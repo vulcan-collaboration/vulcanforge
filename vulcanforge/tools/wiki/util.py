@@ -123,7 +123,8 @@ class BrokenLinkFinder(object):
             "app_config_id": app_config_id,
             "deleted": False
         }
-        for page in Page.query.find(query):
+        # keep all() below to prevent timeout
+        for page in Page.query.find(query).all():
             LOG.debug("Searching for links for %s", page.url())
             for err_json in self.find_broken_links_by_page(page):
                 err_json["page"] = page
