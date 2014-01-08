@@ -15,13 +15,16 @@ LOG = logging.getLogger(__name__)
 
 class BrokenLinkFinder(object):
 
-    def __init__(self, user=None):
+    def __init__(self, user=None, follow_redirects=2):
         self.requester = ForgeRequester()
         if user:
             self.requester.set_user(user)
         self.user = user
+        self.follow_redirects = follow_redirects
 
-    def make_request_for_page(self, url, page, follow_redirects=2):
+    def make_request_for_page(self, url, page, follow_redirects=None):
+        if follow_redirects is None:
+            follow_redirects = self.follow_redirects
         parsed = urlparse(url)
         request_kwargs = {"stream": True, "allow_redirects": False}
         if not parsed.netloc:
@@ -78,12 +81,6 @@ class BrokenLinkFinder(object):
                         "html": str(img),
                         "msg": "HTML Request Failure Response {}".format(
                             resp.status_code)
-                    }
-                elif not resp.headers["content-type"].startswith("image/"):
-                    yield {
-                        "link": src,
-                        "html": str(img),
-                        "msg": "Load Failure: Inappropriate content type"
                     }
             else:
                 yield {
