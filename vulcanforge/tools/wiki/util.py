@@ -21,9 +21,9 @@ class BrokenLinkFinder(object):
             self.requester.set_user(user)
         self.user = user
 
-    def make_request_for_page(self, url, page, follow_redirects=True):
+    def make_request_for_page(self, url, page, follow_redirects=2):
         parsed = urlparse(url)
-        request_kwargs = {"stream": True}
+        request_kwargs = {"stream": True, "allow_redirects": False}
         if not parsed.netloc:
             path = parsed.path
             if not path.startswith('/'):
@@ -45,7 +45,7 @@ class BrokenLinkFinder(object):
         resp = request_func(url, **request_kwargs)
         if follow_redirects and resp.status_code == 302:
             resp = self.make_request_for_page(
-                resp.headers["location"], page, False)
+                resp.headers["location"], page, follow_redirects - 1)
         return resp
 
     def find_broken_links_by_page(self, page):
