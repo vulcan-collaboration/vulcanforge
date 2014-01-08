@@ -2,6 +2,7 @@ import os
 import logging
 
 import requests
+from requests.exceptions import Timeout
 from urlparse import urlparse
 from pylons import tmpl_context as c, app_globals as g
 from BeautifulSoup import BeautifulSoup
@@ -57,7 +58,20 @@ class BrokenLinkFinder(object):
         for img in soup.findAll("img"):
             src = img.get("src")
             if src:
-                resp = self.make_request_for_page(src, page)
+                try:
+                    resp = self.make_request_for_page(src, page)
+                except Timeout:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Request timed out"
+                    }
+                except Exception as e:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Unknown Error: {}".format(str(e))
+                    }
                 if resp.status_code != 200:
                     yield {
                         "link": src,
@@ -81,7 +95,20 @@ class BrokenLinkFinder(object):
         for a in soup.findAll('a'):
             href = a.get("href")
             if href:
-                resp = self.make_request_for_page(href, page)
+                try:
+                    resp = self.make_request_for_page(href, page)
+                except Timeout:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Request timed out"
+                    }
+                except Exception as e:
+                    yield {
+                        "link": src,
+                        "html": str(img),
+                        "msg": "Unknown Error: {}".format(str(e))
+                    }
                 if resp.status_code != 200:
                     yield {
                         "link": href,
