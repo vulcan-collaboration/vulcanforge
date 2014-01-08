@@ -73,8 +73,8 @@ setup(
         "python-markdown-oembed",
         "redis == 2.7.2",
         "hiredis",
-        "gevent",
-        "gevent-websocket",
+        "gevent>=1.0",
+        "gevent-websocket>=0.9",
         "jsonschema"
     ],
     setup_requires=["PasteScript >= 1.7"],
