@@ -16,7 +16,6 @@ from time import sleep
 from multiprocessing import Process
 import signal
 from paste.util.converters import asbool
-import gevent.baseserver
 
 
 logging.basicConfig(level=logging.WARN)
@@ -24,7 +23,7 @@ LOG = logging.getLogger("vulcanforge.websocket")
 
 
 from vulcanforge.websocket import get_config
-from vulcanforge.websocket.server import make_server
+from vulcanforge.websocket.server import make_server, make_listener
 
 
 def main():
@@ -43,7 +42,7 @@ def main():
     port = int(config['websocket.port'])
     process_count = int(config['websocket.process_count'])
 
-    listener = gevent.baseserver._tcp_listener((host, port), reuse_addr=1)
+    listener = make_listener(host, port)
     processes = []
 
     def start_server_process(listener):
