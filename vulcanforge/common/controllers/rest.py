@@ -17,6 +17,7 @@ import urllib
 import os
 
 import oauth2 as oauth
+from paste.util.converters import asbool
 import pymongo
 from webob import exc
 from tg import expose, flash, redirect, config, TGController
@@ -488,7 +489,8 @@ class WebAPIController(TGController):
         project_cursor = Project.query.find(project_query_params)
         project_cursor.sort('sortable_name', pymongo.ASCENDING)
         for project in project_cursor:
-            if not g.security.has_access(project, 'read'):
+            if not (g.security.has_access(project, 'read') or
+                    project.first_mount('read')):
                 continue
             project_data = {
                 'label': project.name,
@@ -511,24 +513,29 @@ class WebAPIController(TGController):
             },
             "label": "",
             "url": self._get_global_nav_root_href(),
-            "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
+            "icon": self._get_global_nav_root_icon()
         }
 
     def _get_global_nav_children(self):
-        proj_img = 'images/forge_toolbar_icons/projects_icon_on.png'
-        user_img = 'images/forge_toolbar_icons/designers_icon_on.png'
-        return [
-            {
-                'label': 'Browse All Projects',
-                'url': '/browse/',
-                'icon': g.resource_manager.absurl(proj_img)
-            },
-            {
-                'label': 'Browse All Designers',
-                'url': '/designers/',
-                'icon': g.resource_manager.absurl(user_img)
-            }
-        ]
+        items = []
+        item_keys = config.get('masternav.root_items', '').split()
+        for key in item_keys:
+            key_prefix = 'masternav.items.' + key + '.'
+            try:
+                label = config[key_prefix + 'label']
+                href = config[key_prefix + 'href']
+                icon_url = config[key_prefix + 'icon']
+            except KeyError, e:
+                LOG.exception('Missing required key for %r, skipping it', key)
+                continue
+            if asbool(config.get(key_prefix + 'icon_is_resource', False)):
+                icon_url = g.resource_manager.absurl(icon_url)
+            items.append({
+                'label': label,
+                'url': href,
+                'icon': icon_url
+            })
+        return items
 
     def _get_global_nav_actions(self):
         global_actions = []
@@ -548,6 +555,9 @@ class WebAPIController(TGController):
             return "/"
         else:
             return "/dashboard/activity_feed/"
+
+    def _get_global_nav_root_icon(self):
+        return g.resource_manager.absurl('images/vf_plus_fang_logo.png')
 
     def _get_global_nav_actions_for_hood(self, hood):
         actions = []
