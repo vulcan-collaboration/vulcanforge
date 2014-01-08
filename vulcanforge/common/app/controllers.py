@@ -21,6 +21,9 @@ class DefaultAdminController(BaseController):
     def __init__(self, app):
         self.app = app
 
+    def _check_security(self):
+        g.security.require_access(self.app, 'admin')
+
     @expose()
     def index(self, **kw):
         return redirect('permissions')
@@ -40,19 +43,20 @@ class DefaultAdminController(BaseController):
         return dict(
             app=self.app,
             allow_config=g.security.has_access(c.project, 'admin'),
+            permission_description=self.app.permissions,
             permissions=permissions)
 
     @expose(TEMPLATE_DIR + 'app_admin_options.html')
     def options(self):
         return dict(
             app=self.app,
-            allow_config=g.security.has_access(self.app, 'configure'))
+            allow_config=g.security.has_access(self.app, 'admin'))
 
     @expose()
     @require_post()
     def configure(self, **kw):
         with g.context_manager.push(c, app=self.app):
-            g.security.require_access(self.app, 'configure')
+            g.security.require_access(self.app, 'admin')
             is_admin = self.app.config.tool_name == 'admin'
             if kw.pop('delete', False):
                 if is_admin:

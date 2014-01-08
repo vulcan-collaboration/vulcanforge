@@ -27,7 +27,7 @@ class Application(object):
     :var status: the status level of this app.  'production' apps are available
         to all projects
     :var bool searchable: toggle if the search box appears in the left menu
-    :var permissions: a list of named permissions used by the app
+    :var permissions: a dictionary of named permissions used by the app, the values describe what the permissions enable
     :var sitemap: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
         to create an app navigation.
     :var bool installable: toggle if the app can be installed in a project
@@ -49,7 +49,11 @@ class Application(object):
     api_root = None  # root rest controller
     static_dir = 'static'
     template_dir = 'templates'
-    permissions = []
+    permissions = dict(
+        admin='Configure this tool and its permissions',
+        write='Create new artifacts or modify old ones',
+        read='View tool artifacts'
+    )
     sitemap = []
     searchable = False
     DiscussionClass = Discussion

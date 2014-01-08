@@ -10,10 +10,10 @@
            class="ico-r admin_modal {{g.icons.perm_tool.css}}"></small>
       </a>
       {% endif %}
-      <p style="padding-bottom: 0"><b
-            data-icon="{{g.icons[icon_name].char}}"
-            class="ico x48 {{g.icons[icon_name].css}}"></b>
-      </p>
+      {% if description %}
+        <p style="font-size: 11px; padding: 4px; font-style: italic">{{description}}
+        </p>
+      {% endif %}
       <ul class="subroles">
         {% for role in roles %}
           {% if role.name %}

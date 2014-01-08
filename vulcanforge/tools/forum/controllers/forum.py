@@ -53,7 +53,7 @@ class ForumPostController(PostController):
     @expose(BASE_TEMPLATE_DIR + 'post.html')
     def index(self, **kw):
         if self.thread.discussion.deleted and\
-           not g.security.has_access(c.app, 'configure'):
+           not g.security.has_access(c.app, 'admin'):
             redirect(self.thread.discussion.url() + 'deleted')
         return super(ForumPostController, self).index(**kw)
 
@@ -63,7 +63,7 @@ class ForumPostController(PostController):
     def moderate(self, **kw):
         g.security.require_access(self.post, 'moderate')
         if self.thread.discussion.deleted and\
-           not g.security.has_access(c.app, 'configure'):
+           not g.security.has_access(c.app, 'admin'):
             redirect(self.thread.discussion.url() + 'deleted')
         tasks.calc_thread_stats.post(self.post.thread._id)
         tasks.calc_forum_stats(self.post.discussion.shortname)
@@ -91,7 +91,7 @@ class ForumThreadController(ThreadController):
     def index(self, limit=None, page=0, count=0, **kw):
         c.url = url.current()
         if self.thread.discussion.deleted and \
-                not g.security.has_access(c.app, 'configure'):
+                not g.security.has_access(c.app, 'admin'):
             redirect(self.thread.discussion.url() + 'deleted')
         return super(ForumThreadController, self).index(
             limit=limit, page=page, count=count, show_moderate=True, **kw
@@ -104,7 +104,7 @@ class ForumThreadController(ThreadController):
     def moderate(self, **kw):
         g.security.require_access(self.thread, 'moderate')
         if self.thread.discussion.deleted and \
-                not g.security.has_access(c.app, 'configure'):
+                not g.security.has_access(c.app, 'admin'):
             redirect(self.thread.discussion.url() + 'deleted')
         args = self.Widgets.moderate_thread.validate(kw, None)
         tasks.calc_forum_stats.post(self.thread.discussion.shortname)
@@ -155,7 +155,7 @@ class ForumController(BaseDiscussionController):
     @expose(BASE_TEMPLATE_DIR + 'index.html')
     def index(self, threads=None, limit=None, page=0, count=0, **kw):
         if self.discussion.deleted and \
-        not g.security.has_access(c.app, 'configure'):
+        not g.security.has_access(c.app, 'write'):
             redirect(self.discussion.url() + 'deleted')
         limit, page, start = g.handle_paging(limit, page)
         threads = DM.ForumThread.query.find({
