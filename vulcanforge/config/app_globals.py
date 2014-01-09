@@ -451,7 +451,7 @@ class ForgeAppGlobals(object):
 
     @property
     def production_mode(self):
-        return asbool(config.get('debug')) == False
+        return not asbool(config.get('debug', 'false'))
 
     def oid_session(self):
         if 'openid_info' in session:
