@@ -496,8 +496,12 @@ class WebAPIController(TGController):
         project_cursor = Project.query.find(project_query_params)
         project_cursor.sort('sortable_name', pymongo.ASCENDING)
         for project in project_cursor:
-            if not (g.security.has_access(project, 'read') or
-                    project.first_mount('read')):
+            if (
+                project.deleted and
+                not g.security.has_access(project, 'write') or
+                not g.security.has_access(project, 'read') or
+                not project.first_mount('read')
+            ):
                 continue
             project_data = {
                 'label': project.name,
