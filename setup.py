@@ -125,6 +125,7 @@ setup(
     install_tool = vulcanforge.command.project:InstallTool
     wiki-export = vulcanforge.command.wiki_tool:ExportWikiPages
     wiki-import = vulcanforge.command.wiki_tool:ImportWikiPages
+    wiki_findbroken = vulcanforge.command.wiki_tool:FindBrokenLinks
 
     [easy_widgets.engines]
     jinja = vulcanforge.config.app_cfg:JinjaEngine

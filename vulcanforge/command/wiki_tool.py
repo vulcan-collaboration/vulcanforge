@@ -9,8 +9,10 @@ from ming.odm import ThreadLocalODMSession
 from tg import config
 from vulcanforge.auth.model import User
 from vulcanforge.common.util import temporary_dir
+from vulcanforge.common.util.context import register_widget_context
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
+from vulcanforge.tools.wiki.util import BrokenLinkFinder
 
 from .base import Command
 
@@ -228,3 +230,52 @@ class ImportWikiPages(Command):
                     page.commit()
 
         ThreadLocalODMSession.flush_all()
+
+
+class FindBrokenLinks(Command):
+    min_args = 3
+    max_args = 3
+    usage = '<ini file> project mount_point'
+    summary = 'Finds broken links and images in a wiki tool.'
+    parser = Command.standard_parser(verbose=True)
+    parser.add_option("-n", "--neighborhood", dest="neighborhood",
+                      help="Neighborhood url prefix (if necessary)")
+    parser.add_option("-u", "--user", dest="user",
+                      help="Make requests as user with this username")
+
+    def command(self):
+        self.basic_setup()
+        register_widget_context()
+        neighborhood = None
+        if self.options.neighborhood:
+            neighborhood = Neighborhood.by_prefix(self.options.neighborhood)
+            if not neighborhood:
+                raise RuntimeError("Unable to find neighborhood {}".format(
+                    self.options.neighborhood))
+
+        g.context_manager.set(self.args[1], self.args[2],
+                              neighborhood=neighborhood)
+
+        if self.options.user:
+            user = User.by_username(self.options.user)
+        else:
+            user = None
+        broken_finder = BrokenLinkFinder(user=user)
+
+        def text_overflow(s, max_len):
+            if len(s) > max_len:
+                half_max = max_len / 2
+                s = s[:half_max-3] + '...' + s[-half_max:]
+            return s
+
+        print "{:^80} {:^100} {:^80} {:^33}".format(
+            "Page (url)", "Broken Link", "Html Str", "Reason")
+
+        fmt = "{:80} {:100} {:80} {}"
+        for error_spec in broken_finder.find_broken_links_by_app():
+            print fmt.format(
+                error_spec["page"].url(),
+                text_overflow(error_spec["link"], 100),
+                text_overflow(error_spec["html"], 80),
+                text_overflow(error_spec["msg"], 80)
+            )
