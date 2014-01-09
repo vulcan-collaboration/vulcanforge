@@ -429,7 +429,8 @@ class WebServiceRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    @cache_rendered(name='navdata-{c.user._id}', timeout=60,
+    @cache_rendered(name='cache.navdata.{c.user._id}',
+                    timeout=500, debug_timeout=10,
                     allow_overrides=True)
     def navdata(self, **kwargs):
         """
@@ -469,7 +470,7 @@ class WebAPIController(TGController):
         hood_items = []
 
         hood_query_params = {
-            'url_prefix': {'$ne': '/u/'}
+            'url_prefix': {'$nin': ['/u/', '//']}
         }
         for hood in Neighborhood.query.find(hood_query_params):
             if not g.security.has_access(hood, 'read'):

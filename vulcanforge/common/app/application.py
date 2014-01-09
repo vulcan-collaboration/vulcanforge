@@ -327,3 +327,18 @@ class Application(object):
     def get_calendar_events(self, date_start, date_end):
         """Apps can provide events to the Calendar App"""
         return []
+
+    def iter_mapped_classes(self):
+        """
+        Iterates yielding each mapped class owned by this application.
+
+        Used under the hood in purging all database objects from a specific app.
+        """
+        if self.DiscussionClass:
+            yield self.DiscussionClass
+        if self.PostClass:
+            yield self.PostClass
+        if self.AttachmentClass:
+            yield self.AttachmentClass
+        for cls in self.artifacts.values():
+            yield cls

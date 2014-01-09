@@ -16,6 +16,7 @@ class BaseCacheDecorator(object):
     hash object with input params key and name.
 
     :param timeout int seconds
+    :param debug_timeout int overrides timeout only in debug mode
     :param key str key to use with redis. Can incorporate context by using
         format string with "c", e.g.: "preferences-{c.user.username}"
     :param name str name to use with redis. Can incorporate context by using
@@ -27,10 +28,11 @@ class BaseCacheDecorator(object):
 
     """
     def __init__(self, name=None, key=None, timeout=None, allow_overrides=False,
-                 override_kwarg='force'):
+                 override_kwarg='force', debug_timeout=None):
         self.name = name
         self.key = key
         self.timeout = timeout
+        self.debug_timeout = debug_timeout
         self.allow_overrides = allow_overrides
         self.override_kwarg = override_kwarg
 
@@ -72,6 +74,11 @@ class BaseCacheDecorator(object):
             key = self.default_key(func, args, kwargs)
         return name, key
 
+    def get_timeout(self):
+        if g.production_mode:
+            return self.timeout
+        return self.debug_timeout or self.timeout
+
     def get_cached(self, name, key):  # pragma no cover
         raise NotImplementedError('get_cached')
 
@@ -101,7 +108,7 @@ class cache_str(BaseCacheDecorator):
         return g.cache.hget(name, key)
 
     def set_cached(self, name, key, value):
-        return g.cache.hset(name, key, value, self.timeout)
+        return g.cache.hset(name, key, value, self.get_timeout())
 
 
 class cache_literal(cache_str):
@@ -118,7 +125,7 @@ class cache_json(BaseCacheDecorator):
         return g.cache.hget_json(name, key)
 
     def set_cached(self, name, key, value):
-        return g.cache.hset_json(name, key, value, self.timeout)
+        return g.cache.hset_json(name, key, value, self.get_timeout())
 
 
 class BaseCacheController(BaseCacheDecorator):
@@ -203,5 +210,5 @@ class cache_rendered(BaseCacheController):
                 'response': response['response'],
                 'content_type': response.get('content_type', '')
             }
-            g.cache.hmset(name, val, self.timeout)
+            g.cache.hmset(name, val, self.get_timeout())
             LOG.info('setting cache val for %s to %s', name, response)
