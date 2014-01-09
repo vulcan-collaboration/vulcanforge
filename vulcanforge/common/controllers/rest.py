@@ -429,7 +429,8 @@ class WebServiceRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    @cache_rendered(timeout=60, allow_overrides=True)
+    @cache_rendered(name='navdata-{c.user._id}', timeout=60,
+                    allow_overrides=True)
     def navdata(self, **kwargs):
         """
         Special icons and labels configuration:
