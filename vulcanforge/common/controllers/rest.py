@@ -504,6 +504,7 @@ class WebAPIController(TGController):
             hood_id_map[project.neighborhood_id]['children'].\
                 append(project_data)
 
+        root_item = self._get_global_nav_root_item()
         # compile output
         return {
             'hoods': hood_items,
@@ -511,9 +512,9 @@ class WebAPIController(TGController):
                 'children': self._get_global_nav_children(),
                 'actions': self._get_global_nav_actions()
             },
-            "label": "",
-            "url": self._get_global_nav_root_href(),
-            "icon": self._get_global_nav_root_icon()
+            "label": root_item['label'],
+            "url": root_item['url'],
+            "icon": root_item['icon']
         }
 
     def _get_global_nav_children(self):
@@ -550,14 +551,22 @@ class WebAPIController(TGController):
             })
         return global_actions
 
-    def _get_global_nav_root_href(self):
+    def _get_global_nav_root_item(self):
         if c.user == User.anonymous():
-            return "/"
+            href = config.get('masternav.root.href', "/")
         else:
-            return "/dashboard/activity_feed/"
-
-    def _get_global_nav_root_icon(self):
-        return g.resource_manager.absurl('images/vf_plus_fang_logo.png')
+            href = config.get('masternav.root.href',
+                              "/dashboard/activity_feed/")
+        icon_url = config.get('masternav.root.icon',
+                              "images/vf_logo_icon2.png")
+        if asbool(config.get('masternav.root.icon_is_resource', 'true')):
+            icon_url = g.resource_manager.absurl(icon_url)
+        label = config.get('masternav.root.label', '').strip()
+        return {
+            'label': label,
+            'icon': icon_url,
+            'url': href
+        }
 
     def _get_global_nav_actions_for_hood(self, hood):
         actions = []
