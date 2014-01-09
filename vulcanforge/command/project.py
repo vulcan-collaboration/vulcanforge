@@ -5,7 +5,7 @@ from ming.odm.odmsession import ThreadLocalODMSession
 from . import base
 from vulcanforge.auth.schema import ACE
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.model import Project, ProjectRole
+from vulcanforge.project.model import Project, ProjectRole, AppConfig
 
 log = logging.getLogger(__name__)
 
@@ -76,3 +76,37 @@ class InstallTool(base.Command):
         # wrap up
         ThreadLocalODMSession.flush_all()
         ThreadLocalODMSession.close_all()
+
+
+class PurgeProject(base.Command):
+    min_args = 2
+    max_args = 2
+    usage = '<ini_file> <project_shortname>'
+    summary = "Purge a project, it's tools, and it's artifacts... use wisely."
+    parser = base.Command.standard_parser(verbose=True)
+
+    def command(self):
+        self.basic_setup()
+        project_shortname = self.args[1]
+        project = Project.query.get(shortname=project_shortname)
+        assert project is not None, "Project not found."
+        assert project.deleted, "Project has not been deleted."
+        map(self.purge_app_config, self.iter_app_configs(project._id))
+        Project.query.remove({'_id': project._id})
+
+    def iter_app_configs(self, project_id):
+        for app_config in AppConfig.query.find({'project_id': project_id}):
+            yield app_config
+
+    def purge_app_config(self, app_config):
+        query_params = {
+            '$or': [
+                {'project_id': app_config.project_id},
+                {'app_config_id': app_config._id}
+            ]
+        }
+        app = app_config.instantiate()
+        for cls in app.iter_mapped_classes():
+            cls.query.remove(query_params)
+        AppConfig.query.remove(query_params)
+
