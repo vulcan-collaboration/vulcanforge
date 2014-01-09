@@ -258,7 +258,7 @@ class _AuthController(BaseController):
         g.auth_provider.login(user)
         flash("Your password has been updated.", status="confirm")
         if return_to is None:
-            return_to = config.get('home_url', '/')
+            return_to = user.landing_url()
         return redirect(return_to)
 
     @expose(TEMPLATE_DIR + 'auth_cancel_email_mod.html')
