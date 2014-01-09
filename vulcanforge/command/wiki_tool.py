@@ -8,7 +8,7 @@ from pylons import tmpl_context as c, app_globals as g
 from ming.odm import ThreadLocalODMSession
 from tg import config
 from vulcanforge.auth.model import User
-from vulcanforge.common.util import temporary_dir
+from vulcanforge.common.util import temporary_dir, temporary_file
 from vulcanforge.common.util.context import register_widget_context
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
@@ -175,13 +175,9 @@ class ImportWikiPages(Command):
         if c.user is None:
             raise WikiDumpHandlerError("General error: unable to find user!")
 
-        with temporary_dir() as dirname:
-            with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
-                zip_handle.extractall(dirname)
-
-            # get root
+        with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
             pages_filename = 'pages' + WIKI_DUMP_EXTENSION
-            with open(os.path.join(dirname, pages_filename)) as pages_fp:
+            with zip_handle.open(pages_filename) as pages_fp:
                 for page_descriptor in json.load(pages_fp):
                     if self.options.no_update:
                         page = Page.query.get(
@@ -195,8 +191,7 @@ class ImportWikiPages(Command):
                             continue
                     page = Page.upsert(page_descriptor['title'])
                     if page_descriptor['is_root']:
-                        gl = Globals.query.get(
-                            app_config_id=c.app.config._id)
+                        gl = Globals.query.get(app_config_id=c.app.config._id)
                         gl.root = page.title
                     page_text = page_descriptor['text']
                     if self.options.replace_urls:
@@ -212,24 +207,24 @@ class ImportWikiPages(Command):
                         old = page.attachment_class().query.get(**query)
                         if old:
                             old.delete()
-                        try:
-                            fp = open(
-                                os.path.join(dirname, attachment['exp_path']))
-                        except (IOError, KeyError):
-                            LOG.warn(
-                                "Unable to find %s for page %s in file",
-                                attachment['exp_path'],
-                                page.title
-                            )
-                        else:
-                            page.attach(
-                                attachment['filename'],
-                                fp,
-                                content_type=attachment['content_type']
-                            )
+                        with temporary_file() as (fp, fname):
+                            path = attachment['exp_path']
+                            try:
+                                fp.write(zip_handle.read(path))
+                            except (IOError, KeyError):
+                                LOG.warn(
+                                    "Unable to find %s for page %s in file",
+                                    path,
+                                    page.title)
+                            else:
+                                fp.seek(0)
+                                page.attach(
+                                    attachment['filename'],
+                                    fp,
+                                    content_type=attachment['content_type'])
                     page.commit()
 
-        ThreadLocalODMSession.flush_all()
+            ThreadLocalODMSession.flush_all()
 
 
 class FindBrokenLinks(Command):
