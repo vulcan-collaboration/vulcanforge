@@ -44,8 +44,8 @@ class BrokenLinkFinder(object):
                 request_func = requests.get
             else:
                 request_func = requests.get
-        LOG.info("Making request to %s", url)
         resp = request_func(url, **request_kwargs)
+        LOG.info("Request to %s returned %s", url, resp.status_code)
         if follow_redirects and resp.status_code == 302:
             resp = self.make_request_for_page(
                 resp.headers["location"], page, follow_redirects - 1)
@@ -57,6 +57,7 @@ class BrokenLinkFinder(object):
         try:
             soup = BeautifulSoup(html)
         except Exception:
+            LOG.warn("Error parsing html in page %s", page.url())
             raise StopIteration
         for img in soup.findAll("img"):
             src = img.get("src")
