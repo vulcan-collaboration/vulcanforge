@@ -217,6 +217,7 @@ class ImportWikiPages(Command):
                                     path,
                                     page.title)
                             else:
+                                fp.seek(0)
                                 page.attach(
                                     attachment['filename'],
                                     fp,
