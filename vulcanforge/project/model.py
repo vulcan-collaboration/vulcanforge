@@ -1168,13 +1168,12 @@ class AppConfig(MappedClass):
         return None
 
     def load(self):
-        """
-        :returns: the related :class:`Application
-            <vulcanforge.common.app.Application>` instance
-
-        """
         result = g.tool_manager.tools[self.tool_name.lower()]["app"]
         return result
+
+    def instantiate(self):
+        cls = self.load()
+        return cls(self.project, self)
 
     def update_label_counts(self):
         self.label_count_data = self.lookup_label_counts()
