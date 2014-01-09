@@ -8,7 +8,7 @@ from pylons import tmpl_context as c, app_globals as g
 from ming.odm import ThreadLocalODMSession
 from tg import config
 from vulcanforge.auth.model import User
-from vulcanforge.common.util import temporary_dir
+from vulcanforge.common.util import temporary_dir, temporary_file
 from vulcanforge.common.util.context import register_widget_context
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.tools.wiki.model import Page, Globals
@@ -207,20 +207,20 @@ class ImportWikiPages(Command):
                         old = page.attachment_class().query.get(**query)
                         if old:
                             old.delete()
-                        try:
-                            fp = zip_handle.open(attachment['exp_path'])
-                        except (IOError, KeyError):
-                            LOG.warn(
-                                "Unable to find %s for page %s in file",
-                                attachment['exp_path'],
-                                page.title
-                            )
-                        else:
-                            page.attach(
-                                attachment['filename'],
-                                fp,
-                                content_type=attachment['content_type']
-                            )
+                        with temporary_file() as (fp, fname):
+                            path = attachment['exp_path']
+                            try:
+                                fp.write(zip_handle.read(path))
+                            except (IOError, KeyError):
+                                LOG.warn(
+                                    "Unable to find %s for page %s in file",
+                                    path,
+                                    page.title)
+                            else:
+                                page.attach(
+                                    attachment['filename'],
+                                    fp,
+                                    content_type=attachment['content_type'])
                     page.commit()
 
             ThreadLocalODMSession.flush_all()
