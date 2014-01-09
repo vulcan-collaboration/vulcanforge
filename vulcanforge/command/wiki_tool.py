@@ -175,13 +175,9 @@ class ImportWikiPages(Command):
         if c.user is None:
             raise WikiDumpHandlerError("General error: unable to find user!")
 
-        with temporary_dir() as dirname:
-            with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
-                zip_handle.extractall(dirname)
-
-            # get root
+        with zipfile.ZipFile(zip_name, allowZip64=True) as zip_handle:
             pages_filename = 'pages' + WIKI_DUMP_EXTENSION
-            with open(os.path.join(dirname, pages_filename)) as pages_fp:
+            with zip_handle.open(pages_filename) as pages_fp:
                 for page_descriptor in json.load(pages_fp):
                     if self.options.no_update:
                         page = Page.query.get(
@@ -195,8 +191,7 @@ class ImportWikiPages(Command):
                             continue
                     page = Page.upsert(page_descriptor['title'])
                     if page_descriptor['is_root']:
-                        gl = Globals.query.get(
-                            app_config_id=c.app.config._id)
+                        gl = Globals.query.get(app_config_id=c.app.config._id)
                         gl.root = page.title
                     page_text = page_descriptor['text']
                     if self.options.replace_urls:
@@ -213,8 +208,7 @@ class ImportWikiPages(Command):
                         if old:
                             old.delete()
                         try:
-                            fp = open(
-                                os.path.join(dirname, attachment['exp_path']))
+                            fp = zip_handle.open(attachment['exp_path'])
                         except (IOError, KeyError):
                             LOG.warn(
                                 "Unable to find %s for page %s in file",
@@ -229,7 +223,7 @@ class ImportWikiPages(Command):
                             )
                     page.commit()
 
-        ThreadLocalODMSession.flush_all()
+            ThreadLocalODMSession.flush_all()
 
 
 class FindBrokenLinks(Command):
