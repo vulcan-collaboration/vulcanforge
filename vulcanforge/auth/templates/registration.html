@@ -31,15 +31,28 @@
     {% endfor %}
     <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}" />
 
-    <style>.{{ g.antispam.honey_class }} { display:none } </style>
+    <style>
+        .{{ g.antispam.honey_class }} { display:none }
+
+        .header-logo {
+            margin-top: 5px;
+        }
+
+        #header-wrapper {
+            text-align: left;
+            padding-left: 12px;
+        }
+
+    </style>
 
     <script type="text/javascript"
             src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
 </head>
 <body>
-    <div id="header-wrapper"></div>
+    <div id="header-wrapper">
+        <img class="header-logo" src="{{ g.resource_manager.absurl('images/vf_logo_header_short.png') }}"/>
+    </div>
     <div id="content-areas-wrapper">
-        <div id="left-toolbar"></div>
         <div id="main-content-holder">
             <div id="content-columns">
                 <div id="main-column" class="main-column">
@@ -66,9 +79,7 @@
                 </div>
             </div>
         </div>
-        <div id="right-toolbar"></div>
-    </div>
-    <div id="footer"></div>
+      </div>
 
     {% for blob in g.resource_manager.emit('js') %}
         {{ blob }}
