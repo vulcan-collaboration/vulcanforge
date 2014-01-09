@@ -57,6 +57,7 @@ class BrokenLinkFinder(object):
         try:
             soup = BeautifulSoup(html)
         except Exception:
+            LOG.warn("Error parsing html in page %s", page.url())
             raise StopIteration
         for img in soup.findAll("img"):
             src = img.get("src")
