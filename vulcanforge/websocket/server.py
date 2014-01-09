@@ -9,11 +9,13 @@ import logging
 import json
 from paste.deploy.converters import asint
 import redis
+import socket
 import gevent
-import gevent.baseserver
+import gevent.socket
 import gevent.pool
 from gevent.pywsgi import WSGIServer
 import geventwebsocket
+from geventwebsocket.handler import WebSocketHandler
 from vulcanforge.websocket import load_auth_broker
 from vulcanforge.websocket.exceptions import WebSocketException, \
     LostConnection, InvalidMessageException, NotAuthorized, NotAuthenticated
@@ -131,7 +133,7 @@ class ConnectionController(object):
             self.connected = False
 
     def is_connected(self):
-        return self.connected and self.websocket.socket is not None
+        return self.connected and not self.websocket.closed
 
     def run_listener(self):
         self._loop(self._listen_frame)
@@ -211,12 +213,19 @@ class ConnectionController(object):
             }))
 
 
+def make_listener(host, port):
+    socket_fd = gevent.socket.socket()
+    socket_fd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    socket_fd.bind((host, port))
+    socket_fd.listen(0)
+    return socket_fd
+
+
 def make_server(config, listener=None):
     if listener is None:
         host = config['websocket.host']
         port = int(config['websocket.port'])
-        listener = gevent.baseserver._tcp_listener((host, port))
+        listener = make_listener(host, port)
     app = WebSocketApp(config)
-    server = WSGIServer(listener, app,
-                        handler_class=geventwebsocket.WebSocketHandler)
+    server = WSGIServer(listener, app, handler_class=WebSocketHandler)
     return server

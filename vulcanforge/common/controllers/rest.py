@@ -17,6 +17,7 @@ import urllib
 import os
 
 import oauth2 as oauth
+from paste.util.converters import asbool
 import pymongo
 from webob import exc
 from tg import expose, flash, redirect, config, TGController
@@ -428,7 +429,9 @@ class WebServiceRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    #@cache_rendered(timeout=60)
+    @cache_rendered(name='cache.navdata.{c.user._id}',
+                    timeout=500, debug_timeout=10,
+                    allow_overrides=True)
     def navdata(self, **kwargs):
         """
         Special icons and labels configuration:
@@ -467,7 +470,7 @@ class WebAPIController(TGController):
         hood_items = []
 
         hood_query_params = {
-            'url_prefix': {'$ne': '/u/'}
+            'url_prefix': {'$nin': ['/u/', '//']}
         }
         for hood in Neighborhood.query.find(hood_query_params):
             if not g.security.has_access(hood, 'read'):
@@ -494,7 +497,12 @@ class WebAPIController(TGController):
         project_cursor = Project.query.find(project_query_params)
         project_cursor.sort('sortable_name', pymongo.ASCENDING)
         for project in project_cursor:
-            if not g.security.has_access(project, 'read'):
+            if (
+                project.deleted and
+                not g.security.has_access(project, 'write') or
+                not g.security.has_access(project, 'read') or
+                not project.first_mount('read')
+            ):
                 continue
             project_data = {
                 'label': project.name,
@@ -508,6 +516,7 @@ class WebAPIController(TGController):
             hood_id_map[project.neighborhood_id]['children'].\
                 append(project_data)
 
+        root_item = self._get_global_nav_root_item()
         # compile output
         return {
             'hoods': hood_items,
@@ -515,26 +524,31 @@ class WebAPIController(TGController):
                 'children': self._get_global_nav_children(),
                 'actions': self._get_global_nav_actions()
             },
-            "label": "",
-            "url": self._get_global_nav_root_href(),
-            "icon": g.resource_manager.absurl('images/vf_logo_icon2.png')
+            "label": root_item['label'],
+            "url": root_item['url'],
+            "icon": root_item['icon']
         }
 
     def _get_global_nav_children(self):
-        proj_img = 'images/forge_toolbar_icons/projects_icon_on.png'
-        user_img = 'images/forge_toolbar_icons/designers_icon_on.png'
-        return [
-            {
-                'label': 'Browse All Projects',
-                'url': '/browse/',
-                'icon': g.resource_manager.absurl(proj_img)
-            },
-            {
-                'label': 'Browse All Designers',
-                'url': '/designers/',
-                'icon': g.resource_manager.absurl(user_img)
-            }
-        ]
+        items = []
+        item_keys = config.get('masternav.root_items', '').split()
+        for key in item_keys:
+            key_prefix = 'masternav.items.' + key + '.'
+            try:
+                label = config[key_prefix + 'label']
+                href = config[key_prefix + 'href']
+                icon_url = config[key_prefix + 'icon']
+            except KeyError, e:
+                LOG.exception('Missing required key for %r, skipping it', key)
+                continue
+            if asbool(config.get(key_prefix + 'icon_is_resource', False)):
+                icon_url = g.resource_manager.absurl(icon_url)
+            items.append({
+                'label': label,
+                'url': href,
+                'icon': icon_url
+            })
+        return items
 
     def _get_global_nav_actions(self):
         global_actions = []
@@ -549,11 +563,22 @@ class WebAPIController(TGController):
             })
         return global_actions
 
-    def _get_global_nav_root_href(self):
+    def _get_global_nav_root_item(self):
         if c.user == User.anonymous():
-            return "/"
+            href = config.get('masternav.root.href', "/")
         else:
-            return "/dashboard/activity_feed/"
+            href = config.get('masternav.root.href',
+                              "/dashboard/activity_feed/")
+        icon_url = config.get('masternav.root.icon',
+                              "images/vf_logo_icon2.png")
+        if asbool(config.get('masternav.root.icon_is_resource', 'true')):
+            icon_url = g.resource_manager.absurl(icon_url)
+        label = config.get('masternav.root.label', '').strip()
+        return {
+            'label': label,
+            'icon': icon_url,
+            'url': href
+        }
 
     def _get_global_nav_actions_for_hood(self, hood):
         actions = []
