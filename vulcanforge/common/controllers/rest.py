@@ -423,10 +423,20 @@ class SwiftAuthRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    @cache_rendered(name='cache.navdata.{c.user._id}',
-                    timeout=500, debug_timeout=10,
-                    allow_overrides=True)
     def navdata(self, **kwargs):
+        if not g.cache:
+            return self._make_navdata()
+        cache_hash_name = 'navdata'
+        hash_key = c.user.username
+        timeout = (10 * 60) if g.production_mode else 10
+        cached = g.cache.hget_json(cache_hash_name, hash_key)
+        if cached:
+            return cached
+        new_navdata = self._make_navdata()
+        g.cache.hset_json(cache_hash_name, hash_key, new_navdata, timeout)
+        return new_navdata
+
+    def _make_navdata(self):
         """
         Special icons and labels configuration:
 
