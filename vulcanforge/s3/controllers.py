@@ -33,7 +33,7 @@ class BucketController(BaseRestController):
         service is available.
 
         """
-        force_local = asbool(kwargs.get('force_local', False))
+        force_local = True  # TODO: work out content-disposition in direct reqs
         keyname = get_remainder_path(map(urlunquote, args))
         if not g.s3_serve_local and not force_local:
             # redirect to remote
