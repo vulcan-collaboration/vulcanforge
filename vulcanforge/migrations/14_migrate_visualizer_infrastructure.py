@@ -1,6 +1,7 @@
 import os
 
 from formencode.variabledecode import variable_decode
+from ming.odm import ThreadLocalODMSession
 from pylons import app_globals as g
 from tg import config
 from vulcanforge.common.util.filesystem import import_object
@@ -43,9 +44,11 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                 key = g.get_s3_key(keyname)
                 s3_file = S3VisualizerFile(
                     filename=filename,
-                    visualizer_id=doc['_id'])
+                    visualizer_config_id=doc['_id'])
                 s3_file.set_contents_from_string(key.read())
             coll.save(doc)
+
+        ThreadLocalODMSession.flush_all()
 
         # convert server-side visualizers
         decoded = variable_decode(config)

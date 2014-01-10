@@ -66,7 +66,7 @@ class S3HostedVisualizer(BaseVisualizer):
     @property
     def src_url(self):
         ep_file = self.get_entry_point_file()
-        return ep_file.url(absolute=True, direct_to_remote=True)
+        return ep_file.url(absolute=True, direct_to_remote=False)
 
     def get_entry_point_file(self):
         ep_file = S3VisualizerFile.query.get(
