@@ -108,7 +108,7 @@ class File(BaseMappedClass):
 
     @property
     def _s3_headers(self):
-        return {'Content-Type': self.content_type}
+        return {'Content-Type': str(self.content_type)}
 
     def _update_metadata(self):
         """
