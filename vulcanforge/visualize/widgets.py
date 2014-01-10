@@ -14,7 +14,7 @@ from vulcanforge.resources.widgets import Widget, JSLink, CSSLink, JSScript
 class BaseContentWidget(Widget):
 
     def resources(self):
-        yield JSLink('js//lib/jquery/jquery.1.7.2.min.js', scope="forge")
+        yield JSLink('js/lib/jquery/jquery.1.7.2.min.js', scope="forge")
         yield JSLink('js/lib/jquery/jquery-ui.1.10.3.js', scope="forge")
         yield JSLink('visualize/js/visualize.js', scope="forge")
 
