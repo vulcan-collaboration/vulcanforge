@@ -97,14 +97,14 @@ class BrokenLinkFinder(object):
                     resp = self.make_request_for_page(href, page)
                 except Timeout:
                     yield {
-                        "link": src,
-                        "html": str(img),
+                        "link": href,
+                        "html": str(a),
                         "msg": "Request timed out"
                     }
                 except Exception as e:
                     yield {
-                        "link": src,
-                        "html": str(img),
+                        "link": href,
+                        "html": str(a),
                         "msg": "Unknown Error: {}".format(str(e))
                     }
                 if resp.status_code != 200:
