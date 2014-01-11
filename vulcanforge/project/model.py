@@ -11,7 +11,7 @@ from tg import config
 from bson import ObjectId
 from ming import schema as S
 from ming.utils import LazyProperty
-from ming.odm import ThreadLocalODMSession, Mapper
+from ming.odm import ThreadLocalODMSession, MapperExtension
 from ming.odm import session, state
 from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
 from ming.odm.declarative import MappedClass
@@ -29,12 +29,47 @@ from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import title_sort, push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.auth.schema import ACL, ACE, EVERYONE
+from vulcanforge.common.util.diff import get_dict_diff_changed_keys
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.tasks import unindex_project, reindex_project
 
 LOG = logging.getLogger(__name__)
 
 BANISH_TEXT = "Your membership has been revoked from {}."
+
+
+class ProjectExtension(MapperExtension):
+    def after_delete(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_insert(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_update(self, instance, state, sess):
+        changed_keys = get_dict_diff_changed_keys(state.original_document,
+                                                  state.document)
+        if changed_keys.intersection([
+            'name',
+            'acl'
+        ]):
+            g.cache.redis.expire('navdata', 0)
+
+
+class AppConfigExtension(MapperExtension):
+    def after_delete(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_insert(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_update(self, instance, state, sess):
+        changed_keys = get_dict_diff_changed_keys(state.original_document,
+                                                  state.document)
+        if changed_keys.intersection([
+            'options',
+            'acl'
+        ]):
+            g.cache.redis.expire('navdata', 0)
 
 
 class ProjectFile(File):
@@ -125,6 +160,8 @@ class Project(SOLRIndexed):
             'shortname',
             'parent_id',
             'sortable_activity']
+
+        extensions = [ProjectExtension]
 
         def before_save(self):
             if self.name is None and self.shortname is not None:
@@ -1112,6 +1149,7 @@ class AppConfig(MappedClass):
             ('_id',),
             ('project_id',)
         ]
+        extensions = [AppConfigExtension]
 
     # AppConfig schema
     _id = FieldProperty(S.ObjectId)

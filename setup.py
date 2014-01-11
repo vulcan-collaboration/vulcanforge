@@ -127,6 +127,7 @@ setup(
     wiki-import = vulcanforge.command.wiki_tool:ImportWikiPages
     wiki_findbroken = vulcanforge.command.wiki_tool:FindBrokenLinks
     purge-project = vulcanforge.command.project:PurgeProject
+    cleanup_for_application_start = vulcanforge.command.cleanup:CleanupForApplicationStart
 
     [easy_widgets.engines]
     jinja = vulcanforge.config.app_cfg:JinjaEngine
