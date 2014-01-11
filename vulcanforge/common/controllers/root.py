@@ -114,7 +114,15 @@ class ForgeRootController(WsgiDispatchController):
 
     @expose('jinja:front.html')
     @with_trailing_slash
-    def index(self, **kw):
+    def index(self, **kwargs):
+        if c.user is User.anonymous():
+            return self._anonymous_index(**kwargs)
+        return self._authenticated_index(**kwargs)
+
+    def _authenticated_index(self, **kwargs):
+        return tg.redirect(c.user.landing_url())
+
+    def _anonymous_index(self, **kwargs):
         """Handle the front-page.
 
         TODO:
