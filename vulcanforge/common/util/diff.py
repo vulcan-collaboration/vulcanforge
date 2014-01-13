@@ -238,5 +238,44 @@ def levenshtein(s1, s2):
     return previous_row[-1]
 
 
+class DictDiffCalculator(object):
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+        self.changed_keys_set = set()
+
+    def get_changed_keys(self):
+        self.changed_keys_set.clear()
+        self._calculate_changed_keys(self.a, self.b)
+        return set(['.'.join(k) for k in self.changed_keys_set if k])
+
+    @staticmethod
+    def _iterable_plus_args(iterable, *args):
+        for x in iterable:
+            yield x
+        for x in args:
+            yield x
+
+    def _calculate_changed_keys(self, a, b, *key_path):
+        for key in set(a).union(b):
+            new_key_path = list(self._iterable_plus_args(key_path, key))
+            if key in a and key in b:
+                x = a[key]
+                y = b[key]
+                if type(x) == type(y) and isinstance(x, dict):
+                    self._calculate_changed_keys(x, y, *new_key_path)
+                elif x != y:
+                    self.changed_keys_set.update((key_path,
+                                                  tuple(new_key_path)))
+            else:
+                self.changed_keys_set.update((key_path,
+                                              tuple(new_key_path)))
+
+
+def get_dict_diff_changed_keys(a, b):
+    return DictDiffCalculator(a, b).get_changed_keys()
+
+
 if __name__ == '__main__':  # pragma no cover
     test()

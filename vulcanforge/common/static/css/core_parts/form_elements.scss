@@ -338,7 +338,7 @@ input.label-edit {
 .form-controls {
     padding: $pu*3 $pu*2;
     margin-top: $pu;
-
+    text-align: right;
     @include form-controls-skin();
 }
 
