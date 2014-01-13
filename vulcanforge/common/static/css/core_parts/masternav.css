@@ -134,18 +134,20 @@ li.masternav-item .masternav-item-icon.special-icon {
 
 .popup-container::before,
 .popup-container::after {
-    content: "";
+    content: "...";
     z-index: 2;
     position: absolute;
     left: 0;
     width: 100%;
     height: 0;
     transition: height 400ms;
-    /*font-family: "ForgeIconicFill";
+    font-family: "ForgeIconicFill";
     font-size: 20px;
     text-align: center;
-    line-height: 15px;
-    color: rgba(255, 255, 255, 0.7);*/
+    line-height: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    overflow: hidden;
+    pointer-events: none;
 }
 
 .popup-container.scrollable-top::before,
@@ -271,6 +273,16 @@ ul.masternav-popup a.action span {
     li.masternav-item.has-menu:hover::before {
         opacity: 1;
     }
+}
+
+
+#vf-user-menu-button {
+    width: 24px;
+}
+#vf-user-menu-button .ico-user {
+    position: absolute;
+    top: 8px;
+    left: 8px;
 }
 
 
