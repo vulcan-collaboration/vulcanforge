@@ -606,7 +606,7 @@ class WebAPIController(TGController):
             app_config_data = {
                 'label': app_config.options.mount_label,
                 'url': app_config.url(),
-                'icon': app_config.icon_url(48),
+                'icon': app_config.icon_url(32),
                 'shortname': app_config.options.mount_point,
                 'actions': []
             }
