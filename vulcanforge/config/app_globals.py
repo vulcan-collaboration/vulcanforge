@@ -83,9 +83,6 @@ class ForgeAppGlobals(object):
         self.show_register_on_login = asbool(config.get(
             'show_register_on_login', 'true'))
 
-        # Setup Gravatar
-        self.gravatar = gravatar.url
-
         # Setup pygments
         self.pygments_formatter = pygments.formatters.HtmlFormatter(
             cssclass='codehilite',
@@ -226,6 +223,24 @@ class ForgeAppGlobals(object):
 
         # websocket
         self.websocket_enabled = asbool(config.get('websocket.enabled', True))
+
+        self.gravatar_default = config.get('gravatar.default', "retro")
+
+    def gravatar(self, *args, **kwargs):
+        options = {
+            'd': self.gravatar_default
+        }
+        alias_map = (
+            ('default', 'd'),
+            ('rating', 'r'),
+            ('forcedefault', 'f'),
+            ('size', 's')
+        )
+        for alias, key in alias_map:
+            if alias in kwargs:
+                kwargs[key] = kwargs.pop(alias)
+        options.update(kwargs.iteritems())
+        return gravatar.url(*args, **options)
 
     @property
     def header_logo(self):
