@@ -25,7 +25,7 @@ from .mdx_visualizer import StashProcessor, VisualizerPattern, StashPattern
 
 
 LOG = logging.getLogger(__name__)
-SHORTLINK_PATTERN = r'(?<![\[])\[([^\]\[]*)\]'
+SHORTLINK_PATTERN = r'(?<![\[\\])\[([^\\\]\[]*(?:\\[\[\]\\][^\\\]\[]*)*)\](?![\(])'
 ARTIFACT_RE = re.compile(r'((.*?):)?((.*?):)?(.+)')
 
 
@@ -155,9 +155,9 @@ class ForgeProcessor(object):
 
     def install(self):
         for k, v in self.inline_patterns.iteritems():
-            self.markdown.inlinePatterns[k] = v
+            self.markdown.inlinePatterns.add(k, v, "_begin")
         if self._use_wiki:
-            self.markdown.treeprocessors['forge'] = self.tree_processor
+            self.markdown.treeprocessors.add('forge', self.tree_processor, '_end')
         self.markdown.postprocessors['forge'] = self.postprocessor
 
     def store(self, raw):
@@ -202,8 +202,12 @@ class ForgeProcessor(object):
         self.alinks = {}
         self.compiled = False
 
-    def _expand_alink(self, link):
+    def _de_escape_link(self, link):
+        return link.replace("\\]", "]").replace("\\[", "[").replace("\\\\", "\\")
+
+    def _expand_alink(self, alink):
         # try to find an artifact reference
+        link = self._de_escape_link(alink)
         new_link = self.alinks.get(link, None)
         if new_link:
             link_html = None
