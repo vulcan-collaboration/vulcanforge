@@ -182,6 +182,19 @@ class DictDifferChangedKeysTestCase(unittest.TestCase):
         changed_keys = differ.get_changed_keys()
         self.assertEqual(changed_keys, {'a', 'a.0', 'a.0.b'})
 
+    def test_changed_dict_to_list(self):
+        a = {
+            'a': {'b': 0}
+        }
+        b = {
+            'a': [
+                {'b': 1}
+            ]
+        }
+        differ = DictDiffCalculator(a, b)
+        changed_keys = differ.get_changed_keys()
+        self.assertEqual(changed_keys, {'a'})
+
 
 if __name__ == "__main__":
     unittest.main()
