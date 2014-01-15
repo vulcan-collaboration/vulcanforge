@@ -29,7 +29,7 @@ from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import title_sort, push_config
 from vulcanforge.common.util.decorators import exceptionless
 from vulcanforge.auth.schema import ACL, ACE, EVERYONE
-from vulcanforge.common.util.diff import get_dict_diff_changed_keys
+from vulcanforge.common.util.diff import get_dict_diff_have_keys_changed
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.tasks import unindex_project, reindex_project
 
@@ -46,12 +46,11 @@ class ProjectExtension(MapperExtension):
         g.cache.redis.expire('navdata', 0)
 
     def after_update(self, instance, state, sess):
-        changed_keys = get_dict_diff_changed_keys(state.original_document,
-                                                  state.document)
-        if changed_keys.intersection([
-            'name',
-            'acl'
-        ]):
+        if get_dict_diff_have_keys_changed(
+            state.original_document, state.document,
+            ('name',),
+            ('acl',)
+        ):
             g.cache.redis.expire('navdata', 0)
 
 
@@ -63,12 +62,11 @@ class AppConfigExtension(MapperExtension):
         g.cache.redis.expire('navdata', 0)
 
     def after_update(self, instance, state, sess):
-        changed_keys = get_dict_diff_changed_keys(state.original_document,
-                                                  state.document)
-        if changed_keys.intersection([
-            'options',
-            'acl'
-        ]):
+        if get_dict_diff_have_keys_changed(
+            state.original_document, state.document,
+            ('options',),
+            ('acl',)
+        ):
             g.cache.redis.expire('navdata', 0)
 
 
