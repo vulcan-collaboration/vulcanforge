@@ -241,6 +241,8 @@ def levenshtein(s1, s2):
 class DictDiffCalculator(object):
 
     def __init__(self, a, b):
+        assert isinstance(a, dict) and isinstance(b, dict), \
+            "both arguments must be dictionaries"
         self.a = a
         self.b = b
         self._changed_keys_set = set()
@@ -380,7 +382,7 @@ def get_dict_diff_have_keys_changed(a, b, *key_paths):
 
         to test if `options.name` or `acl` or `labels.1.title` have changed:
 
-        >>> self.have_keys_changed(state,
+        >>> self.have_keys_changed(a, b,
                                    ('options', 'name'),
                                    ('acl',),
                                    ('labels', 1, 'title')
