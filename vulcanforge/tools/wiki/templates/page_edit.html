@@ -21,7 +21,7 @@
     <ul class="field-list padded">
         <li>
             <fieldset class="vf-fieldset">
-                <label>Name:</label>
+                <label for="title">Name:</label>
                 <input class="long" maxlength="40" type="text" name="title" id="title" value="{{page.title}}" placeholder="Page name" required="required" autofocus="autofocus"/>
                 <p>Pages can be organized using slashes like parts of a URL. example: MainTopic/SubTopic</p>
                 <div id="rename_descendants_field">
@@ -30,6 +30,8 @@
                         <p>If renaming a page, also rename all of it's sub-pages.</p>
                     </fieldset>
                 </div>
+                <hr>
+                <p>{{ c.featured_field.display(value=page.featured) }} <em>Featured</em> pages are included in the global navigation menu for easy access.</p>
             </fieldset>
         </li>
         <li>
