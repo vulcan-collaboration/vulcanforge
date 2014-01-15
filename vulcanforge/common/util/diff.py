@@ -382,7 +382,7 @@ def get_dict_diff_have_keys_changed(a, b, *key_paths):
 
         to test if `options.name` or `acl` or `labels.1.title` have changed:
 
-        >>> self.have_keys_changed(state,
+        >>> self.have_keys_changed(a, b,
                                    ('options', 'name'),
                                    ('acl',),
                                    ('labels', 1, 'title')
