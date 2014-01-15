@@ -909,6 +909,8 @@ class PageController(WikiContentBaseController):
                             self.page.viewable_by.remove(user.username)
 
         self.page.hide_attachments = hide_attachments
+        if featured == 'on':  # a hack... validator is not converting the value
+            featured = True
         if featured != bool(self.page.featured):
             g.cache.redis.expire('navdata', 0)
             self.page.featured = featured
