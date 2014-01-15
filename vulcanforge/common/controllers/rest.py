@@ -589,7 +589,8 @@ class WebAPIController(TGController):
         if hood.user_can_register(c.user):
             actions.append({
                 'label': 'Start a {}'.format(hood.project_cls.type_label),
-                'url': '{}add_project'.format(hood.url())
+                'url': '{}add_project'.format(hood.url()),
+                'icon': 'ico-plus'
             })
         return actions
 
@@ -608,8 +609,16 @@ class WebAPIController(TGController):
                 'url': app_config.url(),
                 'icon': app_config.icon_url(32),
                 'shortname': app_config.options.mount_point,
-                'actions': []
+                'actions': [],
+                'children': []
             }
+            app_instance = app_config.instantiate()
+            try:
+                app_nav_data = app_instance.get_global_navigation_data()
+            except NotImplementedError:
+                pass
+            else:
+                app_config_data.update(app_nav_data)
             # special behavior for "home" mount point
             if app_config.options.get('mount_point', None) == 'home':
                 tools.insert(0, app_config_data)

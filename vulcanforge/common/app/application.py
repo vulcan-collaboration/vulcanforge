@@ -343,3 +343,6 @@ class Application(object):
             yield self.AttachmentClass
         for cls in self.artifacts.values():
             yield cls
+
+    def get_global_navigation_data(self):
+        raise NotImplementedError
