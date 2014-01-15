@@ -334,6 +334,18 @@ class ForgeTrackerApp(Application):
             className='nav_child'))
         return links
 
+    def get_global_navigation_data(self):
+        actions = []
+        if g.security.has_access(self, 'read'):
+            actions.append({
+                'label': 'Create New Ticket',
+                'url': self.url + 'new/',
+                'icon': 'ico-plus'
+            })
+        return {
+            'actions': actions
+        }
+
     def has_custom_field(self, field):
         """Checks if given custom field is defined. (Custom field names
         must start with '_'.)

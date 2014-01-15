@@ -241,14 +241,60 @@ def levenshtein(s1, s2):
 class DictDiffCalculator(object):
 
     def __init__(self, a, b):
+        assert isinstance(a, dict) and isinstance(b, dict), \
+            "both arguments must be dictionaries"
         self.a = a
         self.b = b
-        self.changed_keys_set = set()
+        self._changed_keys_set = set()
 
+    # public api methods
     def get_changed_keys(self):
-        self.changed_keys_set.clear()
+        """
+        Slower, recursively checks entire dict structure and returns a set
+        of key names that have changed.
+
+        e.g. {'some_list', 'some_list.0', 'some_list.0.a_dict_key'}
+        """
+        self._changed_keys_set.clear()
         self._calculate_changed_keys(self.a, self.b)
-        return set(['.'.join(k) for k in self.changed_keys_set if k])
+        return set(['.'.join(k) for k in self._changed_keys_set if k])
+
+    def get_has_key_changed(self, *key_path):
+        """
+        Faster, but checks only one key path at a time.
+
+        returns True if changed else False
+        """
+        # get starting point
+        x = self.a
+        y = self.b
+        key_stack = list(key_path)
+        while len(key_stack):
+            key = key_stack.pop(0)
+            if isinstance(x, dict) and isinstance(y, dict):
+                try:
+                    x = x[key]
+                    y = y[key]
+                except KeyError:
+                    return True
+                else:
+                    continue
+            elif isinstance(x, (list, tuple)) and isinstance(y, (list, tuple)):
+                try:
+                    x = x[int(key)]
+                    y = y[int(key)]
+                except IndexError:
+                    return True
+                else:
+                    continue
+        # walk the rest of it until a difference is found
+        return self._walk_until_diff(x, y)
+
+    # internal processing methods
+    @staticmethod
+    def _iter_path_items_from_path(key_path):
+        for i in range(len(key_path)):
+            yield tuple(key_path[:i + 1])
 
     @staticmethod
     def _iterable_plus_args(iterable, *args):
@@ -257,24 +303,99 @@ class DictDiffCalculator(object):
         for x in args:
             yield x
 
+    def _walk_until_diff(self, a, b):
+        """
+        return True if diff is found else False
+        """
+        if isinstance(a, dict) and isinstance(b, dict):
+            for key in set(a).union(b):
+                if key in a and key in b:
+                    x = a[key]
+                    y = b[key]
+                    if self._walk_until_diff(x, y):
+                        continue
+                    if x == y:
+                        continue
+                return True
+        elif isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+            if len(a) != len(b):
+                return True
+            for i in range(len(a)):
+                if len(a)-1 >= i and len(b)-1 >= i:
+                    x = a[i]
+                    y = b[i]
+                    if self._walk_until_diff(x, y):
+                        continue
+                    if x == y:
+                        continue
+                return True
+        return not a == b
+
+    def _walk_for_changed(self, x, y, key_path):
+        if isinstance(x, dict) and isinstance(y, dict):
+            self._calculate_changed_keys(x, y, *key_path)
+            return True
+        elif isinstance(x, (list, tuple)) and isinstance(y, (list, tuple)):
+            self._calculate_changed_indexes(x, y, *key_path)
+            return True
+        return False
+
+    def _add_path_items_to_changed_keys(self, key_path):
+        self._changed_keys_set.update(self._iter_path_items_from_path(key_path))
+
     def _calculate_changed_keys(self, a, b, *key_path):
+        assert isinstance(a, dict)
+        assert isinstance(b, dict)
         for key in set(a).union(b):
             new_key_path = list(self._iterable_plus_args(key_path, key))
             if key in a and key in b:
                 x = a[key]
                 y = b[key]
-                if type(x) == type(y) and isinstance(x, dict):
-                    self._calculate_changed_keys(x, y, *new_key_path)
-                elif x != y:
-                    self.changed_keys_set.update((key_path,
-                                                  tuple(new_key_path)))
-            else:
-                self.changed_keys_set.update((key_path,
-                                              tuple(new_key_path)))
+                if self._walk_for_changed(x, y, new_key_path):
+                    continue
+                if x == y:
+                    continue
+            self._add_path_items_to_changed_keys(new_key_path)
+
+    def _calculate_changed_indexes(self, a, b, *key_path):
+        assert isinstance(a, (list, tuple))
+        assert isinstance(b, (list, tuple))
+        for i in range(max(len(a), len(b))):
+            new_key_path = list(self._iterable_plus_args(key_path, str(i)))
+            if len(a)-1 >= i and len(b)-1 >= i:
+                x = a[i]
+                y = b[i]
+                if self._walk_for_changed(x, y, new_key_path):
+                    continue
+                if x == y:
+                    continue
+            self._add_path_items_to_changed_keys(new_key_path)
 
 
 def get_dict_diff_changed_keys(a, b):
     return DictDiffCalculator(a, b).get_changed_keys()
+
+
+def get_dict_diff_have_keys_changed(a, b, *key_paths):
+    """
+    example:
+
+        to test if `options.name` or `acl` or `labels.1.title` have changed:
+
+        >>> self.have_keys_changed(a, b,
+                                   ('options', 'name'),
+                                   ('acl',),
+                                   ('labels', 1, 'title')
+                                   )
+
+    :param key_paths: a tuple of tuples to test sequentially. If any have
+                      changed in the given state, return True else False.
+    """
+    dict_diff = DictDiffCalculator(a, b)
+    for key_path in key_paths:
+        if dict_diff.get_has_key_changed(key_path):
+            return True
+    return False
 
 
 if __name__ == '__main__':  # pragma no cover

@@ -89,7 +89,7 @@
                             content = project;
                             break;
                         case current[2]:
-                            content = {};
+                            content = tool;
                             break;
                         default:
                             content = data.globals;
@@ -104,7 +104,7 @@
                             }
                             items = items.concat(content.children);
                         }
-                        if (items.length > 0) {
+                        if (items.length > 0  || (typeof(content.actions) !== 'undefined' && content.actions.length > 0)) {
                             $element.addClass('has-menu');
                         }
                     }).
@@ -123,7 +123,7 @@
                             content = project;
                             break;
                         case current[2]:
-                            content = {};
+                            content = tool;
                             break;
                         default:
                             content = data.globals;
@@ -185,7 +185,9 @@
                         return;
                     }
                     _.defaults(link, { shortname: "" });
-                    var hasChildren = (_.has(link, "children") && (link.children.length > 0)) || (_.has(link, "tools") && (link.tools.length > 0));
+                    var hasChildren = ((_.has(link, "children") && (link.children.length > 0)) ||
+                        (_.has(link, "tools") && (link.tools.length > 0)) ||
+                        (typeof(link.actions) !== 'undefined' && link.actions.length > 0));
                     _.extend(link, { hasChildren: hasChildren });
                     // Create the Link element
                     var $item = $(_popupLink(link)).appendTo($list);
@@ -196,9 +198,14 @@
                             removeClass('masternav-menu-open');
                         if (hasChildren) {
                             // Adjust for the 0.5em on the top of the overall list
-                            var subTop = top + $item.position().top - config.submenuNudge;
+                            var subTop = top + $item.position().top;
                             var width = left + $item.outerWidth();
                             var subcontent = _.findWhere(items, { shortname: link.shortname });
+                            if ((_.has(subcontent, "children") && (subcontent.children.length > 0)) ||
+                                (_.has(subcontent, "tools") && (subcontent.tools.length > 0)) ||
+                                (typeof(subcontent.actions) !== 'undefined' && subcontent.actions.length > 1)) {
+                                subTop -= config.submenuNudge;
+                            }
                             _renderPopup($container, depth+1, link.shortname, subcontent, subTop, width, $item);
                         } else {
                             _popState(depth + 1);
@@ -206,7 +213,7 @@
                     });
                 });
                 // Add a separator if there are Actions
-                if (content.actions && content.actions.length > 0) {
+                if (items.length > 0 && content.actions && content.actions.length > 0) {
                     $list.append("<li><hr></li>");
                 }
                 // Render each Action element - And respond to its mounterenter event
@@ -225,7 +232,7 @@
                     $popup.addClass("scrollable-bottom");
                     $list.bind("scroll", function() {
                         // Check if top scroll arrow is needed
-                        if ($list.prop("scrollTop") >= config.scrollBuffer) $popup.addClass("scrollable-top");
+                        if ($list.prop("scrollTop") > 0) $popup.addClass("scrollable-top");
                         else $popup.removeClass("scrollable-top");
                         // Check if top scroll arrow is needed
                         var scrollBottom = $list.prop("scrollHeight") - $list.prop("scrollTop") - $list.height();
@@ -289,14 +296,14 @@
             var _popupLink = _.template(
                 '<li class="masternav-popup-item<% if (hasChildren) { %> children<% } %>" data-shortname="<%= shortname %>">' +
                 '<a class="masternav-item-link" href="<%= url %>">' +
-                '<% if (icon) { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
+                '<% if (typeof(icon) !== "undefined") { %><img class="masternav-item-icon" src="<%= icon %>" /><% } %>' +
                 '<% if (label) { %><span class="masternav-item-label"><%= label %></span><% } %>' +
                 '</a>' +
                 '</li>'
             );
             var _popupAction = _.template(
                 '<li>' +
-                '<a class="action" href="<%= url %>">' +
+                '<a class="action<% if (typeof(icon) !== "undefined") { %> inline-icon <%= icon %><% } %>" href="<%= url %>">' +
                 '<span><%= label %></span>' +
                 '</a>' +
                 '</li>');

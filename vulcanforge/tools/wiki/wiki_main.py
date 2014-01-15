@@ -222,6 +222,22 @@ class ForgeWikiApp(Application):
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
 
+    def get_global_navigation_data(self):
+        children = [
+            {
+                'label': page.featured_label or page.title,
+                'url': page.url()
+            }
+            for page in Page.query.find({
+                'app_config_id': self.config._id,
+                'featured': True
+            })
+            if g.security.has_access(page, 'read')
+        ]
+        return {
+            'children': children
+        }
+
     def get_markdown(self):
         return g.markdown_wiki
 
@@ -568,6 +584,7 @@ class PageController(WikiContentBaseController):
                                              label="Hide Attachments")
         rename_descendants_field = ew.Checkbox(name="rename_descendants",
                                                label="Rename Subpages")
+        featured_field = ew.Checkbox(name="featured", label="Featured")
 
     def __init__(self, title):
         self.title = unquote(really_unicode(title))
@@ -669,6 +686,7 @@ class PageController(WikiContentBaseController):
         c.attachments_field = self.Widgets.attachments_field
         c.hide_attachments_field = self.Widgets.hide_attachments_field
         c.rename_descendants = self.Widgets.rename_descendants_field
+        c.featured_field = self.Widgets.featured_field
         return {
             'page': page,
             'page_exists': page_exists,
@@ -837,11 +855,13 @@ class PageController(WikiContentBaseController):
         'hide_attachments': validators.StringBool(if_empty=False,
                                                   if_missing=False),
         'rename_descendants': validators.StringBool(if_empty=False,
+                                                    if_missing=False),
+        'featured': validators.StringBool(if_empty=False,
                                                     if_missing=False)
     })
     def update(self, title=None, text=None, labels=None, viewable_by=None,
                new_viewable_by=None, hide_attachments=False,
-               rename_descendants=True, **kw):
+               rename_descendants=True, featured=False, **kw):
         if not title:
             flash('You must provide a title for the page.', 'error')
             redirect('edit')
@@ -889,6 +909,9 @@ class PageController(WikiContentBaseController):
                             self.page.viewable_by.remove(user.username)
 
         self.page.hide_attachments = hide_attachments
+        if featured != bool(self.page.featured):
+            g.cache.redis.expire('navdata', 0)
+            self.page.featured = featured
 
         redirect(
             c.app.url + really_unicode(self.page.title).encode('utf-8') +

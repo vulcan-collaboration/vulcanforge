@@ -100,6 +100,8 @@ class Page(VersionedArtifact):
     type_s = 'Wiki'
     content_agreement_protected = FieldProperty(bool, if_missing=False)
     hide_attachments = FieldProperty(bool, if_missing=False)
+    featured = FieldProperty(bool, if_missing=False)
+    featured_label = FieldProperty(str, if_missing=None)
 
     def commit(self):
         self.autosubscribe()

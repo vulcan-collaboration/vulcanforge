@@ -192,6 +192,7 @@ class ProjectAdminController(BaseController):
                 thumbnail_meta=dict(project_id=c.project._id, category='icon'))
             reindex = True
             session(ProjectFile).flush()
+            g.cache.redis.expire('navdata', 0)
 
         if kwargs.get('delete_icon', False):
             ProjectFile.remove(dict(
@@ -200,6 +201,7 @@ class ProjectAdminController(BaseController):
             ))
             reindex = True
             session(ProjectFile).flush()
+            g.cache.redis.expire('navdata', 0)
 
         ad_text = kwargs.get('ad_text', None)
         unpublish_ad = kwargs.get('unpublish_ad', False)
@@ -531,6 +533,7 @@ class ProjectAdminController(BaseController):
                     thumbnail_meta=dict(
                         app_config_id=ac._id, category='icon', size=32))
                 flash("New icon uploaded", "success")
+                g.cache.redis.expire('navdata', 0)
             elif kwargs.get('delete_icon'):
                 old_icon = ac.get_icon()
                 if old_icon:
@@ -539,6 +542,7 @@ class ProjectAdminController(BaseController):
                         category='icon'
                     ))
                     flash("Custom icon deleted", "success")
+                    g.cache.redis.expire('navdata', 0)
                 else:
                     flash("There was no custom icon to delete", "error")
 
