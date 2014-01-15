@@ -241,6 +241,8 @@ def levenshtein(s1, s2):
 class DictDiffCalculator(object):
 
     def __init__(self, a, b):
+        assert isinstance(a, dict) and isinstance(b, dict), \
+            "both arguments must be dictionaries"
         self.a = a
         self.b = b
         self._changed_keys_set = set()
