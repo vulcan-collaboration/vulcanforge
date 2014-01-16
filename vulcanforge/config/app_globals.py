@@ -61,6 +61,7 @@ class ForgeAppGlobals(object):
     tool_manager = None
     resource_manager = None
     task_queue = None
+    event_queue = None
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -81,9 +82,6 @@ class ForgeAppGlobals(object):
         self.browse_home = config.get("browse_home", "/")
         self.show_register_on_login = asbool(config.get(
             'show_register_on_login', 'true'))
-
-        # Setup Gravatar
-        self.gravatar = gravatar.url
 
         # Setup pygments
         self.pygments_formatter = pygments.formatters.HtmlFormatter(
@@ -223,6 +221,27 @@ class ForgeAppGlobals(object):
                 'templates.sidebar_menu', tmpl_master + 'sidebar_menu.html')
         }
 
+        # websocket
+        self.websocket_enabled = asbool(config.get('websocket.enabled', True))
+
+        self.gravatar_default = config.get('gravatar.default', "retro")
+
+    def gravatar(self, *args, **kwargs):
+        options = {
+            'd': self.gravatar_default
+        }
+        alias_map = (
+            ('default', 'd'),
+            ('rating', 'r'),
+            ('forcedefault', 'f'),
+            ('size', 's')
+        )
+        for alias, key in alias_map:
+            if alias in kwargs:
+                kwargs[key] = kwargs.pop(alias)
+        options.update(kwargs.iteritems())
+        return gravatar.url(*args, **options)
+
     @property
     def header_logo(self):
         return self.resource_manager.absurl(
@@ -268,8 +287,8 @@ class ForgeAppGlobals(object):
 
     def make_s3_keyname(self, key_name, artifact=None):
         return config.get('s3.app_prefix', 'Forge') + '/' + \
-               self.artifact_s3_prefix(artifact) + \
-               h.urlquote(key_name)
+            self.artifact_s3_prefix(artifact) + \
+            h.urlquote(key_name)
 
     def get_s3_key(self, key_name, artifact=None, bucket=None,
                    insert_if_missing=True):
@@ -310,6 +329,7 @@ class ForgeAppGlobals(object):
 
     def s3_temp_url(self, keyname, bucket=None, temp_url_key=None,
                     expires=None, account_name=None, method="GET"):
+        """Note that this uses the full keyname of the s3 object"""
         if bucket is None:
             bucket = self.s3_bucket
         if temp_url_key is None:
@@ -324,13 +344,13 @@ class ForgeAppGlobals(object):
             bucket=bucket.name,
             key=keyname
         )
-        hmac_body = '%s\n%s\n%s' % (method, expires, path)
+        hmac_body = '%s\n%s\n%s' % (method, expires, h.urlquote(path))
         sig = hmac.new(temp_url_key, hmac_body, hashlib.sha1).hexdigest()
         url = '{protocol}://{host}:{port}{path}?{query}'.format(
             protocol=bucket.connection.protocol,
             host=bucket.connection.host,
             port=bucket.connection.port,
-            path=path,
+            path=h.urlquote(h.urlquote(path)),
             query=urllib.urlencode({
                 'temp_url_sig': sig,
                 'temp_url_expires': expires
@@ -451,7 +471,7 @@ class ForgeAppGlobals(object):
 
     @property
     def production_mode(self):
-        return asbool(config.get('debug')) == False
+        return not asbool(config.get('debug', 'false'))
 
     def oid_session(self):
         if 'openid_info' in session:
@@ -476,17 +496,22 @@ class ForgeAppGlobals(object):
     def set_app(self, name):
         c.app = c.project.app_instance(name)
 
-    def url(self, base, **kw):
+    def url(self, uri, **kw):
         try:
             url = "{}://{}".format(self.url_scheme, request.host)
         except TypeError:
             url = self.base_url
-        if not base.startswith('/'):
+        if not uri.startswith('/'):
             url += '/'
-        url += base
+        url += uri
         params = urllib.urlencode(kw)
         if params:
             url += '?{}'.format(params)
+        return url
+
+    def cloud_url(self, uri):
+        base_url = config.get('cloud_url', self.base_url)
+        url = base_url.rstrip('/') + '/' + uri.lstrip('/')
         return url
 
     def postload_contents(self):

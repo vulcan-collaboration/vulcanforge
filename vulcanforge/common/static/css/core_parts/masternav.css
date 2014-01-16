@@ -1,0 +1,307 @@
+.masternav, .masternav-context-items, ul.masternav-popup {
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+    list-style-type: none;
+    -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+    -webkit-padding-start: 0;
+}
+
+.masternav {
+    text-align: left;
+}
+.masternav-context-items {
+    position: relative;
+    z-index: 11;
+}
+
+li.masternav-item {
+    display: inline-block;
+    position: relative;
+    padding: 4px 0.5rem 4px 1.5rem;
+    min-height: 32px;
+    line-height: 32px;
+    letter-spacing: 0.1em;
+    color: inherit;
+    background: #404040;
+    background: -webkit-linear-gradient(left, #303030, #404040 3rem);
+    background: -moz-linear-gradient(left, #303030, #404040 3rem);
+    background: -o-linear-gradient(left, #303030, #404040 3rem);
+    background: -ms-linear-gradient(left, #303030, #404040 3rem);
+    background: linear-gradient(to right, #303030, #404040 3rem);
+}
+
+li.masternav-item:first-child {
+    padding-left: 1em;
+    background: #404040;
+}
+li.masternav-item:last-child,
+li.masternav-item:last-child:hover {
+    background: transparent;
+}
+li.masternav-item:last-child::after {
+    content: none;
+}
+li.masternav-item.has-menu:hover:last-child::after,
+li.masternav-item.masternav-menu-open:last-child::after {
+    content: "";
+}
+
+li.masternav-item:nth-child(1) {z-index: 4;}
+li.masternav-item:nth-child(2) {z-index: 3;}
+li.masternav-item:nth-child(3) {z-index: 2;}
+li.masternav-item:nth-child(4) {z-index: 1;}
+
+li.masternav-item:hover {
+    color: white;
+}
+
+li.masternav-item.has-menu:hover,
+li.masternav-item.masternav-menu-open {
+    background: #0086FF;
+    background: -webkit-linear-gradient(left, #05c, #0086FF 3rem);
+    background: -moz-linear-gradient(left, #05c,#0086FF 3rem);
+    background: -o-linear-gradient(left, #05c, #0086FF 3rem);
+    background: -ms-linear-gradient(left, #05c, #0086FF 3rem);
+    background: linear-gradient(to right, #05c, #0086FF 3rem);
+}
+li.masternav-item.has-menu:first-child:hover,
+li.masternav-item.masternav-menu-open:first-child {
+    background: #0086FF;
+}
+
+li.masternav-item::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    bottom: 0;
+    width: 0.75rem;
+    background-image: url(../images/main-nav-chevron.svg);
+    background-size: 100% 100%;
+}
+li.masternav-item:hover::after,
+li.masternav-item.masternav-menu-open::after {
+    background-image: url(../images/main-nav-chevron-hover.svg);
+}
+
+li.masternav-item .masternav-item-link {
+    display: inline-block;
+    position: relative;
+    color: inherit;
+}
+
+li.masternav-item .masternav-item-icon {
+    max-height: 24px;
+    vertical-align: middle;
+}
+li.masternav-item .masternav-item-icon.special-icon {
+    max-height: 32px;
+}
+
+.masternav .masternav-item-label {
+    display: inline-block;
+    max-width: 200px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+    line-height: 24px;
+}
+
+/**********************************************************/
+
+.popup-container {
+    position: fixed;
+    z-index: 10;
+    display: block;
+    background: #282828;
+    background: -webkit-linear-gradient(left, #181818, #282828 3rem);
+    background: -moz-linear-gradient(left, #181818, #282828 3rem);
+    background: -o-linear-gradient(left, #181818, #282828 3rem);
+    background: -ms-linear-gradient(left, #181818, #282828 3rem);
+    background: linear-gradient(to right, #181818, #282828 3rem);
+    line-height: 3em;
+    border: none;
+    padding: 0;
+    opacity: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+}
+
+.popup-container::before,
+.popup-container::after {
+    content: "...";
+    z-index: 2;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 0;
+    transition: height 400ms;
+    font-family: "ForgeIconicFill";
+    font-size: 20px;
+    text-align: center;
+    line-height: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.popup-container.scrollable-top::before,
+.popup-container.scrollable-bottom::after {
+    height: 16px;
+    transition: height 400ms;
+}
+
+.popup-container::before {
+    top: 0;
+    /*content: "\25b2";*/
+    background: rgba(0, 0, 0, 0.5);
+    background: -webkit-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -moz-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -o-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: -ms-linear-gradient(bottom, rgba(0,0,0,0), black);
+    background: linear-gradient(to top, rgba(0,0,0,0), black);
+}
+
+.popup-container::after {
+    bottom: 0;
+    /*content: "\25bc";*/
+    background: rgba(0, 0, 0, 0.5);
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -moz-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -o-linear-gradient(top, rgba(0,0,0,0), black);
+    background: -ms-linear-gradient(top, rgba(0,0,0,0), black);
+    background: linear-gradient(to bottom, rgba(0,0,0,0), black);
+}
+
+ul.masternav-popup {
+    padding: 8px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+ul.masternav-popup > li {
+    min-width: 150px;
+    position: relative;
+    text-align: left;
+    font-size: 14px;
+}
+
+ul.masternav-popup a {
+    display: block;
+    position: relative;
+    max-width: 270px;
+    white-space: nowrap;
+    vertical-align: 8px;
+    padding-right: 1em;
+    color: #d0d0d0;
+    letter-spacing: 0.1rem;
+}
+
+ul.masternav-popup a.action {
+    padding: 0 1rem;
+    line-height: 1.5rem;
+    color: #a0a0a0;
+}
+ul.masternav-popup a:hover,
+ul.masternav-popup .masternav-menu-open a,
+li.masternav-popup-item.children:hover,
+li.masternav-popup-item.children.masternav-menu-open,
+ul.masternav-popup a.action:hover {
+    color: white;
+    background: #0086FF;
+}
+
+.masternav-popup-item.children {
+    padding-right: 2em;
+}
+.masternav-popup-item.children::after {
+    position: absolute;
+    display: block;
+    top: 0;
+    right: 0;
+    width: 1em;
+    font-family: "ForgeIconicFill";
+    content: "\e047";
+    opacity: 0.5;
+    color: white;
+}
+
+ul.masternav-popup hr {
+    border: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+ul.masternav-popup .masternav-item-icon {
+    display: inline-block;
+    vertical-align: middle;
+    min-width: 30px;
+    max-height: 30px;
+    padding-left: 0.5em;
+}
+
+ul.masternav-popup a.action span {
+    font-size: 1em;
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
+
+
+
+@media handheld {
+    /* TODO: fix nested popups for touch interfaces */
+    li.masternav-item {
+        padding-left: 1.5rem;
+    }
+    li.masternav-item.has-menu::before,
+    li.masternav-popup-item.children::after {
+        content: "";
+        display: inline-block;
+        width: 23px;
+        height: 23px;
+        margin-right: 0.5rem;
+        background: url(../images/menu_icon_button.svg) no-repeat center;
+        vertical-align: middle;
+        opacity: 0.7;
+    }
+    li.masternav-item.has-menu:hover::before {
+        opacity: 1;
+    }
+}
+
+
+#vf-user-menu-button {
+    width: 24px;
+}
+#vf-user-menu-button .ico-user {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+}
+
+
+/* --- popup menu overrides (see toolbar.scss for base) --- */
+.masternav-popup-menu.qtip {
+    z-index: -1;
+    min-width: 200px;
+}
+.masternav-item-menu {
+    position: relative;
+}
+.masternav-item-menu.active::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: 0.5rem;
+    background-image: url(../images/popup-menu-title-chevron.svg);
+    background-size: 100% 100%;
+}

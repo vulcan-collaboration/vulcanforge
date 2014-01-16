@@ -1,8 +1,32 @@
-<div class="clip grid-19">
-    <h3>
-        <span class="ico-l">
-            <b data-icon="{{g.icons['table'].char}}" class="ico {{g.icons['table'].css}}"></b>
-            {{h.really_unicode(filename)}}</span>
-    </h3>
-    {{g.highlight(content, filename=filename)}}
-</div>
+{% extends 'vulcanforge.visualize:templates/widgets/basecontent.html' %}
+
+{% block content %}
+<pre class="highlight embedded prettyprint"><code id="{{uid}}code"></code></pre>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function(global){
+        "use strict";
+
+        var $ = global.jQuery,
+            VIS = global.VIS,
+            codeContainer = $('#{{uid}}code');
+
+        $(VIS).on("ready", function(){
+            $.ajax({
+                url: VIS.getResourceUrl(),
+                dataType: "text",
+                xhrFields: {
+                    withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
+                },
+                success: function(resp){
+                    resp = $vf.xmlEscape(resp);
+                    codeContainer.html(prettyPrintOne(resp, null, true));
+                }
+            });
+        });
+
+    }(window));
+</script>
+{% endblock %}

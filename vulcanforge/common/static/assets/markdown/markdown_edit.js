@@ -238,7 +238,7 @@
 
             /* embedded visualization */
             this.converter.hooks.chain("preSpanGamut", function(text){
-                var rePattern = /\^v\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
+                var rePattern = /\^[vV]\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
                 return text.replace(rePattern, function (whole, resourceUrl, props) {
                     return '<div class="markdownPlaceholder visualizerPlaceholder">' +
                         '<p>Visualizer for ' + resourceUrl + ' will be embedded here...</p>' +

@@ -28,8 +28,8 @@ class SitemapEntry(object):
         if children is None:
             children = []
         self.children = children
-        if icon_id is None:
-            icon_id = slugify(self.label)
+        if icon_id is None and isinstance(label, basestring):
+            icon_id = slugify(label)
         self.icon_id = icon_id
 
     def __getitem__(self, x):
@@ -54,9 +54,14 @@ class SitemapEntry(object):
             lbl = lbl(app)
         if url is not None:
             url = basejoin(app.url, url)
-        return SitemapEntry(lbl, url,
+        icon_id = self.icon_id
+        if icon_id is None:
+            icon_id = slugify(lbl)
+        return SitemapEntry(
+            lbl, url,
             [ch.bind_app(app) for ch in self.children],
-            className=self.className
+            className=self.className,
+            icon_id=icon_id
         )
 
     def extend(self, sitemap):

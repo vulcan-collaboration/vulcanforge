@@ -3,7 +3,7 @@ from logging import getLogger
 from pylons import tmpl_context as c, app_globals as g
 import pysolr
 
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 
 
 LOG = getLogger(__name__)

@@ -2,8 +2,6 @@
 {% set has_related_artifacts = True %}
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
-{% do g.resource_manager.register_js('visualize/visualizer.js') %}
-{% do g.resource_manager.register_js('visualize/VFVisualizerEmbedder.js') %}
 
 {% block title %}
 {{c.project.name}} / {{c.app.config.options.mount_label}}
@@ -18,8 +16,6 @@
 {% endblock %}
 
 {% block content %}
-
-{{c.url_file_widget.display(value=fd_file, force=force_display)}}
-
+<div class="fullHeightVisualizer">{{ rendered_file }}</div>
 {% endblock %}
 

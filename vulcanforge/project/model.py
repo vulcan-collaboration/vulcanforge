@@ -3,38 +3,72 @@ import time
 from datetime import datetime
 from uuid import UUID
 import json
-import pymongo
 import re
 
+import pymongo
 from pylons import tmpl_context as c, app_globals as g, request
 from tg import config
 from bson import ObjectId
 from ming import schema as S
 from ming.utils import LazyProperty
-from ming.odm import ThreadLocalODMSession, Mapper
+from ming.odm import ThreadLocalODMSession, MapperExtension
 from ming.odm import session, state
 from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
 from ming.odm.declarative import MappedClass
+
 from vulcanforge.auth.model import User
 from vulcanforge.common.model.base import BaseMappedClass
-
 from vulcanforge.common.model.session import (
     main_orm_session,
     project_orm_session
 )
-from vulcanforge.common.model.filesystem import File
+from vulcanforge.s3.model import File
 from vulcanforge.common.model.index import SOLRIndexed
 from vulcanforge.common.helpers import strip_str
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import title_sort, push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.auth.schema import ACL, ACE, EVERYONE
+from vulcanforge.common.util.diff import get_dict_diff_have_keys_changed
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.tasks import unindex_project, reindex_project
+
 
 LOG = logging.getLogger(__name__)
 
 BANISH_TEXT = "Your membership has been revoked from {}."
+
+
+class ProjectExtension(MapperExtension):
+    def after_delete(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_insert(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_update(self, instance, state, sess):
+        if get_dict_diff_have_keys_changed(
+            state.original_document, state.document,
+            ('name',),
+            ('acl',)
+        ):
+            g.cache.redis.expire('navdata', 0)
+
+
+class AppConfigExtension(MapperExtension):
+    def after_delete(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_insert(self, instance, state, sess):
+        g.cache.redis.expire('navdata', 0)
+
+    def after_update(self, instance, state, sess):
+        if get_dict_diff_have_keys_changed(
+            state.original_document, state.document,
+            ('options',),
+            ('acl',)
+        ):
+            g.cache.redis.expire('navdata', 0)
 
 
 class ProjectFile(File):
@@ -125,6 +159,8 @@ class Project(SOLRIndexed):
             'shortname',
             'parent_id',
             'sortable_activity']
+
+        extensions = [ProjectExtension]
 
         def before_save(self):
             if self.name is None and self.shortname is not None:
@@ -691,6 +727,12 @@ class Project(SOLRIndexed):
             'options.mount_point': mount_point
         }).first()
 
+    def get_app_configs_by_kind(self, entrypoint_name):
+        return AppConfig.query.find({
+            'project_id': self._id,
+            'tool_name': entrypoint_name
+        })
+
     def ordered_mounts(self):
         """
         Returns an array of a projects mounts (tools and sub-projects) in
@@ -698,12 +740,13 @@ class Project(SOLRIndexed):
 
         """
         result = []
-        for sub in self.direct_subprojects:
-            result.append({
-                'ordinal': int(sub.ordinal),
-                'sub': sub,
-                'rank': 1
-            })
+        # NOTE: commented for speed because we do not allow subprojects
+        #for sub in self.direct_subprojects:
+        #    result.append({
+        #        'ordinal': int(sub.ordinal),
+        #        'sub': sub,
+        #        'rank': 1
+        #    })
         for ac in self.app_configs:
             ordinal = ac.options.get('ordinal', 0)
             rank = 0 if ac.options.get('mount_point', None) == 'home' \
@@ -740,10 +783,12 @@ class Project(SOLRIndexed):
 
     @LazyProperty
     def home_ac(self):
-        home_tools = {'home', 'team_home', 'neighborhood_home',
-                      'competition_home'}
+        proj_home_cls = g.tool_manager.tools["home"]["app"]
+        nbhd_home_cls = g.tool_manager.tools["neighborhood_home"]["app"]
         for ac in self.app_configs:
-            if ac.tool_name in home_tools:
+            app_cls = ac.load()
+            if issubclass(app_cls, proj_home_cls) or \
+                    issubclass(app_cls, nbhd_home_cls):
                 return ac
         return None
 
@@ -1111,6 +1156,7 @@ class AppConfig(MappedClass):
             ('_id',),
             ('project_id',)
         ]
+        extensions = [AppConfigExtension]
 
     # AppConfig schema
     _id = FieldProperty(S.ObjectId)
@@ -1147,8 +1193,7 @@ class AppConfig(MappedClass):
 
     @LazyProperty
     def discussion_cls(self):
-        from vulcanforge.discussion.model import Discussion
-        return Discussion
+        return self.app.DiscussionClass
 
     @LazyProperty
     def discussion(self):
@@ -1390,6 +1435,7 @@ class ProjectRole(BaseMappedClass):
         try:
             obj = cls(**kw)
             session(obj).insert_now(obj, state(obj))
+            g.security.credentials.clear()
         except pymongo.errors.DuplicateKeyError:
             session(obj).expunge(obj)
             obj = cls.query.get(**kw)

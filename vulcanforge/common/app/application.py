@@ -86,6 +86,7 @@ class Application(object):
     }
     default_acl = {}
     is_customizable = True
+    visible_to_role = 'read'
 
     def __init__(self, project, app_config_object):
         self.project = project
@@ -158,9 +159,7 @@ class Application(object):
     @classmethod
     def default_options(cls):
         """:return: the default config options"""
-        return dict(
-            (co.name, co.default)
-                for co in cls.config_options)
+        return {co.name: co.default for co in cls.config_options}
 
     def set_acl(self, acl_spec=None):
         """Install default acl. Note that we cannot modify the config acl
@@ -188,13 +187,13 @@ class Application(object):
         # Create the discussion object
         discussion = self.DiscussionClass(
             shortname=self.config.options.mount_point,
-            name='%s Discussion' % self.config.options.mount_point,
-            description='Forum for %s comments' %\
-                        self.config.options.mount_point
+            name='{} Discussion'.format(self.config.options.mount_point),
+            description='Forum for {} comments'.format(
+                self.config.options.mount_point)
         )
         session(discussion).flush()
         self.config.discussion_id = discussion._id
-        self.config.visible_to_role = 'read'
+        self.config.visible_to_role = self.visible_to_role
         self.config.reference_opts = self.reference_opts.copy()
         self.subscribe_admins()
         self.set_acl(acl)
@@ -343,3 +342,6 @@ class Application(object):
             yield self.AttachmentClass
         for cls in self.artifacts.values():
             yield cls
+
+    def get_global_navigation_data(self):
+        raise NotImplementedError

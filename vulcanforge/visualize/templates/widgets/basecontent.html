@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{% import 'vulcanforge.common:templates/jinja_master/lib.html' as lib with context %}
+{% import g.templates['macros'] as theme_macros with context %}
+
+<html lang="en">
+    <head>
+        {% for blob in g.resource_manager.emit('css') %}
+        {{ blob }}
+        {% endfor %}
+        {% block more_head %}
+        {% endblock %}
+    </head>
+    <body style="background-color:#fff;background-image: none;">
+    {% block content %}
+    {% endblock %}
+    {% for blob in g.resource_manager.emit('js') %}
+    {{ blob }}
+    {% endfor %}
+    {% block extra_js %}{% endblock %}
+    </body>
+</html>

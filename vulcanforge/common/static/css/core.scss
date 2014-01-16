@@ -67,6 +67,8 @@
 /* Forums */
 @import "css/core_parts/forums.scss";
 
+/* Master Navigation */
+@import "css/core_parts/masternav.css";
 
 /* For print */
 @import "css/core_parts/for_print.scss";
@@ -150,10 +152,6 @@ li > ul > li > ul {
     height: 22px;
     line-height: 22px;
     display: inline-block;
-}
-
-#header-navi .links li:hover img {
-    opacity: 1;
 }
 
 #copyRight {
@@ -312,7 +310,7 @@ a.install_trig:hover {
 
 .sortable-field:hover {
     background-color: #f8f8f8;
-    border: 1px solid #0095da;
+    border: 1px solid #0086FF;
 }
 
 tr.sortable-field td:first-child {

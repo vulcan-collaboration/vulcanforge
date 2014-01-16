@@ -5,6 +5,5 @@ from show_models import (ShowModelsCommand, ReindexCommand,
 from script import ScriptCommand, SetToolAccessCommand
 from smtp_server import SMTPServerCommand
 from create_neighborhood import CreateNeighborhoodCommand
-from .visualizer import CreateDefaultVisualizersCommand
 from .forgeadmin_tools import ForgeAdminToolsCommand
 from .project import EnsureProjectCreationCommand

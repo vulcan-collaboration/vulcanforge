@@ -64,7 +64,7 @@ setup(
         "jsmin == 2.0.3",
         "cssmin",
         "pycrypto",
-        "pyScss",
+        "pyScss >= 1.2",
         "python-dateutil < 2.0",
         "requests",
         "Pypeline",
@@ -72,7 +72,10 @@ setup(
         "BeautifulSoup < 4.0",
         "python-markdown-oembed",
         "redis == 2.7.2",
-        "hiredis"
+        "hiredis",
+        "gevent>=1.0",
+        "gevent-websocket>=0.9",
+        "jsonschema"
     ],
     setup_requires=["PasteScript >= 1.7"],
     packages=find_packages(exclude=['ez_setup']),
@@ -98,6 +101,7 @@ setup(
     },
     entry_points="""
     [paste.paster_command]
+    eventd = vulcanforge.command.eventd:EventdCommand
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand
     run_migrations = vulcanforge.command.migration:MigrationCommand
@@ -111,7 +115,7 @@ setup(
     set-tool-access = vulcanforge.command:SetToolAccessCommand
     smtp_server = vulcanforge.command:SMTPServerCommand
     create-neighborhood = vulcanforge.command:CreateNeighborhoodCommand
-    #create-default-visualizers = vulcanforge.command:CreateDefaultVisualizersCommand
+    sync_visualizers = vulcanforge.visualize.command:SyncVisualizersCommand
     forgeadmin-tools = vulcanforge.command:ForgeAdminToolsCommand
     createuser = vulcanforge.command.user:CreateUserCommand
     stage-static-resources = vulcanforge.command.resources:StageStaticResources
@@ -127,6 +131,7 @@ setup(
     wiki-import = vulcanforge.command.wiki_tool:ImportWikiPages
     wiki_findbroken = vulcanforge.command.wiki_tool:FindBrokenLinks
     purge-project = vulcanforge.command.project:PurgeProject
+    cleanup_for_application_start = vulcanforge.command.cleanup:CleanupForApplicationStart
 
     [easy_widgets.engines]
     jinja = vulcanforge.config.app_cfg:JinjaEngine

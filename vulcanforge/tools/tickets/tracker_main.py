@@ -33,7 +33,7 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common import validators as V, helpers as h
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.artifact.controllers import (
@@ -333,6 +333,18 @@ class ForgeTrackerApp(Application):
             ui_icon=Icon('', 'ico-info'),
             className='nav_child'))
         return links
+
+    def get_global_navigation_data(self):
+        actions = []
+        if g.security.has_access(self, 'read'):
+            actions.append({
+                'label': 'Create New Ticket',
+                'url': self.url + 'new/',
+                'icon': 'ico-plus'
+            })
+        return {
+            'actions': actions
+        }
 
     def has_custom_field(self, field):
         """Checks if given custom field is defined. (Custom field names

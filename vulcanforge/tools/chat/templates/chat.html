@@ -1,0 +1,24 @@
+{% extends g.templates['master'] %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Transcript: {{ h.pretty_print_datetime(chat_session.mod_date) }}{% endblock %}
+
+{% block header %}{{c.app.config.options.mount_label}} Transcript: {{ h.pretty_print_datetime(chat_session.mod_date) }}{% endblock %}
+
+{% block content %}
+    <div id="chat_session" class="vf-chat-panel-container" data-session-id="{{ chat_session._id }}">
+        <div class="vf-chat-header"></div>
+        <div class="vf-chat-content">
+            <div class="vf-chat-project-messages">
+                {% for post in thread.posts %}
+                    {% set author = post.author() %}
+                    <div class="vf-chat-message-container{% if author._id == c.user._id %} vf-chat-current-user-message{% endif %}">
+                        <img data-username="{{ author.username }}"
+                             class="vf-chat-user-icon vf-chat-user-online"
+                             src="{{ author.icon_url() }}" alt="{{ author.username }}"/>
+                        <div class="vf-chat-message-content">{{ g.markdown.convert(post.text) }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

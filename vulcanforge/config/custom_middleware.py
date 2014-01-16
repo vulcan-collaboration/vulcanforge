@@ -6,7 +6,7 @@ from urllib import urlencode
 import urlparse
 import mimetypes
 from random import random
-from pylons import tmpl_context as c
+from pylons import tmpl_context as c, app_globals as g
 
 import tg
 from tg.configuration import config

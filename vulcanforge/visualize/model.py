@@ -1,307 +1,426 @@
+import hashlib
 import re
-import posixpath
-import mimetypes
 import logging
 from datetime import datetime
-import urlparse
-import zipfile
-import itertools
-from collections import OrderedDict
 import os
 
-from pylons import app_globals as g, tmpl_context as c
-import simplejson
 import pymongo
-from ming.odm.declarative import MappedClass
-from ming.odm.property import FieldProperty
-from ming.schema import ObjectId
+from ming.odm.property import (
+    FieldProperty,
+    ForeignIdProperty,
+    RelationProperty
+)
+from ming import schema
+from ming.odm import session
 from ming.utils import LazyProperty
-from boto.exception import S3ResponseError
+from pylons import tmpl_context as c
+from pymongo.errors import DuplicateKeyError
 
-from vulcanforge.common.helpers import urlquote
-from vulcanforge.common.model.session import main_orm_session
+from vulcanforge.s3.model import File
+from vulcanforge.common.model.base import BaseMappedClass
+from vulcanforge.common.model.session import (
+    main_orm_session,
+    project_orm_session
+)
 from vulcanforge.auth.model import User
-from vulcanforge.visualize.exceptions import VisualizerError
+from vulcanforge.common.util.filesystem import import_object
 
 LOG = logging.getLogger(__name__)
 
 VISUALIZER_PREFIX = 'Visualizer/'
 
 
-class SimpleCache(OrderedDict):
+class VisualizerConfig(BaseMappedClass):
+    """
+    Database representation of a Forge Visualizer
 
-    def __init__(self, size, *args, **kwargs):
-        self.size = size if size is not None else self.default_size
-        super(SimpleCache, self).__init__(*args, **kwargs)
+    :param name: str display name of the visualizer
+    :param shortname: str unique str
+    :param description: str
+    :param visualizer: dict path to Visualizer object
+    :param icon: str url of icon to use for this visualizer
+    :param mime_types: list of mimetypes to match to invoke this visualizer
+    :param extensions: list of extensions to match (default all)
+    :param processing_mime_types: list of mimetypes to match to invoke the
+        visualizers pre-processing hooks
+    :param processing_extensions: list of extensions to match to invoke the
+        visualizers pre-processing hooks
+    :param processing_status_exclude: list of `ProcessingStatus.status`
+        values for a given visualizable that will prevent the visualizer from
+        being invoked (e.g. set to ["error"] to not invoke visualizer if there
+        is a processing error)
+    :param priority: determines order for tabbed visualizer display
+    :param active: bool
+    :param creator_id: user_id
+    :param created_date: date uploaded/created
+    :param modified_date: date modified
+    :param options: dict dumping ground for visualizer specific opts
 
-    def __setitem__(self, key, value, PREV=0, NEXT=1,
-                    dict_setitem=dict.__setitem__):
-        # make sure it goes to back
-        if key in self:
-            del self[key]
-        else:
-            while self.__len__() >= self.size:
-                self.popitem(False)
-        super(SimpleCache, self).__setitem__(key, value, PREV=PREV, NEXT=NEXT,
-                                             dict_setitem=dict_setitem)
-
-    def accessitem(self, key):
-        """get item and move to back of delete queue"""
-        self[key] = value = self[key]
-        return value
-
-
-class Visualizer(MappedClass):
+    """
 
     class __mongometa__:
         name = 'visualizer'
         session = main_orm_session
         indexes = ['extensions', ('extensions', 'active')]
+        unique_indexes = ['shortname']
 
         def before_save(data):
             data['modified_date'] = datetime.utcnow()
-            if not data['shortname']:
-                data['shortname'] = Visualizer.strip_name(data['name'])
 
-    _id = FieldProperty(ObjectId)
-    creator_id = FieldProperty(ObjectId, if_missing=lambda: c.user._id)
+    _id = FieldProperty(schema.ObjectId)
+    name = FieldProperty(str)
+    shortname = FieldProperty(str)
+    description = FieldProperty(str, if_missing='')
+    visualizer = FieldProperty(schema.Object({
+        'classname': str,
+        'module': str
+    }))
+    icon = FieldProperty(str)
+    mime_types = FieldProperty([str])
+    extensions = FieldProperty([str], if_missing=['*'])
+    processing_mime_types = FieldProperty([str], if_missing=None)
+    processing_extensions = FieldProperty([str], if_missing=[])
+    processing_status_exclude = FieldProperty([str], if_missing=[])
+    priority = FieldProperty(int, if_missing=0)
+    active = FieldProperty(bool, if_missing=True)
+    creator_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     modified_date = FieldProperty(datetime, if_missing=datetime.utcnow)
+    options = FieldProperty(None)
 
-    bucket_name = FieldProperty(str, if_missing=None)
-    bundle_content = FieldProperty([str], if_missing=[])
-
-    active = FieldProperty(bool, if_missing=False)
-    priority = FieldProperty(int, if_missing=0)
-    # see vulcanforge.visualize.widgets for widget name options
-    widget = FieldProperty(str, if_missing='s3')
-    thumb = FieldProperty(str, if_missing='')
-
-    name = FieldProperty(str)
-    shortname = FieldProperty(str, unique=True)
-    mime_types = FieldProperty([str])
-    extensions = FieldProperty([str])
-    entry_point = FieldProperty(str, if_missing='index.html')
-    teaser_entry_point = FieldProperty(str)
-    description = FieldProperty(str, if_missing='')
-    icon = FieldProperty(str)
-
-    no_upload_extensions = [
-        re.compile('\.git/'),
-        re.compile('\.svn/'),
-        re.compile('__MACOSX/'),
-        re.compile('\.DS_Store'),
-        re.compile('^/'),
-        re.compile('\.\.'),
-    ]
-    # attrs editable by manifest file
-    _editable_attrs = (
-        'name',
-        'mime_types',
-        'entry_point',
-        'description',
-        'extensions',
-        'shortname',
-        'teaser_entry_point',
-        'icon'
-        )
-
-    _additional_text_extensions = {
-        '.ini',
-        '.gitignore',
-        '.svnignore',
-        'README'
-    }
-
-    # extension cache
-    cache = SimpleCache(10)
-
-    def __init__(self, extensions=['*'], **kwargs):
-        super(Visualizer, self).__init__(extensions=extensions, **kwargs)
+    @staticmethod
+    def strip_name(name):
+        """Used to autocreate the shortname"""
+        stripped = name.lower()\
+            .replace('visualizer', '').strip()\
+            .replace(' ', '_')
+        return stripped
 
     @classmethod
-    def guess_type(cls, name):
-        """Guess the mime type and encoding of a given filename"""
-        content_type, encoding = mimetypes.guess_type(name)
-        if content_type is None or not content_type.startswith('text/'):
-            fn, ext = os.path.splitext(name)
-            ext = ext or fn
-            if ext in cls._additional_text_extensions:
-                content_type, encoding = 'text/plain', None
-            if content_type is None:
-                content_type, encoding = 'application/octet-stream', None
-        return content_type, encoding
+    def from_visualizer(cls, visualizer, shortname=None, **kwargs):
+        attrs = visualizer.default_options
+        attrs.update(kwargs)
+        vis_config = cls(
+            shortname=shortname,
+            visualizer={
+                "classname": visualizer.__name__,
+                "module": visualizer.__module__
+            },
+            **attrs)
+        if not vis_config.shortname and vis_config.name:
+            vis_config.shortname = cls.strip_name(vis_config.name)
+        elif not vis_config.name and vis_config.shortname:
+            vis_config.name = vis_config.shortname.capitalize()
+        return vis_config
+
+    @classmethod
+    def find_active(cls, query):
+        query['active'] = True
+        return cls.query.find(query).sort('priority', pymongo.DESCENDING)
+
+    @classmethod
+    def find_for_visualization(cls, mime_type=None, extensions=None,
+                               processing_on=False, unique_id=None, **query):
+        if extensions is None:
+            extensions = []
+        query["extensions"] = {"$in": extensions + ['*']}
+        cur = cls.find_active(query)
+
+        configs = [vc for vc in cur
+                   if vc.matches_for_visualization(mime_type, extensions)]
+
+        if processing_on:
+            seen_ids = set(v._id for v in configs)
+            for vc in cls.find_for_processing(mime_type, extensions):
+                if vc._id in seen_ids:
+                    continue
+                if unique_id and vc.processing_status_exclude:
+                    status = ProcessingStatus.get_status_str(unique_id, vc)
+                    if status in vc.processing_status_exclude:
+                        continue
+                i = 0
+                for vco in configs:
+                    if vc.priority > vco.priority:
+                        break
+                    i += 1
+                configs.insert(i, vc)
+
+        return configs
+
+    @classmethod
+    def find_for_processing(cls, mime_type=None, extensions=None, **query):
+        if extensions is None:
+            extensions = []
+        query["processing_extensions"] = {"$in": extensions + ['*']}
+        cur = cls.find_active(query)
+
+        configs = [vc for vc in cur
+                   if vc.matches_for_processing(mime_type, extensions)]
+
+        return configs
 
     @property
     def creator(self):
         if self.creator_id:
             return User.query.get(_id=self.creator_id)
 
-    @LazyProperty
-    def key_prefix(self):
-        return VISUALIZER_PREFIX + str(self._id) + '#'
+    def delete(self):
+        visualizer = self.load()
+        visualizer.on_config_delete()
+        super(VisualizerConfig, self).delete()
 
-    @LazyProperty
-    def icon_url(self):
+    def load(self):
+        path = '{0.module}:{0.classname}'.format(self.visualizer)
         try:
-            if self.icon and self.bundle_content:  # must be in s3
-                key = self.get_s3_key(self.icon, insert_if_missing=False)
-                if key:
-                    return key.generate_url(3600 * 24 * 2)
-        except S3ResponseError:
-            pass
-        return self.icon
+            cls = import_object(path)
+            inst = cls(self)
+        except ImportError:
+            inst = None
+        return inst
 
-    def get_s3_key(self, path, **kw):
-        key_name = self.key_prefix + path
-        return g.get_s3_key(key_name, **kw)
+    def matches_for_visualization(self, mtype, extensions):
+        """Does not include processing mimetypes, extensions"""
+        return self._matches_mtype_ext(
+            mtype, extensions, self.mime_types, self.extensions)
 
-    def get_s3_keys(self):
-        return g.get_s3_keys(self.key_prefix)
-
-    def delete_s3_key(self, path):
-        g.delete_s3_key(self.key_prefix + path)
-
-    def delete_s3_keys(self):
-        for key in self.get_s3_keys():
-            g.delete_s3_key(key)
-
-    def can_upload(self, path):
-        return not any(r.search(path) for r in self.no_upload_extensions)
-
-    def _iter_zip(self, zip_handle):
-        return itertools.ifilter(self.can_upload, zip_handle.namelist())
-
-    def update_from_archive(self, archive_fp):
-        with zipfile.ZipFile(archive_fp) as zip_handle:
-            # get root
-            for filename in self._iter_zip(zip_handle):
-                if os.path.basename(filename) == 'manifest.json':
-                    root = os.path.dirname(filename)
-                    break
-            else:
-                raise VisualizerError("No Manifest File found")
-
-            # parse manifest
-            with zip_handle.open(filename) as manifest_fp:
-                self.update_from_manifest_file(manifest_fp)
-
-            # append files
-            file_iter = itertools.ifilter(
-                lambda f: f.startswith(root + '/') if root else True,
-                self._iter_zip(zip_handle))
-            for filename in file_iter:
-                relative_path = os.path.relpath(filename, root)
-                if relative_path != '.':
-                    self.bundle_content.append(relative_path)
-                    k = self.get_s3_key(relative_path)
-                    if not os.path.isdir(filename):
-                        k.set_contents_from_string(
-                            zip_handle.open(filename).read()
-                        )
-
-    def update_from_manifest_file(self, manifest_fp):
-        manifest = simplejson.load(manifest_fp)
-        self.update_from_manifest(manifest)
-
-    def update_from_manifest(self, manifest):
-        """@param manifest dict"""
-        for k, v in manifest.iteritems():
-            if k in self._editable_attrs:
-                setattr(self, k, v)
-            else:
-                LOG.warn('manifest.json contains ignored key: %s = %s', k, v)
-        if not self.extensions:
-            self.extensions = ['*']
-        if self.shortname is None:
-            self.shortname = self.strip_name(self.name)
-        self.cache.clear()
-
-    def download_to_archive(self, archive_fp):
-        for filename in self.bundle_content:
-            key = self.get_s3_key(filename)
-            archive_fp.writestr(filename, key.get_contents_as_string())
+    def matches_for_processing(self, mtype, extensions):
+        if self.processing_mime_types or self.processing_extensions:
+            return self._matches_mtype_ext(
+                mtype, extensions,
+                self.processing_mime_types,
+                self.processing_extensions)
+        else:
+            return False
 
     @staticmethod
-    def strip_name(name):
-        """Used to autocreate the shortname"""
-        stripped = name.lower()\
-        .replace('visualizer', '').strip()\
-        .replace(' ', '_')
-        return stripped
+    def _matches_mtype_ext(mtype, extensions, mime_types, ext_opts):
+        if not mtype or not mime_types:
+            # mimetype unspecified or unknown, match extensions (but not *)
+            match_star_ext = False
+        else:
+            # mimetype specified and determined, insist on a match
+            match_star_ext = True
+            for pattern in mime_types:  # find explicit match
+                if re.search(pattern, mtype):
+                    break
+            else:
+                return False
+        if match_star_ext and '*' in ext_opts:
+            return True
+        else:
+            return any(ext in ext_opts for ext in extensions)
+
+
+class _BaseVisualizerFile(File):
+    class __mongometa__:
+        name = '_base_visualizer_file'
+
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
+
+    @staticmethod
+    def calculate_hash(data):
+        md5 = hashlib.md5()
+        md5.update(data)
+        return md5.hexdigest()
+
+
+class ProcessingStatus(BaseMappedClass):
+    """Represents the status of processing for a visualizable object and
+    visualizer, so that a loading animation can be displayed, an error
+    message, etc.
+
+    """
+    class __mongometa__:
+        name = 'visualizer_processing_status'
+        session = project_orm_session
+        unique_indexes = [('unique_id', 'visualizer_config_id')]
+
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    status = FieldProperty(
+        schema.OneOf('loading', 'ready', 'error', if_missing='loading'))
+    reason = FieldProperty(str, if_missing=None)
 
     @classmethod
-    def get_for_resource(cls, resource_url, mtype=None, cache=False,
-                         context=None):
-        """
-        Get visualizers given a resource file.
-
-        resource - must have a name or filename attribute or url method
-        mime_type - can force method to use your mimetype instead of trying to
-        figure it
-        context - for specifying the context. Not currently used.
-        """
-
-        # get extension(s)
-        extensions = []
-        base = base_path = urlparse.urlsplit(resource_url).path.lower()
-        remainder = ''
-        ext = ''
-        while True:
-            base, ext = posixpath.splitext(base)
-            if not ext:
-                break
-            if base in cls._additional_text_extensions or \
-               ext in cls._additional_text_extensions:
-                mtype = 'text/plain'
-                break
-            while ext in mimetypes.suffix_map:
-                base, ext = posixpath.splitext(
-                    base + mimetypes.suffix_map[ext])
-            if ext in mimetypes.encodings_map:
-                base, ext = posixpath.splitext(base)
-            extensions.append(ext + remainder)
-            remainder = ext + remainder
-
-        # see if ext is cached
-        if cache and ext in cls.cache:
-            return cls.cache.accessitem(ext)
-
-        # find matching visualizers
-        results = cls.query.find({
-            "extensions": {
-                "$in": extensions + ['*']
-            },
-            "active": True
-        }).sort('priority', pymongo.DESCENDING)
-
-        if results is None:
-            return []
-
-        # find mimetype
-        if mtype is None:
-            mtype = mimetypes.guess_type(base_path)[0]
-
-        # get visualizers
-        if mtype is None:
-            # couldnt determine mime type, see if we can match an explicit
-            # attachment (no * allowed)
-            visualizers = [
-                v for v in results
-                if any(ext in v.extensions for ext in extensions)
-            ]
+    def get_status_str(cls, unique_id, visualizer_config):
+        st_obj = cls.query.get(unique_id=unique_id,
+                               visualizer_config_id=visualizer_config._id)
+        if st_obj:
+            status = st_obj.status
         else:
-            # match mimetype
-            visualizers = []
-            for result in results:
-                if result.mime_types == []:
-                    visualizers.append(result)
-                for pattern in result.mime_types:
-                    if re.search(pattern, mtype) is not None:
-                        visualizers.append(result)
+            status = 'unprocessed'
+        return status
 
-        # cache the result
-        if cache:
-            cls.cache[ext] = visualizers
+    @classmethod
+    def set_status_str(cls, unique_id, visualizer_config, status, reason=None):
+        """
+        Immediately sets status to :status  (does not wait for flush)
 
-        return visualizers
+        """
+        query = {
+            "unique_id": unique_id,
+            "visualizer_config_id": visualizer_config._id
+        }
+        cls.query.update(query, {"$set": {"status": status, "reason": reason}},
+                         upsert=True)
+
+    @classmethod
+    def get_or_create(cls, visualizable, visualizer_config):
+        st_obj = cls.query.get(unique_id=visualizable.get_unique_id(),
+                               visualizer_config_id=visualizer_config._id)
+        is_new = False
+        if st_obj is None:
+            try:
+                st_obj = cls(unique_id=visualizable.get_unique_id(),
+                             visualizer_config_id=visualizer_config._id)
+                session(cls).flush(st_obj)
+            except DuplicateKeyError:  # pragma no cover
+                session(cls).expunge(st_obj)
+                st_obj = cls.query.get(
+                    unique_id=visualizable.get_unique_id(),
+                    visualizer_config_id=visualizer_config._id)
+            else:
+                is_new = True
+        return st_obj, is_new
+
+
+class BaseVisualizableFile(_BaseVisualizerFile):
+    """File associated with a Visualizable object"""
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
+    ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
+
+    @classmethod
+    def get_from_visualizable(cls, visualizable, **kwargs):
+        return cls.find_from_visualizable(visualizable, **kwargs).first()
+
+    @classmethod
+    def find_from_visualizable(cls, visualizable, **kwargs):
+        kwargs['unique_id'] = visualizable.get_unique_id()
+        return cls.query.find(kwargs)
+
+    @classmethod
+    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+        pfile = cls.find_from_visualizable(
+            visualizable, filename=filename).first()
+        if not pfile:
+            try:
+                pfile = cls(
+                    unique_id=visualizable.get_unique_id(),
+                    filename=filename)
+                session(cls).flush(pfile)
+            except DuplicateKeyError:  # pragma no cover
+                session(pfile).expunge(pfile)
+                pfile = cls.find_from_visualizable(
+                    visualizable, filename=filename).first()
+        kwargs.setdefault('ref_id', visualizable.artifact_ref_id())
+        for name, value in kwargs.items():
+            setattr(pfile, name, value)
+        return pfile
+
+    @LazyProperty
+    def artifact(self):
+        """Associated artifact (if any) for access control purposes.
+
+        Note that this is not necessarily the original visualizable object.
+
+        """
+        from vulcanforge.artifact.model import ArtifactReference
+        if self.ref_id:
+            return ArtifactReference.artifact_by_index_id(self.ref_id)
+
+    # the following are implemented for process chaining
+    def get_unique_id(self):
+        return self.unique_id
+
+    def artifact_ref_id(self):
+        return self.ref_id
+
+
+class ProcessedArtifactFile(BaseVisualizableFile):
+    """Represents visualizer-specific synthesized resources
+    generated from processing a resource. For example, the STEP visualizer
+    will generate meshes for visualization in the forge.
+
+    By default (using `vulcanforge.visualize.widgets.IFrame`), the url of any
+    these files will be included in the query str of the iframe src for use
+    by the visualizer, with the parameter name determined by `query_param`.
+    To hide the url of the original resource, provide `resource_url` as the
+    value of `query_param`. If `query_param` is None, it will not show up in
+    the iframe query.
+
+    `unique_id` uniquely identifies a given resource within the forge, and is
+    used to map a resource to its processed files (the reverse lookup is
+    currently unnecessary).
+
+    `ref_id` associates a resource with a corresponding Artifact (if any)
+    for access control purposes.
+
+    """
+    class __mongometa__:
+        name = 'visualizer_processed_artifact'
+        unique_indexes = [('unique_id', 'filename')]
+
+    query_param = FieldProperty(None, if_missing='resource_url')
+    origin_hash = FieldProperty(str, if_missing=None)
+
+    @classmethod
+    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+        pfile = super(ProcessedArtifactFile, cls).upsert_from_visualizable(
+            visualizable, filename, **kwargs)
+        if not pfile.origin_hash:
+            pfile.origin_hash = cls.calculate_hash(visualizable.read())
+        return pfile
+
+    def find_duplicates(self):
+        duplicate_query = {
+            "origin_hash": self.origin_hash,
+            "_id": {"$ne": self._id}
+        }
+        return self.__class__.query.find(duplicate_query)
+
+
+class S3VisualizerFile(_BaseVisualizerFile):
+    """File object uploaded by the s3hosted visualizer"""
+    class __mongometa__:
+        name = 's3_visualizer_file'
+
+    parent_folder = FieldProperty(str, if_missing=None)
+    # content hash is used to manage updating modified files
+    content_hash = FieldProperty(str, if_missing=None)
+
+    def __init__(self, **kw):
+        super(S3VisualizerFile, self).__init__(**kw)
+        if self.parent_folder is None:
+            self.parent_folder = os.path.dirname(self.filename)
+        self.__calculate_hash = True
+
+    @classmethod
+    def upsert_from_data(cls, filename, visualizer_config_id, data, **kw):
+        obj = cls.query.get(filename=filename,
+                            visualizer_config_id=visualizer_config_id)
+        if not obj:
+            obj = cls.from_data(filename, data,
+                                visualizer_config_id=visualizer_config_id)
+            return obj
+
+        data_hash = cls.calculate_hash(data)
+        if obj.content_hash != data_hash:
+            obj.__calculate_hash = False
+            obj.set_contents_from_string(data)
+            obj.content_hash = data_hash
+        return obj
+
+    @property
+    def default_keyname(self):
+        return os.path.join(
+            'Visualizer',
+            str(self.visualizer_config_id),
+            super(_BaseVisualizerFile, self).default_keyname)
+
+    def _update_metadata(self):
+        super(S3VisualizerFile, self)._update_metadata()
+        if self.__calculate_hash:
+            self.content_hash = self.calculate_hash(self.read())
+        else:
+            self.__calculate_hash = True

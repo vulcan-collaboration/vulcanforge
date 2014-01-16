@@ -1,3 +1,4 @@
+import cgi
 from decimal import Decimal
 
 from ming.odm.odmsession import ODMCursor
@@ -43,6 +44,9 @@ class SanitizeEncode(GenericJSON):
         else:
             return u''.join(chunks)
 
+    def escape(self, s):
+        return cgi.escape(s)
+
     def _sanitize_encode(self, encoder, sanitize=True):
         def sanitize_encoder(o):
             do_sanitize = sanitize
@@ -54,9 +58,7 @@ class SanitizeEncode(GenericJSON):
                 do_sanitize = False
             s = encoder(o)
             if do_sanitize:
-                s = s.replace('&', '\\u0026')\
-                     .replace('<', '\\u003c')\
-                     .replace('>', '\\u003e')
+                s = self.escape(s)
             return s
         return sanitize_encoder
 

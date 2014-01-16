@@ -222,9 +222,7 @@
 
                             hE.qtip({
                                 content: {
-                                    title: {
-                                        text: element.title
-                                    },
+                                    title: element.title,
                                     text: element.content.replace(/%%UC%%/g,
                                         '<div class="uC">' +
                                             '<span class="inner">' +

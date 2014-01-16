@@ -82,7 +82,8 @@ def temporary_file(text=False, **kw):
     try:
         yield (fp, fname)
     finally:
-        fp.close()
+        if not fp.closed:
+            fp.close()
         os.remove(fname)
 
 

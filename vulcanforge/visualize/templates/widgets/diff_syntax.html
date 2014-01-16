@@ -1,7 +1,7 @@
 <h3>
     <span class="ico-l">
         <b data-icon="{{g.icons['table'].char}}" class="ico {{g.icons['table'].css}}"></b>
-        {{h.really_unicode(a.name) or ''}}
+        {{ h.really_unicode(filename1) }} vs {{ h.really_unicode(filename2) }}
     </span>
 </h3>
-{{g.highlight(diff, lexer='diff')}}
+{{ diff }}

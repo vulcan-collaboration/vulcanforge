@@ -39,11 +39,12 @@ class ProjectHomeApp(Application):
         48: '{ep_name}/images/home_48.png'
     }
     permissions = dict(
-        read = Application.permissions['read']
+        read=Application.permissions['read']
     )
     default_acl = {
         '*anonymous': ['read']
     }
+    visible_to_role = 'project.read'
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
@@ -94,7 +95,7 @@ class ProjectHomeController(BaseController):
     @expose(TEMPLATE_HOME + 'project_index.html')
     def index(self, **kw):
         # project news/description
-        if c.project.short_description:
+        if c.project.description:
             project_description = g.markdown.convert(c.project.description)
         else:
             project_description = ''
