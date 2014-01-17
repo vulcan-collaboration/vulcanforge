@@ -199,7 +199,7 @@
                             $tableHeadGroupRow.append( $('<th/>', {
                                 'html': e.label,
                                 'class': className,
-                                'title': e.title,
+                                'title': e.title || e.label,
                                 'colspan': e.childColumns.length
                             }));
 
@@ -214,7 +214,7 @@
 
                                 $tableHeadRow.append( $('<th/>', {
                                     'html': e2.label,
-                                    'title': e2.title,
+                                    'title': e2.title || e2.label,
                                     'class': childClassName
                                 }));
 
@@ -232,7 +232,7 @@
 
                             $tableHeadRow.append( $('<th/>', {
                                 'html': e.label,
-                                'title': e.title,
+                                'title': e.title || e.label,
                                 'class': className
                             }) );
 
