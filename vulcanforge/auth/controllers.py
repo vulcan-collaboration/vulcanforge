@@ -507,7 +507,7 @@ class UserStatePreferencesRESTController(object):
         self.key = key
 
     def _check_security(self, *args, **kwargs):
-        if c.user is User.anonymous():
+        if c.user.is_anonymous:
             raise exc.HTTPNotFound
 
     @expose('json')

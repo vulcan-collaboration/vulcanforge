@@ -109,6 +109,9 @@ class ForgeRootController(WsgiDispatchController):
         assert c.user is not None, \
             'c.user should always be at least User.anonymous()'
 
+        if g.visibility_mode_handler.is_enabled:
+            g.visibility_mode_handler.check_visibility(c.user, request)
+
         if g.profile_middleware:
             profile_setup_request()
 
@@ -118,7 +121,7 @@ class ForgeRootController(WsgiDispatchController):
     @expose('jinja:front.html')
     @with_trailing_slash
     def index(self, **kwargs):
-        if c.user is User.anonymous():
+        if c.user.is_anonymous:
             return self._anonymous_index(**kwargs)
         return self._authenticated_index(**kwargs)
 

@@ -948,6 +948,10 @@ class User(SOLRIndexed):
     def anonymous(cls):
         return User.query.get(_id=None)
 
+    @property
+    def is_anonymous(self):
+        return self._id is None
+
     def email_address_header(self):
         h = header.Header()
         h.append(u'"%s" ' % self.get_pref('display_name'))

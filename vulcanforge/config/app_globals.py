@@ -391,7 +391,7 @@ class ForgeAppGlobals(object):
 
     def handle_paging(self, limit, page, default=50):
         if limit:
-            if c.user in (None, User.anonymous()):
+            if c.user is None or c.user.is_anonymous:
                 session['results_per_page'] = int(limit)
                 session.save()
             else:
@@ -399,7 +399,7 @@ class ForgeAppGlobals(object):
                 if old_pref != int(limit):
                     c.user.set_pref('results_per_page', int(limit))
         else:
-            if c.user in (None, User.anonymous()):
+            if c.user is None or c.user.is_anonymous:
                 limit = 'results_per_page' in session and \
                         session['results_per_page'] or default
             else:

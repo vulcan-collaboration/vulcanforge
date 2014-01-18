@@ -54,7 +54,7 @@
             </div>
             {% endif %}
         </div>
-        {% if c.user != c.user.anonymous() %}
+        {% if not c.user.is_anonymous %}
         <ul class="post-options">
             <li>
                 {{widgets.related_artifacts.display(value=value)}}
