@@ -86,7 +86,7 @@ class VisualizerConfig(BaseMappedClass):
     creator_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     created_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     modified_date = FieldProperty(datetime, if_missing=datetime.utcnow)
-    options = FieldProperty(None)
+    options = FieldProperty(None, if_missing={})
 
     @staticmethod
     def strip_name(name):

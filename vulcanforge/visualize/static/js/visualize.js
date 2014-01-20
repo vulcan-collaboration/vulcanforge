@@ -136,12 +136,14 @@
                             global.VIS.pollProcessing.call(global.VIS);
                         }, that.config.loadingPollInterval);
                     } else if (response.status === 'ready') {
-                        that.processingSuccess();
+                        that.processingSuccess.call(that);
                     } else {
-                        that.processingError();
+                        that.processingError.call(that);
                     }
                 },
-                error: this.processingError
+                error: function() {
+                    that.processingError();
+                }
             });
         },
         "processingSuccess": function () {
@@ -159,7 +161,9 @@
                     }
                     $(that).trigger("ready");
                 },
-                "error": that.processingError
+                "error": function() {
+                    that.processingError();
+                }
             });
         },
         "processingError": function () {
