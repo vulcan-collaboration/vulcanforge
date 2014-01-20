@@ -11,7 +11,10 @@ class RemoveAltResourceKeys(BaseMigration):
             {"_alt_loading": {"$exists": 1}}
         ]}
         for a_cls in iter_artifact_classes():
-            db, coll = pymongo_db_collection(a_cls)
+            try:
+                db, coll = pymongo_db_collection(a_cls)
+            except Exception:
+                self.write_output("Skipping for {}".format(a_cls), "exception")
             for a_doc in coll.find(query):
                 a_doc.pop("alt_resources", None)
                 a_doc.pop("_alt_loading", None)
