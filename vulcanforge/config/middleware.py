@@ -18,7 +18,6 @@ from .custom_middleware import (
     LoginRedirectMiddleware,
     LogErrorMiddleware,
     WidgetMiddleware,
-    VisibilityModeMiddleware
 )
 from .ming_config import ming_replicant_configure
 from vulcanforge.auth.middleware import AuthMiddleware

@@ -1,11 +1,8 @@
 import logging
 import re
-from itertools import ifilter
 from urllib import urlencode
 
-import tg
 from tg import redirect
-from vulcanforge.auth.model import User
 
 LOG = logging.getLogger(__name__)
 
@@ -30,22 +27,18 @@ class VisibilityModeHandler(object):
         re.compile(r'^/static_auth/')
     ]
 
-    def __init__(self, app):
-        self.app = app
-        self.mode = tg.config.get('visibility_mode', 'default')
-        # bail early if disabled
-        if self.is_enabled:
-            self.login_url = tg.config.get('auth.login_url', '/auth/')
-            self.login_url = "/{}/".format(self.login_url.strip('/'))
-            self.url_whitelist.append(re.compile('^{}'.format(self.login_url)))
-            holes = tg.config.get('visibility_holes', '')
-            for hole in ifilter(None, holes.split(',')):
-                regex = re.compile(hole)
-                self.url_whitelist.append(regex)
+    def __init__(self, mode='default', login_url='/auth/', whitelist=None):
+        self.mode = mode
+        self.login_url = "/{}/".format(login_url.strip('/'))
+        self.url_whitelist.append(re.compile('^{}'.format(self.login_url)))
+        if whitelist is None:
+            whitelist = []
+        for hole in whitelist:
+            self.url_whitelist.append(re.compile(hole))
 
     def check_visibility(self, user, request):
-        pass
-
+        if user.is_anonymous and not self.is_whitelisted(request):
+            self.redirect(request)
 
     @property
     def is_enabled(self):

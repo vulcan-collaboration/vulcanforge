@@ -254,7 +254,7 @@ class SecurityManager(object):
         methods that should only be seen by anonymous users.
 
         """
-        if c.user.is_anonymous:
+        if not c.user.is_anonymous:
             flash("You must first log out to view the requested page.")
             return redirect('/dashboard/')
 
