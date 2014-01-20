@@ -54,139 +54,6 @@ to customize the access control to suit your project's needs.
 TEMPLATE_DIR = 'jinja:vulcanforge.tools.admin:templates/'
 
 
-class AdminApp(Application):
-    """
-    Admin app for administrating tools, permissions, etc. of a project
-
-    """
-    __version__ = vulcanforge.__version__
-    tool_label = 'admin'
-    static_folder = "admin"
-    default_mount_label = 'Admin'
-
-    def __init__(self, project, config):
-        Application.__init__(self, project, config)
-        self.root = ProjectAdminController()
-        self.admin = AdminAppAdminController(self)
-        self.sitemap = [SitemapEntry('Admin', '.')]
-
-    def is_visible_to(self, user):
-        """Whether the user can view the app."""
-        #return has_access(c.project, 'create', user=user)
-        raise DeprecationWarning()
-
-    def main_menu(self):
-        """
-        Apps should provide their entries to be added to the main nav
-        :return: a list of
-        :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
-
-        """
-        return [SitemapEntry(self.config.options.mount_label.title(), '.')]
-
-    def admin_url(self):
-        """
-        A hack until I can figure out whether this can replace self.url
-
-        """
-        if self.project == '--init--':
-            return self.project.neighborhood.url() + '_admin/'
-        return self.url
-
-    @exceptionless([], LOG)
-    def sidebar_menu(self):
-        admin_url = self.admin_url()
-        links = []
-        if g.security.has_access(c.project, 'admin'):
-            if c.project.shortname == '--init--':
-                n_admin_url = self.project.neighborhood.url() + '_admin/'
-                links.append(
-                    SitemapEntry(
-                        'Overview',
-                        n_admin_url + 'overview',
-                        ui_icon=Icon('', 'ico-layers'),
-                        className='nav_child'
-                    )
-                )
-            else:
-                links.append(
-                    SitemapEntry(
-                        'Overview',
-                        admin_url + 'overview',
-                        ui_icon=Icon('', 'ico-layers'),
-                        className='nav_child'
-                    )
-                )
-            if c.project.is_root:
-                links.append(
-                    SitemapEntry(
-                        'Usergroups',
-                        admin_url + 'groups/',
-                        ui_icon=Icon('', 'ico-user'),
-                        className='nav_child')
-                )
-            links.append(
-                SitemapEntry(
-                    'Permissions',
-                    admin_url + 'permissions/',
-                    ui_icon=Icon('', 'ico-bolt'),
-                    className='nav_child'
-                )
-            )
-        links.append(
-            SitemapEntry(
-                'Tools',
-                admin_url + 'tools',
-                ui_icon=Icon('', 'ico-wrench'),
-                className='nav_child'))
-        pending_str = ''
-        pending = AM.MembershipRequest.query.find({
-            'project_id': c.project._id
-        }).count()
-        if pending:
-            pending_str = '({})'.format(pending)
-        links.append(
-            SitemapEntry(
-                'Members' + pending_str,
-                admin_url + 'members',
-                ui_icon=Icon('', 'ico-user'),
-                className='nav_child'))
-        if c.project.can_register_users:
-            pending_str = ''
-            pending = AM.RegistrationRequest.query.find({
-                'project_id': c.project._id,
-                'status': 'tbd'
-            }).count()
-            if pending:
-                pending_str = '({})'.format(pending)
-            links.append(
-                SitemapEntry(
-                    "User Registration" + pending_str,
-                    admin_url + 'registration',
-                    className='nav_child'
-                ))
-        if len(c.project.neighborhood_invitations):
-            links.append(
-                SitemapEntry(
-                    'Invitation(s)',
-                    admin_url + 'invitations',
-                    className='nav_child'))
-
-        return links
-
-    def admin_menu(self):
-        return []
-
-    def install(self, project, subscribe_admins=True, **kw):
-        self.config.visible_to_role = 'project.admin'
-        self.config.reference_opts = Application.reference_opts
-        if subscribe_admins:
-            self.subscribe_admins()
-
-    def uninstall(self, project=None, project_id=None):  # pragma no cover
-        raise NotImplementedError("uninstall")
-
-
 class ProjectAdminController(BaseController):
 
     class Widgets(BaseController.Widgets):
@@ -410,20 +277,18 @@ class ProjectAdminController(BaseController):
                                 delete_member_agreement=None, **kwargs):
         if member_agreement is not None and member_agreement != '':
             if c.project.member_agreement:
-                ProjectFile.remove(dict(
-                    project_id=c.project._id,
-                    category='member_agreement'
-                ))
+                ProjectFile.remove(
+                    {'project_id': c.project._id,
+                     'category': 'member_agreement'})
             ProjectFile.from_stream(
                 member_agreement.filename,
                 member_agreement.file,
                 project_id=c.project._id,
                 category='member_agreement')
         if delete_member_agreement:
-            ProjectFile.remove(dict(
-                project_id=c.project._id,
-                category='member_agreement'
-            ))
+            ProjectFile.remove({
+                'project_id': c.project._id,
+                'category': 'member_agreement'})
         return redirect('members')
 
     @expose('json')
@@ -592,13 +457,11 @@ class ProjectAdminController(BaseController):
             flash("User already {}".format(req.status), "warn")
         else:
             if send_mail != "no":
-                template_file = self._relative_path(
-                    "templates/mail/deny_new_user.txt")
-                with open(template_file, 'r') as fp:
-                    text = fp.read()
-
-                text = text.format(
-                    forge_name=config.get('forge_name', 'the forge'))
+                template = g.jinja2_env.get_template(
+                    'admin/mail/deny_new_user.txt')
+                text = template.render({
+                    "forge_name": config.get('forge_name', 'the forge')
+                })
                 mail_tasks.sendmail.post(
                     fromaddr=g.forgemail_return_path,
                     destinations=[req.email],
@@ -817,6 +680,141 @@ class ProjectAdminController(BaseController):
     def request_deletion(self, **kwargs):
         conversation = self._do_request_deletion()
         return redirect(conversation.get_url())
+
+
+class AdminApp(Application):
+    """
+    Admin app for administrating tools, permissions, etc. of a project
+
+    """
+    __version__ = vulcanforge.__version__
+    tool_label = 'admin'
+    static_folder = "admin"
+    default_mount_label = 'Admin'
+    visible_to_role = 'project.admin'
+    controller_cls = ProjectAdminController
+
+    def __init__(self, project, config):
+        Application.__init__(self, project, config)
+        self.root = self.controller_cls()
+        self.admin = AdminAppAdminController(self)
+        self.sitemap = [SitemapEntry('Admin', '.')]
+
+    def is_visible_to(self, user):
+        """Whether the user can view the app."""
+        #return has_access(c.project, 'create', user=user)
+        raise DeprecationWarning()
+
+    def main_menu(self):
+        """
+        Apps should provide their entries to be added to the main nav
+        :return: a list of
+        :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+
+        """
+        return [SitemapEntry(self.config.options.mount_label.title(), '.')]
+
+    def admin_url(self):
+        """
+        A hack until I can figure out whether this can replace self.url
+
+        """
+        if self.project == '--init--':
+            return self.project.neighborhood.url() + '_admin/'
+        return self.url
+
+    @exceptionless([], LOG)
+    def sidebar_menu(self):
+        admin_url = self.admin_url()
+        links = []
+        if g.security.has_access(c.project, 'admin'):
+            if c.project.shortname == '--init--':
+                n_admin_url = self.project.neighborhood.url() + '_admin/'
+                links.append(
+                    SitemapEntry(
+                        'Overview',
+                        n_admin_url + 'overview',
+                        ui_icon=Icon('', 'ico-layers'),
+                        className='nav_child'
+                    )
+                )
+            else:
+                links.append(
+                    SitemapEntry(
+                        'Overview',
+                        admin_url + 'overview',
+                        ui_icon=Icon('', 'ico-layers'),
+                        className='nav_child'
+                    )
+                )
+            if c.project.is_root:
+                links.append(
+                    SitemapEntry(
+                        'Usergroups',
+                        admin_url + 'groups/',
+                        ui_icon=Icon('', 'ico-user'),
+                        className='nav_child')
+                )
+            links.append(
+                SitemapEntry(
+                    'Permissions',
+                    admin_url + 'permissions/',
+                    ui_icon=Icon('', 'ico-bolt'),
+                    className='nav_child'
+                )
+            )
+        links.append(
+            SitemapEntry(
+                'Tools',
+                admin_url + 'tools',
+                ui_icon=Icon('', 'ico-wrench'),
+                className='nav_child'))
+        pending_str = ''
+        pending = AM.MembershipRequest.query.find({
+            'project_id': c.project._id
+        }).count()
+        if pending:
+            pending_str = '({})'.format(pending)
+        links.append(
+            SitemapEntry(
+                'Members' + pending_str,
+                admin_url + 'members',
+                ui_icon=Icon('', 'ico-user'),
+                className='nav_child'))
+        if c.project.can_register_users:
+            pending_str = ''
+            pending = AM.RegistrationRequest.query.find({
+                'project_id': c.project._id,
+                'status': 'tbd'
+            }).count()
+            if pending:
+                pending_str = '({})'.format(pending)
+            links.append(
+                SitemapEntry(
+                    "User Registration" + pending_str,
+                    admin_url + 'registration',
+                    className='nav_child'
+                ))
+        if len(c.project.neighborhood_invitations):
+            links.append(
+                SitemapEntry(
+                    'Invitation(s)',
+                    admin_url + 'invitations',
+                    className='nav_child'))
+
+        return links
+
+    def admin_menu(self):
+        return []
+
+    def install(self, project, subscribe_admins=True, **kw):
+        self.config.visible_to_role = self.visible_to_role
+        self.config.reference_opts = Application.reference_opts
+        if subscribe_admins:
+            self.subscribe_admins()
+
+    def uninstall(self, project=None, project_id=None):  # pragma no cover
+        raise NotImplementedError("uninstall")
 
 
 class PermissionsController(BaseController):
