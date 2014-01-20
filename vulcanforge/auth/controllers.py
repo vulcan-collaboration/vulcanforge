@@ -495,8 +495,9 @@ class _ModeratedAuthController(_AuthController):
 
 # determine whether to moderate general registrations
 #   Use visibility mode settings unless explicitly defined
-_moderate = asbool(config.get('moderate_registration',
-                              g.visibility_mode_handler.is_enabled))
+_moderate = asbool(
+    config.get('moderate_registration',
+               config.get('visibility_mode') == 'closed'))
 AuthController = _ModeratedAuthController if _moderate else _AuthController
 
 
