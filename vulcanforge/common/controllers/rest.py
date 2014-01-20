@@ -562,7 +562,7 @@ class WebAPIController(TGController):
 
     def _get_global_nav_actions(self):
         global_actions = []
-        if c.user == User.anonymous():
+        if c.user.is_anonymous:
             global_actions.append({
                 'label': 'Register',
                 'url': g.user_register_url
@@ -574,7 +574,7 @@ class WebAPIController(TGController):
         return global_actions
 
     def _get_global_nav_root_item(self):
-        if c.user == User.anonymous():
+        if c.user.is_anonymous:
             href = config.get('masternav.root.href', "/")
         else:
             href = config.get('masternav.root.href',

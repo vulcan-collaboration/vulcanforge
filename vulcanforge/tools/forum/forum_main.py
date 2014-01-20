@@ -187,7 +187,7 @@ class ForgeDiscussionApp(Application):
             if moderate_link:
                 l.append(moderate_link)
             # if we are in a thread and not anonymous, provide placeholder links to use in js
-            if '/thread/' in request.url and c.user not in (None, User.anonymous()):
+            if '/thread/' in request.url and c.user and not c.user.is_anonymous:
                 l.append(SitemapEntry(
                         'Mark as Spam', 'flag_as_spam',
                         ui_icon=Icon('','ico-star'), className='sidebar_thread_spam'))

@@ -32,6 +32,7 @@ from boto.exception import S3CreateError
 from vulcanforge.auth.authentication_provider import (
     LocalAuthenticationProvider)
 from vulcanforge.auth.security_manager import SecurityManager
+from vulcanforge.auth.visibility_mode import VisibilityModeHandler
 from vulcanforge.cache.redis_cache import RedisCache
 from vulcanforge.common.helpers import slugify, split_subdomain
 from vulcanforge.common.util.debug import (
@@ -118,6 +119,7 @@ class ForgeConfig(AppConfig):
         self.setup_task_queue()
         self.setup_visualize()
         self.setup_event_queue()
+        self.setup_visibilitymode()
 
     def register_packages(self):
         """This is a placeholder for now, but soon it will hold our extension
@@ -452,3 +454,10 @@ class ForgeConfig(AppConfig):
 
         config['pylons.app_globals'].visualize_artifact = visualize_artifcact
         config['pylons.app_globals'].visualize_url = visualize_url
+
+    def setup_visibilitymode(self):
+        visibility_mode = config.get('visibility_mode', 'default')
+        whitelist = filter(None, config.get('visibility_holes', '').split(','))
+        login_url = config.get('auth.login_url', '/auth/')
+        handler = VisibilityModeHandler(visibility_mode, login_url, whitelist)
+        config['pylons.app_globals'].visibility_mode_handler = handler
