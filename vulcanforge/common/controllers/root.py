@@ -102,12 +102,18 @@ class ForgeRootController(WsgiDispatchController):
             self._debug_util_ = DebugUtilRootController()
         super(ForgeRootController, self).__init__()
 
-    def _setup_request(self):
-        c.neighborhood = c.project = c.app = None
-        c.memoize_cache = {}
+    def _set_user_context(self):
         c.user = g.auth_provider.authenticate_request()
         assert c.user is not None, \
             'c.user should always be at least User.anonymous()'
+
+    def _setup_request(self):
+        c.neighborhood = c.project = c.app = None
+        c.memoize_cache = {}
+        self._set_user_context()
+
+        if g.visibility_mode_handler.is_enabled:
+            g.visibility_mode_handler.check_visibility(c.user, request)
 
         if g.profile_middleware:
             profile_setup_request()
@@ -118,7 +124,7 @@ class ForgeRootController(WsgiDispatchController):
     @expose('jinja:front.html')
     @with_trailing_slash
     def index(self, **kwargs):
-        if c.user is User.anonymous():
+        if c.user.is_anonymous:
             return self._anonymous_index(**kwargs)
         return self._authenticated_index(**kwargs)
 

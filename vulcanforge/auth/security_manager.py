@@ -220,7 +220,7 @@ class SecurityManager(object):
         return result
 
     def raise_forbidden(self, message=FORBIDDEN_MSG):
-        if c.user != User.anonymous():
+        if not c.user.is_anonymous:
             request.environ['error_message'] = message
             raise exc.HTTPForbidden(detail=message)
         else:
@@ -245,7 +245,7 @@ class SecurityManager(object):
 
     def require_authenticated(self):
         """:raises: HTTPUnauthorized if current user is anonymous"""
-        if c.user == User.anonymous():
+        if c.user.is_anonymous:
             raise exc.HTTPUnauthorized()
 
     def require_anonymous(self):
@@ -254,7 +254,7 @@ class SecurityManager(object):
         methods that should only be seen by anonymous users.
 
         """
-        if c.user != User.anonymous():
+        if not c.user.is_anonymous:
             flash("You must first log out to view the requested page.")
             return redirect('/dashboard/')
 
@@ -276,7 +276,7 @@ class SecurityManager(object):
         if user is None:
             user = c.user
         read_roles = ['anonymous']
-        if user and user != user.anonymous():
+        if user and not user.is_anonymous:
             read_roles.append('authenticated')
             reaching_role_ids = self.credentials.user_roles(
                 user_id=user._id).reaching_ids

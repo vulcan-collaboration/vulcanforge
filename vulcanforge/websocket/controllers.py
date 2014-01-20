@@ -28,7 +28,7 @@ class WebSocketAPIController(BaseController):
 
     @expose('json')
     def authenticate(self, **kwargs):
-        if c.user == User.anonymous():
+        if c.user.is_anonymous:
             authenticated = False
         elif c.user.active():
             authenticated = True

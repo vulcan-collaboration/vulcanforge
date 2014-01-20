@@ -5,7 +5,7 @@
 {% block header %}{{c.app.config.options.mount_label}}{% endblock %}
 
 {% block actions %}
-    {% if c.user and c.user != c.user.anonymous() %}
+    {% if c.user and not c.user.is_anonymous %}
         {{ g.subscription_popup_menu.display(feed_url=c.url+'feed') }}
     {% endif %}
 {% endblock %}

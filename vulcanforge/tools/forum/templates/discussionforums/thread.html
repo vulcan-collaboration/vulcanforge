@@ -18,7 +18,7 @@
     {% endif %}
     {{ g.icon_button_widget.display(label='Tag', css="thread_tag",
         icon='ico-tag', href="#") }}
-    {% if c.user and c.user != c.user.anonymous() %}
+    {% if c.user and not c.user.is_anonymous %}
         {{ g.subscription_popup_menu.display(artifact=thread, feed_url=c.url+'feed.rss') }}
     {% endif %}
 {% endblock %}
