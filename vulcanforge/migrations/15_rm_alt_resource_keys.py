@@ -20,4 +20,4 @@ class RemoveAltResourceKeys(BaseMigration):
                 a_doc.pop("_alt_loading", None)
                 count += 1
                 coll.save(a_doc)
-        self.write_output("Repaired %d artifacts")
+        self.write_output("Repaired {} artifacts".format(count))
