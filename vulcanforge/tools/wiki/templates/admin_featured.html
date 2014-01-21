@@ -1,0 +1,58 @@
+<p>Pages can be added or removed to this list while editing the page.</p>
+{% if has_featured_pages %}
+    <form method="POST"
+          action="{{ c.project.url() }}admin/{{ app.config.options.mount_point }}/update_featured">
+        <p><em>Drag and drop to reorder.</em></p>
+        <ol id="page_list">
+            {% for page in featured_pages %}
+                <li class="page_item">
+                    <input type="hidden"
+                           name="featured_ordinals.{{ page._id }}"
+                           class="page-ordinal-input"
+                           value="{{ page.featured_ordinal }}"/>
+                    <label for="page-{{ page._id }}-featured_label">label</label>
+                    <input type="text"
+                           id="page-{{ page._id }}-featured_label"
+                           name="featured_labels.{{ page._id }}"
+                           value="{{ page.featured_label or '' }}"
+                            placeholder="{{ page.title }}"/>
+                    <a href="{{ page.url }}">{{ page.title }}</a>
+                </li>
+            {% endfor %}
+        </ol>
+        {% if allow_config %}
+            <div class="vf-form-controls">
+                <input type="submit" value="Save"/>
+                <input type="button" class="close" value="Cancel"/>
+            </div>
+        {% endif %}
+    </form>
+    <style>
+        #page_list {
+            margin: 1rem 0;
+            padding: 0;
+            list-style: none;
+        }
+        .page_item {
+            margin: 4px;
+            padding: 4px 8px;
+            font-weight: normal;
+            background: rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        $(function () {
+            $('#page_list').
+                    sortable().
+                    on('sortupdate', function () {
+                        var i = 0;
+                        $('.page-ordinal-input').
+                                each(function () {
+                                    $(this).val(++i);
+                                });
+                    });
+        });
+    </script>
+{% else %}
+    <p>Currently there are no featured pages.</p>
+{% endif %}
