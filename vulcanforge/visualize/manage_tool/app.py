@@ -110,8 +110,8 @@ class VisualizerConfigController(BaseController):
                 "extensions": ', '.join(vis_config.extensions +
                                         vis_config.processing_extensions),
                 "mime_types": ', '.join(
-                    vis_config.mime_types or [] +
-                    vis_config.processing_mime_types or []),
+                    (vis_config.mime_types or []) +
+                    (vis_config.processing_mime_types or [])),
                 "author": avatar,
                 "modified": ago(vis_config.modified_date, cutoff=True),
                 "created": ago(vis_config.created_date, cutoff=True)
