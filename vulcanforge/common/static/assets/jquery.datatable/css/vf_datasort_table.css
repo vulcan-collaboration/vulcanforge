@@ -135,7 +135,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * DataTables display
  */
-table.display {
+.dataTables_wrapper table.display {
 	margin: 0 auto;
 	clear: both;
 	width: 100%;
@@ -154,7 +154,7 @@ table.display {
 	 */
 }
 
-table.display thead th {
+.dataTables_wrapper table.display thead th {
 	padding: 3px 18px 3px 10px;
 	border-bottom: 1px solid black;
 	font-weight: bold;
@@ -162,21 +162,21 @@ table.display thead th {
 	* cursor: hand;
 }
 
-table.display tfoot th {
+.dataTables_wrapper table.display tfoot th {
 	padding: 3px 18px 3px 10px;
 	border-top: 1px solid black;
 	font-weight: bold;
 }
 
-table.display tr.heading2 td {
+.dataTables_wrapper table.display tr.heading2 td {
 	border-bottom: 1px solid #aaa;
 }
 
-table.display td {
+.dataTables_wrapper table.display td {
 	padding: 3px 10px;
 }
 
-table.display td.center {
+.dataTables_wrapper table.display td.center {
 	text-align: center;
 }
 
@@ -186,28 +186,28 @@ table.display td.center {
  * DataTables sorting
  */
 
-table.dataTable th.sorting_asc {
+.dataTables_wrapper table.dataTable th.sorting_asc {
 	background: url('../images/sort_asc.png') no-repeat center right;
 }
 
-table.dataTable th.sorting_desc {
+.dataTables_wrapper table.dataTable th.sorting_desc {
 	background: url('../images/sort_desc.png') no-repeat center right;
 }
 
-table.dataTable th.sorting {
+.dataTables_wrapper table.dataTable th.sorting {
 	background: url('../images/sort_both.png') no-repeat center right;
 }
 
-table.dataTable th.sorting_asc_disabled {
+.dataTables_wrapper table.dataTable th.sorting_asc_disabled {
 	background: url('../images/sort_asc_disabled.png') no-repeat center right;
 }
 
-table.dataTable th.sorting_desc_disabled {
+.dataTables_wrapper table.dataTable th.sorting_desc_disabled {
 	background: url('../images/sort_desc_disabled.png') no-repeat center right;
 }
  
-table.display thead th:active,
-table.display thead td:active {
+.dataTables_wrapper table.display thead th:active,
+.dataTables_wrapper table.display thead td:active {
 	outline: none;
 }
 
@@ -217,44 +217,44 @@ table.display thead td:active {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * DataTables row classes
  */
-table.display tr.odd.gradeA {
+.dataTables_wrapper table.display tr.odd.gradeA {
 	background-color: #ddffdd;
 }
 
-table.display tr.even.gradeA {
+.dataTables_wrapper table.display tr.even.gradeA {
 	background-color: #eeffee;
 }
 
-table.display tr.odd.gradeC {
+.dataTables_wrapper table.display tr.odd.gradeC {
 	background-color: #ddddff;
 }
 
-table.display tr.even.gradeC {
+.dataTables_wrapper table.display tr.even.gradeC {
 	background-color: #eeeeff;
 }
 
-table.display tr.odd.gradeX {
+.dataTables_wrapper table.display tr.odd.gradeX {
 	background-color: #ffdddd;
 }
 
-table.display tr.even.gradeX {
+.dataTables_wrapper table.display tr.even.gradeX {
 	background-color: #ffeeee;
 }
 
-table.display tr.odd.gradeU {
+.dataTables_wrapper table.display tr.odd.gradeU {
 	background-color: #ddd;
 }
 
-table.display tr.even.gradeU {
+.dataTables_wrapper table.display tr.even.gradeU {
 	background-color: #eee;
 }
 
 
-tr.odd {
+.dataTables_wrapper tr.odd {
 	background-color: #E2E4FF;
 }
 
-tr.even {
+.dataTables_wrapper tr.even {
 	background-color: white;
 }
 
@@ -274,13 +274,13 @@ tr.even {
 	-webkit-overflow-scrolling: touch;
 }
 
-.top, .bottom {
+.dataTables_wrapper .top, .bottom {
 	padding: 15px;
 	background-color: #F5F5F5;
 	border: 1px solid #CCCCCC;
 }
 
-.top .dataTables_info {
+.dataTables_wrapper .top .dataTables_info {
 	float: none;
 }
 
@@ -292,23 +292,23 @@ tr.even {
 	text-align: center;
 }
 
-tfoot input {
+.dataTables_wrapper tfoot input {
 	margin: 0.5em 0;
 	width: 100%;
 	color: #444;
 }
 
-tfoot input.search_init {
+.dataTables_wrapper tfoot input.search_init {
 	color: #999;
 }
 
-td.group {
+.dataTables_wrapper td.group {
 	background-color: #d1cfd0;
 	border-bottom: 2px solid #A19B9E;
 	border-top: 2px solid #A19B9E;
 }
 
-td.details {
+.dataTables_wrapper td.details {
 	background-color: #d1cfd0;
 	border: 2px solid #A19B9E;
 }
@@ -357,11 +357,11 @@ td.details {
 	background-color: #99B3FF;
 }
 
-table.display tr.even.row_selected td {
+.dataTables_wrapper table.display tr.even.row_selected td {
 	background-color: #B0BED9;
 }
 
-table.display tr.odd.row_selected td {
+.dataTables_wrapper table.display tr.odd.row_selected td {
 	background-color: #9FAFD1;
 }
 
@@ -370,27 +370,27 @@ table.display tr.odd.row_selected td {
  * Sorting classes for columns
  */
 /* For the standard odd/even */
-tr.odd td.sorting_1 {
+.dataTables_wrapper tr.odd td.sorting_1 {
 	background-color: #D3D6FF;
 }
 
-tr.odd td.sorting_2 {
+.dataTables_wrapper tr.odd td.sorting_2 {
 	background-color: #DADCFF;
 }
 
-tr.odd td.sorting_3 {
+.dataTables_wrapper tr.odd td.sorting_3 {
 	background-color: #E0E2FF;
 }
 
-tr.even td.sorting_1 {
+.dataTables_wrapper tr.even td.sorting_1 {
 	background-color: #EAEBFF;
 }
 
-tr.even td.sorting_2 {
+.dataTables_wrapper tr.even td.sorting_2 {
 	background-color: #F2F3FF;
 }
 
-tr.even td.sorting_3 {
+.dataTables_wrapper tr.even td.sorting_3 {
 	background-color: #F9F9FF;
 }
 
@@ -405,99 +405,99 @@ tr.even td.sorting_3 {
 	  dd > d1
 	  ee > e2
  */
-tr.odd.gradeA td.sorting_1 {
+.dataTables_wrapper tr.odd.gradeA td.sorting_1 {
 	background-color: #c4ffc4;
 }
 
-tr.odd.gradeA td.sorting_2 {
+.dataTables_wrapper tr.odd.gradeA td.sorting_2 {
 	background-color: #d1ffd1;
 }
 
-tr.odd.gradeA td.sorting_3 {
+.dataTables_wrapper tr.odd.gradeA td.sorting_3 {
 	background-color: #d1ffd1;
 }
 
-tr.even.gradeA td.sorting_1 {
+.dataTables_wrapper tr.even.gradeA td.sorting_1 {
 	background-color: #d5ffd5;
 }
 
-tr.even.gradeA td.sorting_2 {
+.dataTables_wrapper tr.even.gradeA td.sorting_2 {
 	background-color: #e2ffe2;
 }
 
-tr.even.gradeA td.sorting_3 {
+.dataTables_wrapper tr.even.gradeA td.sorting_3 {
 	background-color: #e2ffe2;
 }
 
-tr.odd.gradeC td.sorting_1 {
+.dataTables_wrapper tr.odd.gradeC td.sorting_1 {
 	background-color: #c4c4ff;
 }
 
-tr.odd.gradeC td.sorting_2 {
+.dataTables_wrapper tr.odd.gradeC td.sorting_2 {
 	background-color: #d1d1ff;
 }
 
-tr.odd.gradeC td.sorting_3 {
+.dataTables_wrapper tr.odd.gradeC td.sorting_3 {
 	background-color: #d1d1ff;
 }
 
-tr.even.gradeC td.sorting_1 {
+.dataTables_wrapper tr.even.gradeC td.sorting_1 {
 	background-color: #d5d5ff;
 }
 
-tr.even.gradeC td.sorting_2 {
+.dataTables_wrapper tr.even.gradeC td.sorting_2 {
 	background-color: #e2e2ff;
 }
 
-tr.even.gradeC td.sorting_3 {
+.dataTables_wrapper tr.even.gradeC td.sorting_3 {
 	background-color: #e2e2ff;
 }
 
-tr.odd.gradeX td.sorting_1 {
+.dataTables_wrapper tr.odd.gradeX td.sorting_1 {
 	background-color: #ffc4c4;
 }
 
-tr.odd.gradeX td.sorting_2 {
+.dataTables_wrapper tr.odd.gradeX td.sorting_2 {
 	background-color: #ffd1d1;
 }
 
-tr.odd.gradeX td.sorting_3 {
+.dataTables_wrapper tr.odd.gradeX td.sorting_3 {
 	background-color: #ffd1d1;
 }
 
-tr.even.gradeX td.sorting_1 {
+.dataTables_wrapper tr.even.gradeX td.sorting_1 {
 	background-color: #ffd5d5;
 }
 
-tr.even.gradeX td.sorting_2 {
+.dataTables_wrapper tr.even.gradeX td.sorting_2 {
 	background-color: #ffe2e2;
 }
 
-tr.even.gradeX td.sorting_3 {
+.dataTables_wrapper tr.even.gradeX td.sorting_3 {
 	background-color: #ffe2e2;
 }
 
-tr.odd.gradeU td.sorting_1 {
+.dataTables_wrapper tr.odd.gradeU td.sorting_1 {
 	background-color: #c4c4c4;
 }
 
-tr.odd.gradeU td.sorting_2 {
+.dataTables_wrapper tr.odd.gradeU td.sorting_2 {
 	background-color: #d1d1d1;
 }
 
-tr.odd.gradeU td.sorting_3 {
+.dataTables_wrapper tr.odd.gradeU td.sorting_3 {
 	background-color: #d1d1d1;
 }
 
-tr.even.gradeU td.sorting_1 {
+.dataTables_wrapper tr.even.gradeU td.sorting_1 {
 	background-color: #d5d5d5;
 }
 
-tr.even.gradeU td.sorting_2 {
+.dataTables_wrapper tr.even.gradeU td.sorting_2 {
 	background-color: #e2e2e2;
 }
 
-tr.even.gradeU td.sorting_3 {
+.dataTables_wrapper tr.even.gradeU td.sorting_3 {
 	background-color: #e2e2e2;
 }
 
@@ -549,31 +549,31 @@ tr.even.gradeU td.sorting_3 {
 /*
  * KeyTable
  */
-table.KeyTable td {
+.dataTables_wrapper table.KeyTable td {
 	border: 3px solid transparent;
 }
 
-table.KeyTable td.focus {
+.dataTables_wrapper table.KeyTable td.focus {
 	border: 3px solid #3366FF;
 }
 
-table.display tr.gradeA {
+.dataTables_wrapper table.display tr.gradeA {
 	background-color: #eeffee;
 }
 
-table.display tr.gradeC {
+.dataTables_wrapper table.display tr.gradeC {
 	background-color: #ddddff;
 }
 
-table.display tr.gradeX {
+.dataTables_wrapper table.display tr.gradeX {
 	background-color: #ffdddd;
 }
 
-table.display tr.gradeU {
+.dataTables_wrapper table.display tr.gradeU {
 	background-color: #ddd;
 }
 
-div.box {
+.dataTables_wrapper div.box {
 	height: 100px;
 	padding: 10px;
 	overflow: auto;
