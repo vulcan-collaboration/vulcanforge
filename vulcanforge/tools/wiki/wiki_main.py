@@ -8,6 +8,7 @@ from datetime import datetime
 import types
 
 # Non-stdlib imports
+import bson
 from tg import expose, validate, redirect, response, flash
 from tg.decorators import with_trailing_slash, without_trailing_slash
 from tg.controllers import RestController
@@ -228,10 +229,7 @@ class ForgeWikiApp(Application):
                 'label': page.featured_label or page.title,
                 'url': page.url()
             }
-            for page in Page.query.find({
-                'app_config_id': self.config._id,
-                'featured': True
-            })
+            for page in self.get_featured_pages_cursor()
             if g.security.has_access(page, 'read')
         ]
         return {
@@ -262,7 +260,11 @@ class ForgeWikiApp(Application):
                 admin_url + 'home', className='admin_modal'
             ),
             SitemapEntry(
-                'Options', admin_url + 'options', className='admin_modal')
+                'Options', admin_url + 'options', className='admin_modal'),
+            SitemapEntry(
+                'Manage Featured Pages',
+                admin_url + 'featured', className='admin_modal'
+            )
         ]
         if self.permissions and g.security.has_access(self, 'admin'):
             links.append(
@@ -313,15 +315,6 @@ class ForgeWikiApp(Application):
                 ui_icon='ico-moderate',
                 small=pending_mod_count
             ))
-        links.extend([
-            SitemapEntry(''),
-            SitemapEntry(
-                'Markdown Syntax',
-                c.app.url + 'markdown_syntax/',
-                ui_icon=Icon('', 'ico-info'),
-                className='nav_child'
-            )
-        ])
         return links
 
     def install(self, project, acl=None):
@@ -355,6 +348,15 @@ class ForgeWikiApp(Application):
         Globals.query.remove(dict(app_config_id=self.config._id))
         super(ForgeWikiApp, self).uninstall(project=project,
                                             project_id=project_id)
+
+    def get_featured_pages_cursor(self, sort=True):
+        cursor = Page.query.find({
+            'app_config_id': self.config._id,
+            'featured': True
+        })
+        if sort:
+            cursor.sort('featured_ordinal', pymongo.ASCENDING)
+        return cursor
 
 
 def get_page_title_from_request(req_url=None, prefix=None):
@@ -862,6 +864,7 @@ class PageController(WikiContentBaseController):
     def update(self, title=None, text=None, labels=None, viewable_by=None,
                new_viewable_by=None, hide_attachments=False,
                rename_descendants=True, featured=False, **kw):
+        modified = False
         if not title:
             flash('You must provide a title for the page.', 'error')
             redirect('edit')
@@ -871,16 +874,29 @@ class PageController(WikiContentBaseController):
             self.page.viewable_by = ['all']
         else:
             g.security.require_access(self.page, 'write')
+
+        # title
         name_conflict = None
         title = title.strip('/ \t\n')
         if self.page.title != title:
             name_conflict = self._rename_page(title, rename_descendants)
-        self.page.text = text
-        if labels:
-            self.page.labels = labels.split(',')
-        else:
-            self.page.labels = []
+            modified = True
 
+        # text
+        if self.page.text != text:
+            self.page.text = text
+            modified = True
+
+        # labels
+        if labels:
+            labels = labels.split(',')
+        else:
+            labels = []
+        if self.page.labels != labels:
+            self.page.labels = labels
+            modified = True
+
+        # attachments
         posted_values = variable_decode(request.POST)
         for attachment in posted_values.get('new_attachments', []):
             if not hasattr(attachment, 'file'):
@@ -890,7 +906,9 @@ class PageController(WikiContentBaseController):
                 attachment.file,
                 content_type=attachment.type
             )
-        self.page.commit()
+            modified = True
+        if modified:
+            self.page.commit()
         if new_viewable_by:
             if new_viewable_by == 'all':
                 self.page.viewable_by.append('all')
@@ -907,13 +925,25 @@ class PageController(WikiContentBaseController):
                         user = User.by_username(str(u['id']))
                         if user:
                             self.page.viewable_by.remove(user.username)
-
         self.page.hide_attachments = hide_attachments
+
+        # featured
         if featured == 'on':  # a hack... validator is not converting the value
             featured = True
         if featured != bool(self.page.featured):
-            g.cache.redis.expire('navdata', 0)
             self.page.featured = featured
+            if featured:
+                # put this page at the end of the list
+                cursor = self.page.app.get_featured_pages_cursor(sort=False)
+                last_page = cursor.sort('featured_ordinal', -1).first()
+                self.page.featured_ordinal = last_page.featured_ordinal + 1
+            else:
+                # update the featured list ordinals
+                cursor = self.page.app.get_featured_pages_cursor()
+                for i, page in enumerate(cursor):
+                    page.featured_ordinal = i
+                self.page.featured_ordinal = None
+            g.cache.redis.expire('navdata', 0)
 
         redirect(
             c.app.url + really_unicode(self.page.title).encode('utf-8') +
@@ -1066,6 +1096,25 @@ class WikiAdminController(DefaultAdminController):
                     allow_config=g.security.has_access(self.app, 'admin'))
 
     @without_trailing_slash
+    @expose(TEMPLATE_DIR + 'admin_featured.html')
+    def featured(self):
+        cursor = self.app.get_featured_pages_cursor()
+        return {
+            'app': self.app,
+            'allow_config': g.security.has_access(self.app, 'admin'),
+            'has_featured_pages': cursor.count() > 0,
+            'featured_pages': [
+                {
+                    '_id': p._id,
+                    'title': p.title,
+                    'url': p.url,
+                    'featured_label': p.featured_label
+                }
+                for p in cursor
+            ]
+        }
+
+    @without_trailing_slash
     @expose()
     @require_post()
     def set_home(self, new_home):
@@ -1093,6 +1142,37 @@ class WikiAdminController(DefaultAdminController):
         self.app.show_right_bar = show_right_bar
         self.app.show_table_of_contents = show_table_of_contents
         flash('Wiki options updated')
+        redirect(c.project.url() + 'admin/tools')
+
+    @without_trailing_slash
+    @expose()
+    @require_post()
+    @vardec
+    def update_featured(self, featured_ordinals=None, featured_labels=None,
+                        **kwargs):
+        if featured_ordinals is not None:
+            for _id, value in featured_ordinals.items():
+                try:
+                    _id = bson.ObjectId(_id)
+                    value = int(value)
+                except ValueError:
+                    continue
+                page = Page.query.get(app_config_id=self.app.config._id,
+                                      _id=_id)
+                if page is not None and g.security.has_access(page, 'write'):
+                    page.featured_ordinal = value
+        if featured_labels is not None:
+            for _id, value in featured_labels.items():
+                try:
+                    _id = bson.ObjectId(_id)
+                except ValueError:
+                    continue
+                page = Page.query.get(app_config_id=self.app.config._id,
+                                      _id=_id)
+                if page is not None and g.security.has_access(page, 'write'):
+                    page.featured_label = value
+        g.cache.redis.expire('navdata', 0)
+        flash('Wiki featured pages updated')
         redirect(c.project.url() + 'admin/tools')
 
 

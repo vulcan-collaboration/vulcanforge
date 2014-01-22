@@ -185,7 +185,7 @@
     animation: pulseTextOpacity 2s linear 0s infinite;
 }
 
-.vf-chat-projects-list-container {
+.vf-chat-modal-container {
     display: block;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -196,6 +196,7 @@
     right: 0;
     height: 100%;
     padding: 0.5rem;
+    color: #c0c0c0;
     background: #282828;
     text-align: left;
     overflow-y: auto;
@@ -205,22 +206,21 @@
     -o-transition: top 300ms;
     transition: top 300ms;
 }
-.vf-chat-project-list-container-open {
+.vf-chat-modal-container-open {
     top: 0;
 }
-.vf-chat-projects-list-container h2 {
+.vf-chat-modal-container h2 {
     display: block;
     margin: 0;
     padding: 2px;
     font-size: 1rem;
-    color: #c0c0c0;
     border: none;
     line-height: 24px;
     height: auto;
     font-weight: lighter;
     letter-spacing: 0.125em;
 }
-.vf-chat-projects-list {
+.vf-chat-modal-content {
     padding: 0.5rem;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -228,6 +228,14 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+.vf-chat-modal-container label {
+    margin: 0;
+    padding: 0;
+    border: none;
+    color: inherit;
+    font-weight: normal;
+    text-transform: inherit;
 }
 
 

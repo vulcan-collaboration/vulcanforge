@@ -26,8 +26,14 @@
             _scrollTimeout: null,
             init: function () {
                 var that = this,
-                    activeProjectName = this.pref('project');
+                    activeProjectName = undefined;
                 this._isOpen = this.prefBool('open');
+                if (typeof this.pref('openOnMessage') === 'undefined') {
+                    this.prefBool('openOnMessage', true);
+                }
+                if (typeof this.pref('skipContextProjectSelect') === 'undefined') {
+                    this.prefBool('skipContextProjectSelect', false);
+                }
                 this.loadState(function () {
                     if (that._projectsWithChat.length === 0) {
                         console.debug('No projects with chat found, disabling chat');
@@ -46,11 +52,16 @@
                             vfSocket.subscribe($.map(project.users, function (v, i) {
                                 return 'user.' + v;
                             }));
-                            if (!activeProjectName) {
-                                activeProjectName = project.shortname;
-                            }
                         }
                     });
+                    if (!that.prefBool('skipContextProjectSelect') && $vf.nav_context && $vf.nav_context.length >= 2 && that.getProjectHasChat($vf.nav_context[1])) {
+                        activeProjectName = $vf.nav_context[1];
+                    } else {
+                        activeProjectName = that.pref('project');
+                    }
+                    if (!activeProjectName || !that.getProjectHasChat(activeProjectName)) {
+                        activeProjectName = that._projectsWithChat[0];
+                    }
                     that.bindEvents();
                     that.selectProject(activeProjectName);
                 });
@@ -90,28 +101,10 @@
                     text('chat').
                     appendTo(this.$container);
 
-                this.$projectListContainer = $('<div/>').
-                    addClass('vf-chat-projects-list-container').
-                    appendTo(this.$container);
-                this.$projectListToolbar = $('<div/>').
-                    addClass('vf-chat-toolbar').
-                    addClass('vf-chat-project-list-toolbar').
-                    appendTo(this.$projectListContainer);
-                this.$projectList = $('<div/>').
-                    addClass('vf-chat-projects-list').
-                    appendTo(this.$projectListContainer);
-                $('<button/>').
-                    text('\u2713').
-                    addClass('vf-chat-close-project-list-button').
-                    addClass('vf-chat-toolbar-item').
-                    addClass('vf-chat-toolbar-icon-item').
-                    appendTo(this.$projectListToolbar);
-                $('<h2/>').
-                    text('Projects').
-                    addClass('vf-chat-toolbar-item').
-                    addClass('vf-chat-toolbar-stretchy-item').
-                    appendTo(this.$projectListToolbar);
+                this.initUIProjectList();
+                this.initUISettings();
 
+                // main panel container
                 this.$panelContainer = $('<div/>').
                     addClass('vf-chat-panel-container').
                     appendTo(this.$container);
@@ -165,6 +158,13 @@
                     addClass('vf-chat-toolbar-item').
                     addClass('vf-chat-toolbar-icon-item').
                     addClass('vf-chat-toolbar-chat-transcripts').
+                    appendTo(this.$mainToolbar);
+                $('<button/>').
+                    text('\u2699').
+                    attr('title', 'Settings').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    addClass('vf-chat-toolbar-settings').
                     appendTo(this.$mainToolbar);
 
                 // Project Toolbar
@@ -229,6 +229,92 @@
                         appendTo(that.$userListContainer);
                 });
                 this.$container.appendTo('body');
+            },
+            initUIProjectList: function () {
+                this.$projectListContainer = $('<div/>').
+                    addClass('vf-chat-modal-container').
+                    addClass('vf-chat-projects-list-container').
+                    appendTo(this.$container);
+                this.$projectListToolbar = $('<div/>').
+                    addClass('vf-chat-toolbar').
+                    addClass('vf-chat-modal-toolbar').
+                    addClass('vf-chat-project-list-toolbar').
+                    appendTo(this.$projectListContainer);
+                this.$projectList = $('<div/>').
+                    addClass('vf-chat-modal-content').
+                    addClass('vf-chat-projects-list').
+                    appendTo(this.$projectListContainer);
+                $('<h2/>').
+                    text('Projects').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-stretchy-item').
+                    appendTo(this.$projectListToolbar);
+                $('<button/>').
+                    text('\u2713').
+                    addClass('vf-chat-close-project-list-button').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    appendTo(this.$projectListToolbar);
+            },
+            initUISettings: function () {
+                var $openOnMessageContainer,
+                    $skipContextProjectContainer;
+                this.$settingsContainer = $('<div/>').
+                    addClass('vf-chat-modal-container').
+                    addClass('vf-chat-settings-container').
+                    appendTo(this.$container);
+                this.$settingsToolbar = $('<div/>').
+                    addClass('vf-chat-toolbar').
+                    addClass('vf-chat-modal-toolbar').
+                    addClass('vf-chat-settings-toolbar').
+                    appendTo(this.$settingsContainer);
+                this.$settingsContent = $('<div/>').
+                    addClass('vf-chat-modal-content').
+                    addClass('vf-chat-settings').
+                    appendTo(this.$settingsContainer);
+                $('<h2/>').
+                    text('Chat Settings').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-stretchy-item').
+                    appendTo(this.$settingsToolbar);
+                $('<button/>').
+                    text('\u2713').
+                    addClass('vf-chat-close-settings-button').
+                    addClass('vf-chat-toolbar-item').
+                    addClass('vf-chat-toolbar-icon-item').
+                    appendTo(this.$settingsToolbar);
+
+                $openOnMessageContainer = $('<p/>').
+                    appendTo(this.$settingsContent);
+                this.$openOnMessageCheckbox = $('<input type="checkbox"/>').
+                    attr('id', 'vf-chat-toggle-open-on-message').
+                    attr('data-preference', 'openOnMessage').
+                    addClass('vf-chat-preference-toggle-input').
+                    appendTo($openOnMessageContainer);
+                $('<label/>').
+                    attr('for', 'vf-chat-toggle-open-on-message').
+                    text('Open automatically when a new message is received.').
+                    appendTo($openOnMessageContainer);
+                if (this.prefBool('openOnMessage')) {
+                    this.$openOnMessageCheckbox.
+                        attr('checked', 'checked');
+                }
+
+                $skipContextProjectContainer = $('<p/>').
+                    appendTo(this.$settingsContent);
+                this.$skipContextProjectSelectCheckbox = $('<input type="checkbox"/>').
+                    attr('id', 'vf-chat-toggle-skip-context-project-select').
+                    attr('data-preference', 'skipContextProjectSelect').
+                    addClass('vf-chat-preference-toggle-input').
+                    appendTo($skipContextProjectContainer);
+                $('<label/>').
+                    attr('for', 'vf-chat-toggle-skip-context-project-select').
+                    text('Stay in the same chat while browsing between contexts.').
+                    appendTo($skipContextProjectContainer);
+                if (this.prefBool('skipContextProjectSelect')) {
+                    this.$skipContextProjectSelectCheckbox.
+                        attr('checked', 'checked');
+                }
             },
             bindEvents: function () {
                 var that = this;
@@ -302,11 +388,19 @@
                     on('click', '.vf-chat-toolbar-project-select, .vf-chat-active-project-container', function (e) {
                         that.openProjectList.call(that);
                     }).
-                    /*on('mouseleave', '.vf-chat-projects-list-container', function (e) {
-                        that.closeProjectList.call(that);
-                    }).*/
                     on('click', '.vf-chat-close-project-list-button', function (e) {
                         that.closeProjectList.call(that);
+                    }).
+                    on('click', '.vf-chat-toolbar-settings', function (e) {
+                        that.openSettings.call(that);
+                    }).
+                    on('click', '.vf-chat-close-settings-button', function (e) {
+                        that.closeSettings.call(that);
+                    }).
+                    on('change', '.vf-chat-preference-toggle-input', function (e) {
+                        var $input = $(this),
+                            preferenceName = $input.attr('data-preference');
+                        that.prefBool(preferenceName, $input.prop('checked'));
                     }).
                     on('UserOnline.vfchat', function (e, username, data) {
                         that.updateUserOnline(username, true);
@@ -330,8 +424,10 @@
                                 that._unreadCounts[projectName] += 1;
                                 that.updateUnreadCountAttributes();
                             }
-                        } else if (data.type === 'LocationShared') {
-                            that.renderSharedLocationToProject(data.data, projectName);
+                            if (!that._isOpen && that.prefBool('openOnMessage')) {
+                                that.selectProject(projectName);
+                                that.openChat();
+                            }
                         }
                     }).
                     addHandler(/^user\.([^\.]+)/, function (match, msg) {
@@ -379,13 +475,23 @@
             },
             setProjectListIsOpen: function (value) {
                 this.$projectListContainer.
-                    toggleClass('vf-chat-project-list-container-open', value);
+                    toggleClass('vf-chat-modal-container-open', value);
             },
             openProjectList: function () {
                 this.setProjectListIsOpen(true);
             },
             closeProjectList: function () {
                 this.setProjectListIsOpen(false);
+            },
+            setSettingsIsOpen: function (value) {
+                this.$settingsContainer.
+                    toggleClass('vf-chat-modal-container-open', value);
+            },
+            openSettings: function () {
+                this.setSettingsIsOpen(true);
+            },
+            closeSettings: function () {
+                this.setSettingsIsOpen(false);
             },
             // scrolling
             scrollToBottom: function () {
@@ -398,6 +504,9 @@
             // projects
             getProjectDataByShortname: function (shortname) {
                 return this._projectData[this._projectNameIndex[shortname]];
+            },
+            getProjectHasChat: function (shortname) {
+                return this._projectsWithChat.indexOf(shortname) !== -1;
             },
             selectProject: function (shortname) {
                 var that = this;
@@ -569,47 +678,6 @@
                             }).
                             appendTo($(this));
                     });
-            },
-            // share location events
-            shareLocationToProject: function(projectName) {
-                var projectData = this.getProjectDataByShortname(projectName);
-                vfSocket.trigger({
-                    'type': 'ShareLocationWithChat',
-                    'targets': [projectData.chatChannel],
-                    'params': {
-                        'title': document.title,
-                        'href': window.location.href,
-                        'timestamp': new Date().toISOString()
-                    }
-                });
-                this._autoScroll = true;
-            },
-            renderSharedLocationToProject: function (msgData, projectName) {
-                var $content = $('<span/>');
-                this.renderUserWidget(msgData.author, $content);
-                $content.append(' shared their location: ');
-                $('<a/>').
-                    attr('href', msgData.href).
-                    text(msgData.title).
-                    appendTo($content);
-                this.renderNotificationToProject($content, msgData, projectName);
-            },
-            renderNotificationToProject: function ($content, msgData, projectName) {
-                var that = this,
-                    $projectContent = $('.vf-chat-project-content[data-project="'+projectName+'"]'),
-                    $notificationContainer = $("<div/>").
-                        addClass('vf-chat-notification-container').
-                        attr('data-timestamp', msgData.timestamp);
-                    $('<div/>').
-                        addClass('vf-chat-notification-content').
-                        appendTo($notificationContainer).
-                        html($content).
-                        find('img').
-                        on('load', function () {
-                            that.scrollToBottom.call(that);
-                        });
-                $projectContent.append($notificationContainer);
-                that.scrollToBottom();
             }
         };
 
