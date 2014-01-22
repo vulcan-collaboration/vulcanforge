@@ -102,6 +102,7 @@ class Page(VersionedArtifact):
     hide_attachments = FieldProperty(bool, if_missing=False)
     featured = FieldProperty(bool, if_missing=False)
     featured_label = FieldProperty(str, if_missing=None)
+    featured_ordinal = FieldProperty(int, if_missing=None)
 
     def commit(self):
         self.autosubscribe()
