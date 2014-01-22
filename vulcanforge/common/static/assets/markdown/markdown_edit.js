@@ -289,13 +289,16 @@
             var leadingPipe = new RegExp(
                   ['^'                         ,
                    '[ ]{0,3}'                  , // Allowed whitespace
-                   '[|]'                       , // Initial pipe
-                   '(.+)\\n'                   , // $1: Header Row
+                   '(\\|?-data-\\|? *\\n)?'    , // $1: dataFlag
 
                    '[ ]{0,3}'                  , // Allowed whitespace
-                   '[|]([ ]*[-:]+[-| :]*)\\n'  , // $2: Separator
+                   '[|]'                       , // Initial pipe
+                   '(.+)\\n'                   , // $2: Header Row
 
-                   '('                         , // $3: Table Body
+                   '[ ]{0,3}'                  , // Allowed whitespace
+                   '[|]([ ]*[-:]+[-| :]*)\\n'  , // $3: Separator
+
+                   '('                         , // $4: Table Body
                      '(?:[ ]*[|].*\\n?)*'      , // Table rows
                    ')',
                    '(?:\\n|$)'                   // Stop at final newline
@@ -306,12 +309,15 @@
             var noLeadingPipe = new RegExp(
                 ['^'                         ,
                 '[ ]{0,3}'                  , // Allowed whitespace
-                '(\\S.*[|].*)\\n'           , // $1: Header Row
+                '(\\|?-data-\\|? *\\n)?'    , // $1: dataFlag
 
                 '[ ]{0,3}'                  , // Allowed whitespace
-                '([-:]+[ ]*[|][-| :]*)\\n'  , // $2: Separator
+                '(\\S.*[|].*)\\n'           , // $2: Header Row
 
-                '('                         , // $3: Table Body
+                '[ ]{0,3}'                  , // Allowed whitespace
+                '([-:]+[ ]*[|][-| :]*)\\n'  , // $3: Separator
+
+                '('                         , // $4: Table Body
                  '(?:.*[|].*\\n?)*'        , // Table rows
                 ')'                         ,
                 '(?:\\n|$)'                   // Stop at final newline
@@ -327,8 +333,8 @@
                     return str.replace(/^\s+|\s+$/g, '');
                 }
 
-                // $1 = header, $2 = separator, $3 = body
-                function doTable(match, header, separator, body, offset, string) {
+                // $1 = dataFlag, $2 = header, $3 = separator, $4 = body
+                function doTable(match, dataFlag, header, separator, body, offset, string) {
                     var alignspecs, align = [];
                     // remove any leading pipes and whitespace
                     header = header.replace(/^ *[|]/m, '');
@@ -359,7 +365,13 @@
                     var colCount = headers.length;
 
                     // build html
-                    var html = ['<table>\n', '<thead>\n', '<tr>\n'].join('');
+                    var startTag;
+                    if (typeof dataFlag === 'undefined') {
+                        startTag = '<table>\n';
+                    } else {
+                        startTag = '<table class="datasort-table">\n';
+                    }
+                    var html = [startTag, '<thead>\n', '<tr>\n'].join('');
 
                     // build column headers.
                     for (i = 0; i < colCount; i++) {
@@ -403,6 +415,10 @@
             this.editor = new Markdown.Editor(this.converter, "-" + this.context_id);
             this.editor.hooks.set("insertImageDialog", function(callback) {
                 that._insertImageDialog(callback);
+                return true;
+            });
+            this.editor.hooks.set('onPreviewRefresh', function () {
+                $vf.initDataTables();
                 return true;
             });
             this.editor.run();

@@ -1521,4 +1521,13 @@ $.extend($vf, {
     };
 
 
+    // load datatables
+    $vf.initDataTables = function () {
+        $('table.datasort-table:not(.dataTable)').dataTable();
+    };
+    $(function () {
+        $vf.initDataTables();
+    });
+
+
 }(window));

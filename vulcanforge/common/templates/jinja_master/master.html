@@ -16,6 +16,9 @@
 {% do g.resource_manager.register_css('css/progress-polyfill.css', scope='forge') %}
 {% do g.resource_manager.register_css('theme/css/theme.scss', scope='forge') %}
 {% do g.resource_manager.register_css('websocket/vf_websocket_chat.css', scope='forge') %}
+{% do g.resource_manager.register_css('css/jquery.dataTables.css', scope='forge') %}
+{% do g.resource_manager.register_css('assets/jquery.datatable/css/jquery.dataTables.css', scope='forge') %}
+{% do g.resource_manager.register_css('assets/jquery.datatable/css/vf_datasort_table.css', scope='forge') %}
 
 {# *********************** These are original Allura scripts ********************************* #}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
@@ -41,6 +44,7 @@
 {% do g.resource_manager.register_js('js/lib/json/json2.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/progress-polyfill.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/underscore-min.js', scope='forge') %}
+{% do g.resource_manager.register_js('assets/jquery.datatable/js/jquery.dataTables.min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/vf.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/masternav.js', scope='forge') %}
 {% if g.websocket_enabled %}

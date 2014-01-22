@@ -30,6 +30,8 @@ from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
 from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
+from vulcanforge.config.render.markdown_ext.mdx_datasort_table import \
+    DataSortTableExtension
 from vulcanforge.config.render.markdown_ext.mdx_forge import ForgeExtension
 import vulcanforge.events.tasks
 from vulcanforge.events.model import Event
@@ -448,6 +450,7 @@ class ForgeAppGlobals(object):
             'codehilite',
             ForgeExtension(**kwargs),
             'tables',
+            DataSortTableExtension()
         ]
         extension_configs = {}
         if kwargs.get('wiki', False):
