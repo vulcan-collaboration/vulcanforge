@@ -57,7 +57,7 @@ class VisualizerConfigMapper(object):
                 pmime_types = map(re.compile, pmime_types)
             vis_spec = {
                 "config_id": vis_config._id,
-                "extensions": exts,
+                "extensions": processing_exts,
                 "mime_types": pmime_types,
                 "all_exts": all_processing
             }
@@ -169,20 +169,18 @@ class VisualizerConfigMapper(object):
     def _matches_any(self, s, patterns):
         return any(p.search(s) for p in patterns)
 
-    def _matches_spec(self, fname, mimetype, exts, mime_types, all_exts):
-        if mimetype and mime_types:
-            if not self._matches_any(mimetype, mime_types):
+    def _matches_spec(self, fname, mimetype, spec):
+        if mimetype and spec["mime_types"]:
+            if not self._matches_any(mimetype, spec["mime_types"]):
                 return False
-            if all_exts:
+            if spec["all_exts"]:
                 return True
-        return self._matches_any(fname, exts)
+        return self._matches_any(fname, spec["extensions"])
 
     def _match_config_ids(self, filename, vmap):
         mimetype = self._get_mimetype(filename)
         for vis_spec in vmap:
-            matches = self._matches_spec(
-                filename, mimetype, vis_spec["extensions"],
-                vis_spec["mime_types"], vis_spec["all_exts"])
+            matches = self._matches_spec(filename, mimetype, vis_spec)
             if matches:
                 yield vis_spec["config_id"]
 
