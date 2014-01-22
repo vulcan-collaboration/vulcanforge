@@ -108,7 +108,7 @@ class VisualizerConfigMapper(object):
         vis_ids = list(
             self._match_config_ids(filename, self.visualization_map))
         proc_ids = list(self._match_config_ids(filename, self.processing_map))
-        all_ids = vis_ids + proc_ids
+        all_ids = list(set(vis_ids + proc_ids))
         if all_ids:
             cur = VisualizerConfig.query.find({
                 "_id": {"$in": all_ids}
