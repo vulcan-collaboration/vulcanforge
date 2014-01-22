@@ -131,6 +131,7 @@ class VisualizerConfigController(BaseController):
         for n, vis_id in enumerate(ordered_ids):
             visualizer = VisualizerConfig.query.get(_id=ObjectId(vis_id))
             visualizer.priority = (num - n) * 10
+        g.visualizer_mapper.invalidate_cache()
 
     @expose()
     @validate({
@@ -149,6 +150,7 @@ class VisualizerConfigController(BaseController):
                 visualizer.load().update_from_archive(archive.file)
             # set active state
             visualizer.active = active
+        g.visualizer_mapper.invalidate_cache()
         redirect('index')
 
     @expose()
@@ -160,4 +162,5 @@ class VisualizerConfigController(BaseController):
             raise exc.HTTPBadRequest('Must include an archive')
 
         S3HostedVisualizer.new_from_archive(archive.file)
+        g.visualizer_mapper.invalidate_cache()
         redirect('index')
