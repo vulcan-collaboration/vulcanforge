@@ -1523,7 +1523,12 @@ $.extend($vf, {
 
     // load datatables
     $vf.initDataTables = function () {
-        $('table.datasort-table:not(.dataTable)').dataTable();
+        var $elements = $('table.datasort-table:not(.dataTable)');
+        if (typeof $elements.dataTable !== 'undefined') {
+            $elements.dataTable();
+        } else {
+            console.warn("dataTable should be loaded but is not available")
+        }
     };
     $(function () {
         $vf.initDataTables();
