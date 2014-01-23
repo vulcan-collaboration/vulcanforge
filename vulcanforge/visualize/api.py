@@ -3,6 +3,8 @@ import posixpath
 import mimetypes
 from urlparse import urlparse
 
+from pylons import app_globals as g
+
 from vulcanforge.visualize.widgets import TabbedVisualizers, TabbedDiffs
 from vulcanforge.visualize.exceptions import VisualizerError
 from vulcanforge.visualize.model import VisualizerConfig
@@ -22,13 +24,6 @@ class BaseVisualizerAPI(object):
     """
     full_render_widget = TabbedVisualizers()
     full_diff_widget = TabbedDiffs()
-
-    _additional_text_extensions = {
-        '.ini',
-        '.gitignore',
-        '.svnignore',
-        'readme'
-    }
 
     def __init__(self, resource):
         self.resource = resource
@@ -89,12 +84,13 @@ class BaseVisualizerAPI(object):
         return self.render_for_visualizer(visualizer, **kwargs)
 
     def find_visualizers(self):
-        return [vc.load() for vc in self._find_configs()]
+        configs = g.visualizer_mapper.find_for_visualization(self.filename)
+        return [vc.load() for vc in configs]
 
     def get_visualizer(self):
-        configs = self._find_configs()
-        if configs:
-            return configs[0].load()
+        config = g.visualizer_mapper.get_for_visualization(self.filename)
+        if config:
+            return config.load()
 
     def get_icon_url(self, shortname=None):
         visualizer = self._get_with_optional_shortname(shortname)
@@ -132,12 +128,6 @@ class BaseVisualizerAPI(object):
         return self.full_diff_widget.display(
             specs, filename=os.path.basename(self.url), **kwargs)
 
-    def _find_configs(self, **kwargs):
-        mtype, extensions = self._get_mimetype_ext()
-        configs = VisualizerConfig.find_for_visualization(
-            mime_type=mtype, extensions=extensions, **kwargs)
-        return configs
-
     def _find_with_optional_shortnames(self, shortnames=None):
         # get all visualizers for this resource, or specified shortnames
         if shortnames:
@@ -158,33 +148,10 @@ class BaseVisualizerAPI(object):
             visualizer = self.get_visualizer()
         return visualizer
 
-    def _get_mimetype_ext(self):
+    @property
+    def filename(self):
         parsed = urlparse(self.url)
-        filename = os.path.basename(parsed.path)
-        extensions = []
-        base = filename.lower()
-        remainder = ''
-        mtype = None
-        while True:
-            base, ext = posixpath.splitext(base)
-            if ext in self._additional_text_extensions or (
-                    not ext and not mtype and
-                        base in self._additional_text_extensions):
-                mtype = 'text/plain'
-            if not ext:
-                break
-            while ext in mimetypes.suffix_map:
-                base, ext = posixpath.splitext(
-                    base + mimetypes.suffix_map[ext])
-            if ext in mimetypes.encodings_map:
-                base, ext = posixpath.splitext(base)
-            extensions.append(ext + remainder)
-            remainder = ext + remainder
-
-        if not mtype:
-            mtype = mimetypes.guess_type(filename)[0]
-
-        return mtype, extensions
+        return os.path.basename(parsed.path)
 
     @property
     def url(self):
@@ -213,18 +180,21 @@ class ArtifactVisualizerInterface(BaseVisualizerAPI):
     def download_url(self):
         return self.resource.raw_url()
 
-    def _find_configs(self, processing_on=True, **kwargs):
-        # find matching visualizers with processing hooks too
-        if processing_on:
-            kwargs["unique_id"] = self.resource.get_unique_id()
-        return super(ArtifactVisualizerInterface, self)._find_configs(
-            processing_on=processing_on, **kwargs)
+    def find_visualizers(self):
+        configs = g.visualizer_mapper.find_for_all(
+            self.filename, unique_id=self.resource.get_unique_id())
+        return [vc.load() for vc in configs]
 
     def find_for_processing(self):
-        mtype, extensions = self._get_mimetype_ext()
-        cur = VisualizerConfig.find_for_processing(
-            mime_type=mtype, extensions=extensions)
-        return [vc.load() for vc in cur]
+        configs = g.visualizer_mapper.find_for_processing(
+            self.filename, unique_id=self.resource.get_unique_id())
+        return [vc.load() for vc in configs]
+
+    def get_visualizer(self):
+        config = g.visualizer_mapper.get_for_all(
+            self.filename, unique_id=self.resource.get_unique_id())
+        if config:
+            return config.load()
 
     def render_for_visualizer(self, visualizer, **kwargs):
         return visualizer.render_artifact(self.resource, **kwargs)

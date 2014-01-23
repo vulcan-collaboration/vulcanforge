@@ -145,6 +145,7 @@
                     case 'FILE_TEXT':
                     case 'FILE_IMAGE':
                     case 'FILE_DESIGN_SPACE':
+                    case 'FILE_TESTBENCH_RESULT':
 
                         iconE.addClass(this.iconURL);
 
