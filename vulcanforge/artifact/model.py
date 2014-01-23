@@ -1215,6 +1215,8 @@ class Shortlink(BaseMappedClass):
     re_link_1 = re.compile(r'\s' + _core_re, re.VERBOSE)
     re_link_2 = re.compile(r'^' + _core_re, re.VERBOSE)
 
+    re_link_bracket = re.compile(r'\s*\[([^\]\[]*)]\s*')
+
     # artifact patterns for ephemeral lookups (see same in ArtifactReference)
     EPHEMERAL_PATTERNS = {
         REPO_SHORTLINK_RE: {
@@ -1320,11 +1322,10 @@ class Shortlink(BaseMappedClass):
     @classmethod
     def _parse_link(cls, s):
         """Parse a shortlink into its project/app/artifact parts"""
-        s = s.strip()
-        if s.startswith('['):
-            s = s[1:]
-        if s.endswith(']'):
-            s = s[:-1]
+        link_bracket_match = cls.re_link_bracket.match(s)
+        if link_bracket_match:
+            s = link_bracket_match.group(1)
+
         parts = s.split(':', 2)
         p_shortname = None
         if hasattr(c, 'project'):

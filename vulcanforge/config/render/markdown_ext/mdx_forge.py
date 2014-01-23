@@ -166,6 +166,7 @@ class ForgeProcessor(object):
             raw = raw[1:-1]  # strip off the enclosing []
         elif self.artifact_re.match(raw):
             stash = 'artifact'
+            raw = self._de_escape_link(raw)
         else:
             return raw
         return self._store(stash, raw)
@@ -205,9 +206,8 @@ class ForgeProcessor(object):
     def _de_escape_link(self, link):
         return link.replace("\\]", "]").replace("\\[", "[").replace("\\\\", "\\")
 
-    def _expand_alink(self, alink):
+    def _expand_alink(self, link):
         # try to find an artifact reference
-        link = self._de_escape_link(alink)
         new_link = self.alinks.get(link, None)
         if new_link:
             link_html = None
@@ -226,7 +226,6 @@ class ForgeProcessor(object):
         # if we're on a wiki then link to a non-existant page
         if self._use_wiki and ':' not in link:
             utf_link = unicode(link).encode('utf-8')
-
             return '<a href="{}" class="notfound">[{}]</a>'.format(
                 quote(utf_link), utf_link)
 
