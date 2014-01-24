@@ -5,5 +5,7 @@
 {% block header %}Create Topic{% endblock %}
 
 {% block content %}
-  {{c.new_topic.display(action=c.app.url + 'save_new_topic', value=defaults, show_subject=True, forums=forums)}}
+    <div class="padded-block">
+        {{c.new_topic.display(action=c.app.url + 'save_new_topic', value=defaults, show_subject=True, forums=forums)}}
+    </div>
 {% endblock %}
