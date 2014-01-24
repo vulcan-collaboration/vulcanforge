@@ -57,6 +57,7 @@ from vulcanforge.visualize.api import (
     ArtifactVisualizerInterface,
     UrlVisualizerInterface
 )
+from vulcanforge.visualize.mapping import VisualizerConfigMapper
 
 LOG = logging.getLogger(__name__)
 
@@ -452,8 +453,15 @@ class ForgeConfig(AppConfig):
         else:
             visualize_url = UrlVisualizerInterface
 
+        if config.get('visualize.mapper'):
+            visualize_mapper_cls = import_object(config['visualize.mapper'])
+        else:
+            visualize_mapper_cls = VisualizerConfigMapper
+        visualizer_mapper = visualize_mapper_cls()
+
         config['pylons.app_globals'].visualize_artifact = visualize_artifcact
         config['pylons.app_globals'].visualize_url = visualize_url
+        config['pylons.app_globals'].visualizer_mapper = visualizer_mapper
 
     def setup_visibilitymode(self):
         visibility_mode = config.get('visibility_mode', 'default')

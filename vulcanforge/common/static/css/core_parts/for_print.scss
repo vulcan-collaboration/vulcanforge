@@ -44,6 +44,9 @@
         font-size: 3em;
         height: auto;
         color: #000;
+        text-overflow: initial;
+        max-width: none;
+        overflow: initial;
     }
 
     .avatar.inHeader {

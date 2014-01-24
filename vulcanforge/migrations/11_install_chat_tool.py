@@ -11,6 +11,8 @@ class InstallChatTool(BaseMigration):
             'shortname': {'$ne': '--init--'}
         })
         for project in cursor:
+            if project.neighborhood.name == "Users":
+                continue  # skip user projects
             if project.get_app_configs_by_kind('chat').count():
                 continue  # skip already installed
             yield project
