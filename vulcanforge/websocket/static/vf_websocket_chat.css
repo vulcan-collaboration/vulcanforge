@@ -552,3 +552,9 @@ span.alt_text {
         opacity: 1;
     }
 }
+
+@media print {
+    #vf-chat-container {
+        display: none;
+    }
+}
