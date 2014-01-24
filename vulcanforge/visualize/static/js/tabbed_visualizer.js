@@ -79,7 +79,18 @@ function renderTabbedVisualizer(config) {
         toolbarTabs,
         visualizerFooterE,
         visualizerWrapper,
-        visualizerWrapperE;
+        visualizerWrapperE,
+        selectVisualizerTab = function (name) {
+            $('a[data-visualizer="'+name+'"]', toolbarTabsUL).click();
+        };
+
+    $iframeE.on('load', function () {
+        var iframeWindow = this.window || this.contentWindow;
+        iframeWindow.TAB_API = {
+            'visualizerSpecs': visualizerSpecs,
+            'selectVisualizerTab': selectVisualizerTab
+        };
+    });
 
     if (typeof config.height !== "undefined") {
         $iframeE.css("height", config.height);
@@ -130,7 +141,7 @@ function renderTabbedVisualizer(config) {
                 newWindowB.setUrl(spec.fullscreen_url);
                 return false;
             }
-        }));
+        }).attr('data-visualizer', spec.name));
         toolbarTabsUL.append(thisTab);
         if (i === 0){
             thisTab.find("a").click();
