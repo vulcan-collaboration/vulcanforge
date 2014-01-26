@@ -12,9 +12,9 @@
 
 {% block header %}
     {% for item in hierarchy_items %}
-        <div class="wiki-titlebar-item{% if item.child_count > 0 %} wiki-titlebar-item-with-popup{% endif %}{% if loop.last %} wiki-titlebar-item-main{% else %} wiki-titlebar-item-small{% endif %}">
+        <div class="wiki-titlebar-item{% if not hide_sidebar and item.child_count > 0 %} wiki-titlebar-item-with-popup{% endif %}{% if loop.last %} wiki-titlebar-item-main{% else %} wiki-titlebar-item-small{% endif %}">
             <span class="wiki-titlebar-item-label"><a href="{{ item.href }}">{{ item.label }}</a></span>
-            {% if item.child_count > 0 %}
+            {% if not hide_sidebar and item.child_count > 0 %}
             <div class="wiki-titlebar-item-popup">
                 <ul class="wiki-titlebar-item-list">
                 {% for child in item.children %}
@@ -78,4 +78,10 @@
     {% set thread = page.discussion_thread %}
     <div>{{c.thread.display(value=thread)}}</div>
   {% endif %}
+{% endblock %}
+
+{% block wiki_extra_js %}
+    <script>
+    var WIKI_SIDEBAR = {{ 'false' if hide_sidebar else 'true' }};
+    </script>
 {% endblock %}
