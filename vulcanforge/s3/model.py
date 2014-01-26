@@ -198,7 +198,6 @@ class File(BaseMappedClass):
     def wfile(self, **kw):
         with temporary_file(**kw) as (fp, fname):
             yield fp
-            fp.flush()
             fp.seek(0)
             self.set_contents_from_file(fp)
 
