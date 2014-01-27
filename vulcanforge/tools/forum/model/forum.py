@@ -2,13 +2,13 @@ import re
 
 from ming import schema
 from ming.utils import LazyProperty
-from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty, Mapper
+from ming.odm import FieldProperty, RelationProperty, ForeignIdProperty
 import pymongo
 from pylons import app_globals as g
 
 from vulcanforge.common.util import ConfigProxy
 from vulcanforge.common import helpers as h
-from vulcanforge.common.model.filesystem import File
+from vulcanforge.s3.model import File
 from vulcanforge.artifact.model import Artifact
 from vulcanforge.discussion.model import (
     Discussion,
@@ -145,8 +145,6 @@ class ForumFile(File):
         indexes = ['forum_id'] + File.__mongometa__.indexes
 
     forum_id = FieldProperty(schema.ObjectId)
-
-    THUMB_URL_POSTFIX = ''
 
     @property
     def artifact(self):

@@ -1,25 +1,25 @@
 {% macro page_actions(page=None, subscribed, is_editing=False) -%}
     {% if page and not page.is_fake %}
         {% if not page['deleted'] %}
-            {% if c.user and c.user != c.user.anonymous() %}
+            {% if c.user and not c.user.is_anonymous %}
                 {% if is_editing %}
                     {{g.icon_button_widget.display('View Page', None, None, 'ico-preview', href='.')}}
-                {% elif g.security.has_access(page, 'edit') %}
+                {% elif g.security.has_access(page, 'write') %}
                     {% if page.is_current() %}
                         {{g.icon_button_widget.display('Edit', None, None, 'ico-edit', href=page.original_url()+'edit')}}
                     {% else %}
                         {{ g.icon_button_widget.display('Revert to version ' ~ page.version, 'revert_' ~ page.version, 'post-link', 'ico-undo', href="./revert?version=" ~ page.version) }}
                     {% endif %}
                 {% endif %}
-                {% if g.security.has_access(page, 'delete') and page.is_current() %}
+                {% if g.security.has_access(page, 'write') and page.is_current() %}
                     {{g.icon_button_widget.display('Delete (can be undone)', None, 'post-link', 'ico-delete', href=page.original_url()+'delete')}}
                 {% endif %}
             {% endif %}
             {{g.icon_button_widget.display('History', None, None, 'ico-history', href=page.original_url()+'history')}}
-        {% elif g.security.has_access(page, 'delete') %}
+        {% elif g.security.has_access(page, 'write') %}
             {{g.icon_button_widget.display('Undelete', None, 'post-link', 'ico-undelete', href=page.original_url()+'undelete')}}
         {% endif %}
-        {% if c.user and c.user != c.user.anonymous() and page.is_current() %}
+        {% if c.user and not c.user.is_anonymous and page.is_current() %}
             {{ g.subscription_popup_menu.display(artifact=page, feed_url=page.original_url()+'feed') }}
         {% endif %}
     {% endif %}

@@ -33,7 +33,7 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common import validators as V, helpers as h
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.artifact.controllers import (
@@ -84,9 +84,16 @@ search_validators = dict(
 
 class ForgeTrackerApp(Application):
     __version__ = version.__version__
-    permissions = ['configure', 'read', 'write', 'save_searches',
-                   'unmoderated_post', 'post', 'moderate', 'admin',
-                   'edit_protected']
+    permissions = dict(Application.permissions,
+        admin='Configure this tool, add new ticket properties and configure milestones',
+        read='View tickets',
+        write='Create and modify tickets',
+        moderate='Moderate comments',
+        unmoderated_post='Add comments without moderation',
+        post='Add comments',
+        save_searches='Persist custom searches',
+        edit_protected='Edit ticket fields marked as protected'
+    )
     searchable = True
     tool_label = 'Tickets'
     static_folder = 'Tickets'
@@ -116,19 +123,11 @@ class ForgeTrackerApp(Application):
         "View Issues": {"url": ""},
         "Edit Milestones": {
             "url": "milestones",
-            "permission": "configure"
+            "permission": "admin"
         }
     }
-    permission_descriptions = dict(Application.permission_descriptions,
-        write="create new tickets",
-        configure="configure milestones",
-        save_searches="persist custom searches",
-        moderate="moderate new content",
-        unmoderated_post="add content without moderation",
-        edit_protected="edit fields marked as protected",
-    )
     default_acl = {
-        'Admin': permissions,
+        'Admin': permissions.keys(),
         'Developer': ['write', 'moderate', 'save_searches'],
         '*authenticated': ['post', 'unmoderated_post'],
         '*anonymous': ['read']
@@ -182,7 +181,7 @@ class ForgeTrackerApp(Application):
         admin_url = c.project.url() + 'admin/' + \
             self.config.options.mount_point + '/'
         links = [SitemapEntry('Field Management', admin_url + 'fields')]
-        if self.permissions and g.security.has_access(self, 'configure'):
+        if self.permissions and g.security.has_access(self, 'admin'):
             links.append(SitemapEntry(
                 'Permissions',
                 admin_url + 'permissions',
@@ -238,6 +237,10 @@ class ForgeTrackerApp(Application):
                 'Home',
                 self.config.url(),
                 ui_icon=Icon('', 'ico-home')))
+            links.append(SitemapEntry(
+                'My Tickets',
+                self.get_user_query_url(c.user.username),
+                ui_icon=Icon('', 'ico-user')))
         if g.security.has_access(self, 'write'):
             links.append(SitemapEntry(
                 'Create Ticket',
@@ -296,7 +299,7 @@ class ForgeTrackerApp(Application):
             # '{0}new/?super_id={1}'.format(self.config.url(), ticket._id),
             # className='nav_child'))
 
-        if g.security.has_access(self, 'configure'):
+        if g.security.has_access(self, 'admin'):
             admin_url = c.project.url() + 'admin/' + \
                         self.config.options.mount_point + '/'
             links.extend([
@@ -330,6 +333,18 @@ class ForgeTrackerApp(Application):
             ui_icon=Icon('', 'ico-info'),
             className='nav_child'))
         return links
+
+    def get_global_navigation_data(self):
+        actions = []
+        if g.security.has_access(self, 'read'):
+            actions.append({
+                'label': 'Create New Ticket',
+                'url': self.url + 'new/',
+                'icon': 'ico-plus'
+            })
+        return {
+            'actions': actions
+        }
 
     def has_custom_field(self, field):
         """Checks if given custom field is defined. (Custom field names
@@ -423,6 +438,12 @@ class ForgeTrackerApp(Application):
                 "className": "ticket-milestone-event"
             })
         return events
+
+    def get_user_query_url(self, username):
+        template = '{base}search/search/?q=' \
+                   'assigned_to_s_mv:{username}+OR+' \
+                   'reported_by_s:{username}'
+        return template.format(base=self.config.url(), username=username)
 
 
 class BaseTrackerController(BaseController):
@@ -679,7 +700,7 @@ class RootController(BaseTrackerController):
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'milestones.html')
     def milestones(self, **kw):
-        g.security.require_access(c.app, 'configure')
+        g.security.require_access(c.app, 'admin')
         milestones = []
         c.date_field = self.Widgets.date_field
         for fld in c.app.globals.milestone_fields:
@@ -710,7 +731,7 @@ class RootController(BaseTrackerController):
         "milestones": ForEach(MilestoneSchema())
     })
     def update_milestones(self, field_name=None, milestones=None, **kw):
-        g.security.require_access(c.app, 'configure')
+        g.security.require_access(c.app, 'admin')
         update_counts = False
         # TODO: fix this mess
         for fld in c.app.globals.milestone_fields:
@@ -1255,29 +1276,21 @@ class TicketController(BaseTrackerController):
                 self.ticket.custom_fields[cf.name] = value
                 changes[cf.name[1:]] = self.ticket.custom_fields.get(cf.name)
         thread = self.ticket.discussion_thread
-        latest_post = thread.posts and thread.posts[-1] or None
-        post = None
-        if latest_post and latest_post.author() == c.user:
-            now = datetime.utcnow()
-            folding_window = timedelta(seconds=60 * 5)
-            if (latest_post.timestamp + folding_window) > now:
-                post = latest_post
-                LOG.info('Folding ticket updates into %s', post)
-        tpl_fn = pkg_resources.resource_filename(
-            'vulcanforge.tools.tickets', 'data/ticket_changed_tmpl')
-        change_text = h.render_genshi_plaintext(
-            tpl_fn,
-            changelist=changes.get_changed())
-        if post is None:
-            post = thread.add_post(text=change_text)
-        else:
-            post.text += '\n\n' + change_text
+        versions = dict(safe_text="safe_", text="")
+        clist = changes.get_changed()
+        for k, v in versions.items():
+            tpath = "data/" + v + "ticket_changed_tmpl"
+            t = 'vulcanforge.tools.tickets'
+            tpl =  pkg_resources.resource_filename(t, tpath)
+            ctext = h.render_genshi_plaintext(tpl, changelist=clist)
+            if comment:
+                ct = "Comment: " + comment if k == "text" else "Comment added."
+                ctext += "\n" + ct
+            versions[k] = "\n\n" + ctext
+        thread.add_post(**versions)
         self.ticket.commit()
         if any_sums:
             self.ticket.dirty_sums()
-        if comment:
-            self.ticket.discussion_thread.post(text=comment)
-
         session(TM.Ticket).flush()
         redirect(self.ticket.url())
 
@@ -1314,7 +1327,7 @@ class TrackerAdminController(DefaultAdminController):
         #     self.app.globals.milestone_names = ''
 
     def _check_security(self):
-        g.security.require_access(self.app, 'configure')
+        g.security.require_access(self.app, 'admin')
 
     @expose()
     @with_trailing_slash

@@ -13,18 +13,6 @@ class _Base(object):
     class Widgets(object):
         pass
 
-    def _relative_path(self, path, allow_breakout=False):
-        cls = self.__class__
-        while cls.__module__ != __module__:
-            module = __import__(cls.__module__)
-            dir = os.path.basename(module.__file__)
-            full_path = os.path.normpath(os.path.join(dir, path))
-            if not allow_breakout and not full_path.startswith(dir):
-                break  # no relative imports
-            if os.path.exists(full_path):
-                return full_path
-            cls = cls.__base__
-
 
 class BaseController(_Base):
     """Simple, lightweight controller. TG routing will use root controller

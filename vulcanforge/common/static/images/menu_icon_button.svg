@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
+  "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg viewBox="0 0 23 23"
+     preserveAspectRatio="square" pointer-events="none"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+    <rect id="bar1"
+          x="5" y="5"
+          width="13" height="3"
+          rx="1" ry="1"
+          fill="white" />
+    <use id="bar2"
+         xlink:href="#bar1"
+         y="5"/>
+    <use id="bar3"
+         xlink:href="#bar2"
+         y="5"/>
+</svg>

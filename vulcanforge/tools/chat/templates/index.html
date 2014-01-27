@@ -1,0 +1,15 @@
+{% extends g.templates['master'] %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Transcripts{% endblock %}
+
+{% block header %}{{c.app.config.options.mount_label}} Transcripts{% endblock %}
+
+{% block content %}
+    <div class="padded-block">
+        <ul>
+            {% for chat_session in chat_sessions %}
+                <li><a href="{{ chat_session.url() }}">Transcript from {{ h.pretty_print_datetime(chat_session.mod_date) }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

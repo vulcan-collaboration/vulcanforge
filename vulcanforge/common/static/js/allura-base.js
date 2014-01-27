@@ -118,34 +118,7 @@ function flash( html, kind, timeout ){
     });
 }
 
-function attach_form_retry( form ){
-    $(form).submit(function(){
-        var $form = $(this),
-            $messages = $('#messages');
-
-        $messages.notify('Saving...', {
-            status: 'info'
-        });
-        setTimeout(function(){
-            // After 7 seconds, express our concern.
-            $messages.notify('The server is taking too long to respond. Retrying in 30 seconds.', {
-                status: 'error'
-            });
-            setTimeout(function(){
-                // After 30 seconds total, give up and try again.
-                $messages.notify('Retrying...', {
-                    status: 'warning'
-                });
-                $form.submit();
-            }, 23000)
-        }, 7000);
-    });
-}
-
 $(function(){
-    // Add notifications for form submission.
-    attach_form_retry('form.can-retry');
-
     $('#messages').notifier({
         closeIcon: '<span title="Close" class="close-button icon ico-close"></span>'
     });

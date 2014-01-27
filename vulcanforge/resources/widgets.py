@@ -4,11 +4,12 @@ from urllib import urlencode
 from webob import exc
 from webhelpers.html import literal
 from pylons import app_globals as g
+from tg import config
 import ew
 from ew.utils import LazyProperty, push_context
 from ew.core import widget_context
 from ew.fields import FieldWidget
-from ew.render import Snippet
+from ew.render import Snippet, File
 from ew.jinja2_ew import BOOLEAN_ATTRS
 from jinja2 import escape
 import jsmin
@@ -214,8 +215,15 @@ class Widget(ew.Widget):
 
     def display(self, **kw):
         context = self.prepare_context(kw)
-        if self.js_template:
-            with push_context(widget_context, widget=self):
+        with push_context(widget_context, widget=self):
+            if self.js_template:
                 js_text = Snippet(self.js_template, 'jinja2')(context)
-            g.resource_manager.register_js_snippet(js_text)
-        return ew.Widget.display(self, **kw)
+                g.resource_manager.register_js_snippet(js_text)
+            if isinstance(self.template, basestring):
+                if ':' in self.template:
+                    engine, path = self.template.split(':', 1)
+                else:
+                    engine, path = config['default_renderer'], self.template
+                self.template = File(path, engine)
+            widget_context.resource_manager.register(self)
+            return self.template(context)

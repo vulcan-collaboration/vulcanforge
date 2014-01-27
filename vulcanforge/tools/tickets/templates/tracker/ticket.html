@@ -50,7 +50,7 @@
 {% endblock %}
 
 {% block actions %}
-    {% if c.user and c.user != c.user.anonymous() %}
+    {% if c.user and not c.user.is_anonymous %}
         {{ g.icon_button_widget.display('Edit', None, 'edit_ticket', 'ico-edit', href=ticket.url()+'edit') }}
         {{ g.subscription_popup_menu.display(artifact=ticket, feed_url=ticket.url()+'feed.rss') }}
     {% endif %}

@@ -79,10 +79,6 @@ body {
   @extend .bbs;
 }
 
-body.authenticated #content-areas-wrapper {
-  padding-top: $header-wrapper-height + $forge-toolbar-height;
-}
-
 /* Side toolbars */
 
 .toolbar {
@@ -118,72 +114,47 @@ body.authenticated #content-areas-wrapper {
   @extend .bbs;
 }
 
-body.has-project-toolbar #left-toolbar {
-  width: $project-toolbar-item-width;
-}
-
-#right-toolbar {
-  right: 0px;
-  width: $right-toolbar-width;
-  z-index: $right-toolbar-z-index;
-
-  @include right-toolbar-skin;
-
-  @extend .toolbar;
-  @extend .bbs;
-}
-
 
 #sidebar {
   width: $sidebar-width;
 
   @extend .bbs;
 
-  position: fixed;
+  position: absolute;
 
-  height: 100%;
+  min-height: 100%;
   top: 0;
-  right: $right-toolbar-width;
+  right: 0;
 
   @include sidebar-skin;
 
   z-index: $sidebar-z-index;
 
-  overflow-y: auto;
+  padding-top: $main-column-header-height;
+  padding-bottom: 2rem;
 
-  padding-top: $header-wrapper-height + $main-column-header-height - 1px;
-}
-
-body.authenticated #sidebar {
-  padding-top: $header-wrapper-height + $main-column-header-height + $forge-toolbar-height - 1px;
+  overflow-x: hidden;
 }
 
 body.has-related-artifacts #sidebar {
-  padding-top: $header-wrapper-height + $main-column-header-height + $related-artifacts-height;
+  padding-top: $main-column-header-height + $related-artifacts-height;
 }
 
-body.authenticated.has-related-artifacts #sidebar {
-  padding-top: $header-wrapper-height + $main-column-header-height + $forge-toolbar-height + $related-artifacts-height;
+#referenceBinContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    z-index: 100;
 }
 
 /* Content areas */
 
 #main-content-holder {
-  margin-right: $right-toolbar-width;
   margin-bottom: $footer-height;
-  margin-left: $left-toolbar-min-width;
   padding: 0;
   height: 100%;
 
   @extend .bbs;
-}
-
-body.has-project-toolbar #main-content-holder {
-  margin-left: $project-toolbar-item-width;
-}
-
-body.authenticated .toolbar {
-  top: $header-wrapper-height + $forge-toolbar-height;
 }
 
 #content-columns {
@@ -210,7 +181,7 @@ body.has-related-artifacts #content-columns {
 }
 
 body.has-sidebar #main-column {
-  padding-right: $sidebar-width;
+  margin-right: $sidebar-width;
 }
 
 .float-33 {

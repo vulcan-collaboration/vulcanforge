@@ -57,7 +57,6 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import get_client_ip, cryptographic_nonce
 from vulcanforge.common.widgets.forms import PasswordChangeForm, UploadKeyForm
-from vulcanforge.config.custom_middleware import VisibilityModeMiddleware
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.model import Mailbox
 from vulcanforge.notification.tasks import sendmail
@@ -258,7 +257,7 @@ class _AuthController(BaseController):
         g.auth_provider.login(user)
         flash("Your password has been updated.", status="confirm")
         if return_to is None:
-            return_to = config.get('home_url', '/')
+            return_to = user.landing_url()
         return redirect(return_to)
 
     @expose(TEMPLATE_DIR + 'auth_cancel_email_mod.html')
@@ -496,9 +495,9 @@ class _ModeratedAuthController(_AuthController):
 
 # determine whether to moderate general registrations
 #   Use visibility mode settings unless explicitly defined
-_visibility_mode = config.get('visibility_mode', 'default')
-_moderate = asbool(config.get('moderate_registration',
-                              VisibilityModeMiddleware.MODES[_visibility_mode]))
+_moderate = asbool(
+    config.get('moderate_registration',
+               config.get('visibility_mode') == 'closed'))
 AuthController = _ModeratedAuthController if _moderate else _AuthController
 
 
@@ -507,7 +506,7 @@ class UserStatePreferencesRESTController(object):
         self.key = key
 
     def _check_security(self, *args, **kwargs):
-        if c.user is User.anonymous():
+        if c.user.is_anonymous:
             raise exc.HTTPNotFound
 
     @expose('json')

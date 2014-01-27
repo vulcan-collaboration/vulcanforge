@@ -195,7 +195,6 @@ class ServiceToken(BaseMappedClass):
         session = main_orm_session
         indexes = ['api_key', 'user_id']
 
-    _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty('User')
     api_key = FieldProperty(str, if_missing=lambda: cryptographic_nonce(128))
     expires = FieldProperty(
@@ -693,17 +692,13 @@ class User(SOLRIndexed):
     def url(self):
         return '/u/{}/'.format(self.username.replace('_', '-'))
 
-    def icon_url(self):
-        if self.private_project() and self.private_project().icon:
-            icon_url = '/u/' + self.username.replace('_', '-') + '/user_icon'
-        elif self.preferences.email_address:
-            icon_url = g.gravatar(self.preferences.email_address,
-                                  default="identicon")
-        else:
-            icon_url = g.gravatar(
-                "{}@vulcanforge.org".format(self.username),
-                default="identicon")
-        return icon_url
+    def icon_url(self, **gravatar_kwargs):
+        user_project = self.private_project()
+        if user_project and user_project.icon:
+            return '/u/'+self.username.replace('_', '-')+'/user_icon'
+        email_address = (self.preferences.email_address or
+                         "{}@vulcanforge.org".format(self.username))
+        return g.gravatar(email_address, **gravatar_kwargs)
 
     def landing_url(self):
         landing_url = self.get_pref('login_landing_url')
@@ -953,6 +948,10 @@ class User(SOLRIndexed):
     def anonymous(cls):
         return User.query.get(_id=None)
 
+    @property
+    def is_anonymous(self):
+        return self._id is None
+
     def email_address_header(self):
         h = header.Header()
         h.append(u'"%s" ' % self.get_pref('display_name'))
@@ -971,8 +970,11 @@ class User(SOLRIndexed):
 
     @property
     def registration_time(self):
-        gt = self._id.generation_time
-        return time.mktime(gt.timetuple())
+        if self._id:
+            reg_time = time.mktime(self._id.generation_time.timetuple())
+        else:
+            reg_time = 1.0
+        return reg_time
 
     def get_profile_info(self):
         return {
@@ -986,7 +988,7 @@ class User(SOLRIndexed):
             "skypeName": self.skype_name,
             "userSince": h.ago_ts(self.registration_time),
             "projects": [p.shortname for p in self.my_projects()
-                         if p.is_real()]
+                         if p and p.is_real()]
         }
 
     def delete_account(self):

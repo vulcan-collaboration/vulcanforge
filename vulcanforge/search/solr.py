@@ -3,7 +3,7 @@ from logging import getLogger
 from pylons import tmpl_context as c, app_globals as g
 import pysolr
 
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 
 
 LOG = getLogger(__name__)
@@ -62,7 +62,4 @@ class SolrSearch(object):
             fq1['is_history_b'] = 'False'
         fq1.update(fq_dict)
         fq = ['{}:({})'.format(k, v) for k, v in fq1.iteritems()]
-        try:
-            return self.solr.search(q, fq=fq, rows=rows, **kw)
-        except pysolr.SolrError, e:
-            raise ValueError('Error running search query: %s' % e.message)
+        return self(q, fq=fq, rows=rows, **kw)

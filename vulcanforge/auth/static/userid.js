@@ -169,7 +169,7 @@
                     'class': 'id-user-since'
                 }),
                 $mission = $('<div/>', {
-                    text: data.mission,
+                    html: data.mission,
                     'class': 'id-mission'
                 }),
                 $expertise = $('<div/>', {
@@ -286,26 +286,27 @@
 
                         content: {
 
-                            text: $content,
-                            ajax: {
-                                loading: false,
-                                url: options.userURL+'/profile/get_user_profile',
-                                type: 'GET',
-                                data: {
-                                    username: options.userName
-                                },
-                                dataType: 'json',
-                                success: function ( data ) {
-                                    data.userURL = options.userURL;
+                            text: function (event, api) {
+                                var $myContent = $content.clone();
+                                $.ajax({
+                                    url: options.userURL+'/profile/get_user_profile',
+                                    type: 'GET',
+                                    data: {
+                                        username: options.userName
+                                    },
+                                    dataType: 'json',
+                                    success: function ( data ) {
+                                        data.userURL = options.userURL;
 
-                                    createUserIdPanel( $content, data );
+                                        createUserIdPanel( $myContent, data );
 
-                                    this.reposition();
-                                    this.render();
-                                },
-                                error: function ( e ) {
-                                    $avatar.qtip('destroy');
-                                }
+                                        api.reposition();
+                                    },
+                                    error: function ( e ) {
+                                        api.destroy();
+                                    }
+                                });
+                                return $myContent;
                             }
 
                         },

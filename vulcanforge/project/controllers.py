@@ -36,6 +36,7 @@ class ProjectController(BaseController):
         setattr(self, 'feed.rss', self.feed)
         setattr(self, 'feed.atom', self.feed)
         setattr(self, '_nav.json', self._nav)
+        super(ProjectController, self).__init__()
 
     @expose('json:')
     def _nav(self):

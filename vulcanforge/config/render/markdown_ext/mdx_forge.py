@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
-from urllib import quote
 from urlparse import urljoin
 
 from tg import config
 from pylons import tmpl_context as c, request
 from BeautifulSoup import BeautifulSoup
-import feedparser
+from feedparser import _HTMLSanitizer
 
 import markdown
 from markdown.util import etree
@@ -19,9 +18,14 @@ import webhelpers
 from vulcanforge.project.model import Project
 from vulcanforge.artifact.model import Shortlink, ArtifactReference
 from vulcanforge.artifact.widgets import ArtifactLink
+from vulcanforge.common.helpers import urlquote
 
 from . import markdown_macro
-from .mdx_visualizer import StashProcessor, VisualizerPattern, StashPattern
+from .mdx_stash import StashProcessor, StashPattern
+from vulcanforge.visualize.markdown_ext import (
+    VisualizerPattern,
+    FullVisualizerPattern
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -69,6 +73,7 @@ class ForgeExtension(OEmbedExtension):
                 patterns={
                     'visualizer': VisualizerPattern,
                     'oembed': OEmbedStashedPattern,
+                    'full_visualizer': FullVisualizerPattern
                 },
                 pattern_kwargs={
                     'oembed': {
@@ -139,6 +144,7 @@ class ForgeProcessor(object):
     def __init__(self, use_wiki=False, markdown=None, macro_context=None,
                  simple_alinks=False):
         self.markdown = markdown
+        self.markdown.forge_processor = self
         self._use_wiki = use_wiki
         self._macro_context = macro_context
         self._simple_alinks = simple_alinks
@@ -218,16 +224,17 @@ class ForgeProcessor(object):
                     link_html = self.artifact_link.display(
                         value=artifact, tag="span")
                 except Exception:  # pragma no cover
+                    # shortlink without artifact reference?
                     LOG.exception("Error rendering artifact link")
             if not link_html:
-                link_html = '<a href="%s">[%s]</a>' % (new_link.url, link)
+                link_html = u'<a href="%s">[%s]</a>' % (new_link.url, link)
             return link_html
 
         # if we're on a wiki then link to a non-existant page
-        if self._use_wiki and ':' not in link:
+        if self._use_wiki and u':' not in link:
             utf_link = unicode(link).encode('utf-8')
             return '<a href="{}" class="notfound">[{}]</a>'.format(
-                quote(utf_link), utf_link)
+                urlquote(utf_link), utf_link)
 
         ###
         parts = link.split(':')
@@ -244,12 +251,12 @@ class ForgeProcessor(object):
                 if app_config:
                     url_method = app_config.url
         if callable(url_method):
-            return '<a href="{}" class="notfound">[{}]</a>'.format(
+            return u'<a href="{}" class="notfound">[{}]</a>'.format(
                 url_method(), link)
         ###
 
         # fallback is to print the link as it was formatted
-        return "[{}]".format(link)
+        return u"[{}]".format(link)
 
     def _expand_link(self, link):
         if link.startswith('#'):
@@ -360,7 +367,7 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
             if 'base_url' in config and config['base_url'] in val:
                 return
             else:
-                tag[attr] = '/nf/redirect/?path=%s' % quote(val)
+                tag[attr] = '/nf/redirect/?path=%s' % urlquote(val)
                 tag['rel'] = 'nofollow'
                 return
         if val.startswith('/') or val.startswith('.') or val.startswith('#'):
@@ -376,18 +383,18 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
         tag[attr] = val
 
 
-class ForgeHTMLSanitizer(feedparser._HTMLSanitizer):
-    acceptable_elements = feedparser._HTMLSanitizer.acceptable_elements.difference(
+class ForgeHTMLSanitizer(_HTMLSanitizer):
+    acceptable_elements = _HTMLSanitizer.acceptable_elements.difference(
         {'form', 'noscript', 'sound'})
 
-    acceptable_attributes = feedparser._HTMLSanitizer.acceptable_attributes.difference(
+    acceptable_attributes = _HTMLSanitizer.acceptable_attributes.difference(
         {'action', 'method'})
 
     def __init__(self, encoding, _type=''):
         try:
-            feedparser._HTMLSanitizer.__init__(self, encoding)
+            _HTMLSanitizer.__init__(self, encoding)
         except TypeError:
-            feedparser._HTMLSanitizer.__init__(self, encoding, _type)
+            _HTMLSanitizer.__init__(self, encoding, _type)
 
 
 class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):

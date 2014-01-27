@@ -8,6 +8,7 @@ from datetime import datetime
 import types
 
 # Non-stdlib imports
+import bson
 from tg import expose, validate, redirect, response, flash
 from tg.decorators import with_trailing_slash, without_trailing_slash
 from tg.controllers import RestController
@@ -34,7 +35,7 @@ from vulcanforge.common.controllers.decorators import (
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.helpers import urlquote, really_unicode, diff_text
 from vulcanforge.common.util import push_config
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.common.widgets.form_fields import (
@@ -93,8 +94,13 @@ class WikiSearchController(DefaultSearchController):
 class ForgeWikiApp(Application):
     """This is the Wiki app for PyForge"""
     __version__ = __version__
-    permissions = ['configure', 'read', 'create', 'edit', 'delete',
-                   'unmoderated_post', 'post', 'moderate', 'admin']
+    permissions = dict(Application.permissions,
+        read='View wiki pages',
+        write='Create, modify and delete wiki pages',
+        moderate='Moderate comments',
+        unmoderated_post='Add comments without moderation',
+        post='Add comments'
+    )
     searchable = True
     tool_label = 'Wiki'
     static_folder = 'Wiki'
@@ -110,7 +116,7 @@ class ForgeWikiApp(Application):
     reference_opts = dict(Application.reference_opts,
         can_reference=True,
         can_create=True,
-        create_perm='create'
+        create_perm='write'
     )
     admin_description = (
         "The wiki is a veritable content management system for your project. "
@@ -121,22 +127,14 @@ class ForgeWikiApp(Application):
     admin_actions = {
         "Add Page": {
             "url": "New%20Wiki%20Page",
-            "permission": "create"
+            "permission": "write"
         },
         "View Wiki": {"url": ""},
     }
-    permission_descriptions = dict(
-        Application.permission_descriptions,
-        moderate="moderate new content",
-        unmoderated_post="add content without moderation",
-        create="create new pages",
-        edit="edit existing pages",
-        delete="delete pages"
-    )
     default_acl = {
-        'Admin': permissions,
-        'Developer': ['delete', 'moderate'],
-        'Member': ['create', 'edit'],
+        'Admin': permissions.keys(),
+        'Developer': ['write', 'moderate'],
+        'Member': ['write', 'read'],
         '*authenticated': ['post', 'unmoderated_post'],
         '*anonymous': ['read']
     }
@@ -225,6 +223,19 @@ class ForgeWikiApp(Application):
         """
         return [SitemapEntry(self.config.options.mount_label.title(), '.')]
 
+    def get_global_navigation_data(self):
+        children = [
+            {
+                'label': page.featured_label or page.title,
+                'url': page.url()
+            }
+            for page in self.get_featured_pages_cursor()
+            if g.security.has_access(page, 'read')
+        ]
+        return {
+            'children': children
+        }
+
     def get_markdown(self):
         return g.markdown_wiki
 
@@ -249,9 +260,13 @@ class ForgeWikiApp(Application):
                 admin_url + 'home', className='admin_modal'
             ),
             SitemapEntry(
-                'Options', admin_url + 'options', className='admin_modal')
+                'Options', admin_url + 'options', className='admin_modal'),
+            SitemapEntry(
+                'Manage Featured Pages',
+                admin_url + 'featured', className='admin_modal'
+            )
         ]
-        if self.permissions and g.security.has_access(self, 'configure'):
+        if self.permissions and g.security.has_access(self, 'admin'):
             links.append(
                 SitemapEntry(
                     'Permissions',
@@ -263,7 +278,7 @@ class ForgeWikiApp(Application):
 
     def sidebar_menu(self):
         links = []
-        if g.security.has_access(self, 'create'):
+        if g.security.has_access(self, 'write'):
             links.extend([
                 SitemapEntry(
                     'Create Page',
@@ -300,15 +315,6 @@ class ForgeWikiApp(Application):
                 ui_icon='ico-moderate',
                 small=pending_mod_count
             ))
-        links.extend([
-            SitemapEntry(''),
-            SitemapEntry(
-                'Markdown Syntax',
-                c.app.url + 'markdown_syntax/',
-                ui_icon=Icon('', 'ico-info'),
-                className='nav_child'
-            )
-        ])
         return links
 
     def install(self, project, acl=None):
@@ -342,6 +348,15 @@ class ForgeWikiApp(Application):
         Globals.query.remove(dict(app_config_id=self.config._id))
         super(ForgeWikiApp, self).uninstall(project=project,
                                             project_id=project_id)
+
+    def get_featured_pages_cursor(self, sort=True):
+        cursor = Page.query.find({
+            'app_config_id': self.config._id,
+            'featured': True
+        })
+        if sort:
+            cursor.sort('featured_ordinal', pymongo.ASCENDING)
+        return cursor
 
 
 def get_page_title_from_request(req_url_utf=None, prefix=None):
@@ -450,7 +465,7 @@ class RootController(WikiContentBaseController):
         limit, pagenum, start = g.handle_paging(limit, page, default=25)
         pages = []
         criteria = dict(app_config_id=c.app.config._id)
-        can_delete = g.security.has_access(c.app, 'delete')
+        can_delete = g.security.has_access(c.app, 'write')
         show_deleted = show_deleted and can_delete
         if not can_delete:
             criteria['deleted'] = False
@@ -575,6 +590,7 @@ class PageController(WikiContentBaseController):
                                              label="Hide Attachments")
         rename_descendants_field = ew.Checkbox(name="rename_descendants",
                                                label="Rename Subpages")
+        featured_field = ew.Checkbox(name="featured", label="Featured")
 
     def __init__(self, title):
         self.title = unquote(really_unicode(title))
@@ -590,9 +606,9 @@ class PageController(WikiContentBaseController):
         if self.page:
             g.security.require_access(self.page, 'read')
             if self.page.deleted:
-                g.security.require_access(self.page, 'delete')
+                g.security.require_access(self.page, 'write')
         else:
-            g.security.require_access(c.app, 'create')
+            g.security.require_access(c.app, 'write')
 
     def fake_page(self):
         return dict(
@@ -643,21 +659,12 @@ class PageController(WikiContentBaseController):
         elif 'all' not in page.viewable_by and \
                 c.user.username not in page.viewable_by:
             raise exc.HTTPForbidden(detail="You may not view this page.")
-        cur = page.version
-        if cur > 1:
-            prev = cur - 1
-        else:
-            prev = None
-        next_ = cur + 1
         hide_sidebar = not (c.app.show_left_bar or
-                            g.security.has_access(self.page, 'edit'))
+                            g.security.has_access(self.page, 'write'))
         page_html = page.get_rendered_html()
         hierarchy_items = self.get_hierarchy_items()
         return dict(
             page=page,
-            cur=cur,
-            prev=prev,
-            next=next_,
             subscribed=Mailbox.subscribed(artifact=page),
             hide_sidebar=hide_sidebar,
             show_meta=c.app.show_right_bar,
@@ -671,7 +678,7 @@ class PageController(WikiContentBaseController):
     def edit(self, default_content=u'', **kw):
         page_exists = self.page
         if page_exists:
-            g.security.require_access(self.page, 'edit')
+            g.security.require_access(self.page, 'write')
             page = self.page
             attachment_context_id = str(page._id)
         else:
@@ -685,6 +692,7 @@ class PageController(WikiContentBaseController):
         c.attachments_field = self.Widgets.attachments_field
         c.hide_attachments_field = self.Widgets.hide_attachments_field
         c.rename_descendants = self.Widgets.rename_descendants_field
+        c.featured_field = self.Widgets.featured_field
         return {
             'page': page,
             'page_exists': page_exists,
@@ -695,7 +703,7 @@ class PageController(WikiContentBaseController):
     @expose('json')
     @require_post()
     def delete(self):
-        g.security.require_access(self.page, 'delete')
+        g.security.require_access(self.page, 'write')
         Shortlink.query.remove(dict(ref_id=self.page.index_id()))
         self.page.deleted = True
         self.page.deleted_time = datetime.utcnow()
@@ -706,7 +714,7 @@ class PageController(WikiContentBaseController):
     @expose('json')
     @require_post()
     def undelete(self):
-        g.security.require_access(self.page, 'delete')
+        g.security.require_access(self.page, 'write')
         self.page.deleted = False
         Shortlink.from_artifact(self.page)
         return dict(location='.')
@@ -812,7 +820,7 @@ class PageController(WikiContentBaseController):
     def revert(self, version):
         if not self.page:
             raise exc.HTTPNotFound
-        g.security.require_access(self.page, 'edit')
+        g.security.require_access(self.page, 'write')
         orig = self.get_version(version)
         if orig:
             self.page.text = orig.text
@@ -853,11 +861,14 @@ class PageController(WikiContentBaseController):
         'hide_attachments': validators.StringBool(if_empty=False,
                                                   if_missing=False),
         'rename_descendants': validators.StringBool(if_empty=False,
+                                                    if_missing=False),
+        'featured': validators.StringBool(if_empty=False,
                                                     if_missing=False)
     })
     def update(self, title=None, text=None, labels=None, viewable_by=None,
                new_viewable_by=None, hide_attachments=False,
-               rename_descendants=True, **kw):
+               rename_descendants=True, featured=False, **kw):
+        modified = False
         if not title:
             flash('You must provide a title for the page.', 'error')
             redirect('edit')
@@ -866,16 +877,30 @@ class PageController(WikiContentBaseController):
             self.page = Page.upsert(self.title)
             self.page.viewable_by = ['all']
         else:
-            g.security.require_access(self.page, 'edit')
+            g.security.require_access(self.page, 'write')
+
+        # title
         name_conflict = None
+        title = title.strip('/ \t\n')
         if self.page.title != title:
             name_conflict = self._rename_page(title, rename_descendants)
-        self.page.text = text
-        if labels:
-            self.page.labels = labels.split(',')
-        else:
-            self.page.labels = []
+            modified = True
 
+        # text
+        if self.page.text != text:
+            self.page.text = text
+            modified = True
+
+        # labels
+        if labels:
+            labels = labels.split(',')
+        else:
+            labels = []
+        if self.page.labels != labels:
+            self.page.labels = labels
+            modified = True
+
+        # attachments
         posted_values = variable_decode(request.POST)
         for attachment in posted_values.get('new_attachments', []):
             if not hasattr(attachment, 'file'):
@@ -885,7 +910,9 @@ class PageController(WikiContentBaseController):
                 attachment.file,
                 content_type=attachment.type
             )
-        self.page.commit()
+            modified = True
+        if modified:
+            self.page.commit()
         if new_viewable_by:
             if new_viewable_by == 'all':
                 self.page.viewable_by.append('all')
@@ -902,8 +929,25 @@ class PageController(WikiContentBaseController):
                         user = User.by_username(str(u['id']))
                         if user:
                             self.page.viewable_by.remove(user.username)
-
         self.page.hide_attachments = hide_attachments
+
+        # featured
+        if featured == 'on':  # a hack... validator is not converting the value
+            featured = True
+        if featured != bool(self.page.featured):
+            self.page.featured = featured
+            if featured:
+                # put this page at the end of the list
+                cursor = self.page.app.get_featured_pages_cursor(sort=False)
+                last_page = cursor.sort('featured_ordinal', -1).first()
+                self.page.featured_ordinal = last_page.featured_ordinal + 1
+            else:
+                # update the featured list ordinals
+                cursor = self.page.app.get_featured_pages_cursor()
+                for i, page in enumerate(cursor):
+                    page.featured_ordinal = i
+                self.page.featured_ordinal = None
+            g.cache.redis.expire('navdata', 0)
 
         redirect(
             really_unicode(c.app.url + self.page.title +(u'/' if not name_conflict else u'/edit')).encode('utf-8')
@@ -1023,10 +1067,10 @@ class RootRestController(RestController):
             title=title,
             deleted=False)
         if not page:
-            g.security.require_access(c.app, 'create')
+            g.security.require_access(c.app, 'write')
             page = Page.upsert(title)
         else:
-            g.security.require_access(page, 'edit')
+            g.security.require_access(page, 'write')
         page.text = post_data['text']
         if 'labels' in post_data:
             page.labels = post_data['labels'].split(',')
@@ -1036,7 +1080,7 @@ class RootRestController(RestController):
 class WikiAdminController(DefaultAdminController):
 
     def _check_security(self):
-        g.security.require_access(self.app, 'configure')
+        g.security.require_access(self.app, 'admin')
 
     @with_trailing_slash
     def index(self, **kw):
@@ -1047,13 +1091,32 @@ class WikiAdminController(DefaultAdminController):
     def home(self):
         return dict(app=self.app,
                     home=self.app.root_page_name,
-                    allow_config=g.security.has_access(self.app, 'configure'))
+                    allow_config=g.security.has_access(self.app, 'admin'))
 
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'admin_options.html')
     def options(self):
         return dict(app=self.app,
-                    allow_config=g.security.has_access(self.app, 'configure'))
+                    allow_config=g.security.has_access(self.app, 'admin'))
+
+    @without_trailing_slash
+    @expose(TEMPLATE_DIR + 'admin_featured.html')
+    def featured(self):
+        cursor = self.app.get_featured_pages_cursor()
+        return {
+            'app': self.app,
+            'allow_config': g.security.has_access(self.app, 'admin'),
+            'has_featured_pages': cursor.count() > 0,
+            'featured_pages': [
+                {
+                    '_id': p._id,
+                    'title': p.title,
+                    'url': p.url,
+                    'featured_label': p.featured_label
+                }
+                for p in cursor
+            ]
+        }
 
     @without_trailing_slash
     @expose()
@@ -1083,6 +1146,37 @@ class WikiAdminController(DefaultAdminController):
         self.app.show_right_bar = show_right_bar
         self.app.show_table_of_contents = show_table_of_contents
         flash('Wiki options updated')
+        redirect(c.project.url() + 'admin/tools')
+
+    @without_trailing_slash
+    @expose()
+    @require_post()
+    @vardec
+    def update_featured(self, featured_ordinals=None, featured_labels=None,
+                        **kwargs):
+        if featured_ordinals is not None:
+            for _id, value in featured_ordinals.items():
+                try:
+                    _id = bson.ObjectId(_id)
+                    value = int(value)
+                except ValueError:
+                    continue
+                page = Page.query.get(app_config_id=self.app.config._id,
+                                      _id=_id)
+                if page is not None and g.security.has_access(page, 'write'):
+                    page.featured_ordinal = value
+        if featured_labels is not None:
+            for _id, value in featured_labels.items():
+                try:
+                    _id = bson.ObjectId(_id)
+                except ValueError:
+                    continue
+                page = Page.query.get(app_config_id=self.app.config._id,
+                                      _id=_id)
+                if page is not None and g.security.has_access(page, 'write'):
+                    page.featured_label = value
+        g.cache.redis.expire('navdata', 0)
+        flash('Wiki featured pages updated')
         redirect(c.project.url() + 'admin/tools')
 
 

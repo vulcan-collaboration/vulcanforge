@@ -12,11 +12,12 @@ from vulcanforge.auth.model import User
 from vulcanforge.common.controllers.base import WsgiDispatchController
 from vulcanforge.artifact.controllers import ArtifactReferenceController
 from vulcanforge.auth.controllers import AuthController, UserDiscoverController
+from vulcanforge.common.controllers.debugutil import DebugUtilRootController
 from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
-    SwiftAuthRestController
-)
+    SwiftAuthRestController,
+    WebServiceRestController)
 from vulcanforge.common.controllers.static import (
     NewForgeController,
     ForgeStaticController
@@ -29,6 +30,7 @@ from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.controllers import ProjectBrowseController
 from vulcanforge.project.model import ProjectCategory, Project
 from vulcanforge.project.widgets import ProjectListWidget
+from vulcanforge.s3.controllers import S3ProxyController
 from vulcanforge.search.controllers import (
     AutocompleteController,
     SearchController
@@ -71,7 +73,9 @@ class ForgeRootController(WsgiDispatchController):
     rest = RestController()
     search = SearchController()
     static_auth = SwiftAuthRestController()
+    s3_proxy = S3ProxyController()
     visualize = VisualizerRootController()
+    webs = WebServiceRestController()
 
     # widgets
     class Widgets(WsgiDispatchController.Widgets):
@@ -94,14 +98,22 @@ class ForgeRootController(WsgiDispatchController):
                 continue
             n.bind_controller(self)
         self.browse = ProjectBrowseController()
+        if not g.production_mode:
+            self._debug_util_ = DebugUtilRootController()
         super(ForgeRootController, self).__init__()
+
+    def _set_user_context(self):
+        c.user = g.auth_provider.authenticate_request()
+        assert c.user is not None, \
+            'c.user should always be at least User.anonymous()'
 
     def _setup_request(self):
         c.neighborhood = c.project = c.app = None
         c.memoize_cache = {}
-        c.user = g.auth_provider.authenticate_request()
-        assert c.user is not None, \
-            'c.user should always be at least User.anonymous()'
+        self._set_user_context()
+
+        if g.visibility_mode_handler.is_enabled:
+            g.visibility_mode_handler.check_visibility(c.user, request)
 
         if g.profile_middleware:
             profile_setup_request()
@@ -111,7 +123,15 @@ class ForgeRootController(WsgiDispatchController):
 
     @expose('jinja:front.html')
     @with_trailing_slash
-    def index(self, **kw):
+    def index(self, **kwargs):
+        if c.user.is_anonymous:
+            return self._anonymous_index(**kwargs)
+        return self._authenticated_index(**kwargs)
+
+    def _authenticated_index(self, **kwargs):
+        return tg.redirect(c.user.landing_url())
+
+    def _anonymous_index(self, **kwargs):
         """Handle the front-page.
 
         TODO:

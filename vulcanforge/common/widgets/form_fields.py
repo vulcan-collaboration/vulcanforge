@@ -12,9 +12,7 @@ from ew.render import File
 
 from vulcanforge.common.widgets.util import onready
 from vulcanforge.resources.widgets import JSLink, CSSLink, Widget
-from vulcanforge.visualize.widgets.visualize import ThumbnailVisualizer, IFrame
-from vulcanforge.visualize.model import Visualizer
-from vulcanforge.visualize.util import render_fs_urls, get_fs_items
+from vulcanforge.visualize.util import get_visualizer_options
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/form/'
@@ -99,31 +97,22 @@ class Attachment(Widget):
     params = ['value']
 
     def resources(self):
-        yield JSLink('visualize/visualizer.js')
+        yield JSLink('visualize/js/visualizer_util.js')
         yield JSLink('assets/attachment/attachment.js')
-
-    def prepare_context(self, context):
-        new_context = super(Attachment, self).prepare_context(context)
-        new_context['render_fs_urls'] = render_fs_urls
-        return new_context
 
     def get_mode(self, *args, **kw):
         return 'thumb'
 
     def display(self, value=None, **kw):
-        visualizer_link_items = get_fs_items(
-            value.url(), dl_too=True, size=value.length)
-        thumb = value.get_thumb()
-        if thumb is not None:
-            thumb_url = thumb.url()
-        else:
-            thumb_url = None
+        visualizer_link_items = get_visualizer_options(
+            value, dl_too=True, size=value.length)
+        thumb_url = value.get_thumb_url()
         absolute_url = value.url(absolute=True)
         try:
             link_url = visualizer_link_items[0]['url']
         except IndexError:
             link_url = absolute_url
-        return super(Attachment, self).display(
+        content = super(Attachment, self).display(
             value=value,
             visualizer_links=json.dumps(visualizer_link_items),
             mimetype=value.content_type,
@@ -131,8 +120,8 @@ class Attachment(Widget):
             absolute_url=absolute_url,
             link_url=link_url,
             extension=value.get_extension() or '',
-            **kw
-        )
+            **kw)
+        return content
 
 
 class AttachmentList(ew_core.Widget):
@@ -474,17 +463,10 @@ class VisualizeTermsAgreementField(TermsAgreementField):
 
     """
     template = TEMPLATE_DIR + 'visualizer-terms-agreement-field.html'
-    visualizer_widget = IFrame()
 
     def prepare_context(self, context):
         context = ew.Checkbox.prepare_context(self, context)
-        visualizers = Visualizer.get_for_resource(self.terms_file)
-        if visualizers:
-            visualizer = visualizers[0]
-        else:
-            visualizer = None
-        context['visualizer'] = visualizer
-        self.visualizer_widget.no_iframe_msg = (
+        context['no_iframe_msg'] = (
             'Please install iframes to view the terms, or download them'
             '<a href="{}">here</a>'.format(self.terms_file)
         )

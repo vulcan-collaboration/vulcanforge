@@ -19,8 +19,7 @@ from vulcanforge.artifact.widgets import short_artifact_link_data
 from vulcanforge.artifact.tasks import process_artifact
 from vulcanforge.discussion.model import Post
 from vulcanforge.project.model import Project
-from vulcanforge.visualize.model import Visualizer
-from vulcanforge.visualize.widgets.visualize import ArtifactRenderVisualizer
+from vulcanforge.visualize.model import VisualizerConfig
 
 
 LOG = logging.getLogger(__name__)
@@ -364,9 +363,6 @@ class AttachmentController(BaseController):
     AttachmentClass = None
     edit_perm = 'edit'
 
-    class Widgets(BaseController.Widgets):
-        artifact_render_widget = ArtifactRenderVisualizer()
-
     def _check_security(self):
         g.security.require_access(self.artifact, 'read')
 
@@ -410,18 +406,10 @@ class AttachmentController(BaseController):
                 except exc.HTTPNotFound:
                     pass
             redirect(request.referer or self.artifact.url())
-        if 'embed_vis' in kw:
-            visualizer = None
-            if visualizer_id:
-                visualizer = Visualizer.query.get(_id=visualizer_id)
-            return self.Widgets.artifact_render_widget.display(
-                value=self.attachment,
-                visualizer=visualizer,
-                content=self.attachment.read(),
-                filename=self.attachment.filename,
-                context="embed"
-            )
-        return self.attachment.serve(embed)
+        elif g.s3_serve_local or request.is_xhr:
+            return self.attachment.serve(embed)
+        else:
+            return redirect(self.attachment.remote_url())
 
     @expose()
     def thumb(self, embed=True):

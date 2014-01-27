@@ -13,7 +13,6 @@ class ForgeGlobals(BaseMappedClass):
         name = 'forge_globals'
         session = main_orm_session
 
-    _id = FieldProperty(S.ObjectId)
     user_counter = FieldProperty(int, if_missing=1)
     taskd_tester = FieldProperty(S.Object({
         'counter': S.Int(if_missing=0),
@@ -26,4 +25,7 @@ class ForgeGlobals(BaseMappedClass):
         """Get current user counter and increment by 1"""
         _, coll = pymongo_db_collection(cls)
         doc = coll.find_and_modify(update={"$inc": {"user_counter": 1}})
-        return doc["user_counter"]
+        if doc:
+            return doc["user_counter"]
+        else:
+            coll.insert({'user_counter': 1})

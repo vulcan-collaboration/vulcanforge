@@ -26,9 +26,8 @@ from vulcanforge.common.util.http import (
 )
 from vulcanforge.common import exceptions as exc
 from vulcanforge.artifact.widgets import RelatedArtifactsWidget
-from vulcanforge.visualize.model import Visualizer
+from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.tools.downloads import model as FDM
-from vulcanforge.visualize.widgets.visualize import ArtifactEmbedVisualizer
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:tools/downloads/templates/'
@@ -45,7 +44,6 @@ class FileController(BaseTGController):
 
     class Widgets(BaseTGController.Widgets):
         related_artifacts = RelatedArtifactsWidget()
-        url_file_widget = ArtifactEmbedVisualizer()
 
     @expose(TEMPLATE_DIR + 'file.html')
     def _default(self, *args, **kwargs):
@@ -55,12 +53,14 @@ class FileController(BaseTGController):
             raise exc.AJAXNotFound('The requested file does not exist.')
 
         c.related_artifacts_widget = self.Widgets.related_artifacts
-        c.url_file_widget = self.Widgets.url_file_widget
+        rendered_file = g.visualize_artifact(fd_file).full_render(
+            on_unvisualizable=lambda fd: redirect(fd_file.raw_url()))
+
         return dict(
             hide_sidebar=True,
             fd_file=fd_file,
             editable=g.security.has_access(c.app, 'write'),
-            force_display=asbool(kwargs.get('force_display', 'false')))
+            rendered_file=rendered_file)
 
 
 class TreeController(TGController):
@@ -216,11 +216,9 @@ class ContentRestController(RestController):
                     'type': entry.type_s
                 }
 
-            vis = Visualizer.get_for_resource(path, cache=True)
-            if vis:
-                # only shows the first visualizer icon for now
-                # should show available visualizers
-                data[path]['extra']['iconURL'] = vis[0].icon_url
+            icon_url = g.visualize_url(path).get_icon_url()
+            if icon_url:
+                data[path]['extra']['iconURL'] = icon_url
 
             if entry.filesize is not None:
                 data[path]['extra']['size'] = h.pretty_print_file_size(
@@ -234,7 +232,6 @@ class ContentRestController(RestController):
         if request.url.endswith('/'):
             return self._folder(*args)
         else:
-            override_template(self.get_one, '')
             return self._file(*args, **kwargs)
 
     @expose('json')

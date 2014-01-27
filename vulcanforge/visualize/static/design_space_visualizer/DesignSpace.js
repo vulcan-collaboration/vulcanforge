@@ -213,29 +213,42 @@ $(parent).ready(function() {
                 function elementMapper( data, request, cache ) {
 
                     var mappedDatas = [],
+                        validTypes = [
+                            'Compound',
+                            'Component',
+                            'LocalComponent',
+                            'Alternative',
+                            'Optional',
+                            'ComponentCategory'
+                        ],
                         newElement,
-                        parentCategory;
+                        parentCategory,
+                        dataType;
 
                     trace("ElementMapper with data id " + data.id);
                     if ( data && data.id ) {
 
-                        var typeMap = {
-                            'AVM.META.Design.Compound': 'Compound',
-                            'AVM.META.Design.ComponentInstance': data.ComponentID && 'Component' || 'LocalComponent',
-                            'AVM.META.Design.Alternative': 'Alternative',
-                            'AVM.META.Design.Optional': 'Optional',
-                            'ComponentCategory': 'ComponentCategory'
-                        };
+                        /* get data type */
+                        dataType = data.$type || '';
+                        if (dataType.substr(0, 16) === 'AVM.META.Design.') {
+                            dataType = dataType.substr(16);
+                        }
+                        if (dataType === 'ComponentInstance') {
+                            dataType = data.component_id ? 'Component': 'LocalComponent';
+                        }
+                        if (validTypes.indexOf(dataType) === -1){
+                            dataType = 'DesignContainer';
+                        }
 
                         newElement = {
                             id: data.id,
                             dataType: 'element',
                             properties: {
-                                componentId: data.ComponentID,
-                                componentVersion: data.ComponentVersion,
+                                componentId: data.component_id,
+                                /* componentVersion: data.ComponentVersion,*/
                                 designId: data.design_id,
-                                name: data.Name,
-                                type: typeMap[ data.$type ] || 'DesignContainer',
+                                name: data.name,
+                                type: dataType,
                                 metadata: {},
                                 indexId: data.index_id
                             }
@@ -262,7 +275,7 @@ $(parent).ready(function() {
                                         childrenByComponentCategory[ child.component_category ] = {
                                             id: data.id + '::::' + child.component_category,
                                             $type: 'ComponentCategory',
-                                            Name: child.component_category,
+                                            name: child.component_category,
                                             children: []
                                         };
 
@@ -318,12 +331,12 @@ $(parent).ready(function() {
                             }
                         }
 
-                        if ( data.parentId ) {
+                        if ( data.parent_id ) {
                             mappedDatas.push( {
                                 dataType: 'Relation',
                                 type: 'embeds',
                                 nodes: [
-                                    data.parentId,
+                                    data.parent_id,
                                     data.id
                                 ]
                             } );
@@ -590,20 +603,22 @@ $(parent).ready(function() {
                 function _determineDocTypeFromUrl( url ) {
                     var result = null,
                         projectIndex = -1 ,
-                        designIndex = -1;
+                        designIndex = -1,
+                        queryIndex,
+                        pathUrl;
+
+                    function extMatches (ext) {
+                        return pathUrl.substr(-ext.length) === ext;
+                    }
 
                     if (url !== undefined && url !== '') {
+                        queryIndex = url.lastIndexOf('?');
+                        pathUrl = queryIndex === -1 ? url : url.substr(0, queryIndex);
 
-                        projectIndex = url.indexOf('.project.json');
-                        designIndex = url.indexOf('.metadesign.json');
-
-                        if ( designIndex !== projectIndex ) {
-
-                            if ( designIndex < projectIndex && designIndex !== -1 || projectIndex === -1 ) {
-                                result = 'design';
-                            } else {
-                                result = 'project';
-                            }
+                        if (extMatches('.project.json')) {
+                            result = 'project';
+                        } else if (extMatches('.metadesign.json') || extMatches('.adm')) {
+                            result = 'design';
                         }
                     }
                     return result;

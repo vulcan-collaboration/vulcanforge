@@ -64,6 +64,7 @@ class BaseMigration(object):
             self.miglog.status = 'success'
             self.miglog.ended_dt = datetime.utcnow()
             session(self.miglog).flush(self.miglog)
+            ThreadLocalODMSession.flush_all()
 
     def run(self):
         """Override this with your migration script logic"""

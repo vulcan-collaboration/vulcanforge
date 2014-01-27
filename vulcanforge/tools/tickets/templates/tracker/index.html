@@ -18,7 +18,7 @@
     href=tg.url(c.app.url+'edit/', dict(q=q, limit=limit, sort=sort))) }}
     {% endif %}
 
-    {% if c.user and c.user != c.user.anonymous() %}
+    {% if c.user and not c.user.is_anonymous %}
         {{ g.subscription_popup_menu.display(feed_url=c.app.url+'feed.rss') }}
     {% endif %}
 {% endblock %}

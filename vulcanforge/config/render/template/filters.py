@@ -1,15 +1,30 @@
-import json
 import datetime
 
-from babel.util import LocalTimezone
+try:
+    from babel.localtime import LOCALTZ
+except ImportError:
+    # babel < 1.0
+    from babel.util import LocalTimezone as LOCALTZ
 from jinja2 import evalcontextfilter
 from markupsafe import Markup
-from pylons import app_globals as g
+from vulcanforge.config.render.jsonify import SanitizeEncode
+
+import simplejson
+
+
+class HtmlJSONEncoder(SanitizeEncode):
+    def escape(self, s):
+        return s.replace('&', '\\u0026')\
+                .replace('<', '\\u003c')\
+                .replace('>', '\\u003e')
 
 
 @evalcontextfilter
 def jsonify(eval_ctx, value):
-    content = g.json_renderer.encode(value, sanitize=eval_ctx.autoescape)
+    cls = None
+    if eval_ctx.autoescape:
+        cls = HtmlJSONEncoder
+    content = simplejson.dumps(value, cls=cls)
     return Markup(content)
 
 
@@ -53,7 +68,7 @@ def timesince(d, now=None):
 
     if not now:
         if d.tzinfo:
-            now = datetime.datetime.now(LocalTimezone(d))
+            now = datetime.datetime.now(LOCALTZ(d))
         else:
             now = datetime.datetime.utcnow()
 

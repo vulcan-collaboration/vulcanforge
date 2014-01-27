@@ -20,6 +20,7 @@ class CardField(ew._Jinja2Widget):
         ew_core.Widget.defaults,
         id=None,
         name='Deck',
+        description='',
         icon_name='group',
         items=None,
         roles=[],

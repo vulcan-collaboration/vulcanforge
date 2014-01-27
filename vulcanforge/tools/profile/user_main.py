@@ -21,7 +21,7 @@ from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.controllers.decorators import vardec
 from vulcanforge.common.types import SitemapEntry
 from vulcanforge.common.util import push_config, nonce
-from vulcanforge.common.util.decorators import exceptionless
+from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.app import Application
 from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.auth.schema import ACE
@@ -34,6 +34,7 @@ from vulcanforge.notification.model import Notification
 from vulcanforge.project.widgets import ProjectListWidget
 from vulcanforge.project.model import Project, ProjectFile
 from vulcanforge.notification.widgets import ActivityFeed
+from vulcanforge.resources import Icon
 from vulcanforge.tools.admin import model as AM
 from vulcanforge.tools.home import model as PHM
 from vulcanforge.tools.home.project_main import ProjectHomeController
@@ -62,19 +63,46 @@ class UserProfileApp(Application):
     def sitemap(self):
         return []
 
-    @exceptionless([], LOG)
     def sidebar_menu(self):
+        is_mine = c.user._id == self.user._id
+
         menu = []
+
+        if is_mine:
+            reg_nbhd = c.user.registration_neighborhood()
+            if reg_nbhd and reg_nbhd.user_can_register():
+                menu.extend([
+                    SitemapEntry(
+                        'Start a {}'.format(reg_nbhd.project_cls.type_label),
+                        reg_nbhd.url() + 'add_project',
+                        ui_icon=Icon('', 'ico-plus')
+                    ),
+                    SitemapEntry('')
+                ])
+            menu.append(SitemapEntry('Activity Feed',
+                                     '/dashboard/activity_feed',
+                                     ui_icon=Icon('', 'ico-activity')))
+
+        menu.append(SitemapEntry('Profile', self.url,
+                                 ui_icon=Icon('', 'ico-user')))
+
+        if is_mine:
+            menu.append(SitemapEntry('Conversations', '/dashboard/messages',
+                                     ui_icon=Icon('', 'ico-inbox')))
+
         if g.security.has_access(c.project, 'admin'):
             menu.extend([
-                SitemapEntry('Profile', self.url),
+                SitemapEntry(''),
                 SitemapEntry('Settings'),
-                SitemapEntry('Edit Profile Info', self.url + 'edit_profile')
+                SitemapEntry('Edit Profile Info', self.url + 'edit_profile',
+                             ui_icon=Icon('', 'ico-edit'))
             ])
-        if c.user._id == self.user._id:
+        if is_mine:
             menu.extend([
-                SitemapEntry('Preferences', '/auth/prefs/'),
-                SitemapEntry('Subscriptions', "/auth/prefs/subscriptions")
+                SitemapEntry('Preferences', '/auth/prefs/',
+                             ui_icon=Icon('', 'ico-settings')),
+                SitemapEntry('Subscriptions', "/auth/prefs/subscriptions",
+                             ui_icon=Icon('', 'ico-mail'))
             ])
         return menu
 
@@ -103,7 +131,7 @@ class WorkspaceTabController(RestController):
     @expose('json')
     def post(self, href=None, title=None, type=None, order=0, state=None,
              **kw):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if href is None or title is None:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -126,7 +154,7 @@ class WorkspaceTabController(RestController):
     # Update
     @expose()
     def put(self, object_id, operation, value, **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         tab = WorkspaceTab.query.get(
             _id=bson.ObjectId(object_id), user_id=c.user._id)
         if not tab:
@@ -147,7 +175,7 @@ class WorkspaceTabController(RestController):
 
     @expose()
     def post_delete(self, object_id, **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         tab = WorkspaceTab.query.get(
             _id=bson.ObjectId(object_id), user_id=c.user._id)
         if not tab:
@@ -168,7 +196,7 @@ class ReferenceBinController(RestController):
     # Create
     @expose('json')
     def post(self, ref_id=None, last_mod='0', **kwargs):
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if not ref_id:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -197,7 +225,7 @@ class ReferenceBinController(RestController):
     def delete_reference(self, ref_id=None, last_mod=None, **kwargs):
         if not last_mod:
             last_mod = '0'
-        g.security.require_access(c.project, 'create')
+        g.security.require_access(c.project, 'write')
         if not ref_id:
             raise exceptions.AJAXMethodNotAllowed(
                 'Not enough arguments supported')
@@ -374,7 +402,7 @@ class UserProfileController(BaseController):
     @require_post()
     def update_configuration(self, divs=None, layout_class=None, new_div=None,
                              **kw):
-        g.security.require_access(c.project, 'update')
+        g.security.require_access(c.project, 'write')
         config = PHM.PortalConfig.current()
         config.layout_class = layout_class
         # Handle updated and deleted divs
@@ -546,7 +574,7 @@ class UserProfileController(BaseController):
         return dict(
             allow_read=g.security.has_access(c.app, 'read', user=self.user),
             allow_write=g.security.has_access(c.app, 'write', user=self.user),
-            allow_create=g.security.has_access(c.app, 'create', user=self.user)
+            allow_create=g.security.has_access(c.app, 'write', user=self.user)
         )
 
     @expose('json')

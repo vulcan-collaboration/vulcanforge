@@ -260,7 +260,8 @@
             createLinkButton = null,
             relationsMap = {},
             progressBar,
-            postRedraw = $.noop;
+            postRedraw = $.noop,
+            loaded = false;
 
         // defaults
         config.infoURL = config.infoURL || defaultInfoURL;
@@ -280,24 +281,28 @@
             config.infoTriggerE.qtip({
                 suppress: false,
                 content: {
-                    text: contentE,
-                    ajax: {
-                        url: config.infoURL, // URL to the JSON script
-                        type: 'GET', // POST or GET
-                        data: {artifact_ref: config.refId}, // Data to pass along with your request
-                        dataType: 'json', // Tell it we're retrieving JSON
-                        success: function (data) {
-                            that.render(data);
-                            this.render();
-                            this.reposition();
-                            postRedraw();
-                            this.reposition();
+                    text: function (event, api) {
+                        if (!loaded) {
+                            $.ajax({
+                                url: config.infoURL, // URL to the JSON script
+                                type: 'GET', // POST or GET
+                                data: {artifact_ref: config.refId}, // Data to pass along with your request
+                                dataType: 'json', // Tell it we're retrieving JSON
+                                success: function (data) {
+                                    that.render(data);
+                                    api.reposition();
+                                    postRedraw();
+                                    api.reposition();
+                                    loaded = true;
+                                }
+                            });
                         }
+                        return contentE;
                     }
 
                 },
                 position: {
-                    at: 'top right', // Position the tooltip above the link
+                    at: 'middle right', // Position the tooltip above the link
                     my: 'top left',
                     viewport: $(window), // Keep the tooltip on-screen at all times
                     effect: false // Disable positioning animation

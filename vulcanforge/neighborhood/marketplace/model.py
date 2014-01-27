@@ -21,7 +21,6 @@ class UserAdvertisement(SOLRIndexed):
         indexes = ['user_id', 'pub_date']
 
     type_s = 'UserAdvertisement'
-    _id = FieldProperty(schema.ObjectId)
     pub_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     user_id = ForeignIdProperty('User')
     user = RelationProperty('User')
@@ -58,7 +57,6 @@ class ProjectAdvertisement(SOLRIndexed):
         indexes = ['project_id', 'pub_date']
 
     type_s = 'ProjectAdvertisement'
-    _id = FieldProperty(schema.ObjectId)
     pub_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     project_id = ForeignIdProperty('Project')
     project = RelationProperty('Project')

@@ -1,3 +1,4 @@
+import simplejson as json
 import logging
 from datetime import datetime
 import re
@@ -264,6 +265,7 @@ class AbstractThread(Artifact):
             thread_id=self._id,
             parent_id=parent_id,
             text=text,
+            safe_text=kw.get('safe_text', None),
             status='pending'
         )
         if timestamp is not None:
@@ -281,14 +283,16 @@ class AbstractThread(Artifact):
         self.attachment_class().remove(dict(thread_id=self._id))
         Artifact.delete(self)
 
-    def _get_subscription(self):
+    @property
+    def subscription(self):
         return self.subscriptions.get(str(c.user._id))
-    def _set_subscription(self, value):
+
+    @subscription.setter
+    def subscription(self, value):
         if value:
             self.subscriptions[str(c.user._id)] = True
         else:
             self.subscriptions.pop(str(c.user._id), None)
-    subscription = property(_get_subscription, _set_subscription)
 
 
 class Thread(AbstractThread):
@@ -401,6 +405,7 @@ class AbstractPost(Message, VersionedArtifact):
     last_edit_date = FieldProperty(datetime, if_missing=None)
     last_edit_by_id = ForeignIdProperty(User)
     edit_count = FieldProperty(int, if_missing=0)
+    safe_text = FieldProperty(str, if_missing=None)
 
     thread = RelationProperty(Thread)
     discussion = RelationProperty(Discussion)
@@ -415,7 +420,7 @@ class AbstractPost(Message, VersionedArtifact):
             status=self.status,
             text=self.text,
             flagged_by=map(str, self.flagged_by),
-            timestamp=self.timestamp,
+            timestamp=self.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
             author_id=str(author._id),
             author=author.username)
 
@@ -521,7 +526,6 @@ class AbstractPost(Message, VersionedArtifact):
         super(AbstractPost, self).delete()
 
     def approve(self):
-        from vulcanforge.notification.model import Notification
         if self.status == 'ok': return
         self.status = 'ok'
         if self.parent_id is None:
@@ -538,9 +542,9 @@ class AbstractPost(Message, VersionedArtifact):
                 c.project.project_role(author)._id,
                 'unmoderated_post')
         g.post_event('discussion.new_post', self.thread_id, self._id)
-        artifact = self.thread.artifact or self.thread
-        Notification.post(artifact, 'message', post=self)
+        self.notify()
         session(self).flush()
+        self.publish_to_redis()
         self.thread.last_post_date = max(
             self.thread.last_post_date,
             self.mod_date)
@@ -560,6 +564,33 @@ class AbstractPost(Message, VersionedArtifact):
                 'src="?{}"?'.format(att.filename),
                 'src="{}"'.format(att.url(absolute=True)),
                 self.text)
+
+    def notify(self):
+        from vulcanforge.notification.model import Notification
+        artifact = self.thread.artifact or self.thread
+        Notification.post(artifact, 'message', post=self)
+
+    def get_publish_channels(self):
+        return [
+            'thread.{}'.format(self.thread_id)
+        ]
+
+    def get_publish_dict(self):
+        return {
+            'type': 'Post',
+            'data': {
+                'threadID': str(self.thread_id),
+                'text': self.text,
+                'html': g.markdown.convert(self.text),
+                'timestamp': self.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'author': self.author().username
+            }
+        }
+
+    def publish_to_redis(self):
+        redis = g.cache.redis
+        for channel in self.get_publish_channels():
+            redis.publish(channel, json.dumps(self.get_publish_dict()))
 
 
 class Post(AbstractPost):
@@ -630,11 +661,9 @@ class DiscussionAttachment(BaseAttachment):
             app_config_id=post.app_config_id)
 
     def local_url(self):
-        if self.post_id:
-            prefix = self.artifact.absolute_url()
+        artifact = self.artifact
+        if isinstance(artifact, self.PostClass):
+            prefix = artifact.absolute_url()
         else:
-            prefix = self.artifact.url()
+            prefix = artifact.url()
         return prefix + 'attachment/' + urlquote(self.filename)
-
-
-

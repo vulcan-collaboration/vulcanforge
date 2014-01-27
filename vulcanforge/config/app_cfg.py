@@ -19,6 +19,7 @@ import pkg_resources
 from paste.deploy.converters import asbool, asint
 import pysolr
 import tg
+import tg.render
 import jinja2
 from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 import pylons
@@ -30,7 +31,8 @@ from boto.exception import S3CreateError
 # needed for tg.configuration to work
 from vulcanforge.auth.authentication_provider import (
     LocalAuthenticationProvider)
-from vulcanforge.auth.security_manager import SecurityManager, SwiftAuthorizer
+from vulcanforge.auth.security_manager import SecurityManager
+from vulcanforge.auth.visibility_mode import VisibilityModeHandler
 from vulcanforge.cache.redis_cache import RedisCache
 from vulcanforge.common.helpers import slugify, split_subdomain
 from vulcanforge.common.util.debug import (
@@ -47,9 +49,14 @@ from vulcanforge.config.render.jsonify import JSONRenderer
 from vulcanforge.config.render.template.filters import jsonify, timesince
 from .tool_manager import ToolManager
 from .context_manager import ContextManager
+from vulcanforge.s3.auth import SwiftAuthorizer
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
 from vulcanforge.taskd.queue import RedisQueue
+from vulcanforge.visualize.api import (
+    ArtifactVisualizerInterface,
+    UrlVisualizerInterface
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -65,7 +72,8 @@ class ForgeConfig(AppConfig):
         'neighborhood': ['vulcanforge:neighborhood/static'],
         'notification': ['vulcanforge:notification/static'],
         'project': ['vulcanforge:project/static'],
-        'visualize': ['vulcanforge:visualize/static']
+        'visualize': ['vulcanforge:visualize/static'],
+        'websocket': ['vulcanforge:websocket/static']
     }
     template_dirs = ['vulcanforge:common/templates']
     namespaced_template_dirs = {
@@ -76,7 +84,8 @@ class ForgeConfig(AppConfig):
         'neighborhood': ['vulcanforge:neighborhood/templates'],
         'notification': ['vulcanforge:notification/templates'],
         'project': ['vulcanforge:project/templates'],
-        'visualize': ['vulcanforge:visualize/templates']
+        'visualize': ['vulcanforge:visualize/templates'],
+        '_debug_util': ['vulcanforge:common/templates/_debug_util_']
     }
     vulcan_packages = ['vulcanforge']
 
@@ -108,6 +117,9 @@ class ForgeConfig(AppConfig):
         self.setup_search()
         self.setup_cache()
         self.setup_task_queue()
+        self.setup_visualize()
+        self.setup_event_queue()
+        self.setup_visibilitymode()
 
     def register_packages(self):
         """This is a placeholder for now, but soon it will hold our extension
@@ -308,13 +320,36 @@ class ForgeConfig(AppConfig):
         task_queue = cls(config.get('task_queue.name', 'task_queue'), **kwargs)
         config['pylons.app_globals'].task_queue = task_queue
 
+    def setup_event_queue(self):
+        """This sets up a redis event queue.
+
+        """
+        api_path = config.get('event_queue.cls')
+        if api_path:
+            cls = import_object(api_path)
+        else:
+            cls = RedisQueue
+        kwargs = {
+            'host': config.get('event_queue.host', config['redis.host']),
+            'port': asint(config.get('event_queue.port',
+                                     config.get('redis.port', 6379))),
+            'db': asint(config.get('event_queue.db',
+                                   config.get('redis.db', 0)))
+        }
+        if config.get('event_queue.namespace'):
+            kwargs['namespace'] = config['event_queue.namespace']
+
+        event_queue = cls(config.get('event_queue.name', 'event_queue'),
+                          **kwargs)
+        config['pylons.app_globals'].event_queue = event_queue
+
     def setup_routes(self):
-        map = Mapper(directory=config['pylons.paths']['controllers'],
-                     always_scan=config['debug'])
+        mapper = Mapper(directory=config['pylons.paths']['controllers'],
+                        always_scan=config['debug'])
         # Setup a default route for the root of object dispatch
-        map.connect('*url', controller=self.root_controller,
-                    action='routes_placeholder')
-        config['routes.map'] = map
+        mapper.connect('*url', controller=self.root_controller,
+                       action='routes_placeholder')
+        config['routes.map'] = mapper
 
     def setup_template_loader(self):
         """Setup the template loader, responsible for finding the templates
@@ -405,3 +440,24 @@ class ForgeConfig(AppConfig):
 
         config['pylons.app_globals'].json_renderer = json_renderer
         self.render_functions.json = json_renderer.render_json
+
+    def setup_visualize(self):
+        if config.get('visualize.artifact_interface'):
+            visualize_artifcact = import_object(
+                config['visualize.artifact_interface'])
+        else:
+            visualize_artifcact = ArtifactVisualizerInterface
+        if config.get('visualize.url_interface'):
+            visualize_url = import_object(config['visualize.url_interface'])
+        else:
+            visualize_url = UrlVisualizerInterface
+
+        config['pylons.app_globals'].visualize_artifact = visualize_artifcact
+        config['pylons.app_globals'].visualize_url = visualize_url
+
+    def setup_visibilitymode(self):
+        visibility_mode = config.get('visibility_mode', 'default')
+        whitelist = filter(None, config.get('visibility_holes', '').split(','))
+        login_url = config.get('auth.login_url', '/auth/')
+        handler = VisibilityModeHandler(visibility_mode, login_url, whitelist)
+        config['pylons.app_globals'].visibility_mode_handler = handler

@@ -1,5 +1,4 @@
 import logging
-import os
 from collections import defaultdict
 from datetime import datetime
 from pprint import pformat
@@ -15,26 +14,29 @@ from ming.odm import state, session
 from ming.odm import (
     FieldProperty,
     ForeignIdProperty,
-    RelationProperty,
-    Mapper
+    RelationProperty
 )
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
 
 from vulcanforge.common.model.base import BaseMappedClass
-from vulcanforge.common.model.filesystem import File
+from vulcanforge.s3.model import File
 from vulcanforge.common.model.session import (
     artifact_orm_session,
     project_orm_session,
-    main_orm_session)
+    main_orm_session,
+    visualizable_orm_session,
+    visualizable_artifact_session)
 from vulcanforge.common.helpers import absurl, urlquote
-from vulcanforge.common.util import nonce, temporary_dir
+from vulcanforge.common.util import nonce
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACL
 from vulcanforge.project.model import Project
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.util import gen_message_id
+from vulcanforge.taskd import model_task
+from vulcanforge.visualize.base import VisualizableMixIn
 
 LOG = logging.getLogger(__name__)
 
@@ -106,11 +108,6 @@ class ArtifactApiMixin(object):
         @return: str
         """
         return self.link_text()
-
-    @classmethod
-    def get_pymongo_db_and_collection(cls):
-        db = session(cls).impl.bind.db
-        return db, db[cls.__mongometa__.name]
 
     def parent_security_context(self):
         """ACL processing should continue at the  AppConfig object. This lets
@@ -197,24 +194,6 @@ class ArtifactApiMixin(object):
         """
         return self.app_config.options.mount_label
 
-    def get_alt_resource(self, key, **kw):
-        raise NotImplementedError('get_alt_resource')
-
-    def _process_alt_file(self, file, filename=None):
-        """Process alt resource file, uploads to s3"""
-        if filename is None:
-            filename = os.path.basename(file.name)
-
-        # upload the file
-        key = g.get_s3_key(filename, self)
-        LOG.info('Writing new resource to {}'.format(key.name))
-        key.set_contents_from_file(file)
-
-        return dict(key=key.name)
-
-    def url_for_visualizer(self):
-        return self.get_alt_resource('visualizer') or self.url()
-
     def raw_url(self):
         """
         Url at which to download the resource.
@@ -222,7 +201,7 @@ class ArtifactApiMixin(object):
         @return: str
 
         """
-        return self.get_alt_resource('raw') or self.url()
+        return self.url()
 
     def get_discussion_thread(self, data=None, generate_if_missing=True):
         """
@@ -231,17 +210,18 @@ class ArtifactApiMixin(object):
 
         @rtype: vulcanforge.discussion.model.Thread
         """
-        from vulcanforge.discussion.model import Thread
-        t = Thread.query.get(ref_id=self.index_id())
-        if t is None and generate_if_missing:
+        app = self.app_config.instantiate()
+        thread_class = app.DiscussionClass.thread_class()
+        thread = thread_class.query.get(ref_id=self.index_id())
+        if thread is None and generate_if_missing:
             idx = self.index() or {}
-            t = Thread(
+            thread = thread_class(
                 app_config_id=self.app_config_id,
                 discussion_id=self.app_config.discussion_id,
                 ref_id=idx.get('id', self.index_id()),
                 subject='%s discussion' % idx.get('title_s', self.link_text()))
-            session(Thread).flush(t)
-        return t
+            thread.flush_self()
+        return thread
 
     @LazyProperty
     def discussion_thread(self):
@@ -278,7 +258,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     type_s = 'Generic Artifact'
 
     # Artifact base schema
-    _id = FieldProperty(S.ObjectId)
     mod_date = FieldProperty(datetime, if_missing=datetime.utcnow)
     app_config_id = ForeignIdProperty(
         'AppConfig', if_missing=lambda: c.app.config._id)
@@ -290,8 +269,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     labels = FieldProperty([str])
     app_config = RelationProperty('AppConfig')
     preview_url = FieldProperty(str, if_missing=None)
-    alt_resources = FieldProperty({str: None})
-    _alt_loading = FieldProperty(bool, if_missing=False)
 
     @classmethod
     def attachment_class(cls):  # pragma no cover
@@ -386,7 +363,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         if getattr(c, 'app', None) and c.app.config._id == self.app_config._id:
             return c.app
         else:
-            return self.app_config.load()(self.project, self.app_config)
+            return self.app_config.instantiate()
 
     def index(self, text_objects=None, use_posts=True, **kwargs):
         """
@@ -481,34 +458,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         @return: artifact | None
         """
         return None
-
-    def get_alt_resource(self, key):
-        if key in self.alt_resources:
-            return self.alt_resources[key]
-        return self.alt_resources.get('*')
-
-    def set_alt_resource(self, key, url=None, file=None, flush=False, **kw):
-        if file and not url:
-            url = self._process_alt_file(file, **kw)
-        self.alt_resources[key] = url
-        if flush:
-            session(self.__class__).flush(self)
-
-    def alternate_rest_url(self):
-        """
-        Url at which to set alternate resource for the artifact
-
-        :return: str
-        """
-        return '/rest{}artifact/alternate'.format(self.app_config.url())
-
-    def _get_alt_loading(self):
-        return self._alt_loading
-
-    def _set_alt_loading(self, value):
-        self._alt_loading = bool(value)
-
-    alt_loading = property(_get_alt_loading, _set_alt_loading)
 
     def attach(self, filename, fp, **kw):
         att = self.attachment_class().save_attachment(
@@ -678,8 +627,8 @@ class VersionedArtifact(Artifact):
         self.version = old_version
 
     def history(self):
-        HC = self.__mongometa__.history_class
-        q = HC.query.find(dict(
+        history_cls = self.__mongometa__.history_class
+        q = history_cls.query.find(dict(
             artifact_id=self._id
         )).sort('version', pymongo.DESCENDING)
         return q
@@ -887,7 +836,7 @@ class Feed(MappedClass):
         return feed
 
 
-class BaseAttachment(File):
+class BaseAttachment(File, VisualizableMixIn):
     thumbnail_size = (96, 96)
     ArtifactType = None
 
@@ -895,7 +844,7 @@ class BaseAttachment(File):
         name = 'attachment'
         polymorphic_on = 'attachment_type'
         polymorphic_identity = None
-        session = project_orm_session
+        session = visualizable_orm_session
         indexes = ['artifact_id', 'app_config_id'] + File.__mongometa__.indexes
 
     artifact_id = FieldProperty(S.ObjectId)
@@ -909,7 +858,10 @@ class BaseAttachment(File):
 
     def local_url(self):
         """Forge-local URL (not s3. Generally one should use File.url)"""
-        return self.artifact.url() + 'attachment/' + urlquote(self.filename)
+        filename = self.filename
+        if self.is_thumb:
+            filename += '/thumb'
+        return self.artifact.url() + 'attachment/' + urlquote(filename)
 
     def is_embedded(self):
         return self.filename in request.environ.get(
@@ -956,51 +908,25 @@ class BaseAttachment(File):
             'artifact_id': self.artifact_id
         }
 
+    def get_unique_id(self):
+        return 'attachment.{}.{}.{}'.format(
+            self.attachment_type,
+            self.artifact.index_id(),
+            self.filename
+        )
 
-class ArtifactProcessor(object):
-    """
-    Processes artifacts for alternate resource generation.
+    def artifact_ref_id(self):
+        return self.artifact.index_id()
 
-    Developed for on-demand alternate resource generation
-
-    This was designed to accept plugins if need be
-
-    """
-    processor_map = {}
-
-    @classmethod
-    def process(cls, name, artifact, context, verbose=True):
-        if name == 'cad':
-            # this is a temporary hack until [#1128]
-            if 'cad' not in cls.processor_map:
-                try:
-                    from vehicleforge.cad.processors import CADProcessor
-                except ImportError:
-                    CADProcessor = None
-                if CADProcessor:
-                    cls.processor_map['cad'] = CADProcessor
-            processor_cls = cls.processor_map.get(name)
-
-            # this is stuff we will more or less keep
-            if processor_cls:
-                try:
-                    with temporary_dir() as tmpdir:
-                        processor = processor_cls(verbose=verbose)
-                        filename = artifact.get_content_to_folder(tmpdir)
-
-                        outfile = processor.run(os.path.join(tmpdir, filename))
-                        with open(outfile, 'r') as fp:
-                            artifact.set_alt_resource(context, file=fp)
-                except Exception:
-                    artifact.set_alt_resource(
-                        context, {'status': 'error'}, flush=True)
-                    raise
-                finally:
-                    artifact.alt_loading = False
-            else:
-                LOG.warn('processor not found for {}'.format(artifact))
-        else:
-            LOG.warn('processor name was not cad')
+    @model_task
+    def trigger_vis_upload_hook(self):
+        # process attachments immediately
+        for visualizer in g.visualize_artifact(self).find_for_processing():
+            try:
+                visualizer.process_artifact(self)
+            except Exception:
+                LOG.exception('Error running on_upload hook on %s in %s',
+                              self.get_unique_id(), visualizer.name)
 
 
 # Ephemeral Functions for ArtifactReference
@@ -1392,3 +1318,13 @@ class Shortlink(BaseMappedClass):
             return ref_id
 
 
+class VisualizableArtifact(Artifact, VisualizableMixIn):
+
+    class __mongometa__:
+        session = visualizable_artifact_session
+
+    def get_unique_id(self):
+        return self.index_id()
+
+    def artifact_ref_id(self):
+        return self.index_id()

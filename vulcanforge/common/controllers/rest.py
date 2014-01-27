@@ -11,11 +11,14 @@ https://B{<domain>}/rest/
 
 @undocumented
 """
+import json
 import logging
 import urllib
 import os
 
 import oauth2 as oauth
+from paste.util.converters import asbool
+import pymongo
 from webob import exc
 from tg import expose, flash, redirect, config, TGController
 from pylons import tmpl_context as c, app_globals as g, request, response
@@ -35,6 +38,7 @@ from vulcanforge.auth.oauth.model import (
     OAuthAccessToken,
     OAuthRequestToken
 )
+from vulcanforge.cache.decorators import cache_rendered
 from vulcanforge.common.controllers.decorators import require_authenticated
 from vulcanforge.common.util import (
     nonce,
@@ -45,7 +49,8 @@ from vulcanforge.common.util import (
 from vulcanforge.artifact.controllers import ArtifactRestController
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.exceptions import NoSuchProjectError
-from vulcanforge.project.model import AppConfig
+from vulcanforge.project.model import AppConfig, Project
+from vulcanforge.websocket.controllers import WebSocketAPIController
 
 LOG = logging.getLogger(__name__)
 
@@ -55,6 +60,7 @@ class RestController(TGController):
     def __init__(self):
         self.user = UserRestController()
         self.artifact = ArtifactRestController(index_only=True)
+        self.webapi = WebAPIController()
 
     def _check_security(self):
         api_token = self._authenticate_request()
@@ -413,3 +419,218 @@ class SwiftAuthRestController(object):
             'has_permission is %s to resource %s for %s',
             str(has_permission), path, c.user.username)
         return {"has_permission": has_permission}
+
+
+class WebServiceRestController(object):
+    auth = WebServiceAuthController()
+    websocket = WebSocketAPIController()
+
+
+class WebAPIController(TGController):
+
+    @expose('json')
+    def navdata(self, **kwargs):
+        if not g.cache:
+            return self._make_navdata()
+        cache_hash_name = 'navdata'
+        hash_key = c.user.username
+        timeout = (10 * 60) if g.production_mode else 10
+        cached = g.cache.hget_json(cache_hash_name, hash_key)
+        if cached:
+            return cached
+        new_navdata = self._make_navdata()
+        g.cache.hset_json(cache_hash_name, hash_key, new_navdata, timeout)
+        return new_navdata
+
+    def _make_navdata(self):
+        """
+        Special icons and labels configuration:
+
+        config parameter:`masternav.special_neighborhoods`
+        config value: JSON structure, example (expanded to show structure)
+            {
+                "/projects/": {
+                    "label": "",
+                    "icon": "images/fang_logo.png",
+                    "icon_is_resource": true
+                }
+            }
+        """
+        SPECIAL_ICONS = {}
+        SPECIAL_LABELS = {}
+        specials_key = 'masternav.special_neighborhoods'
+        try:
+            specials_config = json.loads(config.get(specials_key, '{}'))
+        except ValueError:
+            LOG.exception("Could not parse config parameter %r", specials_key)
+        else:
+            for k, v in specials_config.items():
+                if 'icon' in v:
+                    if v.get('icon_is_resource', False):
+                        SPECIAL_ICONS[k] = g.resource_manager.\
+                            absurl(v.get('icon'))
+                    else:
+                        SPECIAL_ICONS[k] = v.get('icon')
+                if 'label' in v:
+                    SPECIAL_LABELS[k] = v.get('label')
+
+        hood_id_map = {}
+        project_id_map = {}
+
+        hood_items = []
+
+        hood_query_params = {
+            'url_prefix': {'$nin': ['/u/', '//']}
+        }
+        for hood in Neighborhood.query.find(hood_query_params):
+            if not g.security.has_access(hood, 'read'):
+                continue
+            project = hood.neighborhood_project
+            hood_data = {
+                'label': SPECIAL_LABELS.get(hood.url_prefix, hood.name),
+                'url': hood.url(),
+                'icon': SPECIAL_ICONS.get(hood.url_prefix, hood.icon_url()),
+                'shortname': hood.url_prefix,
+                'children': [],
+                'tools': self._get_global_nav_tools_for_project(project),
+                'actions': self._get_global_nav_actions_for_hood(hood),
+                'specialIcon': hood.url_prefix in SPECIAL_ICONS
+            }
+            hood_id_map[hood._id] = hood_data
+            hood_items.append(hood_data)
+
+        project_query_params = {
+            'neighborhood_id': {
+                '$in': hood_id_map.keys()
+            }
+        }
+        project_cursor = Project.query.find(project_query_params)
+        project_cursor.sort('sortable_name', pymongo.ASCENDING)
+        for project in project_cursor:
+            if (
+                project.deleted and
+                not g.security.has_access(project, 'write') or
+                not g.security.has_access(project, 'read') or
+                not project.first_mount('read')
+            ):
+                continue
+            project_data = {
+                'label': project.name,
+                'url': project.url(),
+                'icon': project.icon_url,
+                'shortname': project.shortname,
+                'tools': self._get_global_nav_tools_for_project(project),
+                'actions': self._get_global_nav_actions_for_project(project)
+            }
+            project_id_map[project._id] = project_data
+            hood_id_map[project.neighborhood_id]['children'].\
+                append(project_data)
+
+        root_item = self._get_global_nav_root_item()
+        # compile output
+        return {
+            'hoods': hood_items,
+            'globals': {
+                'children': self._get_global_nav_children(),
+                'actions': self._get_global_nav_actions()
+            },
+            "label": root_item['label'],
+            "url": root_item['url'],
+            "icon": root_item['icon']
+        }
+
+    def _get_global_nav_children(self):
+        items = []
+        item_keys = config.get('masternav.root_items', '').split()
+        for key in item_keys:
+            key_prefix = 'masternav.items.' + key + '.'
+            try:
+                label = config[key_prefix + 'label']
+                href = config[key_prefix + 'href']
+                icon_url = config[key_prefix + 'icon']
+            except KeyError, e:
+                LOG.exception('Missing required key for %r, skipping it', key)
+                continue
+            if asbool(config.get(key_prefix + 'icon_is_resource', False)):
+                icon_url = g.resource_manager.absurl(icon_url)
+            items.append({
+                'label': label,
+                'url': href,
+                'icon': icon_url
+            })
+        return items
+
+    def _get_global_nav_actions(self):
+        global_actions = []
+        if c.user.is_anonymous:
+            global_actions.append({
+                'label': 'Register',
+                'url': g.user_register_url
+            })
+            global_actions.append({
+                'label': 'Log In',
+                'url': g.login_url
+            })
+        return global_actions
+
+    def _get_global_nav_root_item(self):
+        if c.user.is_anonymous:
+            href = config.get('masternav.root.href', "/")
+        else:
+            href = config.get('masternav.root.href',
+                              "/dashboard/activity_feed/")
+        icon_url = config.get('masternav.root.icon',
+                              "images/vf_logo_icon2.png")
+        if asbool(config.get('masternav.root.icon_is_resource', 'true')):
+            icon_url = g.resource_manager.absurl(icon_url)
+        label = config.get('masternav.root.label', '').strip()
+        return {
+            'label': label,
+            'icon': icon_url,
+            'url': href
+        }
+
+    def _get_global_nav_actions_for_hood(self, hood):
+        actions = []
+        if hood.user_can_register(c.user):
+            actions.append({
+                'label': 'Start a {}'.format(hood.project_cls.type_label),
+                'url': '{}add_project'.format(hood.url()),
+                'icon': 'ico-plus'
+            })
+        return actions
+
+    def _get_global_nav_tools_for_project(self, project):
+        tools = []
+        i = 0
+        for mount in project.ordered_mounts():
+            i += 1
+            if i == 1:  # skip the first mount for listing
+                continue
+            app_config = mount.get('ac', None)
+            if app_config is None or not app_config.is_visible_to(c.user):
+                continue
+            app_config_data = {
+                'label': app_config.options.mount_label,
+                'url': app_config.url(),
+                'icon': app_config.icon_url(32),
+                'shortname': app_config.options.mount_point,
+                'actions': [],
+                'children': []
+            }
+            app_instance = app_config.instantiate()
+            try:
+                app_nav_data = app_instance.get_global_navigation_data()
+            except NotImplementedError:
+                pass
+            else:
+                app_config_data.update(app_nav_data)
+            # special behavior for "home" mount point
+            if app_config.options.get('mount_point', None) == 'home':
+                tools.insert(0, app_config_data)
+            else:
+                tools.append(app_config_data)
+        return tools
+
+    def _get_global_nav_actions_for_project(self, project):
+        return []

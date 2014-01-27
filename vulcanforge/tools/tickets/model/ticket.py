@@ -418,7 +418,7 @@ class Ticket(VersionedArtifact):
     @property
     def reported_by_name(self):
         who = self.reported_by
-        if who in (None, User.anonymous()):
+        if who or who.is_anonymous:
             return 'nobody'
         return who.get_pref('display_name')
 
@@ -432,7 +432,7 @@ class Ticket(VersionedArtifact):
     def assigned_to_names(self):
         if self.assigned_to_ids:
             names = [u.get_pref('display_name') for u in self.assigned_to
-                     if not u in (None, User.anonymous())]
+                     if u and not u.is_anonymous]
 
             if names:
                 return names

@@ -37,9 +37,10 @@
                         mimetype = $(this).attr('data-mimetype');
                     that.attachments[filename] = {
                         is_image: mimetype.match(/image.*/),
-                        $el: $(this)
+                        $el: $(this),
+                        url: $(this).attr('data-url') ? $(this).attr('data-url') : null,
+                        thumbURL: $(this).attr('data-thumb-url') ? $(this).attr('data-thumb-url') : null,
                     };
-                    that.attachments[filename].url = $(this).attr('data-url') ? $(this).attr('data-url') : null;
                 });
             }
         }
@@ -72,6 +73,9 @@
                 previewUrl = windowURL.createObjectURL(att.$el.files[0]);
             } else if (this.attachments.hasOwnProperty(filename) && this.attachments[filename].url){
                 previewUrl = this.attachments[filename].url;
+            } else if (filename.search(/^\.{0,2}\//) !== -1) {
+                // Use the filename as the URL if it is a relative or absolute path
+                previewUrl = filename;
             } else {
                 previewUrl = './attachment/' + filename;
             }
@@ -83,7 +87,8 @@
                 if (this.attachments.hasOwnProperty(fname) && this.attachments[fname]['is_image']){
                     available.push({
                         filename: fname,
-                        url: this.attachments[fname].url
+                        url: this.attachments[fname].url,
+                        thumbURL: this.attachments[fname].thumbURL
                     });
                 }
             }
@@ -152,8 +157,6 @@
                     this.$textarea.resize();
                 } else if (this.options.previewHeight) {
                     that.$preview.height(this.options.previewHeight);
-                } else {
-                    that.$preview.css('min-height', that.$textarea.height());
                 }
             }
             this.attachmentManager = this.options.attachmentManager;
@@ -235,7 +238,7 @@
 
             /* embedded visualization */
             this.converter.hooks.chain("preSpanGamut", function(text){
-                var rePattern = /\^v\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
+                var rePattern = /\^[vV]\(([^\)]+)\)(?:\(([^\)]*)\))?/g;
                 return text.replace(rePattern, function (whole, resourceUrl, props) {
                     return '<div class="markdownPlaceholder visualizerPlaceholder">' +
                         '<p>Visualizer for ' + resourceUrl + ' will be embedded here...</p>' +
@@ -278,7 +281,7 @@
                 return text.replace(rePattern, '');
             });
             this.converter.hooks.chain("postBlockGamut", function(text, runBlockGamut) {
-                var rePattern = /\/\*(?:.*?\n?)*?\*\//gm;
+                var rePattern = /\/\*[.\n]*?\*\//gm;
                 return text.replace(rePattern, '');
             });
 
@@ -286,13 +289,16 @@
             var leadingPipe = new RegExp(
                   ['^'                         ,
                    '[ ]{0,3}'                  , // Allowed whitespace
-                   '[|]'                       , // Initial pipe
-                   '(.+)\\n'                   , // $1: Header Row
+                   '(\\|?-data-\\|? *\\n)?'    , // $1: dataFlag
 
                    '[ ]{0,3}'                  , // Allowed whitespace
-                   '[|]([ ]*[-:]+[-| :]*)\\n'  , // $2: Separator
+                   '[|]'                       , // Initial pipe
+                   '(.+)\\n'                   , // $2: Header Row
 
-                   '('                         , // $3: Table Body
+                   '[ ]{0,3}'                  , // Allowed whitespace
+                   '[|]([ ]*[-:]+[-| :]*)\\n'  , // $3: Separator
+
+                   '('                         , // $4: Table Body
                      '(?:[ ]*[|].*\\n?)*'      , // Table rows
                    ')',
                    '(?:\\n|$)'                   // Stop at final newline
@@ -303,12 +309,15 @@
             var noLeadingPipe = new RegExp(
                 ['^'                         ,
                 '[ ]{0,3}'                  , // Allowed whitespace
-                '(\\S.*[|].*)\\n'           , // $1: Header Row
+                '(\\|?-data-\\|? *\\n)?'    , // $1: dataFlag
 
                 '[ ]{0,3}'                  , // Allowed whitespace
-                '([-:]+[ ]*[|][-| :]*)\\n'  , // $2: Separator
+                '(\\S.*[|].*)\\n'           , // $2: Header Row
 
-                '('                         , // $3: Table Body
+                '[ ]{0,3}'                  , // Allowed whitespace
+                '([-:]+[ ]*[|][-| :]*)\\n'  , // $3: Separator
+
+                '('                         , // $4: Table Body
                  '(?:.*[|].*\\n?)*'        , // Table rows
                 ')'                         ,
                 '(?:\\n|$)'                   // Stop at final newline
@@ -324,8 +333,8 @@
                     return str.replace(/^\s+|\s+$/g, '');
                 }
 
-                // $1 = header, $2 = separator, $3 = body
-                function doTable(match, header, separator, body, offset, string) {
+                // $1 = dataFlag, $2 = header, $3 = separator, $4 = body
+                function doTable(match, dataFlag, header, separator, body, offset, string) {
                     var alignspecs, align = [];
                     // remove any leading pipes and whitespace
                     header = header.replace(/^ *[|]/m, '');
@@ -356,7 +365,13 @@
                     var colCount = headers.length;
 
                     // build html
-                    var html = ['<table>\n', '<thead>\n', '<tr>\n'].join('');
+                    var startTag;
+                    if (typeof dataFlag === 'undefined') {
+                        startTag = '<table>\n';
+                    } else {
+                        startTag = '<table class="datasort-table">\n';
+                    }
+                    var html = [startTag, '<thead>\n', '<tr>\n'].join('');
 
                     // build column headers.
                     for (i = 0; i < colCount; i++) {
@@ -402,6 +417,10 @@
                 that._insertImageDialog(callback);
                 return true;
             });
+            this.editor.hooks.set('onPreviewRefresh', function () {
+                $vf.initDataTables();
+                return true;
+            });
             this.editor.run();
         },
         _insertImageDialog: function(callback) {
@@ -421,18 +440,24 @@
                 $attachmentsUL = $('<ul/>', {
                     "class": "markdown-attachment-img-list-insert"
                 });
-                $.each(availableImages, function(i, el){
-                    $attachmentsUL
-                        .append($('<li/>')
-                            .append($('<a/>', {
-                                "class": 'close',
-                                "text": el.filename,
-                                "href": "#",
-                                "click": function() {
-                                    callback('attachment:' + el.url);
-                                    return true;
-                                }
-                        })));
+                $.each(availableImages, function (i, imgInfo) {
+                    var $link = $('<a/>', {
+                        "class": 'close',
+                        "text": imgInfo.filename,
+                        "href": "#",
+                        "click": function () {
+                            callback('attachment:' + imgInfo.url);
+                            return true;
+                        }
+                    }).
+                        appendTo($('<li/>').appendTo($attachmentsUL));
+                    if (imgInfo.thumbURL) {
+                        $link.prepend(' ');
+                        $('<img/>').
+                            addClass('markdown-attachment-img-thumbnail').
+                            attr('src', imgInfo.thumbURL).
+                            prependTo($link);
+                    }
                 });
                 $form
                     .append($('<p/>', {
@@ -502,5 +527,51 @@
         .bind({'help': openHelpPanel});
 
     $('.markdown-tabs').fadeIn('slow');
+
+    $(window).bind('scroll resize', function () {
+        var headerHeight = $('#header-wrapper').height() + $('#main-column-header').height() + 10,
+            footerHeight = $('#footer').height() + 20,
+            windowHeight = $(window).height(),
+            windowScrollTop = $(window).scrollTop();
+        $('.markdown-edit').each(function (i, container) {
+            var $container = $(container),
+                $editContainer = $container.find('.markdown-edit-editor-container'),
+                $toolbar = $container.find('.markdown-button-bar'),
+                $textarea = $editContainer.find('textarea'),
+                containerOffsetTop = $container.offset().top,
+                containerHeight = $container.height(),
+                minHeight = parseInt($textarea.css('min-height')),  //requires a min-height specified in `px` from stylesheet
+                maxHeight = windowHeight - headerHeight - footerHeight - $toolbar.height(),
+                topOffset, textareaHeight, calculatedTextareaHeight;
+
+            // determine if offset is needed, check false first
+            //  container is not flex or box display                                                        container is below the window                          container is above the window
+            if (['flex', 'box', '-webkit-flex', '-webkit-box'].indexOf($container.css('display')) === -1 || containerOffsetTop > windowScrollTop + windowHeight || containerOffsetTop + containerHeight < windowScrollTop) {
+                $editContainer.css({
+                    'border-top-width': 0
+                });
+                $textarea.css({
+                    'height': 'auto'
+                });
+            } else {
+                // determine offset amount and height
+                topOffset = windowScrollTop - containerOffsetTop + headerHeight;
+                topOffset = Math.min(Math.max(0, topOffset), containerHeight - minHeight - $toolbar.height());
+                if (topOffset === 0) {
+                    maxHeight = maxHeight - (containerOffsetTop - windowScrollTop) + headerHeight;
+                }
+                calculatedTextareaHeight = containerHeight - topOffset - $toolbar.height();
+                textareaHeight = Math.min(maxHeight, Math.max(minHeight, calculatedTextareaHeight));
+
+                // apply
+                $editContainer.css({
+                    'border-top-width': topOffset
+                });
+                $textarea.css({
+                    'height': textareaHeight
+                });
+            }
+        });
+    });
 
 }(window));

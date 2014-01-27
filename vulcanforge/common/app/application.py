@@ -27,7 +27,7 @@ class Application(object):
     :var status: the status level of this app.  'production' apps are available
         to all projects
     :var bool searchable: toggle if the search box appears in the left menu
-    :var permissions: a list of named permissions used by the app
+    :var permissions: a dictionary of named permissions used by the app, the values describe what the permissions enable
     :var sitemap: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
         to create an app navigation.
     :var bool installable: toggle if the app can be installed in a project
@@ -49,7 +49,11 @@ class Application(object):
     api_root = None  # root rest controller
     static_dir = 'static'
     template_dir = 'templates'
-    permissions = []
+    permissions = dict(
+        admin='Configure this tool and its permissions',
+        write='Create new artifacts or modify old ones',
+        read='View tool artifacts'
+    )
     sitemap = []
     searchable = False
     DiscussionClass = Discussion
@@ -82,6 +86,7 @@ class Application(object):
     }
     default_acl = {}
     is_customizable = True
+    visible_to_role = 'read'
 
     def __init__(self, project, app_config_object):
         self.project = project
@@ -154,9 +159,7 @@ class Application(object):
     @classmethod
     def default_options(cls):
         """:return: the default config options"""
-        return dict(
-            (co.name, co.default)
-                for co in cls.config_options)
+        return {co.name: co.default for co in cls.config_options}
 
     def set_acl(self, acl_spec=None):
         """Install default acl. Note that we cannot modify the config acl
@@ -184,13 +187,13 @@ class Application(object):
         # Create the discussion object
         discussion = self.DiscussionClass(
             shortname=self.config.options.mount_point,
-            name='%s Discussion' % self.config.options.mount_point,
-            description='Forum for %s comments' %\
-                        self.config.options.mount_point
+            name='{} Discussion'.format(self.config.options.mount_point),
+            description='Forum for {} comments'.format(
+                self.config.options.mount_point)
         )
         session(discussion).flush()
         self.config.discussion_id = discussion._id
-        self.config.visible_to_role = 'read'
+        self.config.visible_to_role = self.visible_to_role
         self.config.reference_opts = self.reference_opts.copy()
         self.subscribe_admins()
         self.set_acl(acl)
@@ -324,3 +327,21 @@ class Application(object):
     def get_calendar_events(self, date_start, date_end):
         """Apps can provide events to the Calendar App"""
         return []
+
+    def iter_mapped_classes(self):
+        """
+        Iterates yielding each mapped class owned by this application.
+
+        Used under the hood in purging all database objects from a specific app.
+        """
+        if self.DiscussionClass:
+            yield self.DiscussionClass
+        if self.PostClass:
+            yield self.PostClass
+        if self.AttachmentClass:
+            yield self.AttachmentClass
+        for cls in self.artifacts.values():
+            yield cls
+
+    def get_global_navigation_data(self):
+        raise NotImplementedError

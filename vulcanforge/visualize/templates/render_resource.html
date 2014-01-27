@@ -1,5 +1,5 @@
 
-{{ widget.display(resource_url, extra_params=extra_params, height=height) }}
+{{ g.visualize_url(resource_url).full_render(extra_params=extra_params, height=height) }}
 
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}

@@ -1,7 +1,7 @@
 <fieldset class="vf-fieldset terms-agree" id="terms-container-{{id}}">
     <legend>{{ header }}</legend>
     {% if visualizer %}
-        {{ widget.visualizer_widget.display(value=widget.terms_file, visualizer=visualizer) }}
+        {{ g.visualize_url(widget.terms_file).render() }}
     {% endif %}
     <p><a href="{{ widget.terms_file }}" target="_blank">Download {{ header }} here</a></p>
 

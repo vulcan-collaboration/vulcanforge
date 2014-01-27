@@ -38,46 +38,9 @@ TEMPLATE_DIR = 'jinja:vulcanforge:dashboard/templates/'
 
 
 class BaseDashboardController(BaseController):
-    class Forms(BaseController.Forms):
-        make_announcement_form = MakeAnnouncementForm()
 
     def _before(self, *args, **kwargs):
-        c.custom_sidebar_menu = []
-        reg_nbhd = c.user.registration_neighborhood()
-        if reg_nbhd and reg_nbhd.user_can_register():
-            c.custom_sidebar_menu.extend([
-                SitemapEntry(
-                    'Start a {}'.format(reg_nbhd.project_cls.type_label),
-                    reg_nbhd.url() + 'add_project',
-                    ui_icon=Icon('', 'ico-plus')
-                ),
-                SitemapEntry('Dashboard')
-            ])
-        c.custom_sidebar_menu.extend([
-            SitemapEntry('Activity Feed', '/dashboard/activity_feed',
-                         ui_icon=Icon('', 'ico-activity')),
-            SitemapEntry('Conversations', '/dashboard/messages',
-                         ui_icon=Icon('', 'ico-inbox')),
-            SitemapEntry(
-                'Start a conversation',
-                '/dashboard/messages/start_conversation',
-                ui_icon=Icon('', 'ico-plus')
-            ),
-        ])
-        if len(self.Forms.make_announcement_form._available_sender_roles()):
-            c.custom_sidebar_menu.append(SitemapEntry(
-                'Make an announcement',
-                '/dashboard/messages/make_announcement',
-                ui_icon=Icon('', 'ico-plus')
-            ))
-            # announce to all users option
-        p_admin = Project.query.get(shortname=g.site_admin_project)
-        if g.security.has_access(p_admin, 'admin'):
-            c.custom_sidebar_menu.append(SitemapEntry(
-                "Announce to All Users",
-                '/dashboard/messages/announce_to_all',
-                ui_icon=Icon('', 'ico-plus')
-            ))
+        g.context_manager.set('u/{}'.format(c.user.username), 'profile')
 
 
 class DashboardRootController(BaseDashboardController):
@@ -95,7 +58,33 @@ class DashboardRootController(BaseDashboardController):
 
 
 class BaseMessagesController(BaseDashboardController):
-    pass
+    class Forms(BaseController.Forms):
+        make_announcement_form = MakeAnnouncementForm()
+
+    def _before(self, *args, **kwargs):
+        super(BaseMessagesController, self)._before(*args, **kwargs)
+        c.custom_sidebar_menu = [
+            SitemapEntry(
+                'Start a conversation',
+                '/dashboard/messages/start_conversation',
+                ui_icon=Icon('', 'ico-plus')
+            )
+        ]
+        if len(self.Forms.make_announcement_form._available_sender_roles()):
+            c.custom_sidebar_menu.append(SitemapEntry(
+                'Make an announcement',
+                '/dashboard/messages/make_announcement',
+                ui_icon=Icon('', 'ico-plus')
+            ))
+            # announce to all users option
+        p_admin = Project.query.get(shortname=g.site_admin_project)
+        if g.security.has_access(p_admin, 'admin'):
+            c.custom_sidebar_menu.append(SitemapEntry(
+                "Announce to All Users",
+                '/dashboard/messages/announce_to_all',
+                ui_icon=Icon('', 'ico-plus')
+            ))
+        c.custom_sidebar_menu.append(SitemapEntry(''))
 
 
 class ConversationController(BaseMessagesController):

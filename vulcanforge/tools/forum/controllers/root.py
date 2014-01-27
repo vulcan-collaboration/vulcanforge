@@ -2,6 +2,7 @@ import json
 import logging
 from urllib import unquote
 import pymongo
+from bson import ObjectId
 
 from tg import expose, validate, redirect, flash, response
 from tg.decorators import with_trailing_slash
@@ -21,7 +22,7 @@ from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.discussion import widgets as DW
 from .forum import ForumController, TEMPLATE_DIR
 from vulcanforge.tools.forum import import_support, model, util, widgets as FW
-from vulcanforge.tools.forum.widgets.admin import AddForumShort
+from vulcanforge.tools.forum.widgets.admin import AddForumShort, AddForum
 
 LOG = logging.getLogger(__name__)
 
@@ -45,7 +46,8 @@ class RootController(BaseController):
     class Forms(BaseController.Forms):
         new_topic = DW.NewTopicPost(submit_text='Save')
         forum_subscription_form = FW.ForumSubscriptionForm()
-        add_forum = AddForumShort()
+        add_forum = AddForum()
+        add_forum_short = AddForumShort()
 
     def __init__(self):
         super(RootController, self).__init__()
@@ -58,7 +60,7 @@ class RootController(BaseController):
     @expose(TEMPLATE_DIR + 'index.html')
     def index(self, new_forum=False, add_forum=None, **kw):
         c.new_topic = self.Forms.new_topic
-        c.add_forum = self.Forms.add_forum
+        c.add_forum = self.Forms.add_forum_short
         c.announcements_table = self.Widgets.announcements_table
         c.url = url.current()
         announcements = model.ForumThread.query.find(dict(
@@ -80,14 +82,61 @@ class RootController(BaseController):
 
     @expose(TEMPLATE_DIR + 'index.html')
     def new_forum(self, **kw):
+        g.security.require_access(c.app, 'write')
         c.url = url.current()
         return self.index(new_forum=True, **kw)
+
+    @expose(TEMPLATE_DIR + 'admin_forums.html')
+    def forums(self, add_forum=None, **kw):
+        g.security.require_access(c.app, 'write')
+        c.add_forum = self.Forms.add_forum
+        return dict(
+            app=c.app,
+            allow_config=g.security.has_access(c.app, 'write'),
+            add_forum=add_forum
+        )
+
+    @vardec
+    @expose()
+    @require_post()
+    def update_forums(self, forum=None, **kw):
+        g.security.require_access(c.app, 'write')
+        if forum is None:
+            forum = []
+        for f in forum:
+            forum = model.Forum.query.get(_id=ObjectId(str(f['id'])))
+            if f.get('delete'):
+                forum.deleted=True
+            elif f.get('undelete'):
+                forum.deleted=False
+            else:
+                if any(s in f['shortname'] for s in ('.', '/', ' ')):
+                    flash('Shortname cannot contain space . or /', 'error')
+                    redirect('.')
+                forum.name = f['name']
+                forum.shortname = f['shortname']
+                forum.description = f['description']
+                forum.ordinal = int(f['ordinal'])
+                if 'icon' in f and f['icon'] is not None and f['icon'] != '':
+                    util.save_forum_icon(forum, f['icon'])
+        flash('Forums updated')
+        redirect(request.referrer or 'forums')
+
+    @vardec
+    @expose()
+    @require_post()
+    @validate_form("add_forum", error_handler=forums)
+    def add_forum(self, add_forum=None, **kw):
+        g.security.require_access(c.app, 'write')
+        f = util.create_forum(c.app, add_forum)
+        redirect(f.url())
 
     @vardec
     @expose()
     @require_post()
     @validate_form("add_forum", error_handler=index)
     def add_forum_short(self, add_forum=None, **kw):
+        g.security.require_access(c.app, 'write')
         f = util.create_forum(c.app, add_forum)
         redirect(f.url())
 
@@ -119,7 +168,7 @@ class RootController(BaseController):
         discussion = model.Forum.query.get(
             app_config_id=c.app.config._id,
             shortname=forum)
-        if discussion.deleted and not g.security.has_access(c.app, 'configure'):
+        if discussion.deleted and not g.security.has_access(c.app, 'write'):
             flash('This forum has been removed.')
             redirect(request.referrer)
         g.security.require_access(discussion, 'post')

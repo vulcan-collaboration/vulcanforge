@@ -1,0 +1,30 @@
+{% extends '_debug_util_/_debug_base.html' %}
+
+{% block title %}REDIS – {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>REDIS</h2>
+    {% if selected and selected.exists %}
+        <h2><em>{{ selected.type }}{% if selected.ttl != -1 %} TTL:{{ selected.ttl }}{% endif %}</em> {{ selected.key }}</h2>
+        {% if selected.type == 'hash' %}
+            <pre>{{ selected.value|pprint }}</pre>
+        {% else %}
+            <pre>{{ selected.value }}</pre>
+        {% endif %}
+    {% elif selected and not selected.exists %}
+        <h2><em>NOT FOUND</em> {{ selected.key }}</h2>
+    {% endif %}
+    {% if selected %}
+        <hr>
+    {% endif %}
+    <h2>All Keys</h2>
+    {% if keys %}
+        <ul>
+        {% for key_name in keys|sort %}
+            <li><a href=".?key={{ key_name }}">{{ key_name }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Redis is empty</p>
+    {% endif %}
+{% endblock %}

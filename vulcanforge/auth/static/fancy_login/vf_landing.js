@@ -41,13 +41,11 @@ var fragmentShader,
             minVersion: 12,
             downloadURL: 'http://www.opera.com/download/',
             cssClass: 'opera'
-        }
-
-        /*,
+        },
 
         'Internet Explorer': {
-            minVersion: 9
-        }*/
+            minVersion: 11
+        }
     };
 
     var idle = $.cookie('idleLogout.loggedOut');

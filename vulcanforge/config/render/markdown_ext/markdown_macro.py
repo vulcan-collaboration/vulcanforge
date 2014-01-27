@@ -3,6 +3,7 @@ import cgi
 import shlex
 import string
 import logging
+import re
 
 import pymongo
 from pylons import tmpl_context as c, app_globals as g, request
@@ -16,6 +17,9 @@ from vulcanforge.project.widgets import ProjectListWidget
 LOG = logging.getLogger(__name__)
 
 _macros = {}
+
+
+RELATIVE_OR_ABSOLUTE_URL_REGEX = re.compile('^\.{0,2}/')
 
 
 class Include(ew.Widget):
@@ -140,11 +144,15 @@ def include(ref=None, **kw):
     artifact = link.ref.artifact
     if artifact is None:
         return '[[include (artifact not found)]]' % ref
-    included = request.environ.setdefault('allura.macro.included', set())
-    if artifact in included:
-        return '[[include %s (already included)]' % ref
+    try:
+        included = request.environ.setdefault('allura.macro.included', set())
+    except TypeError:
+        pass
     else:
-        included.add(artifact)
+        if artifact in included:
+            return '[[include %s (already included)]' % ref
+        else:
+            included.add(artifact)
     sb = Include()
     g.resource_manager.register(sb)
     response = sb.display(artifact=artifact, attrs=kw)
@@ -154,9 +162,13 @@ def include(ref=None, **kw):
 @macro()
 def img(src=None, **kw):
     attrs = ('%s="%s"' % t for t in kw.iteritems())
-    included = request.environ.setdefault('allura.macro.att_embedded', set())
-    included.add(src)
-    if '://' in src:
+    try:
+        included = request.environ.setdefault('allura.macro.att_embedded', set())
+    except TypeError:
+        pass
+    else:
+        included.add(src)
+    if '://' in src or RELATIVE_OR_ABSOLUTE_URL_REGEX.match(src):
         return '<img src="%s" %s/>' % (src, ' '.join(attrs))
     else:
         return '<img src="./attachment/%s" %s/>' % (src, ' '.join(attrs))
