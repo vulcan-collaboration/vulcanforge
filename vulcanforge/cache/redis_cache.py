@@ -81,7 +81,6 @@ class RedisCache(object):
         result = self.get(name)
         if result:
             result = self._from_json(name, result)
-        LOG.info('get json %s is %s', name, result)
         return result
 
     def set_json(self, name, value, expiration=None):
@@ -96,7 +95,6 @@ class RedisCache(object):
         result = self.hget(name, key)
         if result:
             result = self._from_json(','.join((name, key)), result)
-        LOG.info('get json %s is %s', name, result)
         return result
 
     def hset_json(self, name, key, value, expiration=None):

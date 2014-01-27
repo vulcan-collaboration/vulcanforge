@@ -260,8 +260,11 @@ class ProjectOverviewForm(ForgeForm):
                 attrs={
                     'class': 'vf-fieldset',
                 }
-            ),
-            ew.FieldSet(
+            )
+        ]
+        if not getattr(c, 'project', None) or \
+                c.project.neighborhood.enable_marketplace:
+            fields.append(ew.FieldSet(
                 label="Marketplace",
                 fields=[
                     ew.TextArea(
@@ -284,8 +287,7 @@ class ProjectOverviewForm(ForgeForm):
                 attrs={
                     'class': 'vf-fieldset',
                 }
-            ),
-        ]
+            ))
         perils = []
         if c.project.deleted:
             perils.append(

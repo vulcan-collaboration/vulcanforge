@@ -180,3 +180,18 @@ a.notfound {
     font-weight: normal;
     color: #888;
 }
+
+
+@media print {
+    .wiki-titlebar-item-with-popup .wiki-titlebar-item-label::after,
+    .avatar-list
+    {display: none;}
+
+    .wiki-titlebar-item,
+    .wiki-titlebar-item-label {
+        display: inline;
+        float: none;
+        margin: 0;
+        padding: 0;
+    }
+}
