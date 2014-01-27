@@ -42,7 +42,7 @@ class SyntaxVisualizer(BaseVisualizer):
     content_widget = SyntaxContent()
     artifact_diff_widget = SyntaxArtifactDiff()
     default_options = {
-        "name": "Syntax Visualizer",
+        "name": "Source",
         "mime_types": [
             '^text/',
             '^application/javascript',
