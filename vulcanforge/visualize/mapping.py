@@ -163,7 +163,7 @@ class VisualizerConfigMapper(object):
             if pattern == '*':
                 all_exts = True
             else:
-                extensions.append(re.compile(pattern))
+                extensions.append(re.compile(pattern, flags=re.IGNORECASE))
         return extensions, all_exts
 
     def _matches_any(self, s, patterns):
