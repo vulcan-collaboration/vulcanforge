@@ -22,7 +22,7 @@
 
 {% block header %}{{ config.get('forge_name', 'Forge') }} Registration{% endblock %}
 {% block content %}
-                    <div id="browserSupportErrorHolder"></div>
+                    <div id="browserSupportErrorHolder" class="padded"></div>
                     <noscript>
                         <div class="message error" id="noScriptErrorHolder">{{ config.get('forge_name', 'The forge') }} relies on JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
                     </noscript>
