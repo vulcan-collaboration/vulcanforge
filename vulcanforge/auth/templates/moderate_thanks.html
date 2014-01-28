@@ -6,7 +6,7 @@
 
 {% block content %}
     <div class="padded">
-        <p>Thanks for your interest in VehicleForge. You will receive your
+        <p>Thanks for your interest in {%if config %}{{config.get('forge_name', 'Our Forge')}}{% else %}Our Forge{% endif %}. You will receive your
         activation link once the approval process is complete.</p>
     </div>
 {% endblock %}
