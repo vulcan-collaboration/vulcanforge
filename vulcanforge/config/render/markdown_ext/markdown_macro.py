@@ -11,6 +11,7 @@ import ew
 
 from vulcanforge.common.helpers import encode_keys, ago
 from vulcanforge.artifact.model import Shortlink, Feed
+from vulcanforge.common.util.urls import rebase_url
 from vulcanforge.project.model import Project, ProjectCategory
 from vulcanforge.project.widgets import ProjectListWidget
 
@@ -131,31 +132,6 @@ def projects(category=None, display_mode='grid', sort='last_updated',
     pl = ProjectListWidget()
     g.resource_manager.register(pl)
     response = pl.display(projects=pq.all(), display_mode=display_mode)
-    return response
-
-
-@macro()
-def include(ref=None, **kw):
-    if ref is None:
-        return '[-include-]'
-    link = Shortlink.lookup(ref)
-    if not link:
-        return '[[include %s (not found)]]' % ref
-    artifact = link.ref.artifact
-    if artifact is None:
-        return '[[include (artifact not found)]]' % ref
-    try:
-        included = request.environ.setdefault('allura.macro.included', set())
-    except TypeError:
-        pass
-    else:
-        if artifact in included:
-            return '[[include %s (already included)]' % ref
-        else:
-            included.add(artifact)
-    sb = Include()
-    g.resource_manager.register(sb)
-    response = sb.display(artifact=artifact, attrs=kw)
     return response
 
 

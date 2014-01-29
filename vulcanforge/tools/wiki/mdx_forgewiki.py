@@ -1,20 +1,168 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
+import StringIO
 
 import markdown
+import markdown.blockprocessors
+import markdown.preprocessors
+import markdown.postprocessors
 from markdown.extensions.headerid import slugify, unique, itertext
 import markdown.extensions.toc
 from markdown.util import etree
 from pylons import tmpl_context as c
 import pymongo
+import time
+from webhelpers.html import literal
+from vulcanforge.common.util.urls import rebase_url
 from vulcanforge.tools.wiki.model import Page
 
 
 LOG = logging.getLogger(__name__)
 
 
+def log_execution_time(message):
+    def wrapper(method):
+        def wrapped(*args, **kwargs):
+            time_start = time.time()
+            result = method(*args, **kwargs)
+            time_end = time.time()
+            LOG.info('–– {}: {} ––'.format(message, time_end - time_start))
+            return result
+        return wrapped
+    return wrapper
+
+
 # Processors
+
+
+class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
+    """
+    format:
+
+        [[include Other Page Title]]
+
+    A little hackish but it requires that c.wikipage is set to remap links.
+
+    Should be registered as first preprocessor.
+
+    TODO: make embeddable in nested blocks
+            (i.e. include inside a readmore block)
+    """
+    include_pattern = re.compile(r'^[ ]{0,3}\[\[include +([^\]]+)]]\s*$')
+    not_found_template = u'> *\[\[include {}\]\]: Page not found.*'
+
+    def __init__(self, markdown_instance=None, extension=None):
+        super(WikiPageIncludePreprocessor, self).__init__(markdown_instance)
+        self.extension = extension
+
+    @log_execution_time('Preprocessor')
+    def run(self, lines):
+        # skip running if someone forgot to set the wikipage
+        page = getattr(c, 'wikipage', False)
+        if not page:
+            return lines
+        page_class = page.query.mapped_class
+        page_title = page.title.strip()
+        # include pages
+        context_stack = []
+        line_cursor = 0
+        while line_cursor < len(lines):
+            line = lines[line_cursor]
+            # pop the context
+            if line == self.extension.include_end:
+                context_stack.pop()
+
+            include_match = self.include_pattern.match(line)
+            if include_match is None:
+                line_cursor += 1
+                continue
+            lines.pop(line_cursor)  # remove the include tag
+
+            # find the requested page
+            include_title = include_match.group(1).strip()
+            if include_title == page_title or include_title in context_stack:
+                continue
+            include_page = page_class.query.get(
+                app_config_id=page.app_config_id,
+                title=include_title)
+            if include_page is None:
+                lines.insert(line_cursor,
+                             self.not_found_template.format(include_title))
+                line_cursor += 1
+                continue
+            include_url = include_page.url()
+            include_lines = include_page.text.split('\n')
+
+            # insert the included page text (markdown) surrounded by flags for
+            # the postprocessor
+            new_lines = (
+                [self.extension.include_start.format(include_url)] +
+                include_lines +
+                [self.extension.include_end]
+            )
+            lines = lines[:line_cursor] + new_lines + lines[line_cursor:]
+            # push the context
+            context_stack.append(include_title)
+
+        return lines
+
+
+class WikiPageIncludePostprocessor(markdown.postprocessors.Postprocessor):
+    def __init__(self, markdown_instance=None, extension=None):
+        super(WikiPageIncludePostprocessor, self).__init__(markdown_instance)
+        self.extension = extension
+
+    @log_execution_time('Postprocessor')
+    def run(self, text):
+        """
+        Rebase all of the "href" and "src" attributes for included pages.
+        """
+        # skip running if someone forgot to set the wikipage
+        page = getattr(c, 'wikipage', False)
+        if not page:
+            return text
+        page_url = page.url()
+        old_text = StringIO.StringIO(text)
+        new_text = StringIO.StringIO()
+        include_stack = []
+        active_buffer = StringIO.StringIO()
+
+        def replace_attr(match):
+            attribute_name, url = match.groups()
+            new_url = rebase_url(url, include_stack[-1], page_url)
+            return u' {}="{}"'.format(attribute_name, new_url)
+
+        def flush_buffer(new_text, buffer):
+            buffer.seek(0)
+            new_text.write(re.sub(ur' (href|src)="([^"]+)"', replace_attr,
+                                  buffer.read()))
+
+        for line in old_text:
+            # does line start new context?
+            match = self.extension.include_start_pattern.match(line)
+            if match is not None:
+                if include_stack:
+                    flush_buffer(new_text, active_buffer)
+                    active_buffer = StringIO.StringIO()
+                include_stack.append(match.group(1))
+                continue
+            # does the line end a context?
+            if self.extension.include_end_pattern.match(line):
+                flush_buffer(new_text, active_buffer)
+                active_buffer = StringIO.StringIO()
+                include_stack.pop()
+                continue
+            # are we even in a context?
+            if not include_stack:
+                new_text.write(line)
+                continue
+            ## rebase urls for the current context in this line
+            #new_text += re.sub(ur' (href|src)="([^"]+)"', replace_attr, line)
+            # add the line to the buffer
+            active_buffer.write(line)
+        new_text.seek(0)
+        return literal(new_text.read())
 
 
 class WikiPageTreeBlockProcessor(markdown.blockprocessors.BlockProcessor):
@@ -199,7 +347,23 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
 
 
 class ForgeWikiExtension(markdown.Extension):
+
+    include_start = u'\n¶¶¶begin-include {}\n'
+    include_end = u'\n¶¶¶end-include\n'
+    include_start_pattern = re.compile(ur'^<p>¶¶¶begin-include (.+)</p>$')
+    include_end_pattern = re.compile(ur'^<p>¶¶¶end-include</p>$')
+
     def extendMarkdown(self, md, md_globals):
+        # includes
+        include_preprocessor = WikiPageIncludePreprocessor(md, self)
+        md.preprocessors.add('forgewiki_include',
+                             include_preprocessor,
+                             '_begin')
+        include_postprocessor = WikiPageIncludePostprocessor(md, self)
+        md.postprocessors.add('forgewiki_include',
+                              include_postprocessor,
+                              '_end')
+
         # {Table of Contents}
         table_of_contents_config = {
             'marker': '{Table of Contents}',
