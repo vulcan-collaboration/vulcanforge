@@ -56,7 +56,7 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
         while line_cursor < len(lines):
             line = lines[line_cursor]
             # pop the context
-            if line == self.extension.include_end:
+            if line == self.extension.include_end and len(context_stack):
                 context_stack.pop()
 
             include_match = self.include_pattern.match(line)
@@ -127,16 +127,23 @@ class WikiPageIncludePostprocessor(markdown.postprocessors.Postprocessor):
             # does line start new context?
             match = self.extension.include_start_pattern.match(line)
             if match is not None:
+                content_before, include_title, content_after = match.groups()
                 if include_stack:
                     flush_buffer(new_text, active_buffer)
                     active_buffer = StringIO.StringIO()
-                include_stack.append(match.group(1))
+                include_stack.append(include_title)
+                new_text.write(content_before)
+                new_text.write(content_after)
                 continue
             # does the line end a context?
-            if self.extension.include_end_pattern.match(line):
+            match = self.extension.include_end_pattern.match(line)
+            if match:
+                content_before, content_after = match.groups()
                 flush_buffer(new_text, active_buffer)
                 active_buffer = StringIO.StringIO()
                 include_stack.pop()
+                new_text.write(content_before)
+                new_text.write(content_after)
                 continue
             # are we even in a context?
             if not include_stack:
@@ -333,10 +340,10 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
 
 class ForgeWikiExtension(markdown.Extension):
 
-    include_start = u'\n¶¶¶begin-include {}\n'
-    include_end = u'\n¶¶¶end-include\n'
-    include_start_pattern = re.compile(ur'^<p>¶¶¶begin-include (.+)</p>$')
-    include_end_pattern = re.compile(ur'^<p>¶¶¶end-include</p>$')
+    include_start = u'\n¶¶¶begin-include {}¶¶¶\n'
+    include_end = u'\n¶¶¶end-include¶¶¶\n'
+    include_start_pattern = re.compile(ur'([^¶]*)¶¶¶begin-include (.+)¶¶¶(.*)')
+    include_end_pattern = re.compile(ur'([^¶]*)¶¶¶end-include¶¶¶(.*)')
 
     def extendMarkdown(self, md, md_globals):
         # includes
