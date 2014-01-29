@@ -39,6 +39,10 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
     include_pattern = re.compile(r'^[ ]{0,3}\[\[include +([^\]]+)]]\s*$')
     not_found_template = u'> *\[\[include {}\]\]: Page not found.*'
 
+    # included pages plain text (raw markdown) first has all matches of the
+    # following pattern removed from it.
+    included_sub_pattern = re.compile(ur'\{Table of Contents}')
+
     def __init__(self, markdown_instance=None, extension=None):
         super(WikiPageIncludePreprocessor, self).__init__(markdown_instance)
         self.extension = extension
@@ -78,7 +82,8 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
                 line_cursor += 1
                 continue
             include_url = include_page.url()
-            include_lines = include_page.text.split('\n')
+            include_text = self.included_sub_pattern.sub('', include_page.text)
+            include_lines = include_text.split('\n')
 
             # insert the included page text (markdown) surrounded by flags for
             # the postprocessor
