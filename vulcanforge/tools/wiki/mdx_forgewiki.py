@@ -12,25 +12,12 @@ import markdown.extensions.toc
 from markdown.util import etree
 from pylons import tmpl_context as c
 import pymongo
-import time
 from webhelpers.html import literal
 from vulcanforge.common.util.urls import rebase_url
 from vulcanforge.tools.wiki.model import Page
 
 
 LOG = logging.getLogger(__name__)
-
-
-def log_execution_time(message):
-    def wrapper(method):
-        def wrapped(*args, **kwargs):
-            time_start = time.time()
-            result = method(*args, **kwargs)
-            time_end = time.time()
-            LOG.info('–– {}: {} ––'.format(message, time_end - time_start))
-            return result
-        return wrapped
-    return wrapper
 
 
 # Processors
@@ -56,7 +43,6 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
         super(WikiPageIncludePreprocessor, self).__init__(markdown_instance)
         self.extension = extension
 
-    @log_execution_time('Preprocessor')
     def run(self, lines):
         # skip running if someone forgot to set the wikipage
         page = getattr(c, 'wikipage', False)
@@ -113,7 +99,6 @@ class WikiPageIncludePostprocessor(markdown.postprocessors.Postprocessor):
         super(WikiPageIncludePostprocessor, self).__init__(markdown_instance)
         self.extension = extension
 
-    @log_execution_time('Postprocessor')
     def run(self, text):
         """
         Rebase all of the "href" and "src" attributes for included pages.
