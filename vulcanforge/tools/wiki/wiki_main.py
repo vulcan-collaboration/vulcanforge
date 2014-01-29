@@ -590,7 +590,7 @@ class PageController(WikiContentBaseController):
 
     def __init__(self, title):
         self.title = unquote(really_unicode(title))
-        self.page = Page.query.get(
+        c.wikipage = self.page = Page.query.get(
             app_config_id=c.app.config._id, title=self.title)
         if self.page is not None:
             self.attachment = WikiAttachmentsController(self.page)
