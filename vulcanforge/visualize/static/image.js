@@ -50,6 +50,7 @@
     $.widget('vf_vis.image', {
 
         options: {
+            zoomButtonFactor: 1.4,
             minImageDimension: 32,
             maxScale: 8
         },
@@ -238,10 +239,10 @@
 
 
         zoomIn: function () {
-            this.setScale(this._scale * 1.1);
+            this.setScale(this._scale * this.options.zoomButtonFactor);
         },
         zoomOut: function () {
-            this.setScale(this._scale * 0.9);
+            this.setScale(this._scale / this.options.zoomButtonFactor);
         },
         center: function () {
             var x, y;
