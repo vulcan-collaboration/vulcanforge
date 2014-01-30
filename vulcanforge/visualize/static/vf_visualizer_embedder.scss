@@ -169,6 +169,9 @@ div.visualizerTabs ul.ui-tabs-nav li.dl-link-container {
     right: 0;
     bottom: 0;
 }
+body.has-sidebar .fullHeightVisualizer .visualizerWrapper {
+    right: $sidebar-width;
+}
 
 .fullHeightVisualizer .visualizerToolbar {
     flex: 0 0 auto;
