@@ -256,18 +256,17 @@ class Notification(SOLRIndexed):
                 text = u"{}: {}".format(author.display_name, post_text)
             else:
                 text = post_text
-            d = dict(
-                _id=post._id,
-                from_address=str(author._id),
-                # TODO: forgemail reference follows
-                reply_to_address=u'"%s" <%s>' % (
-                    subject_prefix, getattr(artifact, 'email_address',
-                                            'noreply@in.vulcanforge.org')),
-                subject=subject_prefix+subject,
-                text=text,
-                in_reply_to=post.parent_id,
-                author_id=author._id,
-                pubdate=datetime.utcnow())
+            d = {'_id': post._id,
+                 'from_address': str(author._id),
+                 'reply_to_address': u'"%s" <%s>' % (
+                     subject_prefix,
+                     getattr(artifact, 'email_address',
+                             'noreply@in.vulcanforge.org')),
+                 'subject': subject_prefix + subject,
+                 'text': text,
+                 'in_reply_to': post.parent_id,
+                 'author_id': author._id,
+                 'pubdate': datetime.utcnow()}
         else:
             subject = kwargs.pop('subject', u'%s modified by %s' % (
                 idx.get('title_s'), c.user.get_pref('display_name')))
