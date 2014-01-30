@@ -181,3 +181,11 @@ input.rename-bookmark-title-input {
 .intellitrigger {
   position: relative;
 }
+
+
+@media print {
+    .referenceBin,
+    .referenceBin.on {
+        display: none;
+    }
+}
