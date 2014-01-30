@@ -1180,32 +1180,44 @@ $.extend($vf, {
     /**
      * forgemarkdown extras
      */
-    $vf.afterInit(function () {
-        // Read More
-        $('.md-read-more').each(function () {
+    $vf.initNewReadMoreTags = function (opt_config) {
+        var defaults = {open: false},
+            options = $.extend(true, {}, defaults, opt_config);
+        $('.md-read-more:not(._rendered_)').each(function () {
             var $theMore = $(this).
-                    hide(),
-                $more = $('<a>Read more...</a>').
+                    addClass('_rendered_'),
+                label = $theMore.attr('title') || 'Read more...',
+                $more = $('<a>'+ label + '</a>').
                     addClass('md-read-more-show').
                     addClass('inline-icon ico-info').
-                    insertBefore($theMore).
-                    bind('click', function () {
-                        $(this).hide();
-                        $less.show();
-                        $theMore.
-                            show();
-                    }),
-                $less = $('<a></a>').
+                    insertBefore($theMore),
+                $less = $('<a/>').
+                    attr('title', 'close').
                     addClass('md-read-more-hide').
-                    addClass('inline-icon ico-close').
-                    prependTo($theMore).
-                    bind('click', function () {
-                        $(this).hide();
-                        $more.show();
-                        $theMore.hide();
-                    }).
-                    hide();
+                    addClass('basic-icon ico-close').
+                    addClass('hidden').
+                    prependTo($theMore),
+                readMore = function () {
+                    $more.addClass('hidden');
+                    $less.removeClass('hidden');
+                    $theMore.removeClass('hidden');
+                },
+                readLess = function () {
+                    $more.removeClass('hidden');
+                    $less.addClass('hidden');
+                    $theMore.addClass('hidden');
+                };
+            $more.on('click', readMore);
+            $less.on('click', readLess);
+            if (options.open) {
+                readMore();
+            } else {
+                readLess();
+            }
         });
+    };
+    $vf.afterInit(function () {
+        $vf.initNewReadMoreTags();
     });
 
     /**

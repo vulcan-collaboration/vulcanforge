@@ -6,46 +6,132 @@ html, body
     padding: 0;
 }
 
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 .container {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: #808080;
-    overflow: auto;
+    overflow: hidden;
+    cursor: -webkit-grab;
+    cursor: -moz-grab;
+    cursor: grab;
+    background: #404040 url(images/background.svg);
+}
+.container:active {
+    cursor: -webkit-grabbing;
+    cursor: -moz-grabbing;
+    cursor: grabbing;
 }
 
-.container img {
+.image-wrapper {
+    position: relative;
+    text-align: center;
+    -webkit-transform-origin: 0 0;
+    -moz-transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    -o-transform-origin: 0 0;
+    transform-origin: 0 0;
+}
+
+.image {
     display: block;
-    margin: auto;
-    box-shadow: 0 0 2em black;
+    opacity: 0;
+    box-shadow: 0 0 16px rgba(0,0,0,0.5);
+    pointer-events: none;
+    -webkit-transform-origin: 50% 50%;
+    -moz-transform-origin: 50% 50%;
+    -ms-transform-origin: 50% 50%;
+    -o-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+    -webkit-transition: all 1s;
+    -moz-transition: all 1s;
+    -ms-transition: all 1s;
+    -o-transition: all 1s;
+    transition: all 1s;
+    -webkit-transform: scale(0);
+    -moz-transform: scale(0);
+    -ms-transform: scale(0);
+    -o-transform: scale(0);
+    transform: scale(0);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 16px rgba(0,0,0,0.5);
 }
 
 .panel {
     position: fixed;
-    top: 1ex;
-    right: 1ex;
-    padding: 1em;
-    background: rgba(0,0,0,0.6);
-    border-radius: 1ex;
+    top: 1rem;
+    right: 1rem;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+    border-radius: 8px;
     font-family: Arial, sans-serif;
     color: #ddd;
+    cursor: default;
+    -webkit-transition: opacity 2s;
+    -moz-transition: opacity 2s;
+    -ms-transition: opacity 2s;
+    -o-transition: opacity 2s;
+    transition: opacity 2s;
 }
 
 .panel button {
     display: inline-block;
-    padding: 1ex;
-    background: black;
+    margin: 0;
+    padding: 4px 16px;
+    background: #202020;
+    box-shadow: none;
     color: #ddd;
     border: none;
-    border-radius: 1ex;
+    border-radius: 0;
     font-size: 0.8em;
     font-weight: bold;
     text-shadow: none;
 }
 
+.panel button:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+.panel button:last-child {
+    border-radius: 0 3px 3px 0;
+}
+
 .panel button:hover {
-    background: #333;
+    background: #000;
     color: white;
+}
+
+
+.unscaledImageMarker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid green;
+}
+.transformOriginMarker {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    width: 10px;
+    height: 10px;
+    background: green;
 }
