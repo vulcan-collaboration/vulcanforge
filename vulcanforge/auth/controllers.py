@@ -360,7 +360,8 @@ class _AuthController(BaseController):
             neighborhood = Neighborhood.by_prefix(
                 config['default_nbhd_membership'])
             project = neighborhood.neighborhood_project
-        user = User.register(
+        user_cls = neighborhood.user_cls if neighborhood else User
+        user = user_cls.register(
             {
                 'username': username,
                 'display_name': token.name,
