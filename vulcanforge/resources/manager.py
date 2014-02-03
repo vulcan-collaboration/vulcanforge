@@ -35,6 +35,7 @@ class ResourceManager(ew.ResourceManager):
     resource_cache = {}
     combine_static_resources = False
     static_resources_dir = None
+    static_recipes_dir = None
     build_key = 'default'
 
     def __init__(self, config):
@@ -43,6 +44,7 @@ class ResourceManager(ew.ResourceManager):
         self.combine_static_resources = asbool(
             config.get('combine_static_resources', 'false'))
         self.static_resources_dir = config.get('static_resources_dir', None)
+        self.static_recipes_dir = config.get('static_recipes_dir', None)
         self.build_key = config.get('build_key', 'default')
         self.separator = config.get('resource_separator', ';')
 
@@ -203,7 +205,7 @@ class ResourceManager(ew.ResourceManager):
 
     def extend_recipe_list(self, recipe):
         recipe = recipe + os.linesep
-        recipe_path = os.path.join(self.static_resources_dir, RECIPE_FILE)
+        recipe_path = os.path.join(self.static_recipes_dir, RECIPE_FILE)
         recipe_list = []
 
         if os.path.exists(recipe_path):
