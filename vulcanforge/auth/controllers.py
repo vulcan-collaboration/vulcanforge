@@ -107,14 +107,18 @@ class _AuthController(BaseController):
     @require_anonymous
     @with_trailing_slash
     def index(self, **kwargs):
+        is_returning_to = False
         msgClass = ''
         orig_request = request.environ.get('pylons.original_request', None)
         if 'return_to' in kwargs:
             return_to = kwargs.pop('return_to')
+            is_returning_to = True
         elif orig_request:
             return_to = orig_request.url
+            is_returning_to = True
         elif request.referer:
             return_to = urlsplit(request.referer).path
+            is_returning_to = True
         else:
             return_to = '/'
         if config.get('login_template'):
@@ -128,7 +132,8 @@ class _AuthController(BaseController):
             'return_to': return_to,
             'form_values': {'return_to': return_to},
             'can_register': g.show_register_on_login,
-            'autocomplete': not g.production_mode
+            'autocomplete': not g.production_mode,
+            'is_returning_to': is_returning_to
         }
 
     @expose(TEMPLATE_DIR + 'login.html')
@@ -136,7 +141,8 @@ class _AuthController(BaseController):
     def login(self, *args, **kwargs):
         c.form = self.Forms.login_form
         return {
-            'autocomplete': not g.production_mode
+            'autocomplete': not g.production_mode,
+            'is_returning_to': 'return_to' in kwargs
         }
 
     @expose()
@@ -354,7 +360,8 @@ class _AuthController(BaseController):
             neighborhood = Neighborhood.by_prefix(
                 config['default_nbhd_membership'])
             project = neighborhood.neighborhood_project
-        user = User.register(
+        user_cls = neighborhood.user_cls if neighborhood else User
+        user = user_cls.register(
             {
                 'username': username,
                 'display_name': token.name,

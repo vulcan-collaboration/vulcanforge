@@ -10,8 +10,9 @@
 {% block header %}Login{% endblock %}
 
 {% block content %}
-    <div id="loginWrapper">
 
+    <div id="loginWrapper">
+        {% if is_returning_to  %}<p class="padded"><b>The request page is only accessible by authenticated users.</b></p>{% endif %}
         <div id="loginContent" class="padded">
             <div id="loginform">
 

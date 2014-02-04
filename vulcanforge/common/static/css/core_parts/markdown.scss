@@ -1,5 +1,9 @@
 // VERY SPECIFIC FONT SIZES USED HERE
 // all relative to the the core font-size
+body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_content {
+    padding: 0;
+    margin: 1.2rem 0;
+}
 .markdown_content {
     margin: 0;
     padding: 0 1.2rem;
@@ -230,20 +234,29 @@
 
 .md-read-more {
     position: relative;
-    overflow: auto;
-    margin: 1.2rem 1.2rem;
+    margin: 1.8rem 1.2rem;
     padding: 0 1.2rem;
     background: #f0f8ff;
+    border: 1px solid #dae7f2;
 }
 .md-read-more-show {
     display: block;
     margin: 1.2rem;
-    color: #808080;
+    color: rgba(0,0,0,0.5);
 }
 .md-read-more-hide {
     position: absolute;
-    top: 0.6rem;
-    right: 0.6rem;
+    top: -0.6rem;
+    left: -0.6rem;
+}
+.md-read-more-hide::before {
+    font-size: 2em;
+}
+
+.md-read-more.hidden,
+.md-read-more-show.hidden,
+.md-read-more-hide.hidden {
+    display: none;
 }
 
 /* pagedown */
@@ -464,4 +477,37 @@
             border-radius: 0 0 0 1em;
         }
     }
+}
+
+
+@media print {
+    .markdown_content .toc {
+        float: none;
+        margin: 2rem 0;
+        padding: 1rem;
+        border: 1px solid #eee;
+    }
+
+    .markdown_content table {
+        border: 1px solid black;
+    }
+    .markdown_content th {
+        border: 1px solid black;
+    }
+    .markdown_content td {
+        border: 1px solid black;
+    }
+
+    .md-read-more {
+        margin: 2.4rem;
+        border: 2px solid #eee;
+    }
+    .md-read-more.hidden {
+        display: block;
+    }
+    .md-read-more-show,
+    .md-read-more-hide {
+        display: none;
+    }
+
 }

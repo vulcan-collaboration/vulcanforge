@@ -120,6 +120,7 @@
     <li><a href="#md_ex_escapes{{id}}">Escapes</a></li>
     <li><a href="#md_ex_moreheaders{{id}}">More Headers</a></li>
     <li><a href="#md_ex_code{{id}}">Code Highlighting</a></li>
+    <li><a href="#md_ex_readmore{{id}}">Collapsable "Read More..." sections</a></li>
     <li><a href="#md_ex_comment{{id}}">Commenting</a></li>
     <li><a href="#md_ex_includes{{id}}">Includes</a></li>
     <li><a href="#md_ex_page_tree{{id}}">Page Tree</a></li>
@@ -458,6 +459,27 @@ you should escape &amp;lt;unknown&amp;gt; tags
 ~~~~~~
 </pre></div>
 
+
+<h2 id="md_ex_readmore{{id}}" class="markdownguideHeader">Collapsable "Read More..." sections</h2>
+<div class="codehilite"><pre>
+// this text will be hidden until a user clicks the "read more..." button here.
+</pre></div>
+<div class="codehilite"><pre>
+//:: Details
+//
+// This read more section has a custom label "Details"
+</pre></div>
+<div class="codehilite"><pre>
+// markdown works inside read more sections
+//
+// - like
+// - this
+// - list
+//
+// // even this other read more section
+</pre></div>
+
+
 <h2 id="md_ex_comment{{id}}" class="markdownguideHeader">Commenting</h2>
 <p>You can comment in Forge Markdown by wrapping text /* like so */.</p>
 <p>Text within the comment will only display when editing the markdown, but not displaying it, so it is a useful way of leaving notes for fellow contributors or future selves.</p>
@@ -466,13 +488,13 @@ you should escape &amp;lt;unknown&amp;gt; tags
 /* This is a comment and will not show up when displaying the markdown */
 </pre></div>
 
-<h2 id="md_ex_includes{{id}}" class="markdownguideHeader">Includes</h2>
+<h2 id="md_ex_includes{{id}}" class="markdownguideHeader">Includes <em>(only available for Wikis)</em></h2>
 <p>You can embed another wiki page directly:</p>
 <div class="codehilite"><pre>
-[[include ref="Sample Page"]]
+[[include Sample Page]]
 </pre></div>
 
-<h2 id="md_ex_page_tree{{id}}" class="markdownguideHeader">Page Tree <em>(only available in Wiki tools)</em></h2>
+<h2 id="md_ex_page_tree{{id}}" class="markdownguideHeader">Page Tree <em>(only available for Wikis)</em></h2>
 <p>Inserts nested UL elements with links to wiki pages along a tree specified. Page heirarchy is determined by page names; e.g. - "My Topic" is the parent page of "My Topic/My Subtopic".</p>
 <p>full tree starting at wiki root:</p>
 <div class="codehilite"><pre>{PageTree}</pre></div>
