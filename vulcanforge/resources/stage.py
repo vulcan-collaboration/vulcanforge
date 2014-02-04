@@ -1,4 +1,3 @@
-import getpass
 import logging
 import os
 import shutil
@@ -17,7 +16,6 @@ class StaticResourceStager(object):
         self.destination_dir = destination_dir
         self.exceptions = []
         self.log = log or logging.getLogger(__name__)
-        self.log.info("User is '{}'.".format(getpass.getuser()))
 
     def copy_images(self, source_dir, destination_dir):
         if not source_dir.endswith('/'):

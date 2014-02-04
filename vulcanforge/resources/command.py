@@ -1,5 +1,4 @@
 import datetime
-import getpass
 
 from vulcanforge.command.base import Command
 from stage import StaticResourceStager
@@ -17,7 +16,6 @@ class StageStaticResources(Command):
         self.basic_setup()
         start = datetime.datetime.now()
         stager = StaticResourceStager(log=self.log)
-        self.log.info("User is '{}'.".format(getpass.getuser()))
 
         self.log.info('Copying images')
         stager.stage_images()
