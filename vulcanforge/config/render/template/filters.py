@@ -1,13 +1,5 @@
 import datetime
 
-try:
-    from babel.util import LOCALTZ
-except ImportError:
-    try:
-        from babel.localtime import LOCALTZ
-    except ImportError:
-        # babel < 1.0
-        from babel.util import LocalTimezone as LOCALTZ
 from jinja2 import evalcontextfilter
 from markupsafe import Markup
 from vulcanforge.config.render.jsonify import SanitizeEncode
@@ -71,7 +63,7 @@ def timesince(d, now=None):
 
     if not now:
         if d.tzinfo:
-            now = datetime.datetime.now(LOCALTZ(d))
+            now = datetime.datetime.now(d.tzinfo)
         else:
             now = datetime.datetime.utcnow()
 
