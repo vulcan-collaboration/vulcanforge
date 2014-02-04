@@ -1,4 +1,5 @@
 import datetime
+import getpass
 
 from vulcanforge.command.base import Command
 from stage import StaticResourceStager
@@ -14,6 +15,7 @@ class StageStaticResources(Command):
 
     def command(self):
         self.basic_setup()
+        self.log.info("User is '{}'.".format(getpass.getuser()))
         start = datetime.datetime.now()
         stager = StaticResourceStager(log=self.log)
 
