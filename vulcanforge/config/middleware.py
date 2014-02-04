@@ -9,7 +9,6 @@ import pylons
 from pylons.middleware import StatusCodeRedirect
 from tg import config, error as tg_error, TGApp
 import ew
-from ming.odm.middleware import MingMiddleware
 
 from .custom_middleware import (
     StatsMiddleware,
@@ -18,6 +17,7 @@ from .custom_middleware import (
     LoginRedirectMiddleware,
     LogErrorMiddleware,
     WidgetMiddleware,
+    VFMingMiddleware
 )
 from .ming_config import ming_replicant_configure
 from vulcanforge.auth.middleware import AuthMiddleware
@@ -79,7 +79,7 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
     #    app = set_scheme_middleware(app)
         # Handle static files (by tool)
     # Handle setup and flushing of Ming ORM sessions
-    app = MingMiddleware(app)
+    app = VFMingMiddleware(app)
 
     app = VFMiddleware(app)
 

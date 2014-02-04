@@ -1,28 +1,24 @@
 # -*- coding: utf-8 -*-
-from itertools import ifilter
 import re
 import logging
-from urllib import urlencode
 import urlparse
 import mimetypes
 from random import random
-from pylons import tmpl_context as c, app_globals as g
-
-import tg
-from tg.configuration import config
 
 from weberror import formatter, collector
 from weberror.errormiddleware import ErrorMiddleware
-import markdown
-import ew
-from ew.core import widget_context, WidgetContext
+from webob import exc, Request
 from paste import fileapp
 from paste.deploy.converters import asbool
 from pylons.util import call_wsgi_application
-from webob import exc, Request
-
+import tg
+from tg.configuration import config
+import ew
+from ew.core import widget_context, WidgetContext
+from ming.odm.middleware import MingMiddleware
+import markdown
 from scss import Scss
-from vulcanforge.auth.model import User
+
 from vulcanforge.common.model.stats import Stats
 from vulcanforge.common.util import cryptographic_nonce
 from vulcanforge.common.util.log import prefix_lines
@@ -48,6 +44,14 @@ class VFMiddleware(object):
             headers.append(('X-Frame-Options', 'SAMEORIGIN',))
             return start_response(status, headers, exc_info)
         return self.app(environ, vf_start_response)
+
+
+class VFMingMiddleware(MingMiddleware):
+    def _cleanup_request(self):
+        try:
+            super(VFMingMiddleware, self)._cleanup_request()
+        except Exception:
+            LOG.exception("Error cleaning up request in Ming Middleware")
 
 
 class LogContentType(object):
