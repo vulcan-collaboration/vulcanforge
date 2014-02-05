@@ -29,7 +29,7 @@ from vulcanforge.visualize.markdown_ext import (
 
 
 LOG = logging.getLogger(__name__)
-SHORTLINK_PATTERN = r'(?<![\[])\[([^\]\[]*)\]'
+SHORTLINK_PATTERN = r'(?<![\[\\])\[([^\\\]\[]*(?:\\[\[\]\\][^\\\]\[]*)*)\](?![\(])'
 ARTIFACT_RE = re.compile(r'((.*?):)?((.*?):)?(.+)')
 
 
@@ -139,7 +139,7 @@ class ForgeProcessor(object):
     macro_pattern = r'\[(\[([^\]\[]*)\])\]'
     placeholder_prefix = '#jgimwge'
     placeholder = '%s:%%s:%%.4d#khjhhj' % placeholder_prefix
-    placeholder_re = re.compile('%s:(\\w+):(\\d+)#khjhhj' % placeholder_prefix)
+    placeholder_re = re.compile('%s:(\\w+):(\\d+)#khjhhj' % placeholder_prefix, re.UNICODE)
 
     def __init__(self, use_wiki=False, markdown=None, macro_context=None,
                  simple_alinks=False):
@@ -161,9 +161,9 @@ class ForgeProcessor(object):
 
     def install(self):
         for k, v in self.inline_patterns.iteritems():
-            self.markdown.inlinePatterns[k] = v
+            self.markdown.inlinePatterns.add(k, v, "_begin")
         if self._use_wiki:
-            self.markdown.treeprocessors['forge'] = self.tree_processor
+            self.markdown.treeprocessors.add('forge', self.tree_processor, '_end')
         self.markdown.postprocessors['forge'] = self.postprocessor
 
     def store(self, raw):
@@ -172,6 +172,7 @@ class ForgeProcessor(object):
             raw = raw[1:-1]  # strip off the enclosing []
         elif self.artifact_re.match(raw):
             stash = 'artifact'
+            raw = self._de_escape_link(raw)
         else:
             return raw
         return self._store(stash, raw)
@@ -208,6 +209,9 @@ class ForgeProcessor(object):
         self.alinks = {}
         self.compiled = False
 
+    def _de_escape_link(self, link):
+        return link.replace("\\]", "]").replace("\\[", "[").replace("\\\\", "\\")
+
     def _expand_alink(self, link):
         # try to find an artifact reference
         new_link = self.alinks.get(link, None)
@@ -228,8 +232,9 @@ class ForgeProcessor(object):
 
         # if we're on a wiki then link to a non-existant page
         if self._use_wiki and u':' not in link:
-            return u'<a href="{}" class="notfound">[{}]</a>'.format(
-                urlquote(link), link)
+            utf_link = unicode(link).encode('utf-8')
+            return '<a href="{}" class="notfound">[{}]</a>'.format(
+                urlquote(utf_link), utf_link)
 
         ###
         parts = link.split(':')
@@ -285,9 +290,13 @@ class ForgePostprocessor(markdown.postprocessors.Postprocessor):
         self.parent.compile()
 
         def repl(mo):
-            return self.parent.lookup(mo.group(1), int(mo.group(2)))
+            item = self.parent.lookup(mo.group(1), int(mo.group(2)))
+            if isinstance(item,str):
+                item = item.decode('utf-8')
 
-        return self.parent.placeholder_re.sub(repl, text)
+            return item
+
+        return self.parent.placeholder_re.sub(repl, text, re.UNICODE)
 
 
 class ForgeTreeProcessor(markdown.treeprocessors.Treeprocessor):

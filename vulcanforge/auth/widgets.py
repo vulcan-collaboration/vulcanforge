@@ -86,17 +86,9 @@ class Avatar(ew_core.Widget):
     """
     template = TEMPLATE_DIR + 'avatar.html'
 
-    def display(self,
-                user=None,
-                size='48',
-                className=None,
-                show_icon=True,
-                compact=False,
-                extras=None,
-                with_user_id=True,
-                replace_with_userid=None,
-                framed=False,
-                **kw):
+    def display(self, user=None, size='48', className=None, show_icon=True,
+                compact=False, extras=None, with_user_id=True,
+                replace_with_userid=None, framed=False, **kw):
 
         profile_public = user.public or c.user == user
 

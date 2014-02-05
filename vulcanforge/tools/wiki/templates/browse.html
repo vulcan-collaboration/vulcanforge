@@ -43,9 +43,11 @@
             </td>
             {% if 'updated' in page %}
               <td>{{abbr_date(page['updated'])}}
+                  {% if 'last_changer' in page %}
                   <div class="avatar-list">
                       by {{g.avatar.display(user=page['last_changer'], size=16, compact=True)}}
                   </div>
+                  {% endif %}
               </td>
             {% else %}
               <td></td>

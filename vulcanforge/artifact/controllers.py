@@ -16,10 +16,8 @@ from vulcanforge.common.controllers.decorators import require_post
 from vulcanforge.common.exceptions import AJAXNotFound, AJAXForbidden
 from vulcanforge.artifact.model import ArtifactReference, Shortlink
 from vulcanforge.artifact.widgets import short_artifact_link_data
-from vulcanforge.artifact.tasks import process_artifact
 from vulcanforge.discussion.model import Post
 from vulcanforge.project.model import Project
-from vulcanforge.visualize.model import VisualizerConfig
 
 
 LOG = logging.getLogger(__name__)
@@ -239,17 +237,7 @@ class BaseAlternateRestController(RestController):
 
 
 class AlternateRestController(BaseAlternateRestController, BaseArtifactRest):
-
-    @expose('json')
-    def post(self, processor=None, context='visualizer', **kw):
-        """Queues a processesing operation"""
-        g.security.require_access(self.artifact, 'read')
-        self._assert_can_process(context)
-        process_artifact.post(processor, context, self.artifact.index_id())
-        self.artifact.alt_loading = True
-        return {
-            'success': True
-        }
+    pass
 
 
 class ArtifactRestController(BaseArtifactRest):

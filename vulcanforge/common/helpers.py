@@ -5,6 +5,7 @@ import urllib
 import re
 import json
 import logging
+import htmlentitydefs
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
@@ -69,6 +70,41 @@ def really_unicode(s):
                 pass
     # Return the repr of the str -- should always be safe
     return unicode(repr(str(s)))[1:-1]
+
+
+def unescape_unicode(text):
+    """
+    Unescape html text with support for unicode entities (e.g. &#246; -> ö)
+
+    @param text The HTML source.
+    @return The plain text.  If the HTML source contains non-ASCII
+        entities or character references, this is a Unicode string.
+
+    """
+    def fixup(m):
+        entity = m.group(0)
+        if entity[:1] == "<":
+            return ""  # ignore tags
+        if entity[:2] == "&#":
+            try:
+                if entity[:3] == "&#x":
+                    return unichr(int(entity[3:-1], 16))
+                else:
+                    return unichr(int(entity[2:-1]))
+            except ValueError:
+                pass
+        elif entity[:1] == "&":
+            entity = htmlentitydefs.entitydefs.get(entity[1:-1])
+            if entity:
+                if entity[:2] == "&#":
+                    try:
+                        return unichr(int(entity[2:-1]))
+                    except ValueError:
+                        pass
+                else:
+                    return unicode(entity, "iso-8859-1")
+        return entity  # leave as is
+    return re.sub("(?s)<[^>]*>|&#?\w+;", fixup, text)
 
 
 def pretty_print_file_size(size_in_bytes):
