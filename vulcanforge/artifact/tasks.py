@@ -8,25 +8,13 @@ import bson
 from pylons import app_globals as g
 
 from vulcanforge.common.exceptions import ForgeError, CompoundError
+from vulcanforge.common.helpers import unescape_unicode
 from vulcanforge.common.model.session import artifact_orm_session
-from vulcanforge.common.tasks.index import LOG, _indexing_disabled
+from vulcanforge.common.tasks.index import _indexing_disabled
 from vulcanforge.search.solr import solarize
 from vulcanforge.taskd import task
 
-
 LOG = logging.getLogger(__name__)
-
-
-@task
-def process_artifact(processor_name, context, index_id, verbose=False):
-    from vulcanforge.artifact.model import ArtifactReference
-    from vulcanforge.artifact.model import ArtifactProcessor
-    aref = ArtifactReference.query.get(_id=index_id)
-    if not aref or not aref.artifact:
-        raise ForgeError('artifact with index_id {} not found'.format(
-            index_id))
-    ArtifactProcessor.process(
-        processor_name, aref.artifact, context, verbose=verbose)
 
 
 def _convert_value_to_doc(value):
@@ -106,7 +94,8 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
                 if update_refs:
                     if artifact.link_content:
                         l_ref_ids = find_shortlink_refs(
-                            artifact.link_content, upsert=True)
+                            unescape_unicode(artifact.link_content),
+                            upsert=True)
                         for link_ref_id in l_ref_ids:
                             if link_ref_id:
                                 ref.upsert_reference(link_ref_id)
