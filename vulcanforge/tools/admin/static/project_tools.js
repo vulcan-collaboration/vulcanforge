@@ -12,11 +12,22 @@
         var new_mount_point = install_form.find('input.new_mount_point');
         var new_mount_label = install_form.find('input.new_mount_label');
         var install_tool_label = $('#install_tool_label');
+        var install_extra_options_container = $('#install_extra_options_container', install_form).empty();
         install_popup.append(install_form.show());
         $('a.install_trig').click(function () {
             var datatool = $(this).attr('data-tool');
             if (datatool) {
                 var tool = defaults[datatool];
+                $.each(tool.option_fields, function (i, v) {
+                    if (v.label) {
+                        $('<label/>').
+                            text(v.label).
+                            appendTo(install_extra_options_container);
+                    }
+                    $('<div/>').
+                        html(v.html).
+                        appendTo(install_extra_options_container);
+                });
                 install_tool_label.html(tool.default_label);
                 new_ep_name.val(datatool);
                 new_mount_point.val(tool.default_mount);

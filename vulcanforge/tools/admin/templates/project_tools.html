@@ -27,6 +27,7 @@
         <div><input type="text" name="new.mount_label" class="new_mount_label"></div>
         <label>Mount Point</label>
         <div><input type="text" name="new.mount_point" class="new_mount_point"></div>
+        <div id="install_extra_options_container"></div>
         <div>&nbsp;</div>
         <hr>
         <div>&nbsp;</div>
@@ -98,7 +99,14 @@
 <script type="text/javascript">
     var defaults = {
         {% for tool in installable_tools %}
-        '{{tool.name}}':{'default_label':'{{tool.app.default_mount_label}}','default_mount':'{{tool.app.default_mount_point}}'}{% if not loop.last %},{% endif %}
+        '{{tool.name}}':{
+            'default_label':'{{tool.app.default_mount_label}}',
+            'default_mount':'{{tool.app.default_mount_point}}',
+            'option_fields': [{% for option_field in tool.option_fields %}{
+                {% if option_field.label %}'label': {{ option_field.label | jsonify }},{% endif %}
+                'html': {{ option_field.display() | jsonify }}
+            }{{ ',' if not loop.last else '' }}{% endfor %}]
+        }{{ ',' if not loop.last else '' }}
         {% endfor %}
     };
 </script>

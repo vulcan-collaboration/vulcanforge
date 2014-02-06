@@ -120,9 +120,19 @@ def mkdir_p(path):
 
 
 def safe_extract_zip(zip_file, target_folder):
-    name_list = [entry for entry in zip_file.namelist() if
-                 not entry.startswith('/') and not entry.startswith('..')]
-    zip_file.extractall(target_folder, name_list)
+    """
+    extract the contents of a zipfile.ZipFile object safely by skipping files
+    with unsafe path components:
+
+    skips these kinds of names:
+        /a
+        ../a
+        a/../../a
+    """
+    unsafe_filename_pattern = re.compile(ur'^/|(?:^|/)\.\.(?:$|/)')
+    safe_names = [entry for entry in zip_file.namelist() if
+                  not unsafe_filename_pattern.search(entry)]
+    zip_file.extractall(target_folder, safe_names)
 
 
 def levenshtein(s1, s2):

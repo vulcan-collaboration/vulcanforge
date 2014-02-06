@@ -5,8 +5,9 @@ from vulcanforge.common.helpers import slugify
 class ConfigOption(object):
 
     def __init__(self, name, ming_type, default):
-        self.name, self.ming_type, self._default = (
-            name, ming_type, default)
+        self.name = name
+        self.ming_type = ming_type
+        self._default = default
 
     @property
     def default(self):

@@ -101,7 +101,9 @@ class ToolManager(object):
                 tools.append({
                     "name": name,
                     "app": spec["app"],
-                    "icon_url": icon_resource
+                    "icon_url": icon_resource,
+                    "option_fields": app.get_install_option_fields(
+                        project.neighborhood)
                 })
         return tools
 
