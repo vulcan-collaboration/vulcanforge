@@ -63,7 +63,7 @@
 
             checkIfDiffIsEnabled(true);
 
-            if (WIKI_SIDEBAR) {
+            if (typeof WIKI_SIDEBAR !== 'undefined' && WIKI_SIDEBAR) {
                 $('.wiki-titlebar-item').each(function () {
                     var $this = $(this),
                         $label = $('.wiki-titlebar-item-label', $this),

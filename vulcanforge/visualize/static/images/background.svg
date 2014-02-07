@@ -1,0 +1,33 @@
+<?xml version="1.0" standalone="no"?>
+<svg xmlns='http://www.w3.org/2000/svg'
+     xmlns:xlink='http://www.w3.org/1999/xlink' width='128' height='128'>
+    <!--<filter id='n' x='0' y='0'>
+        <feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='1'
+                      stitchTiles='stitch'/>
+        <feColorMatrix type="saturate" values="0" result="noise"/>
+        <feConvolveMatrix in="noise" result="a" order="25 1" edgeMode="wrap"
+                          kernelMatrix="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+        <feConvolveMatrix in="noise" result="b" order="1 25" edgeMode="wrap"
+                          kernelMatrix="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+        <feBlend in="a" in2="b"/>
+    </filter>
+    <rect width='128' height='128' fill='#000'/>
+    <rect width='128' height='128' filter="url(#n)" opacity='0.4'/> -->
+
+    <filter id='n' x='0' y='0'>
+        <feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='1'
+                      stitchTiles='stitch'/>
+        <feColorMatrix type="saturate" values="0"/>
+        <feConvolveMatrix order="3" edgeMode="wrap" result="noise"
+                          kernelMatrix="-1 0 -1
+                                         0 7  0
+                                        -1 0 -1"/>
+        <feConvolveMatrix in="noise" result="a" order="25 1" edgeMode="wrap"
+                          kernelMatrix="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+        <feConvolveMatrix in="noise" result="b" order="1 25" edgeMode="wrap"
+                          kernelMatrix="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+        <feBlend in="a" in2="b"/>
+        <feColorMatrix type="luminanceToAlpha"/>
+    </filter>
+    <rect width='128' height='128' fill='#000' filter="url(#n)"/>
+</svg>

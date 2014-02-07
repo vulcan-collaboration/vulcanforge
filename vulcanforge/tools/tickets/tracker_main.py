@@ -1281,7 +1281,7 @@ class TicketController(BaseTrackerController):
         for k, v in versions.items():
             tpath = "data/" + v + "ticket_changed_tmpl"
             t = 'vulcanforge.tools.tickets'
-            tpl =  pkg_resources.resource_filename(t, tpath)
+            tpl = pkg_resources.resource_filename(t, tpath)
             ctext = h.render_genshi_plaintext(tpl, changelist=clist)
             if comment:
                 ct = "Comment: " + comment if k == "text" else "Comment added."

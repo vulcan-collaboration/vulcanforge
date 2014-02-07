@@ -384,11 +384,11 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
 
 
 class ForgeHTMLSanitizer(_HTMLSanitizer):
-    acceptable_elements = _HTMLSanitizer.acceptable_elements.difference(
-        {'form', 'noscript', 'sound'})
+    acceptable_elements = _HTMLSanitizer.acceptable_elements.\
+        difference({'form', 'noscript', 'sound'})
 
-    acceptable_attributes = _HTMLSanitizer.acceptable_attributes.difference(
-        {'action', 'method'})
+    acceptable_attributes = _HTMLSanitizer.acceptable_attributes.\
+        difference({'action', 'method'})
 
     def __init__(self, encoding, _type=''):
         try:
@@ -418,7 +418,7 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
 
     css_class = "md-read-more"
     md_prefix = r'//'
-    RE = re.compile(r'(^|\n)[ ]{0,3}' + md_prefix + r' ?(.*)')
+    RE = re.compile(r'(?:^|\n)[ ]{0,3}' + md_prefix + r'(::)? (.*)')
 
     def test(self, parent, block):
         return bool(self.RE.search(block))
@@ -427,28 +427,38 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
         block = blocks.pop(0)
         m = self.RE.search(block)
         start = m.start()
+        label = None
         if m:
             before = block[:start]
             self.parser.parseBlocks(parent, [before])
-            block = '\n'.join([self.clean(line)for line in
-                              block[start:].split('\n')])
+            block_buffer = []
+            for line in block[start:].split('\n'):
+                m = self.RE.match(line)
+                stripped = line.strip()
+                if stripped == self.md_prefix:
+                    block_buffer.append("")
+                elif m is None:
+                    block_buffer.append(line)
+                else:
+                    prefix, content = m.groups()
+                    if prefix is not None:
+                        label = label or content
+                    else:
+                        block_buffer.append(content)
+            block = '\n'.join(block_buffer)
         sibling = self.lastChild(parent)
-        if sibling and sibling.tag == "div" \
-                and sibling.attrib.get('class', None) == self.css_class:
+        if (
+            getattr(sibling, 'tag', None) == "div" and
+            sibling.attrib.get('class', None) == self.css_class
+        ):
             element = sibling
         else:
             element = markdown.util.etree.SubElement(parent, 'div')
             element.set('class', self.css_class)
+        if label is not None:
+            LOG.info('setting label')
+            element.set('title', label)
         self.parser.parseChunk(element, block)
-
-    def clean(self, line):
-        m = self.RE.match(line)
-        if line.strip() == self.md_prefix:
-            return ""
-        elif m:
-            return m.group(2)
-        else:
-            return line
 
 
 class CommentProcessor(markdown.preprocessors.Preprocessor):

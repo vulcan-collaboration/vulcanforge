@@ -294,13 +294,14 @@ class Neighborhood(BaseMappedClass):
             shortname)
         p = self.neighborhood_project_cls(
             neighborhood_id=self._id,
+            neighborhood=self,
             shortname=shortname,
             name=name,
             short_description='',
             description='You can edit this description in the admin page',
-            homepage_title = '# ' + name,
+            homepage_title='# ' + name,
             database_uri=database_uri,
-            last_updated = datetime.utcnow(),
+            last_updated=datetime.utcnow(),
             is_root=True
         )
         if apps is None:

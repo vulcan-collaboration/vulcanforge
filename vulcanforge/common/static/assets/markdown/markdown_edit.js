@@ -248,7 +248,7 @@
 
             /* include */
             this.converter.hooks.chain("preSpanGamut", function(text){
-                var rePattern = /\[\[include +ref="?([^\]"]+)"?\]\]/g;
+                var rePattern = /\[\[include +([^\]]+)\]\]/g;
                 return text.replace(rePattern, function (whole, pageName) {
                     return '<div class="markdownPlaceholder wikiPlaceholder">' +
                         '<p>Contents of *' + pageName + '* will be rendered here...</p>' +
@@ -267,11 +267,26 @@
                 });
             });
 
-            /* read more */
+            /*
+            read more
+
+            examples:
+
+                // simple
+
+                //:: custom title
+                // not so simple
+            */
             this.converter.hooks.chain("preBlockGamut", function(text, runBlockGamut) {
-                var rePattern = /^ {0,3}\/\/(.*)(\n\n)?/gm;
-                return text.replace(rePattern, function(whole, inner){
-                     return '<div class="md-read-more">' + runBlockGamut(inner) + '</div>';
+                var readMorePattern = /(?: {0,3}\/\/:: ?(.*)\n)?((?: {0,3}\/\/(?: .*)?\n)+)/gm,
+                    cleanLinesPattern = /(^|\n) {0,3}\/\/ ?/g;
+                return text.replace(readMorePattern, function(whole, label, content){
+                    var myContent = content.replace(cleanLinesPattern, '$1');
+                    return '<div class="md-read-more"' +
+                        (label ? ' title="'+label+'"' : '') +
+                        '>' +
+                        runBlockGamut(myContent) +
+                        '</div>';
                 });
             });
 
@@ -418,6 +433,7 @@
                 return true;
             });
             this.editor.hooks.set('onPreviewRefresh', function () {
+                $vf.initNewReadMoreTags({open: true});
                 $vf.initDataTables();
                 return true;
             });

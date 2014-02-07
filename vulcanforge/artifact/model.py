@@ -1152,7 +1152,7 @@ class Shortlink(BaseMappedClass):
     }
 
     def __repr__(self):
-        return '%s -> %s' % (self.render_link(), self.ref_id)
+        return u'%s -> %s' % (self.render_link(), self.ref_id)
 
     def render_link(self):
         return u'[{}:{}:{}]'.format(
