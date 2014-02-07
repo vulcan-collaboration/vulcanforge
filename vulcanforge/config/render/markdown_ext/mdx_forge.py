@@ -296,7 +296,7 @@ class ForgePostprocessor(markdown.postprocessors.Postprocessor):
 
             return item
 
-        return self.parent.placeholder_re.sub(repl, text, re.UNICODE)
+        return self.parent.placeholder_re.sub(repl, text)
 
 
 class ForgeTreeProcessor(markdown.treeprocessors.Treeprocessor):
