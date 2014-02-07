@@ -179,6 +179,7 @@ class Neighborhood(BaseMappedClass):
 
     def register_project(self, shortname, user=None, project_name=None,
                          user_project=False, private_project=False, apps=None,
+                         tool_options=None,
                          **kw):
         """Register a new project in the neighborhood.  The given user will
         become the project's superuser.  If no user is specified, c.user is
@@ -230,13 +231,15 @@ class Neighborhood(BaseMappedClass):
                 for i, tool in enumerate(project_template['tools'].keys()):
                     tool_config = project_template['tools'][tool]
                     with push_config(c, project=p, user=user):
+                        app_config_options = tool_options.get(tool.lower(), {})
                         app = c.project.install_app(
                             tool,
                             mount_label=tool_config['label'],
                             mount_point=tool_config['mount_point'],
                             ordinal=i + offset,
                             acl=project_template.get('tool_acl', {}).get(
-                                tool_config['mount_point'])
+                                tool_config['mount_point']),
+                            **app_config_options
                         )
                         if 'options' in tool_config:
                             app.config.options.update(tool_config['options'])

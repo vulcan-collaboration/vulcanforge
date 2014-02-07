@@ -36,7 +36,8 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
     TODO: make embeddable in nested blocks
             (i.e. include inside a readmore block)
     """
-    include_pattern = re.compile(r'^[ ]{0,3}\[\[include +([^\]]+)]]\s*$')
+    include_pattern = re.compile(
+        r'^(.*)[ ]{0,3}\[\[include +([^\]]+)]]\s*$')
     not_found_template = u'> *\[\[include {}\]\]: Page not found.*'
 
     # included pages plain text (raw markdown) first has all matches of the
@@ -68,9 +69,12 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
                 line_cursor += 1
                 continue
             lines.pop(line_cursor)  # remove the include tag
+            prefix, include_title = include_match.groups()
+            if prefix is None:
+                prefix = ''
 
             # find the requested page
-            include_title = include_match.group(1).strip()
+            include_title = include_title.strip()
             if include_title == page_title or include_title in context_stack:
                 continue
             include_page = page_class.query.get(
@@ -88,9 +92,9 @@ class WikiPageIncludePreprocessor(markdown.preprocessors.Preprocessor):
             # insert the included page text (markdown) surrounded by flags for
             # the postprocessor
             new_lines = (
-                [self.extension.include_start.format(include_url)] +
-                include_lines +
-                [self.extension.include_end]
+                [prefix + self.extension.include_start.format(include_url)] +
+                [prefix + l for l in include_lines] +
+                [prefix + self.extension.include_end]
             )
             lines = lines[:line_cursor] + new_lines + lines[line_cursor:]
             # push the context

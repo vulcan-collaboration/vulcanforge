@@ -645,20 +645,30 @@ class ProjectAdminController(BaseController):
         try:
             if new and new.get('install'):
                 ep_name = new.get('ep_name', None)
-
+                if ep_name is None:
+                    raise exc.HTTPBadRequest("tool entry point name not "
+                                             "specified")
                 if ep_name.lower() not in map(lambda t: t['name'],
                         g.tool_manager.installable_tools_for(c.project)):
                     raise exc.HTTPForbidden('Access Denied')
+                app_spec = g.tool_manager.tools.get(ep_name)
+                app = app_spec.get('app')
                 mount_point = new['mount_point'].lower() or ep_name.lower()
                 try:
                     mount_point = MOUNTPOINT_VALIDATOR.to_python(mount_point)
                 except Invalid as e:
                     raise ToolError(e.msg)
+                app_config_options = {
+                    option.name: kw.get(option.name)
+                    for option in app.config_options
+                    if option.name in kw
+                }
                 c.project.install_app(
                     ep_name,
                     mount_point,
                     mount_label=new['mount_label'],
-                    ordinal=new['ordinal']
+                    ordinal=new['ordinal'],
+                    **app_config_options
                 )
         except ToolError, e:
             flash('%s: %s' % (e.__class__.__name__, e.args[0]), 'error')

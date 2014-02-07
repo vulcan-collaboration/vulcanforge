@@ -90,6 +90,11 @@ class CustomFieldAdmin(ew.CompoundField):
             label='Show in search',
             show_label=True,
             suppress_label=True),
+        ew.Checkbox(
+            name='required',
+            label='Required',
+            show_label=True,
+            suppress_label=True),
         CustomFieldAdminDetail()]
 
     def to_python(self, value, state=None):

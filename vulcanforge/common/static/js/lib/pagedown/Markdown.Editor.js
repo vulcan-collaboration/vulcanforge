@@ -31,6 +31,9 @@
         quote: "Blockquote <blockquote> Ctrl+Q",
         quoteexample: "Blockquote",
 
+        readmore: "Read More expandable block",
+        readmoreexample: "Read More",
+
         code: "Code Sample <pre><code> Ctrl+K",
         codeexample: "enter code here",
 
@@ -1473,6 +1476,7 @@
             buttons.image = makeButton("wmd-image-button", getString("image"), "-100px", bindCommand(function (chunk, postProcessing) {
                 return this.doLinkOrImage(chunk, postProcessing, true);
             }));
+            buttons.quote = makeButton("wmd-readmore-button", getString("readmore"), "-260px", bindCommand("doReadmore"));
             makeSpacer(2);
             buttons.olist = makeButton("wmd-olist-button", getString("olist"), "-120px", bindCommand(function (chunk, postProcessing) {
                 this.doList(chunk, postProcessing, true);
@@ -1836,6 +1840,11 @@
                 commandMgr.doBlockquote(chunk);
             }
         }
+        if (/(\n|^)[ ]{0,3}\/\/[ \t]+.*\n$/.test(chunk.before)) {
+            if (commandMgr.doReadmore) {
+                commandMgr.doReadmore(chunk);
+            }
+        }
         if (/(\n|^)(\t|[ ]{4,}).*\n$/.test(chunk.before)) {
             if (commandMgr.doCode) {
                 commandMgr.doCode(chunk);
@@ -1985,6 +1994,120 @@
 
         if (!/\n/.test(chunk.selection)) {
             chunk.selection = chunk.selection.replace(/^(> *)/,
+            function (wholeMatch, blanks) {
+                chunk.startTag += blanks;
+                return "";
+            });
+        }
+    };
+
+    commandProto.doReadmore = function (chunk, postProcessing) {
+
+        chunk.selection = chunk.selection.replace(/^(\n*)([^\r]+?)(\n*)$/,
+            function (totalMatch, newlinesBefore, text, newlinesAfter) {
+                chunk.before += newlinesBefore;
+                chunk.after = newlinesAfter + chunk.after;
+                return text;
+            });
+
+        chunk.before = chunk.before.replace(/(\/\/[ \t]*)$/,
+            function (totalMatch, blankLine) {
+                chunk.selection = blankLine + chunk.selection;
+                return "";
+            });
+
+        chunk.selection = chunk.selection.replace(/^(\s|\/\/)+$/, "");
+        chunk.selection = chunk.selection || this.getString("readmoreexample");
+
+        var match = "",
+            leftOver = "",
+            line;
+        if (chunk.before) {
+            var lines = chunk.before.replace(/\n$/, "").split("\n");
+            var inChain = false;
+            for (var i = 0; i < lines.length; i++) {
+                var good = false;
+                line = lines[i];
+                inChain = inChain && line.length > 0; // c) any non-empty line continues the chain
+                if (/^\/\//.test(line)) {                // a)
+                    good = true;
+                    if (!inChain && line.length > 1)  // c) any line that starts with ">" and has at least one more character starts the chain
+                        inChain = true;
+                } else if (/^[ \t]*$/.test(line)) {   // b)
+                    good = true;
+                } else {
+                    good = inChain;                   // c) the line is not empty and does not start with ">", so it matches if and only if we're in the chain
+                }
+                if (good) {
+                    match += line + "\n";
+                } else {
+                    leftOver += match + line;
+                    match = "\n";
+                }
+            }
+            if (!/(^|\n)\/\//.test(match)) {             // d)
+                leftOver += match;
+                match = "";
+            }
+        }
+
+        chunk.startTag = match;
+        chunk.before = leftOver;
+
+        // end of change
+
+        if (chunk.after) {
+            chunk.after = chunk.after.replace(/^\n?/, "\n");
+        }
+
+        chunk.after = chunk.after.replace(/^(((\n|^)(\n[ \t]*)*\/\/(.+\n)*.*)+(\n[ \t]*)*)/,
+            function (totalMatch) {
+                chunk.endTag = totalMatch;
+                return "";
+            }
+        );
+
+        var replaceBlanksInTags = function (useBracket) {
+
+            var replacement = useBracket ? "\/\/ " : "";
+
+            if (chunk.startTag) {
+                chunk.startTag = chunk.startTag.replace(/\n((\/\/|\s)*)\n$/,
+                    function (totalMatch, markdown) {
+                        return "\n" + markdown.replace(/^[ ]{0,3}\/\/?[ \t]*$/gm, replacement) + "\n";
+                    });
+            }
+            if (chunk.endTag) {
+                chunk.endTag = chunk.endTag.replace(/^\n((\/\/|\s)*)\n/,
+                    function (totalMatch, markdown) {
+                        return "\n" + markdown.replace(/^[ ]{0,3}\/\/?[ \t]*$/gm, replacement) + "\n";
+                    });
+            }
+        };
+
+        if (/^(?![ ]{0,3}\/\/)/m.test(chunk.selection)) {
+            this.wrap(chunk, SETTINGS.lineLength - 2);
+            chunk.selection = chunk.selection.replace(/^/gm, "\/\/ ");
+            replaceBlanksInTags(true);
+            chunk.skipLines();
+        } else {
+            chunk.selection = chunk.selection.replace(/^[ ]{0,3}\/\/ ?/gm, "");
+            this.unwrap(chunk);
+            replaceBlanksInTags(false);
+
+            if (!/^(\n|^)[ ]{0,3}\/\//.test(chunk.selection) && chunk.startTag) {
+                chunk.startTag = chunk.startTag.replace(/\n{0,2}$/, "\n\n");
+            }
+
+            if (!/(\n|^)[ ]{0,3}\/\/.*$/.test(chunk.selection) && chunk.endTag) {
+                chunk.endTag = chunk.endTag.replace(/^\n{0,2}/, "\n\n");
+            }
+        }
+
+        chunk.selection = this.hooks.postBlockquoteCreation(chunk.selection);
+
+        if (!/\n/.test(chunk.selection)) {
+            chunk.selection = chunk.selection.replace(/^(\/\/ *)/,
             function (wholeMatch, blanks) {
                 chunk.startTag += blanks;
                 return "";

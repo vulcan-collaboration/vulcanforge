@@ -49,7 +49,7 @@ class TicketMarkdownFields(ew.CompoundField):
 class TicketCustomField(object):
 
     @staticmethod
-    def _select(field):
+    def _select(field, **attributes):
         options = []
         for opt in shlex.split(field.options):
             selected = False
@@ -61,10 +61,10 @@ class TicketCustomField(object):
                           selected=selected))
         return ew.SingleSelectField(label=field.label,
                                     name=str(field.name),
-                                    options=options)
+                                    options=options, attrs=attributes)
 
     @staticmethod
-    def _milestone(field):
+    def _milestone(field, **attributes):
         options = []
         for m in field.milestones:
             if not m.complete:
@@ -73,31 +73,38 @@ class TicketCustomField(object):
                         py_value=m.name))
         ssf = ew.SingleSelectField(
             label=field.label, name=str(field.name),
-            options=options)
+            options=options, attrs=attributes)
         return ssf
 
     @staticmethod
-    def _boolean(field):
-        return ew.Checkbox(label=field.label, name=str(field.name))
+    def _boolean(field, **attributes):
+        return ew.Checkbox(label=field.label, name=str(field.name),
+                           attrs=attributes)
 
     @staticmethod
-    def _number(field):
-        return ew.NumberField(label=field.label, name=str(field.name))
+    def _number(field, **attributes):
+        return ew.NumberField(label=field.label, name=str(field.name),
+                              attrs=attributes)
 
     @staticmethod
-    def _markdown(field):
+    def _markdown(field, **attributes):
         return form_fields.MarkdownEdit(
-            label=field.label, name=str(field.name), wide=True)
+            label=field.label, name=str(field.name), wide=True,
+            attrs=attributes)
 
     @staticmethod
-    def _default(field):
-        return ew.TextField(label=field.label, name=str(field.name))
+    def _default(field, **attributes):
+        return ew.TextField(label=field.label, name=str(field.name),
+                            attrs=attributes)
 
     @classmethod
     def make(cls, field):
         field_type = field.get('type')
+        attributes = {}
+        if field.get('required', False):
+            attributes['required'] = True
         factory = getattr(cls, '_{}'.format(field_type), cls._default)
-        return factory(field)
+        return factory(field, **attributes)
 
 
 class TrackerTicketForm(ForgeForm):
