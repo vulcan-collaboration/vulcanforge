@@ -154,6 +154,7 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
 }
 
 .markdown-edit {
+    position: relative;
     padding: 0;
     border: 0;
     background: transparent;
@@ -224,6 +225,7 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
 
 .markdown-help-button-container {
     position: absolute;
+    z-index: 1;
     top: 3px;
     right: 0;
     padding: 0;
