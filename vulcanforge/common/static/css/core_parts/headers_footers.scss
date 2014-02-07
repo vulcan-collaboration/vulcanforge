@@ -182,7 +182,7 @@ body.has-related-artifacts #main-column-header {
 
 #footer {
   margin-top: 1px;
-  padding: 2px 3px 1px 2px;
+  padding: 2px 3px 1px 80px;
   font-size: 11px;
   position: fixed;
   bottom: 0px;
@@ -244,7 +244,7 @@ body.has-related-artifacts #main-column-header {
     position: fixed;
     text-shadow: 0 1px 3px black;
     text-transform: uppercase;
-    z-index: 10000;
+    z-index: 201;
 }
 
 #beautiful_sunset:hover {
