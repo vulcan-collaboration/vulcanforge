@@ -1,10 +1,13 @@
 import datetime
 
 try:
-    from babel.localtime import LOCALTZ
+    from babel.util import LOCALTZ
 except ImportError:
-    # babel < 1.0
-    from babel.util import LocalTimezone as LOCALTZ
+    try:
+        from babel.localtime import LOCALTZ
+    except ImportError:
+        # babel < 1.0
+        from babel.util import LocalTimezone as LOCALTZ
 from jinja2 import evalcontextfilter
 from markupsafe import Markup
 from vulcanforge.config.render.jsonify import SanitizeEncode

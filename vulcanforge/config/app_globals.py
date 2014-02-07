@@ -339,14 +339,14 @@ class ForgeAppGlobals(object):
         if account_name is None:
             account_name = config.get('s3.account_name', 'account')
         if expires is None:
-            expires = int(
-                time.time() + int(config.get('s3.tempurlexpires', 1800)))
+            expires = int(config.get('s3.tempurlexpires', 1800))
+        expiry_time = int(time.time() + expires)
         path = '/v1/AUTH_{account}/{bucket}/{key}'.format(
             account=account_name,
             bucket=bucket.name,
             key=keyname
         )
-        hmac_body = '%s\n%s\n%s' % (method, expires, h.urlquote(path))
+        hmac_body = '%s\n%s\n%s' % (method, expiry_time, h.urlquote(path))
         sig = hmac.new(temp_url_key, hmac_body, hashlib.sha1).hexdigest()
         url = '{protocol}://{host}:{port}{path}?{query}'.format(
             protocol=bucket.connection.protocol,
@@ -355,7 +355,7 @@ class ForgeAppGlobals(object):
             path=h.urlquote(h.urlquote(path)),
             query=urllib.urlencode({
                 'temp_url_sig': sig,
-                'temp_url_expires': expires
+                'temp_url_expires': expiry_time
             })
         )
         return url

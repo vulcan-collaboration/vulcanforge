@@ -61,7 +61,7 @@ class VisualizerConfig(BaseMappedClass):
     class __mongometa__:
         name = 'visualizer'
         session = main_orm_session
-        indexes = ['extensions', ('extensions', 'active')]
+        indexes = [('active', 'priority'), ('_id', 'priority')]
         unique_indexes = ['shortname']
 
         def before_save(data):
@@ -118,47 +118,6 @@ class VisualizerConfig(BaseMappedClass):
         query['active'] = True
         return cls.query.find(query).sort('priority', pymongo.DESCENDING)
 
-    @classmethod
-    def find_for_visualization(cls, mime_type=None, extensions=None,
-                               processing_on=False, unique_id=None, **query):
-        if extensions is None:
-            extensions = []
-        query["extensions"] = {"$in": extensions + ['*']}
-        cur = cls.find_active(query)
-
-        configs = [vc for vc in cur
-                   if vc.matches_for_visualization(mime_type, extensions)]
-
-        if processing_on:
-            seen_ids = set(v._id for v in configs)
-            for vc in cls.find_for_processing(mime_type, extensions):
-                if vc._id in seen_ids:
-                    continue
-                if unique_id and vc.processing_status_exclude:
-                    status = ProcessingStatus.get_status_str(unique_id, vc)
-                    if status in vc.processing_status_exclude:
-                        continue
-                i = 0
-                for vco in configs:
-                    if vc.priority > vco.priority:
-                        break
-                    i += 1
-                configs.insert(i, vc)
-
-        return configs
-
-    @classmethod
-    def find_for_processing(cls, mime_type=None, extensions=None, **query):
-        if extensions is None:
-            extensions = []
-        query["processing_extensions"] = {"$in": extensions + ['*']}
-        cur = cls.find_active(query)
-
-        configs = [vc for vc in cur
-                   if vc.matches_for_processing(mime_type, extensions)]
-
-        return configs
-
     @property
     def creator(self):
         if self.creator_id:
@@ -177,38 +136,6 @@ class VisualizerConfig(BaseMappedClass):
         except ImportError:
             inst = None
         return inst
-
-    def matches_for_visualization(self, mtype, extensions):
-        """Does not include processing mimetypes, extensions"""
-        return self._matches_mtype_ext(
-            mtype, extensions, self.mime_types, self.extensions)
-
-    def matches_for_processing(self, mtype, extensions):
-        if self.processing_mime_types or self.processing_extensions:
-            return self._matches_mtype_ext(
-                mtype, extensions,
-                self.processing_mime_types,
-                self.processing_extensions)
-        else:
-            return False
-
-    @staticmethod
-    def _matches_mtype_ext(mtype, extensions, mime_types, ext_opts):
-        if not mtype or not mime_types:
-            # mimetype unspecified or unknown, match extensions (but not *)
-            match_star_ext = False
-        else:
-            # mimetype specified and determined, insist on a match
-            match_star_ext = True
-            for pattern in mime_types:  # find explicit match
-                if re.search(pattern, mtype):
-                    break
-            else:
-                return False
-        if match_star_ext and '*' in ext_opts:
-            return True
-        else:
-            return any(ext in ext_opts for ext in extensions)
 
 
 class _BaseVisualizerFile(File):

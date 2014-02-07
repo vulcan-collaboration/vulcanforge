@@ -319,7 +319,10 @@
                             event: 'mouseover',
                             solo: true // Only show one tooltip at a time
                         },
-                        hide: 'unfocus',
+                        hide: {
+                            fixed: true,
+                            delay: 600
+                        },
                         style: {
                             classes: 'user-id',
                             tip: {

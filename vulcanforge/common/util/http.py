@@ -46,7 +46,7 @@ def get_client_ip(request=None):
     return ip
 
 
-def set_download_headers(filename=None, content_type=None, set_ctype=True,
+def set_download_headers(filename, content_type=None, set_ctype=True,
                          set_disposition=True, file_pointer=None):
     if set_disposition:
         response.headers.add(

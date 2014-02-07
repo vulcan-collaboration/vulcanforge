@@ -1,65 +1,28 @@
-<!DOCTYPE html>
-
-{% do g.resource_manager.register_css('css/core.scss') %}
-{% do g.resource_manager.register_css('notification/notify.css') %}
+{% extends g.templates['master'] %}
 
 {% do g.resource_manager.register_css('auth/password_field.scss') %}
 {% do g.resource_manager.register_css('auth/registration/registration.scss') %}
-{% do g.resource_manager.register_css('theme/css/theme.scss') %}
-
-{% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/jquery/jquery-ui.1.10.3.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/jquery/jquery.cookie.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/jquery/jquery.notify.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/allura-base.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/utils.js', scope='forge') %}
 
 {% do g.resource_manager.register_js('auth/fancy_login/Detector.js') %}
 {% do g.resource_manager.register_js('auth/fang/registration.js') %}
 {% do g.resource_manager.register_js('auth/registration/registration.js') %}
 {% do g.resource_manager.register_js('auth/password_field.js') %}
 
-{% do g.resource_manager.register_widgets(c) %}
+{% block extra_css %}
+    .{{ g.antispam.honey_class }} { display:none }
+{% endblock %}
 
-<html lang="en">
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-    <title>{{ config.get('forge_name', 'Forge') }} Registration</title>
-    {% for blob in g.resource_manager.emit('css') %}
-        {{ blob }}
-    {% endfor %}
-    <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}" />
+{% set hide_sidebar = True %}
 
-    <style>
-        .{{ g.antispam.honey_class }} { display:none }
+{% if bodyClasses is undefined %}
+    {% set bodyClasses = [] %}
+{% endif %}
+{% set bodyClasses = ['Login'] %}
+{% block title %}{{ config.get('forge_name', 'Forge') }} Registration{% endblock %}
 
-        .header-logo {
-            margin-top: 5px;
-        }
-
-        #header-wrapper {
-            text-align: left;
-            padding-left: 12px;
-        }
-
-    </style>
-
-    <script type="text/javascript"
-            src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
-</head>
-<body>
-    <div id="header-wrapper">
-        <img class="header-logo" src="{{ g.resource_manager.absurl('images/vf_logo_header_short.png') }}"/>
-    </div>
-    <div id="content-areas-wrapper">
-        <div id="main-content-holder">
-            <div id="content-columns">
-                <div id="main-column" class="main-column">
-                    <div id="main-column-header">
-                        <h2>{{ config.get('forge_name', 'Forge') }} Registration</h2>
-                    </div>
-                    <div id="browserSupportErrorHolder"></div>
+{% block header %}{{ config.get('forge_name', 'Forge') }} Registration{% endblock %}
+{% block content %}
+                    <div id="browserSupportErrorHolder" class="padded"></div>
                     <noscript>
                         <div class="message error" id="noScriptErrorHolder">{{ config.get('forge_name', 'The forge') }} relies on JavaScript.<br/>Please enable scripts in your browser or use a browser with JavaScript support.<br/>Thank you!</div>
                     </noscript>
@@ -76,14 +39,10 @@
                         </ul>
                         {{ c.form.display(value=form_values) }}
                     </div>
-                </div>
-            </div>
-        </div>
-      </div>
+{% endblock %}
 
-    {% for blob in g.resource_manager.emit('js') %}
-        {{ blob }}
-    {% endfor %}
+{% block extra_js %}
+    <script type="text/javascript"
+            src="{{ config['base_url'].split(':')[0]|lower }}://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
 
-</body>
-</html>
+{% endblock %}

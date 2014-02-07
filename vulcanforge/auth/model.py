@@ -1000,10 +1000,6 @@ class User(SOLRIndexed):
                 project.user_leave_project(self)
         self.disabled = True
 
-    @property
-    def default_xcng_label(self):
-        return ''
-
     def get_swift_params(self, force_new=False):
         if force_new:
             st = StaticResourceToken.new_from_user(self)
