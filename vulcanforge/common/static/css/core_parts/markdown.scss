@@ -84,10 +84,10 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
     blockquote {
         position: relative;
         overflow: auto;
-        border: none;
         padding: 0 1.2rem;
         margin: 0 0 0 1.2rem;
-        background: #f0f0f0;
+        background: rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.02);
     }
 
     table {
@@ -115,10 +115,13 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
     }
 
     .toc {
+        position: relative;
+        z-index: 3;
         float: right;
         margin: 0 0 0 1.2rem;
         padding: 1.2rem;
         background: #f8f8f8;
+        border: 2px solid white;
         ul {
             margin: 0;
             padding: 0;
@@ -236,8 +239,8 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
     position: relative;
     margin: 1.8rem 1.2rem;
     padding: 0 1.2rem;
-    background: #f0f8ff;
-    border: 1px solid #dae7f2;
+    background: rgba(0,127,255, 0.04);
+    border: 1px solid rgba(0,127,255, 0.05);
 }
 .md-read-more-show {
     display: block;
