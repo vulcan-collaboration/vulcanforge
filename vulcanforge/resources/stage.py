@@ -41,7 +41,7 @@ class StaticResourceStager(object):
 
     def iter_css_js(self):
         recipe_path = os.path.join(
-            g.resource_manager.static_resources_dir, RECIPE_FILE)
+            g.resource_manager.static_recipes_dir, RECIPE_FILE)
 
         if not os.path.exists(recipe_path):
             with open(recipe_path, 'w') as fp:
