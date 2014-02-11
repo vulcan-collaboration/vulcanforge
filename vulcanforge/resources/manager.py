@@ -58,6 +58,8 @@ class ResourceManager(ew.ResourceManager):
         if not os.path.exists(self.build_dir):
             mkdir_p(self.build_dir)
 
+        self.globals = config['pylons.app_globals']
+
     @property
     def resources(self):
         return widget_context.resources
@@ -70,7 +72,7 @@ class ResourceManager(ew.ResourceManager):
 
     @property
     def recipe_mapping(self):
-        return g.cache.redis.hgetall(RESOURCE_RECIPE_MAPPING)
+        return self.globals.cache.redis.hgetall(RESOURCE_RECIPE_MAPPING)
 
     @classmethod
     def register_directory(cls, url_path, directory):
@@ -254,8 +256,8 @@ class ResourceManager(ew.ResourceManager):
     def hashed_file(self, file_type, rel_resource_paths):
         joined_list = self.separator.join(rel_resource_paths)
         hashed_file_name = str(abs(hash(joined_list))) + '.' + file_type
-        if not g.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, hashed_file_name):
-            g.cache.redis.hset(
+        if not self.globals.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, hashed_file_name):
+            self.globals.cache.redis.hset(
                 RESOURCE_RECIPE_MAPPING,
                 hashed_file_name,
                 joined_list)
@@ -334,8 +336,8 @@ class ResourceManager(ew.ResourceManager):
         if not os.path.exists(content_path):
             if file_type not in ('js','css'):
                 raise IOError()
-            if g.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, href):
-                recipe = g.cache.redis.hget(RESOURCE_RECIPE_MAPPING, href)
+            if self.globals.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, href):
+                recipe = self.globals.cache.redis.hget(RESOURCE_RECIPE_MAPPING, href)
                 resource_list = recipe.strip().split(self.separator)
                 self.write_slim_file(file_type, resource_list)
             else:
