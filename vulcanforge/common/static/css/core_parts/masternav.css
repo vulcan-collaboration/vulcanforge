@@ -115,6 +115,23 @@ li.masternav-item .masternav-item-icon.special-icon {
 
 /**********************************************************/
 
+.masternav-shutter {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 199;
+}
+.masternav-shutter.shutter-off {
+    display: none;
+}
+.masternav-shutter.shutter-on {
+    display: block;
+}
+
+/**********************************************************/
+
 .popup-container {
     position: fixed;
     z-index: 10;
