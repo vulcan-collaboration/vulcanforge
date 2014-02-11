@@ -130,6 +130,7 @@ li.masternav-item .masternav-item-icon.special-icon {
     padding: 0;
     opacity: 0;
     box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+    overflow: hidden;
 }
 
 .popup-container::before,
@@ -139,7 +140,7 @@ li.masternav-item .masternav-item-icon.special-icon {
     position: absolute;
     left: 0;
     width: 100%;
-    height: 0;
+    height: 16px;
     transition: height 400ms;
     font-family: "ForgeIconicFill";
     font-size: 20px;
@@ -150,14 +151,17 @@ li.masternav-item .masternav-item-icon.special-icon {
     pointer-events: none;
 }
 
-.popup-container.scrollable-top::before,
+.popup-container.scrollable-top::before {
+    top: 0;
+}
+
 .popup-container.scrollable-bottom::after {
-    height: 16px;
-    transition: height 400ms;
+    bottom: 0;
 }
 
 .popup-container::before {
-    top: 0;
+    top: -16px;
+    transition: top 400ms;
     /*content: "\25b2";*/
     background: rgba(0, 0, 0, 0.5);
     background: -webkit-linear-gradient(bottom, rgba(0,0,0,0), black);
@@ -168,7 +172,8 @@ li.masternav-item .masternav-item-icon.special-icon {
 }
 
 .popup-container::after {
-    bottom: 0;
+    bottom: -16px;
+    transition: bottom 400ms;
     /*content: "\25bc";*/
     background: rgba(0, 0, 0, 0.5);
     background: -webkit-linear-gradient(top, rgba(0,0,0,0), black);
