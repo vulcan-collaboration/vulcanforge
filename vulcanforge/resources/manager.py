@@ -254,7 +254,7 @@ class ResourceManager(ew.ResourceManager):
     def hashed_file(self, file_type, rel_resource_paths):
         joined_list = self.separator.join(rel_resource_paths)
         hashed_file_name = str(abs(hash(joined_list))) + '.' + file_type
-        if not g.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, hashed_file_name, joined_list):
+        if not g.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, hashed_file_name):
             g.cache.redis.hset(
                 RESOURCE_RECIPE_MAPPING,
                 hashed_file_name,
