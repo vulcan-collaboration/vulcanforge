@@ -161,9 +161,9 @@ class ForgeProcessor(object):
 
     def install(self):
         for k, v in self.inline_patterns.iteritems():
-            self.markdown.inlinePatterns.add(k, v, "_begin")
+            self.markdown.inlinePatterns[k] = v
         if self._use_wiki:
-            self.markdown.treeprocessors.add('forge', self.tree_processor, '_end')
+            self.markdown.treeprocessors['forge'] = self.tree_processor
         self.markdown.postprocessors['forge'] = self.postprocessor
 
     def store(self, raw):
