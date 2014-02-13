@@ -8,7 +8,6 @@ from collections import defaultdict
 
 import jsmin
 import cssmin
-from pylons import app_globals as g
 from scss import config as scss_config, Scss
 from paste.deploy.converters import asbool
 from webhelpers.html import literal
@@ -33,6 +32,7 @@ class ResourceManager(ew.ResourceManager):
     cache_max_age = 60 * 60 * 24 * 365
     paths = []
     kwargs = {}
+    resource_cache = {}
     combine_static_resources = False
     static_resources_dir = None
     static_recipes_dir = None
@@ -52,6 +52,7 @@ class ResourceManager(ew.ResourceManager):
         self.debug_mode = asbool(config.get('debug', 'true'))
         minify = asbool(config.get('minify_static', not self.debug_mode))
         self.use_cssmin = self.use_jsmin = minify
+        self.use_cache = not self.debug_mode
 
         self.build_dir = os.path.join(
             self.static_resources_dir, self.build_key)
@@ -326,6 +327,9 @@ class ResourceManager(ew.ResourceManager):
             zip_file.close()
 
     def serve_slim(self, file_type, href):
+        if href in self.resource_cache:
+            return self.resource_cache[href]
+
         content_path = os.path.join(self.static_resources_dir,
             self.build_key,
             href)
@@ -346,4 +350,6 @@ class ResourceManager(ew.ResourceManager):
         stat = os.stat(content_path)
         content = open(content_path).read()
         resource = (content, stat.st_mtime)
+        if self.use_cache:
+            self.resource_cache[href] = resource
         return resource
