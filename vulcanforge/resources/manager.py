@@ -39,25 +39,28 @@ class ResourceManager(ew.ResourceManager):
     build_key = 'default'
 
     def __init__(self, config):
+        self.debug_mode = asbool(config.get('debug', 'true'))
+
         self.script_name = config.get('ew.script_name', '/_ew_resources/')
         self._url_base = config.get('ew.url_base', '/_ew_resources/')
         self.combine_static_resources = asbool(
             config.get('combine_static_resources', 'false'))
-        self.static_resources_dir = config.get('static_resources_dir')
-        self.static_recipes_dir = config.get('static_recipes_dir',
-                                             self.static_resources_dir)
-        self.build_key = config.get('build_key', 'default')
-        self.separator = config.get('resource_separator', ';')
 
-        self.debug_mode = asbool(config.get('debug', 'true'))
-        minify = asbool(config.get('minify_static', not self.debug_mode))
-        self.use_cssmin = self.use_jsmin = minify
-        self.use_cache = not self.debug_mode
+        self.static_resources_dir = config.get('static_resources_dir', '')
+        if self.static_recipes_dir != '':
+            self.static_recipes_dir = config.get('static_recipes_dir',
+                                                 self.static_resources_dir)
+            self.build_key = config.get('build_key', 'default')
+            self.separator = config.get('resource_separator', ';')
 
-        self.build_dir = os.path.join(
-            self.static_resources_dir, self.build_key)
-        if not os.path.exists(self.build_dir):
-            mkdir_p(self.build_dir)
+            minify = asbool(config.get('minify_static', not self.debug_mode))
+            self.use_cssmin = self.use_jsmin = minify
+            self.use_cache = not self.debug_mode
+
+            self.build_dir = os.path.join(
+                self.static_resources_dir, self.build_key)
+            if not os.path.exists(self.build_dir):
+                mkdir_p(self.build_dir)
 
         self.globals = config['pylons.app_globals']
 
