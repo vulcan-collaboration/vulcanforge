@@ -5,7 +5,6 @@ import shutil
 from pylons import app_globals as g
 
 from vulcanforge.common.util.filesystem import mkdir_p
-from vulcanforge.resources.manager import RECIPE_FILE
 
 
 class StaticResourceStager(object):
@@ -40,29 +39,20 @@ class StaticResourceStager(object):
                 self.copy_images(directory, destination_dir)
 
     def iter_css_js(self):
-        recipe_path = os.path.join(
-            g.resource_manager.static_recipes_dir, RECIPE_FILE)
-
-        if not os.path.exists(recipe_path):
-            with open(recipe_path, 'w') as fp:
-                fp.write('')
-                raise StopIteration
-
-        with open(recipe_path, 'r') as fp:
-            for line in fp:
-                resource_list = line.strip().split(
-                    g.resource_manager.separator)
-                file_type = None
-                for resource in resource_list:
-                    if resource.endswith('.js'):
-                        file_type = 'js'
-                        break
-                    elif resource.endswith('.css'):
-                        file_type = 'css'
-                        break
-                if file_type is None:
-                    continue
-                yield file_type, resource_list
+        for recipe in g.resource_manager.recipe_mapping.values():
+            resource_list = recipe.strip().split(
+                g.resource_manager.separator)
+            file_type = None
+            for resource in resource_list:
+                if resource.endswith('.js'):
+                    file_type = 'js'
+                    break
+                elif resource.endswith('.css'):
+                    file_type = 'css'
+                    break
+            if file_type is None:
+                continue
+            yield file_type, resource_list
 
     def stage_css_js(self):
         for file_type, resource_list in self.iter_css_js():

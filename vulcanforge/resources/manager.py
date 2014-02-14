@@ -22,9 +22,9 @@ LOG = logging.getLogger(__name__)
 
 RESOURCE_URL = re.compile(r"url\([\'\"]?([^\"\'\)]+)[\'\"]?\)")
 ROOTRELATIVE_URL = re.compile(r"url\([\'\"]?/([^\"\'\)]+)[\'\"]?\)")
-RECIPE_FILE = 'static_recipes.txt'
 SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
 
+RESOURCE_RECIPE_MAPPING = 'resource_recipe_mapping'
 
 class ResourceManager(ew.ResourceManager):
     file_types = ['css', 'js']
@@ -57,7 +57,12 @@ class ResourceManager(ew.ResourceManager):
         self.build_dir = os.path.join(
             self.static_resources_dir, self.build_key)
         if not os.path.exists(self.build_dir):
-            mkdir_p(self.build_dir)
+            try:
+                mkdir_p(self.build_dir)
+            except OSError:
+                pass
+            
+        self.globals = config['pylons.app_globals']
 
     @property
     def resources(self):
@@ -68,6 +73,10 @@ class ResourceManager(ew.ResourceManager):
             'js': defaultdict(list),
             'css': defaultdict(list)
         }
+
+    @property
+    def recipe_mapping(self):
+        return self.globals.cache.redis.hgetall(RESOURCE_RECIPE_MAPPING)
 
     @classmethod
     def register_directory(cls, url_path, directory):
@@ -204,23 +213,6 @@ class ResourceManager(ew.ResourceManager):
         """Translate a resource path to a filename"""
         return [dir_ for url_path, dirs in self.paths for dir_ in dirs]
 
-    def extend_recipe_list(self, recipe):
-        recipe = recipe + os.linesep
-        recipe_path = os.path.join(self.static_recipes_dir, RECIPE_FILE)
-        recipe_list = []
-
-        if os.path.exists(recipe_path):
-            recipe_file = open(recipe_path, 'r+')
-            recipe_list = [line for line in recipe_file]
-        else:
-            recipe_file = open(recipe_path, 'w')
-
-        if recipe not in recipe_list:
-            recipe_file.writelines(recipe)
-            recipe_file.flush()
-
-        recipe_file.close()
-
     def config_scss(self):
         scss_config.STATIC_ROOT = self.scss_static_root
         scss_config.ASSETS_ROOT = self.build_dir
@@ -262,7 +254,19 @@ class ResourceManager(ew.ResourceManager):
                 continue
             expanded_url = self.absurl(resource_url)
             content = content.replace('/' + resource_url, expanded_url)
+
         return content
+
+    def hashed_file(self, file_type, rel_resource_paths):
+        joined_list = self.separator.join(rel_resource_paths)
+        hashed_file_name = str(abs(hash(joined_list))) + '.' + file_type
+        if not self.globals.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, hashed_file_name):
+            self.globals.cache.redis.hset(
+                RESOURCE_RECIPE_MAPPING,
+                hashed_file_name,
+                joined_list)
+
+        return hashed_file_name
 
     def write_slim_file(self, file_type, rel_resource_paths,
                         destination_dir=None):
@@ -271,9 +275,8 @@ class ResourceManager(ew.ResourceManager):
         """
         if destination_dir is None:
             destination_dir = self.build_dir
-        joined_list = self.separator.join(rel_resource_paths)
-        file_hash = str(abs(hash(joined_list))) + '.' + file_type
-        build_file_path = os.path.join(destination_dir, file_hash)
+        hashed_file_name = self.hashed_file(file_type, rel_resource_paths)
+        build_file_path = os.path.join(destination_dir, hashed_file_name)
         if not os.path.exists(build_file_path):
             if file_type == 'js' and self.use_jsmin:
                 content = '\n'.join(
@@ -326,23 +329,25 @@ class ResourceManager(ew.ResourceManager):
             zip_file.write(content)
             zip_file.close()
 
-            self.extend_recipe_list(joined_list)
-
-        return file_hash
-
     def serve_slim(self, file_type, href):
-        if href in self.resource_cache:
-            return self.resource_cache[href]
-
-        content_path = os.path.join(self.static_resources_dir, self.build_key,
-                                    href)
+        content_path = os.path.join(self.static_resources_dir,
+            self.build_key,
+            href)
         if not os.path.abspath(content_path).startswith(
                 self.static_resources_dir):
             raise IOError()
 
+        if not os.path.exists(content_path):
+            if file_type not in ('js','css'):
+                raise IOError()
+            if self.globals.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, href):
+                recipe = self.globals.cache.redis.hget(RESOURCE_RECIPE_MAPPING, href)
+                resource_list = recipe.strip().split(self.separator)
+                self.write_slim_file(file_type, resource_list)
+            else:
+                raise IOError
+
         stat = os.stat(content_path)
         content = open(content_path).read()
         resource = (content, stat.st_mtime)
-        if self.use_cache:
-            self.resource_cache[href] = resource
         return resource
