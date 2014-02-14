@@ -1013,7 +1013,7 @@ class PageController(WikiContentBaseController):
 
 class WikiAttachmentController(AttachmentController):
     AttachmentClass = WikiAttachment
-    edit_perm = 'edit'
+    edit_perm = 'write'
 
 
 class WikiAttachmentsController(AttachmentsController):
