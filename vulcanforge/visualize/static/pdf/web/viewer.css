@@ -453,6 +453,10 @@ html[dir='ltr'] #toolbarViewerLeft {
   margin-left: -1px;
 }
 
+#toolbarViewerMiddle {
+  min-width: 210px;
+}
+
 #toolbarViewerRight {
   min-width: 80px;
 }
