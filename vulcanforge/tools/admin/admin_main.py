@@ -651,7 +651,7 @@ class ProjectAdminController(BaseController):
                 if ep_name.lower() not in map(lambda t: t['name'],
                         g.tool_manager.installable_tools_for(c.project)):
                     raise exc.HTTPForbidden('Access Denied')
-                app_spec = g.tool_manager.tools.get(ep_name)
+                app_spec = g.tool_manager.tools.get(ep_name.lower())
                 app = app_spec.get('app')
                 mount_point = new['mount_point'].lower() or ep_name.lower()
                 try:

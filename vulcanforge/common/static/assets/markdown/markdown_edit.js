@@ -433,7 +433,7 @@
                 return true;
             });
             this.editor.hooks.set('onPreviewRefresh', function () {
-                $vf.initNewReadMoreTags({open: true});
+                $vf.initNewReadMoreTags({open: true, $root: that.element});
                 $vf.initDataTables();
                 return true;
             });
