@@ -15,5 +15,9 @@ def _parse_constant(constant):
         raise StrictJSONError(constant)
 
 
+def strict_loads(s, **kwargs):
+    return json.loads(s, parse_constant=_parse_constant, **kwargs)
+
+
 def strict_load(fp, **kwargs):
-    return json.load(fp, parse_constant=_parse_constant, **kwargs)
+    return strict_loads(fp.read(), **kwargs)
