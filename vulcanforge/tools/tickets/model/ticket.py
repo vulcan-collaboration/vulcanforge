@@ -703,6 +703,12 @@ class Ticket(VersionedArtifact):
             self.attach(attachment.filename, attachment.file,
                         content_type=attachment.type)
 
+        # status
+        status = ticket_form.pop('status', None)
+        if status is None or not status in self.globals.set_of_all_status_names:
+            status = self.globals.open_status_names.split(' ')[0]
+        self.status = status
+
         # other fields
         for k, v in ticket_form.iteritems():
             if k == 'assigned_to':
