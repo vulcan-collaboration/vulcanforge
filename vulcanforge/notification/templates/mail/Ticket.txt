@@ -2,7 +2,7 @@
 
 ---
 
-** [{{artifact.app_config.options.mount_point}}:{{artifact.ticket_num}}] {{artifact.summary}}**
+** [{{artifact.app_config.options.mount_point}}:#{{artifact.ticket_num}}] {{artifact.summary}}**
 
 - **Status:** {{artifact.status}}{% if artifact.labels.__len__() %}
 - **Labels:** {% for label in artifact.labels %}{{label}} {% else %}None{% endfor %}{% endif %}
