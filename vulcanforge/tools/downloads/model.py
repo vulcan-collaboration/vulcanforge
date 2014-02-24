@@ -43,6 +43,7 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
         ]
 
     type_s = 'ForgeDownloadsFile'
+    visualizable_kind = 'downloads_file'
 
     def raw_url(self):
         return '/rest' + self.url()

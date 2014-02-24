@@ -839,6 +839,7 @@ class Feed(MappedClass):
 class BaseAttachment(File, VisualizableMixIn):
     thumbnail_size = (96, 96)
     ArtifactType = None
+    visualizable_kind = 'attachment'
 
     class __mongometa__:
         name = 'attachment'
