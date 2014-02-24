@@ -326,13 +326,14 @@ class Ticket(VersionedArtifact):
 
     def index(self, **kw):
         assigned_to_name_s = ','.join(sorted(self.assigned_to_names))
+        status = self.status or self.default_status
         params = dict(
             title_s='Ticket %s' % self.ticket_num,
             version_i=self.version,
             type_s=self.type_s,
             ticket_num_i=self.ticket_num,
             milestone_s=self._milestone,
-            status_s=self.status,
+            status_s=status,
             open_b=self.is_open(),
             snippet_s=self.summary,
             summary_t=self.summary,
@@ -349,7 +350,7 @@ class Ticket(VersionedArtifact):
                 self.ticket_num,
                 self.summary,
                 self.description,
-                self.status,
+                status,
                 self.reported_by_name,
                 self.reported_by_username,
                 assigned_to_name_s,
@@ -451,6 +452,10 @@ class Ticket(VersionedArtifact):
     @LazyProperty
     def globals(self):
         return Globals.query.get(app_config_id=self.app_config_id)
+
+    @property
+    def default_status(self):
+        return self.globals.open_status_names.split(' ')[0]
 
     def is_open(self):
         return self.status not in self.app.globals.set_of_closed_status_names
@@ -709,7 +714,7 @@ class Ticket(VersionedArtifact):
             if self.status:
                 status = self.status
             else:
-                status = self.globals.open_status_names.split(' ')[0]
+                status = self.default_status
         self.status = status
 
         # other fields
