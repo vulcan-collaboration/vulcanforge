@@ -6,6 +6,7 @@ from pylons import tmpl_context as c, url
 import tg
 
 from vulcanforge.common import validators as V
+from vulcanforge.common.helpers import slugify
 from vulcanforge.common.widgets import form_fields as ffw, forms as ff
 from vulcanforge.common.widgets.util import PageList, PageSize
 from vulcanforge.artifact.widgets import RelatedArtifactsWidget
@@ -301,7 +302,7 @@ class PostWidget(HierWidget):
         last_edit_name, last_edit_date = None, None
         if value is not None:
             if attachment_context_id is None:
-                attachment_context_id = str(value.slug)
+                attachment_context_id = str(slugify(value.slug))
             if value.edit_count:
                 last_edit_date = value.last_edit_date
                 if value.author().display_name != value.last_edit_by().display_name:
