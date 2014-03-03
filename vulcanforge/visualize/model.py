@@ -31,11 +31,11 @@ VISUALIZER_PREFIX = 'Visualizer/'
 
 def _get_context():
     context = {}
-    if hasattr(c, 'app'):
+    if getattr(c, 'app', None):
         context['app_config_id'] = c.app.config._id
-    if hasattr(c, 'project'):
+    if getattr(c, 'project', None):
         context['project_id'] = c.project._id
-    if hasattr(c, 'neighborhood'):
+    if getattr(c, 'neighborhood', None):
         context['neighborhood_id'] = c.neighborhood._id
     return context
 
