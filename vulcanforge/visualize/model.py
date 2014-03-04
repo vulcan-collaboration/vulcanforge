@@ -1,5 +1,4 @@
 import hashlib
-import re
 import logging
 from datetime import datetime
 import os
@@ -28,6 +27,17 @@ from vulcanforge.common.util.filesystem import import_object
 LOG = logging.getLogger(__name__)
 
 VISUALIZER_PREFIX = 'Visualizer/'
+
+
+def _get_context():
+    context = {}
+    if getattr(c, 'app', None):
+        context['app_config_id'] = c.app.config._id
+    if getattr(c, 'project', None):
+        context['project_id'] = c.project._id
+    if getattr(c, 'neighborhood', None):
+        context['neighborhood_id'] = c.neighborhood._id
+    return context
 
 
 class VisualizerConfig(BaseMappedClass):
@@ -169,6 +179,14 @@ class ProcessingStatus(BaseMappedClass):
         schema.OneOf('loading', 'ready', 'error', if_missing='loading'))
     reason = FieldProperty(str, if_missing=None)
 
+    # the following properties are only used for management purposes
+    visualizable_kind = FieldProperty(str, if_missing=None)
+    context = FieldProperty(schema.Object({
+        "app_config_id": schema.ObjectId(if_missing=None),
+        "project_id": schema.ObjectId(if_missing=None),
+        "neighborhood_id": schema.ObjectId(if_missing=None)
+    }))
+
     @classmethod
     def get_status_str(cls, unique_id, visualizer_config):
         st_obj = cls.query.get(unique_id=unique_id,
@@ -200,6 +218,8 @@ class ProcessingStatus(BaseMappedClass):
         if st_obj is None:
             try:
                 st_obj = cls(unique_id=visualizable.get_unique_id(),
+                             visualizable_kind=visualizable.visualizable_kind,
+                             context=_get_context(),
                              visualizer_config_id=visualizer_config._id)
                 session(cls).flush(st_obj)
             except DuplicateKeyError:  # pragma no cover
@@ -216,6 +236,14 @@ class BaseVisualizableFile(_BaseVisualizerFile):
     """File associated with a Visualizable object"""
     unique_id = FieldProperty(str)  # unique_id of Visualizable
     ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
+
+    # the following properties are only used for management purposes
+    visualizable_kind = FieldProperty(str, if_missing=None)
+    context = FieldProperty(schema.Object({
+        "app_config_id": schema.ObjectId(if_missing=None),
+        "project_id": schema.ObjectId(if_missing=None),
+        "neighborhood_id": schema.ObjectId(if_missing=None)
+    }))
 
     @classmethod
     def get_from_visualizable(cls, visualizable, **kwargs):
@@ -234,6 +262,8 @@ class BaseVisualizableFile(_BaseVisualizerFile):
             try:
                 pfile = cls(
                     unique_id=visualizable.get_unique_id(),
+                    visualizable_kind=visualizable.visualizable_kind,
+                    context=_get_context(),
                     filename=filename)
                 session(cls).flush(pfile)
             except DuplicateKeyError:  # pragma no cover
