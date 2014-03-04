@@ -216,6 +216,20 @@ class File(BaseMappedClass):
         in_memory_file.write(self.key.read())
         return in_memory_file.getvalue()
 
+    def iter_serve(self, *args, **kwargs):
+        """
+        Sets the response headers and serves as a wsgi iter
+
+        NOTE: it is generally better to provide a url directly to the s3 key
+        (via the url method) than serving via this method
+
+        """
+        set_download_headers(self.filename, str(self.content_type))
+        # enable caching
+        set_cache_headers(self._id.generation_time)
+        for block in self.key:
+            yield block
+
     @staticmethod
     def file_is_image(filename=None, content_type=None):
         if content_type is None:

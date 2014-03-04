@@ -255,14 +255,18 @@ class BaseVisualizableFile(_BaseVisualizerFile):
         return cls.query.find(kwargs)
 
     @classmethod
-    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+    def upsert_from_visualizable(cls, visualizable, filename,
+                                 visualizer_config_id, **kwargs):
         pfile = cls.find_from_visualizable(
-            visualizable, filename=filename).first()
+            visualizable,
+            filename=filename,
+            visualizer_config_id=visualizer_config_id).first()
         if not pfile:
             try:
                 pfile = cls(
                     unique_id=visualizable.get_unique_id(),
                     visualizable_kind=visualizable.visualizable_kind,
+                    visualizer_config_id=visualizer_config_id,
                     context=_get_context(),
                     filename=filename)
                 session(cls).flush(pfile)
@@ -322,9 +326,10 @@ class ProcessedArtifactFile(BaseVisualizableFile):
     origin_hash = FieldProperty(str, if_missing=None)
 
     @classmethod
-    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+    def upsert_from_visualizable(cls, visualizable, filename,
+                                 visualizer_config_id, **kwargs):
         pfile = super(ProcessedArtifactFile, cls).upsert_from_visualizable(
-            visualizable, filename, **kwargs)
+            visualizable, filename, visualizer_config_id, **kwargs)
         if not pfile.origin_hash:
             pfile.origin_hash = cls.calculate_hash(visualizable.read())
         return pfile

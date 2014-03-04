@@ -252,7 +252,7 @@ class BaseFileProcessor(object):
         pfile = ProcessedArtifactFile.upsert_from_visualizable(
             self.artifact,
             filename,
-            visualizer_config_id=self.visualizer.config._id,
+            self.visualizer.config._id,
             **kwargs
         )
         session(ProcessedArtifactFile).flush(pfile)
