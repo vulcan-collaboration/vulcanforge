@@ -1321,10 +1321,10 @@ class FailedLogin(BaseMappedClass):
 
         client = cls.get_client_from_request(request)
 
-        if client and cls.num_recent(client) < max_fails:
-            return False
+        if client and cls.num_recent(client) >= max_fails:
+            return True
 
-        return True
+        return False
 
     @staticmethod
     def get_client_from_request(request):
