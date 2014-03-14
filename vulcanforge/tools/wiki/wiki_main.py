@@ -940,7 +940,8 @@ class PageController(WikiContentBaseController):
                 # put this page at the end of the list
                 cursor = self.page.app.get_featured_pages_cursor(sort=False)
                 last_page = cursor.sort('featured_ordinal', -1).first()
-                self.page.featured_ordinal = last_page.featured_ordinal + 1
+                highest_ordinal = last_page.featured_ordinal or 0
+                self.page.featured_ordinal = highest_ordinal + 1
             else:
                 # update the featured list ordinals
                 cursor = self.page.app.get_featured_pages_cursor()
