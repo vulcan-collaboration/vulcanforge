@@ -191,6 +191,8 @@ class Neighborhood(BaseMappedClass):
             project_name = shortname
         if user is None:
             user = getattr(c, 'user', None)
+        if tool_options is None:
+            tool_options = {}
 
         default_home_text = "Welcome to your new project."
         if project_name is not None:

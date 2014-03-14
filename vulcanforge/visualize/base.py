@@ -181,6 +181,9 @@ class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
 
 # For Visualizable artifacts and mapped classes
 class VisualizableMixIn(object):
+     # for differentiating on processed artifacts
+    visualizable_kind = 'base_visualizable'
+
     # subclasses should implement the following not implemented methods
     def get_unique_id(self):
         """Globally unique identifier across all visualizable documents"""
@@ -249,7 +252,7 @@ class BaseFileProcessor(object):
         pfile = ProcessedArtifactFile.upsert_from_visualizable(
             self.artifact,
             filename,
-            visualizer_config_id=self.visualizer.config._id,
+            self.visualizer.config._id,
             **kwargs
         )
         session(ProcessedArtifactFile).flush(pfile)
