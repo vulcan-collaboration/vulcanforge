@@ -1302,10 +1302,7 @@ class FailedLogin(BaseMappedClass):
     class __mongometa__:
         session = main_orm_session
         name = 'failed_login'
-        indexes = [
-            'client',
-            'timestamp'
-        ]
+        indexes = ['client', 'username', 'timestamp']
 
     _id = FieldProperty(S.ObjectId)
     client = FieldProperty(str)
@@ -1320,11 +1317,12 @@ class FailedLogin(BaseMappedClass):
             return False
 
         client = cls.get_client_from_request(request)
+        username = request.params.get('username')
 
-        if client and cls.num_recent(client) < max_fails:
-            return False
+        if client and cls.num_recent(client, username) >= max_fails:
+            return True
 
-        return True
+        return False
 
     @staticmethod
     def get_client_from_request(request):
@@ -1332,11 +1330,12 @@ class FailedLogin(BaseMappedClass):
         return client
 
     @classmethod
-    def num_recent(cls, client):
+    def num_recent(cls, client, username):
         cutoff = datetime.utcnow() - timedelta(minutes=int(
             config.get('login_lock.interval', 0)))
         return cls.query.find({
             'client': client,
+            'username': username,
             'timestamp': {'$gt': cutoff}
         }).count()
 
