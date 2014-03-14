@@ -103,15 +103,12 @@ class _AuthController(BaseController):
     def __init__(self):
         self.prefs = PreferencesController()
 
-    @expose(TEMPLATE_DIR + 'login.html')
-    @require_anonymous
-    @with_trailing_slash
-    def index(self, **kwargs):
+    def _login_params(self, request_kwargs):
         is_returning_to = False
         msgClass = ''
         orig_request = request.environ.get('pylons.original_request', None)
-        if 'return_to' in kwargs:
-            return_to = kwargs.pop('return_to')
+        if 'return_to' in request_kwargs:
+            return_to = request_kwargs.pop('return_to')
             is_returning_to = True
         elif orig_request:
             return_to = orig_request.url
@@ -137,13 +134,15 @@ class _AuthController(BaseController):
         }
 
     @expose(TEMPLATE_DIR + 'login.html')
+    @require_anonymous
+    @with_trailing_slash
+    def index(self, **kwargs):
+        return self._login_params(kwargs)
+
+    @expose(TEMPLATE_DIR + 'login.html')
     @without_trailing_slash
     def login(self, *args, **kwargs):
-        c.form = self.Forms.login_form
-        return {
-            'autocomplete': not g.production_mode,
-            'is_returning_to': 'return_to' in kwargs
-        }
+        return self._login_params(kwargs)
 
     @expose()
     def send_verification_link(self, a):
