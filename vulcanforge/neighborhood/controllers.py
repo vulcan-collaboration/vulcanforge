@@ -275,6 +275,8 @@ class NeighborhoodController(BaseTGController):
         private_project = form_data.pop('private_project', None)
         neighborhood = self.neighborhood
 
+        tool_options = form_data.pop('tool_options', None)
+
         apps = []
         tool_info = {
             'Tickets': 'Manage',
@@ -313,7 +315,8 @@ class NeighborhoodController(BaseTGController):
                 project_unixname,
                 project_name=project_name,
                 private_project=private_project,
-                apps=apps or None
+                apps=apps or None,
+                tool_options=tool_options
             )
             if project_description:
                 c.project.short_description = project_description

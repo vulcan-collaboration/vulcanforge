@@ -8,6 +8,13 @@
 
     $vf.afterInit(function () {
         var current = $vf.nav_context;
+        var menuIsOpen = false;
+        var $shutter = $('<div/>').
+            addClass('masternav-shutter shutter-off').
+            bind('click', function () {
+                _popState(0);
+            }).
+            appendTo('body');
 
         $vf.preloadImagesFromURLs([
             $vf.resourceURL + "images/main-nav-chevron.svg",
@@ -16,14 +23,15 @@
 
         config = config || {};
         config = _.defaults(config, {
-            timeoutDuration: 400,
+            timeoutDuration: 4000,
             smartFilter: false,
             bottomBuffer: 64,
             scrollBuffer: 16,
             rootIcon: $vf.resourceURL + "images/vf_plus_fang_logo.png",
             hoodsIcon: $vf.resourceURL + "images/project_default.png",
             submenuNudge: 8,
-            popupDelay: 175,
+            popupDelay: 300,
+            popupAnimateSpeed: 175,
             animateIntro: 250,
             preferREST: true,
             filterShortname: "--init--"
@@ -109,33 +117,40 @@
                         }
                     }).
                     filter('.has-menu').
-                    bind("mouseenter",function (event) {
+                    bind("mouseenter", function (event) {
                         var $this = $(this), $target = $(event.delegateTarget);
+                        var hoverAction = function () {
+                            var content;
+                            switch ($target.attr('data-shortname')) {
+                            case current[0]:
+                                content = hood;
+                                break;
+                            case current[1]:
+                                content = project;
+                                break;
+                            case current[2]:
+                                content = tool;
+                                break;
+                            default:
+                                content = data.globals;
+                            }
+                            $('.masternav-menu-open').removeClass('masternav-menu-open');
+                            _renderPopup($master, 0, event.delegateTarget.id,
+                                content, $target.outerHeight(),
+                                $target.position().left, $this);
+                        };
                         clearTimeout(masterTimeout);
                         clearTimeout(submenuTimeout);
-                        _popState(0, true);
-                        var content;
-                        switch ($target.attr('data-shortname')) {
-                        case current[0]:
-                            content = hood;
-                            break;
-                        case current[1]:
-                            content = project;
-                            break;
-                        case current[2]:
-                            content = tool;
-                            break;
-                        default:
-                            content = data.globals;
+                        if (menuIsOpen) {
+                            _popState(0, true);
+                            hoverAction();
+                        } else {
+                            $this.data('hovertimeout', setTimeout(hoverAction, config.popupDelay));
                         }
-                        $('.masternav-menu-open').removeClass('masternav-menu-open');
-                        _renderPopup($master, 0, event.delegateTarget.id,
-                            content, $target.outerHeight(),
-                            $target.position().left, $this);
                     }).
                     bind("mouseleave", function () {
-                        masterTimeout =
-                            setTimeout(_checkHover, config.timeoutDuration);
+                        clearTimeout($(this).data('hovertimeout'));
+                        masterTimeout = setTimeout(_checkHover, config.timeoutDuration);
                     });
             };
 
@@ -241,10 +256,14 @@
                         // TODO: Allow overall page to scroll
                     })
                 }
-                $popup.bind("mouseleave", function() {
-                    submenuTimeout = setTimeout(_checkHover, config.timeoutDuration);
-                })
-                .animate({ opacity: 1 }, config.popupDelay);
+                $popup.
+                    bind("mouseenter", function () {
+                        clearTimeout(submenuTimeout);
+                    }).
+                    bind("mouseleave", function() {
+                        submenuTimeout = setTimeout(_checkHover, config.timeoutDuration);
+                    }).
+                    animate({ opacity: 1 }, config.popupAnimateSpeed);
                 $triggeredBy.addClass('masternav-menu-open');
             };
 
@@ -260,6 +279,8 @@
             var _pushState = function($item, depth) {
                 _popState(depth, true);
                 data.state.push($item);
+                $shutter.removeClass('shutter-off').addClass('shutter-on');
+                menuIsOpen = true;
             };
 
             var _popState = function(depth, opt_skipAnimate) {
@@ -276,6 +297,13 @@
                                 });
                         }
                     })(data.state.pop());
+                }
+                if (data.state.length === 0) {
+                    $shutter.removeClass('shutter-on').addClass('shutter-off');
+                    menuIsOpen = false;
+                    $master.
+                        find('.masternav-menu-open').
+                        removeClass('masternav-menu-open')
                 }
             };
 

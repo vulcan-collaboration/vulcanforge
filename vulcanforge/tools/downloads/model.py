@@ -7,6 +7,7 @@ models
 
 @author: U{tannern<tannern@gmail.com>}
 """
+import os
 from ming.odm import FieldProperty
 
 from pylons import app_globals as g, tmpl_context as c
@@ -76,14 +77,22 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
         key = g.get_s3_key('', item)
         key.set_contents_from_file(file_obj)
 
+    def get_key(self):
+        return g.get_s3_key('', self)
+
     def delete(self):
-        key = g.get_s3_key('', self)
-        g.delete_s3_key(key)
+        g.delete_s3_key(self.get_key())
         super(ForgeDownloadsFile, self).delete()
 
     def read(self):
-        key = g.get_s3_key('', self)
-        return key.read()
+        return self.get_key().read()
+
+    def get_content_to_folder(self, path):
+        filename = os.path.basename(self.filename)
+        full_path = os.path.join(path, filename)
+        with open(full_path, 'w') as fp:
+            self.get_key().get_contents_to_file(fp)
+        return filename
 
 
 class ForgeDownloadsDirectory(ForgeDownloadsAbstractItem):
