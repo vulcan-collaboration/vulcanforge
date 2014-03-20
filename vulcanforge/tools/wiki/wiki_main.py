@@ -706,7 +706,8 @@ class PageController(WikiContentBaseController):
         if self.page is None:
             return {
                 'otherEditors': [],
-                'expirationTime': -1
+                'expirationTime': -1,
+                'currentVersion': None
             }
         g.security.require_access(self.page, 'write')
         expiration_time = 20
@@ -727,7 +728,8 @@ class PageController(WikiContentBaseController):
                 g.cache.srem(page_key, username)
         return {
             'otherEditors': list(other_editors),
-            'expirationTime': expiration_time
+            'expirationTime': expiration_time,
+            'currentVersion': self.page.version
         }
 
     @without_trailing_slash
