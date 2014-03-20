@@ -696,7 +696,38 @@ class PageController(WikiContentBaseController):
         return {
             'page': page,
             'page_exists': page_exists,
-            'attachment_context_id': attachment_context_id
+            'attachment_context_id': attachment_context_id,
+            'edit_status': self.edit_status()
+        }
+
+    @without_trailing_slash
+    @expose('json')
+    def edit_status(self):
+        if self.page is None:
+            return {
+                'otherEditors': [],
+                'expirationTime': -1
+            }
+        g.security.require_access(self.page, 'write')
+        expiration_time = 20
+        page_key = 'wiki.editing.{}'.format(self.page._id)
+        user_key_template = '{}.{{}}'.format(page_key)
+        my_user_key = user_key_template.format(c.user.username)
+        g.cache.sadd(page_key, c.user.username)
+        g.cache.expire(page_key, expiration_time)
+        g.cache.set(my_user_key, '', expiration=expiration_time)
+        other_editors = set()
+        for username in g.cache.smembers(page_key):
+            if username == c.user.username:
+                continue
+            user_key = user_key_template.format(username)
+            if g.cache.exists(user_key):
+                other_editors.add(username)
+            else:
+                g.cache.srem(page_key, username)
+        return {
+            'otherEditors': list(other_editors),
+            'expirationTime': expiration_time
         }
 
     @without_trailing_slash
