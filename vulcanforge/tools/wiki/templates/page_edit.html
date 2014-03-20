@@ -106,5 +106,50 @@
                 });
             $('#rename_descendants_field').hide();
         });
+
+        $(function () {
+            var isMainEditor = false,
+                otherEditors = [],
+                expirationTime,
+                $message = $('<span/>').
+                        addClass('wiki-multiple-editors-warning-message'),
+                $warningPanel = $('<div/>').
+                        addClass('wiki-multiple-editors-warning-panel').
+                        append($message).
+                        prependTo('#main-column').
+                        hide(),
+                queueUpdate = function () {
+                    if (expirationTime > 0) {
+                        setTimeout(update, Math.max(1, expirationTime - 1) * 1000);
+                    }
+                },
+                updateFromState = function (newState) {
+                    var count;
+                    otherEditors = newState.otherEditors;
+                    expirationTime = newState.expirationTime;
+                    count = otherEditors.length;
+                    if (!isMainEditor && count > 0) {
+                        if (count > 1) {
+                            $message.text(count + ' active editors: ' + otherEditors.join(', '));
+                        } else {
+                            $message.text(count + ' active editor: ' + otherEditors.join(', '));
+                        }
+                        $warningPanel.show();
+                        isMainEditor = false;
+                    } else {
+                        $warningPanel.hide();
+                        isMainEditor = true;
+                    }
+                    queueUpdate();
+                },
+                update = function () {
+                    $.ajax({
+                        url: 'edit_status',
+                        success: updateFromState,
+                        error: queueUpdate
+                    });
+                };
+            updateFromState({{ edit_status|jsonify }});
+        });
     </script>
 {% endblock %}
