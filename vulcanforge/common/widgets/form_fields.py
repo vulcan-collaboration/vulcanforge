@@ -147,8 +147,7 @@ class AttachmentList(ew_core.Widget):
         return new_context
 
     def has_del_permission(self, value):
-        return g.security.has_access(
-            value, value.app_config.reference_opts['create_perm'])
+        return g.security.has_access(value, 'write')
 
     def get_delete_url(self, att):
         return att.local_url()

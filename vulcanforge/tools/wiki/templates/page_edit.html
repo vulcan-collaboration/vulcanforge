@@ -106,5 +106,71 @@
                 });
             $('#rename_descendants_field').hide();
         });
+
+        // Set up notifications to help prevent overwriting changes for non-realtime editing
+        $(function () {
+            var isMainEditor,
+                startedAtVersion,
+                otherEditors,
+                expirationTime,
+                $message = $('<div/>').
+                        addClass('wiki-multiple-editors-warning-message'),
+                $suggestion = $('<div/>').
+                        addClass('wiki-multiple-editors-warning-suggestion'),
+                $warningPanel = $('<div/>').
+                        addClass('wiki-multiple-editors-warning-panel').
+                        append($message).
+                        append($suggestion).
+                        prependTo('#main-column').
+                        hide(),
+                queueUpdate = function () {
+                    if (expirationTime > 0) {
+                        setTimeout(update, Math.max(1, expirationTime - 1) * 1000);
+                    }
+                },
+                initFromState = function (newState) {
+                    startedAtVersion = newState.currentVersion;
+                    isMainEditor = newState.otherEditors.length === 0;
+                    updateFromState(newState);
+                },
+                updateFromState = function (newState) {
+                    var count;
+                    otherEditors = newState.otherEditors;
+                    expirationTime = newState.expirationTime;
+                    count = otherEditors.length;
+                    if (startedAtVersion !== newState.currentVersion) {
+                        $warningPanel.addClass('alert');
+                        $message.text('Another user has modified this page.');
+                        $suggestion.text('Saving now will overwrite their changes.');
+                        $warningPanel.show();
+                    } else if (!isMainEditor) {
+                        if (count > 0) {
+                            if (count > 1) {
+                                $message.text(count + ' active editors: ' + otherEditors.join(', '));
+                            } else {
+                                $message.text(count + ' active editor: ' + otherEditors.join(', '));
+                            }
+                            $suggestion.text('Coordinate edits to prevent overwriting each others\' changes');
+                            $warningPanel.show();
+                        } else {
+                            $message.text('Other editors have left without saving their changes.');
+                            $suggestion.text('Carry On.');
+                            $warningPanel.
+                                    delay(5000).
+                                    slideUp();
+                            isMainEditor = true;
+                        }
+                    }
+                    queueUpdate();
+                },
+                update = function () {
+                    $.ajax({
+                        url: 'edit_status',
+                        success: updateFromState,
+                        error: queueUpdate
+                    });
+                };
+            initFromState({{ edit_status|jsonify }});
+        });
     </script>
 {% endblock %}
