@@ -171,14 +171,13 @@ class SMTPClient(object):
     def __init__(self):
         self._client = None
 
-    def sendmail(self, addrs, addrfrom, reply_to, subject, message_id,
+    def sendmail(self, addresses, addrfrom, reply_to, subject, message_id,
                  in_reply_to, message):
-        if not addrs:
+        if not addresses:
             return
         charset = message.get_charset()
         if charset is None:
             charset = 'iso-8859-1'
-        message['To'] = Header(reply_to, charset)
         message['From'] = Header(addrfrom, charset)
         message['Reply-To'] = Header(reply_to, charset)
         message['Subject'] = Header(subject, charset)
@@ -188,17 +187,27 @@ class SMTPClient(object):
                 in_reply_to = [ in_reply_to ]
             in_reply_to = ','.join(('<' + irt + '>') for irt in in_reply_to)
             message['In-Reply-To'] = Header(in_reply_to, charset)
-        content = message.as_string()
-        smtp_addrs = map(_parse_smtp_addr, addrs)
-        smtp_addrs = [ a for a in smtp_addrs if isvalid(a) ]
-        if not smtp_addrs:
+
+        def iter_smtp_addresses():
+            for address in addresses:
+                smtp_address = _parse_smtp_addr(address)
+                if isvalid(smtp_address):
+                    yield address, smtp_address
+        smtp_addresses = list(iter_smtp_addresses())
+        if not smtp_addresses:
             LOG.warning('No valid addrs in %s, so not sending mail',
-                map(unicode, addrs))
+                map(unicode, addresses))
             return
         self._connect()
-        r = self._client.sendmail(config.return_path, smtp_addrs, content)
+        send_errors = {}
+        for address, smtp_address in smtp_addresses:
+            message['To'] = Header(address, charset)
+            send_response = self._client.sendmail(config.return_path,
+                                                  [smtp_address],
+                                                  message.as_string())
+            send_errors.update(send_response)
         self._client.quit()
-        return r
+        return send_errors
 
     def _connect(self):
         if asbool(tg.config.get('smtp_ssl', False)):

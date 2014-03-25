@@ -720,8 +720,14 @@ class Ticket(VersionedArtifact):
         # other fields
         for k, v in ticket_form.iteritems():
             if k == 'assigned_to':
-                self.assigned_to_ids = [
-                    u._id for u in v if c.project.user_in_project(user=u)]
+                old_ids = set(self.assigned_to_ids)
+                new_ids = set([u._id for u in v
+                               if c.project.user_in_project(user=u)])
+                added_ids = new_ids.difference(old_ids)
+                for user in v:
+                    if user._id in added_ids:
+                        self.subscribe(user)
+                self.assigned_to_ids = list(new_ids)
             elif k != 'super_id':
                 setattr(self, k, v)
         if 'custom_fields' in ticket_form:
