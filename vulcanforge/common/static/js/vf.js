@@ -1547,4 +1547,36 @@ $.extend($vf, {
     });
 
 
+    // prettify bytes
+    $vf.prettyPrintByteSize = function (size) {
+        if (size === 1) {
+            return "1 byte";
+        }
+        var units = [
+                1024,
+                Math.pow(1024, 2),
+                Math.pow(1024, 3),
+                Math.pow(1024, 4),
+                Math.pow(1024, 5)
+            ],
+            labels = [
+                'KB', 'MB', 'GB', 'TB', 'PB'
+            ],
+            i, x;
+        for (i=units.length; i>=0; --i) {
+            x = size / units[i];
+            if (x > 1) {
+                return $vf.roundToDecimal(x, 2) + ' ' + labels[i];
+            }
+        }
+        return size + ' bytes';
+    };
+
+    // round to decimal places
+    $vf.roundToDecimal = function (i, places) {
+        var factor = Math.pow(10, places);
+        return Math.round(i * factor) / factor;
+    };
+
+
 }(window));
