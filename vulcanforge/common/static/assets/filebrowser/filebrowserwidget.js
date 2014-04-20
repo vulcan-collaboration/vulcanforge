@@ -212,6 +212,8 @@
             data: null,
 
             // how long to cache pathData (in milliseconds)
+            // a timeout of zero (0) means that it never times out.
+            // actually any "falsy" value means this as well.
             dataCacheTimeout: 5 * 60 * 1000,
 
             //
@@ -699,7 +701,7 @@
             }
             // load new data if missing or expired
             if (path && (
-                opt.reload === true || !pathData || !pathData.isCurrent()
+                opt.reload === true || !pathData || (this.options.dataCacheTimeout && !pathData.isCurrent())
                 )) {
                 this._loadPathData(path, callback, opt.showPleaseWait);
             } else {
@@ -762,7 +764,7 @@
             pathData = this.data[path];
             if (pathData) {
                 pathData.childrenLoaded = true;
-                if (!pathData.expiresAt) {
+                if (this.options.dataCacheTimeout && !pathData.expiresAt) {
                     pathData.expiresAt = Number(new Date()) +
                         this.options.dataCacheTimeout;
                 }
@@ -1204,13 +1206,13 @@
                     attr('data-downloadurl', fileDetails);
             }
 
-            if (pathData.extra.iconURL && pathData.extra.iconURL.indexOf('.') !== -1) {
+            if (pathData.extra && pathData.extra.iconURL && pathData.extra.iconURL.indexOf('.') !== -1) {
                 $listItemIcon = $('<img/>').
                     attr('src', pathData.extra.iconURL);
             } else {
                 $listItemIcon = $('<span/>').
                     addClass(this._class('listItem-link-file-icon-' + typeName));
-                if (pathData.extra.iconURL) {
+                if (pathData.extra && pathData.extra.iconURL) {
                     $listItemIcon.
                         addClass(this._class('listItem-link-file-icon-' +
                             $vf.slugify(pathData.extra.iconURL)));
