@@ -1,9 +1,11 @@
+from collections import defaultdict
 from datetime import datetime
 import logging
 from itertools import ifilter
 
 from bson import ObjectId
 from ming.odm import ThreadLocalODMSession, state, session
+import pymongo
 from webob import exc
 from formencode import validators as fev, Invalid
 from pylons import tmpl_context as c, app_globals as g
@@ -79,6 +81,7 @@ class ProjectAdminController(BaseController):
     def __init__(self):
         self.permissions = PermissionsController()
         self.groups = GroupsController()
+        self.roles = RolesController()
 
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'project_admin.html')
@@ -1087,3 +1090,76 @@ class GroupController(BaseController):
 class AdminAppAdminController(DefaultAdminController):
     """Administer the admin app...but WHY??"""
     pass
+
+
+class RolesController(BaseController):
+
+    @with_trailing_slash
+    @expose(TEMPLATE_DIR + 'project_roles.html')
+    def index(self):
+        """
+        TODO: client side app
+            - load all permissions and roles with state hash
+            - api calls
+                - create role
+                - delete role
+                - assign role to user
+                - unassign role to user
+                - assign permission to role
+                - unassign permission to role
+        """
+        return {}
+
+    @expose('json')
+    def role_graph(self):
+        return {
+            'roles': self._get_project_roles(c.project._id),
+            'permissions': self._get_project_permissions(c.project),
+            'apps': self._get_project_app_configs(c.project)
+        }
+
+    @staticmethod
+    def _get_project_roles(project_id):
+        cursor = ProjectRole.query.find({
+            'project_id': project_id
+        })
+        cursor.sort('name', pymongo.DESCENDING)
+        roles = {
+            'named': {},
+            'user': {}
+        }
+        for role in cursor:
+            display = role.display()
+            roleset = roles['user'] if display.startswith('*') else roles['named']
+            roleset[str(role._id)] = {
+                'id': role._id,
+                'user': getattr(role.user, 'username', None),
+                'role_ids': role.roles,
+                'name': role.name,
+                'display': display
+            }
+        return roles
+
+    @staticmethod
+    def _get_project_permissions(project):
+        permissions = defaultdict(lambda: defaultdict(lambda: list()))
+        for ace in project.acl:
+            if ace.access == ACE.ALLOW:
+                permissions['project'][ace.permission].append(ace.role_id)
+        for app_config in project.app_configs:
+            for ace in app_config.acl:
+                if ace.access == ACE.ALLOW:
+                    permissions[str(app_config._id)][ace.permission].append(ace.role_id)
+        return permissions
+
+    @staticmethod
+    def _get_project_app_configs(project):
+        return {
+             str(app_config._id): {
+                 'id': app_config._id,
+                 'label': app_config.options.mount_label,
+                 'mount': app_config.options.mount_point,
+                 'url': app_config.url()
+             }
+             for app_config in project.app_configs
+        }

@@ -544,17 +544,21 @@
         },
 
         goToDirForPathData: function (pathData) {
-            var newTitle;
+            var newTitle,
+                currentURL = window.location.pathname + window.location.hash,
+                newURL = pathData.href || this.options.getURLForPath(pathData.path);
+            console.log(currentURL, newURL);
             // animations
             this._animateListToPathData(pathData);
             this._animatePathToPathData(pathData);
             // history & location management
-            if (window.location.pathname !== pathData.href) {
+            if (currentURL !== newURL) {
+                console.log('pushstate');
                 newTitle = this.options.pageTitleFormat.
                     replace('{path}', pathData.path).
                     replace('{filename}', pathData.name);
                 window.history.pushState({path: pathData.path},
-                    newTitle, pathData.href);
+                    newTitle, newURL);
             } else {
                 window.history.replaceState({path: pathData.path},
                     $('head title').text(), window.location.href);
