@@ -186,20 +186,17 @@
     top: 0;
     left: 0;
     width: 100%;
-    box-shadow: 0 0px 1em #CCC;
+    box-shadow: 0 0 1em #CCC;
 }
 
 .vf-filebrowser-listControlPanel {
-    overflow: auto;
-    padding: 0 1ex;
+    padding: 1px 1ex;
     background: #e0e0e0;
-    background-image: linear-gradient(top, #ddd, #ccc);
-    background-image: -o-linear-gradient(top, #ddd, #ccc);
-    background-image: -moz-linear-gradient(top, #ddd, #ccc);
-    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
-    background-image: -ms-linear-gradient(top, #ddd, #ccc);
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #c0c0c0;
+    background-image: -o-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -moz-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -webkit-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -ms-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
 }
 
 .vf-filebrowser-listControlPanel button,
@@ -256,20 +253,20 @@
     font-weight: bold;
     color: #666;
     text-shadow: 0 0 2px white;
-    background-image: linear-gradient(top, #ddd, #ccc);
-    background-image: -o-linear-gradient(top, #ddd, #ccc);
-    background-image: -moz-linear-gradient(top, #ddd, #ccc);
-    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
-    background-image: -ms-linear-gradient(top, #ddd, #ccc);
+    background-image: -o-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -moz-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -webkit-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -ms-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
 }
 
 .vf-filebrowser-listItem.vf-filebrowser-listItem-selected {
     background: #d9dfed;
-    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
     text-shadow: 0 1px 1px #f0f8ff;
 }
 
