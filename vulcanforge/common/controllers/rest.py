@@ -429,9 +429,9 @@ class WebServiceRestController(object):
 class WebAPIController(TGController):
 
     @expose('json')
-    def navdata(self, shallow=False, **kwargs):
-        if not g.cache or shallow is not False:
-            return self._make_navdata(shallow=shallow)
+    def navdata(self, **kwargs):
+        if not g.cache:
+            return self._make_navdata()
         cache_hash_name = 'navdata'
         hash_key = c.user.username
         timeout = (10 * 60) if g.production_mode else 10
@@ -442,7 +442,7 @@ class WebAPIController(TGController):
         g.cache.hset_json(cache_hash_name, hash_key, new_navdata, timeout)
         return new_navdata
 
-    def _make_navdata(self, shallow=False):
+    def _make_navdata(self):
         """
         Special icons and labels configuration:
 
@@ -499,33 +499,32 @@ class WebAPIController(TGController):
             hood_id_map[hood._id] = hood_data
             hood_items.append(hood_data)
 
-        if shallow is False:
-            project_query_params = {
-                'neighborhood_id': {
-                    '$in': hood_id_map.keys()
-                }
+        project_query_params = {
+            'neighborhood_id': {
+                '$in': hood_id_map.keys()
             }
-            project_cursor = Project.query.find(project_query_params)
-            project_cursor.sort('sortable_name', pymongo.ASCENDING)
-            for project in project_cursor:
-                if (
-                    project.deleted and
-                    not g.security.has_access(project, 'write') or
-                    not g.security.has_access(project, 'read') or
-                    not project.first_mount('read')
-                ):
-                    continue
-                project_data = {
-                    'label': project.name,
-                    'url': project.url(),
-                    'icon': project.icon_url,
-                    'shortname': project.shortname,
-                    'tools': self._get_global_nav_tools_for_project(project),
-                    'actions': self._get_global_nav_actions_for_project(project)
-                }
-                project_id_map[project._id] = project_data
-                hood_id_map[project.neighborhood_id]['children'].\
-                    append(project_data)
+        }
+        project_cursor = Project.query.find(project_query_params)
+        project_cursor.sort('sortable_name', pymongo.ASCENDING)
+        for project in project_cursor:
+            if (
+                project.deleted and
+                not g.security.has_access(project, 'write') or
+                not g.security.has_access(project, 'read') or
+                not project.first_mount('read')
+            ):
+                continue
+            project_data = {
+                'label': project.name,
+                'url': project.url(),
+                'icon': project.icon_url,
+                'shortname': project.shortname,
+                'tools': self._get_global_nav_tools_for_project(project),
+                'actions': self._get_global_nav_actions_for_project(project)
+            }
+            project_id_map[project._id] = project_data
+            hood_id_map[project.neighborhood_id]['children'].\
+                append(project_data)
 
         root_item = self._get_global_nav_root_item()
         # compile output
