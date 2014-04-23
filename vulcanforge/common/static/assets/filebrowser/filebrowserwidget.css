@@ -204,7 +204,7 @@
     display: inline-block;
     min-height: 0;
     margin: 2px;
-    padding: 1ex 1em;
+    padding: 4px 1em;
     line-height: 1em;
     font-size: 11px;
     background: none;
@@ -237,7 +237,7 @@
 
 .vf-filebrowser-listItem-cell {
     display: table-cell;
-    padding: 0.5ex 1em;
+    padding: 4px 1em;
     vertical-align: middle;
     white-space: nowrap;
 }
@@ -272,7 +272,7 @@
 
 .vf-filebrowser-listItem-link-file {
     display: block;
-    padding: 0.5ex 0;
+    padding: 4px 0;
 }
 
 .vf-filebrowser-listItem-link-file-icon {
@@ -305,7 +305,8 @@
 
 .vf-filebrowser-listItem-notes {
     padding-left: 21px;
-    font-size: 0.8em;
+    font-size: 10px;
+    line-height: 13px;
     color: #888;
     font-style: italic;
 }
