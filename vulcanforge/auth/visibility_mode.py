@@ -31,7 +31,7 @@ class VisibilityModeHandler(object):
 
     def __init__(self, mode='default', login_url='/auth/', whitelist=None):
         self.mode = mode
-        self.login_url = "/{}/".format(login_url.strip('/'))
+        self.login_url = "/{}".format(login_url.lstrip('/'))
         self.url_whitelist.append(re.compile('^{}'.format(self.login_url)))
         if whitelist is None:
             whitelist = []
