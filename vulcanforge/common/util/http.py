@@ -49,17 +49,17 @@ def get_client_ip(request=None):
 def set_download_headers(filename, content_type=None, set_ctype=True,
                          set_disposition=True, file_pointer=None):
     if set_disposition:
-        response.headers.add(
-            'Content-Disposition',
-            'attachment;filename=' + filename.encode('utf-8').replace(' ', '_'))
+        disposition = 'attachment;filename=' + \
+                      filename.encode('utf-8').replace(' ', '_')
+        response.headers['Content-Disposition'] = disposition
     if set_ctype:
         if not content_type:
             content_type = guess_mime_type(filename).encode('utf-8')
         response.headers['Content-Type'] = ''
         response.content_type = content_type
         if content_type == 'application/xml' and file_pointer:
-            response.headers['Content-Encoding'] =\
-            UnicodeDammit(file_pointer.read()).originalEncoding
+            encoding = UnicodeDammit(file_pointer.read()).originalEncoding
+            response.headers['Content-Encoding'] = encoding
 
 
 def cache_forever():

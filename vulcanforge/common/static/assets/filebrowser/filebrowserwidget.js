@@ -1183,6 +1183,10 @@
                     that.selectPath(pathData.path);
                 });
 
+            if (pathData.mimetype) {
+                $listItem.attr('data-mimetype', pathData.mimetype);
+            }
+
             $listItemFile = $('<div/>').
                 addClass(this._class('listItem-cell')).
                 addClass(this._class('listItem-cell-file')).

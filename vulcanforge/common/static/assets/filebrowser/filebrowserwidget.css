@@ -25,18 +25,18 @@
     display: inline-block;
     min-height: 1em;
     padding-left: 1.5em;
-    background-image: url(file_icon2.png);
+    background-image: url(file-icon.png);
     background-size: 1em 1em;
     background-position: left center;
     background-repeat: no-repeat;
 }
 
 .vf-filebrowser-iconInline-file {
-    background-image: url(file_icon2.png);
+    background-image: url(file-icon.png);
 }
 
 .vf-filebrowser-iconInline-dir {
-    background-image: url(folder_icon.png);
+    background-image: url(folder-icon.png);
 }
 
 /**
@@ -186,20 +186,17 @@
     top: 0;
     left: 0;
     width: 100%;
-    box-shadow: 0 0px 1em #CCC;
+    box-shadow: 0 0 1em #CCC;
 }
 
 .vf-filebrowser-listControlPanel {
-    overflow: auto;
-    padding: 0 1ex;
+    padding: 1px 1ex;
     background: #e0e0e0;
-    background-image: linear-gradient(top, #ddd, #ccc);
-    background-image: -o-linear-gradient(top, #ddd, #ccc);
-    background-image: -moz-linear-gradient(top, #ddd, #ccc);
-    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
-    background-image: -ms-linear-gradient(top, #ddd, #ccc);
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #c0c0c0;
+    background-image: -o-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -moz-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -webkit-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -ms-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
 }
 
 .vf-filebrowser-listControlPanel button,
@@ -207,7 +204,7 @@
     display: inline-block;
     min-height: 0;
     margin: 2px;
-    padding: 1ex 1em;
+    padding: 4px 1em;
     line-height: 1em;
     font-size: 11px;
     background: none;
@@ -240,7 +237,7 @@
 
 .vf-filebrowser-listItem-cell {
     display: table-cell;
-    padding: 0.5ex 1em;
+    padding: 4px 1em;
     vertical-align: middle;
     white-space: nowrap;
 }
@@ -256,26 +253,26 @@
     font-weight: bold;
     color: #666;
     text-shadow: 0 0 2px white;
-    background-image: linear-gradient(top, #ddd, #ccc);
-    background-image: -o-linear-gradient(top, #ddd, #ccc);
-    background-image: -moz-linear-gradient(top, #ddd, #ccc);
-    background-image: -webkit-linear-gradient(top, #ddd, #ccc);
-    background-image: -ms-linear-gradient(top, #ddd, #ccc);
+    background-image: -o-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -moz-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -webkit-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: -ms-linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
+    background-image: linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
 }
 
 .vf-filebrowser-listItem.vf-filebrowser-listItem-selected {
     background: #d9dfed;
-    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
-    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #f0f8ff);
+    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
     text-shadow: 0 1px 1px #f0f8ff;
 }
 
 .vf-filebrowser-listItem-link-file {
     display: block;
-    padding: 0.5ex 0;
+    padding: 4px 0;
 }
 
 .vf-filebrowser-listItem-link-file-icon {
@@ -283,21 +280,32 @@
     width: 16px;
     height: 16px;
     margin-right: 5px;
-    background-position: center center;
     vertical-align: middle;
-    background-image: url(file_icon2.png);
+    background: url(file-icon.png) center center;
 }
 
 .vf-filebrowser-listItem-link-file-icon-dir {
-    background-image: url(folder_icon.png)
+    background-image: url(folder-icon.png);
 }
 
 .vf-filebrowser-listItem-link-file-icon-file {
-    background-image: url(file_icon2.png)
+    background-image: url(file-icon.png);
 }
 
+.vf-filebrowser-listItem[data-mimetype^="application"] .vf-filebrowser-listItem-link-file-icon {
+    background-image: url(file-icon-application-octet-stream.png);
+}
+
+.vf-filebrowser-listItem[data-mimetype^="image/"] .vf-filebrowser-listItem-link-file-icon,
 .vf-filebrowser-listItem-link-file-icon-file-image {
-    background-image: url(file_icon2.png)
+    background-image: url(file-icon-image.png);
+}
+
+.vf-filebrowser-listItem[data-mimetype="application/json"] .vf-filebrowser-listItem-link-file-icon,
+.vf-filebrowser-listItem[data-mimetype="application/xml"] .vf-filebrowser-listItem-link-file-icon,
+.vf-filebrowser-listItem[data-mimetype^="text/"] .vf-filebrowser-listItem-link-file-icon,
+.vf-filebrowser-listItem-link-file-icon-file-text {
+    background-image: url(file-icon-text.png);
 }
 
 .vf-filebrowser-listItem-link-file-name {
@@ -308,7 +316,8 @@
 
 .vf-filebrowser-listItem-notes {
     padding-left: 21px;
-    font-size: 0.8em;
+    font-size: 10px;
+    line-height: 13px;
     color: #888;
     font-style: italic;
 }
