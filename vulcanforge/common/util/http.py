@@ -5,6 +5,7 @@ from webob import exc
 from paste.httpheaders import CACHE_CONTROL, EXPIRES
 import pylons
 from tg import response
+from vulcanforge.common.helpers import urlquote
 
 from vulcanforge.common.util.filesystem import guess_mime_type
 
@@ -49,8 +50,8 @@ def get_client_ip(request=None):
 def set_download_headers(filename, content_type=None, set_ctype=True,
                          set_disposition=True, file_pointer=None):
     if set_disposition:
-        disposition = 'attachment;filename=' + \
-                      filename.encode('utf-8').replace(' ', '_')
+        safe_name = filename.encode('utf-8')
+        disposition = 'attachment;filename="{}"'.format(safe_name)
         response.headers['Content-Disposition'] = disposition
     if set_ctype:
         if not content_type:
