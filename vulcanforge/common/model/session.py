@@ -137,7 +137,7 @@ class SOLRSessionExtension(VFSessionExtension):
 class VisualizableSessionExtension(VFSessionExtension):
 
     def before_flush(self, obj=None):
-        from vulcanforge.visualize.model import ProcessedArtifactFile
+        from vulcanforge.visualize.model import VisualizableQueryParam
         super(VisualizableSessionExtension, self).before_flush(obj)
         for obj in self.objects_deleted:
             try:
@@ -146,7 +146,9 @@ class VisualizableSessionExtension(VFSessionExtension):
             except Exception:
                 LOG.exception('Error deleting processed files for %s:%s',
                               str(obj), str(obj._id))
-            session(ProcessedArtifactFile).flush()
+            session(VisualizableQueryParam).flush()
+            VisualizableQueryParam.query.remove({
+                "unique_id": obj.get_unique_id()})
 
     def after_flush(self, obj=None):
         for obj in self.objects_added + self.objects_modified:

@@ -148,20 +148,6 @@ class VisualizerConfig(BaseMappedClass):
         return inst
 
 
-class _BaseVisualizerFile(File):
-    class __mongometa__:
-        name = '_base_visualizer_file'
-
-    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
-    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
-
-    @staticmethod
-    def calculate_hash(data):
-        md5 = hashlib.md5()
-        md5.update(data)
-        return md5.hexdigest()
-
-
 class ProcessingStatus(BaseMappedClass):
     """Represents the status of processing for a visualizable object and
     visualizer, so that a loading animation can be displayed, an error
@@ -230,6 +216,47 @@ class ProcessingStatus(BaseMappedClass):
             else:
                 is_new = True
         return st_obj, is_new
+
+
+class VisualizableQueryParam(BaseMappedClass):
+    """Extra query parameters to add to iframe url given visualizer and
+    visualizable
+
+    """
+    class __mongometa__:
+        name = 'visualizable_query_param'
+        session = project_orm_session
+        polymorphic_on = 'kind'
+        polymorphic_identity = None
+        indexes = [('visualizer_config_id', 'unique_id')]
+
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
+    query_param = FieldProperty(str, if_missing='resource_url')
+    query_val = FieldProperty(str, if_missing=None)
+
+    @classmethod
+    def get_query_dict(cls, visualizable, visualizer_config_id):
+        cur = cls.query.find({
+            "visualizer_config_id": visualizer_config_id,
+            "unique_id": visualizable.get_unique_id()
+        })
+        return {p.query_param: p.query_val for p in cur}
+
+
+class _BaseVisualizerFile(File):
+    class __mongometa__:
+        name = '_base_visualizer_file'
+
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
+
+    @staticmethod
+    def calculate_hash(data):
+        md5 = hashlib.md5()
+        md5.update(data)
+        return md5.hexdigest()
 
 
 class BaseVisualizableFile(_BaseVisualizerFile):
@@ -322,7 +349,6 @@ class ProcessedArtifactFile(BaseVisualizableFile):
         name = 'visualizer_processed_artifact'
         unique_indexes = [('unique_id', 'filename')]
 
-    query_param = FieldProperty(None, if_missing='resource_url')
     origin_hash = FieldProperty(str, if_missing=None)
 
     @classmethod

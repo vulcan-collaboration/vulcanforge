@@ -6,8 +6,8 @@ from pylons import app_globals as g
 from vulcanforge.visualize.model import (
     ProcessedArtifactFile,
     ProcessingStatus,
-    VisualizerConfig
-)
+    VisualizerConfig,
+    VisualizableQueryParam)
 from vulcanforge.visualize.tasks import visualizable_task
 from vulcanforge.visualize.widgets import (
     IFrame,
@@ -130,7 +130,7 @@ class BaseVisualizer(object):
 
 
 class BaseProcessingVisualizer(BaseVisualizer):
-    """Does not implement processing hooks"""
+    """A visualizer that requires pre-processing of the content"""
 
     def get_query_for_artifact(self, artifact, **kwargs):
         query = super(BaseProcessingVisualizer, self).get_query_for_artifact(
@@ -140,11 +140,10 @@ class BaseProcessingVisualizer(BaseVisualizer):
             status = ProcessingStatus.get_status_str(unique_id, self.config)
             query["processingStatus"] = status
         query["processingResourceId"] = unique_id
-        cur = ProcessedArtifactFile.find_from_visualizable(
-            artifact, visualizer_config_id=self.config._id)
-        for pfile in cur:
-            if pfile.query_param:
-                query[pfile.query_param] = pfile.url()
+
+        params = VisualizableQueryParam.get_query_dict(
+            artifact, self.config._id)
+        query.update(params)
         return query
 
     def process_artifact(self, artifact):
@@ -248,7 +247,8 @@ class BaseFileProcessor(object):
         """Subclasses implement this"""
         raise NotImplementedError('run')
 
-    def make_processed_file(self, filename, **kwargs):
+    def make_processed_file(self, filename, query_param='resource_url',
+                            **kwargs):
         pfile = ProcessedArtifactFile.upsert_from_visualizable(
             self.artifact,
             filename,
@@ -256,6 +256,13 @@ class BaseFileProcessor(object):
             **kwargs
         )
         session(ProcessedArtifactFile).flush(pfile)
+        if query_param:
+            VisualizableQueryParam(
+                visualizer_config_id=self.visualizer.config._id,
+                unique_id=self.artifact.get_unique_id(),
+                query_param=query_param,
+                query_val=pfile.url()
+            )
         return pfile
 
     def set_status(self, status):
