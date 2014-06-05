@@ -20,6 +20,7 @@ from pylons import app_globals as g, tmpl_context as c
 
 from vulcanforge.common import helpers as h
 from vulcanforge.common.controllers import BaseController, BaseTGController
+from vulcanforge.common.helpers import urlquote
 from vulcanforge.common.util.http import (
     set_cache_headers,
     set_download_headers
@@ -197,7 +198,7 @@ class ContentRestController(RestController):
             path = entry.item_key
             href = "/rest{}content{}".format(
                 c.app.config.url(),
-                path
+                urlquote(path)
             )
             data[path] = {
                 "name": h.really_unicode(entry.filename),

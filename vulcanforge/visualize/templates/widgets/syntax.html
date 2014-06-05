@@ -2,6 +2,9 @@
 
 {% block content %}
 <pre class="highlight embedded prettyprint"><code id="{{uid}}code"></code></pre>
+<div id="loadingContainer">
+    <progress id="loadingProgressBar"></progress>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -14,15 +17,31 @@
             codeContainer = $('#{{uid}}code');
 
         $(VIS).on("ready", function(){
+            $('#loadingProgressBar').
+                    attr('max', 100);
             $.ajax({
                 url: VIS.getResourceUrl(),
                 dataType: "text",
                 xhrFields: {
                     withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
                 },
+                onprogress: function (e) {
+                    var loadedPercent = Math.floor(e.loaded / e.total * 100);
+                    $('#loadingProgressBar').
+                            attr('value', loadedPercent).
+                            text(loadedPercent + '%');
+                },
                 success: function(resp){
+                    $('#loadingProgressBar').
+                            removeAttr('value').
+                            removeAttr('max');
                     resp = $vf.xmlEscape(resp);
                     codeContainer.html(prettyPrintOne(resp, null, true));
+                    $('#loadingContainer').
+                            fadeOut('fast', function () {
+                                $(this).remove();
+                                $(this).dequeue();
+                            });
                 }
             });
         });
