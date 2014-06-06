@@ -161,22 +161,19 @@ class ContentRestController(RestController):
         escape = asbool(kwargs.get('escape', False))
 
         downloaded_file = self._get_file_or_404()
-        k = g.get_s3_key('', downloaded_file)
-
-        in_memory_file = StringIO()
-        try:
-            k.get_contents_to_file(in_memory_file)
-        except Exception:
-            LOG.info('path: ' + downloaded_file.item_key)
-            raise exc.AJAXNotFound(
-                downloaded_file.item_key + ' does not exist')
+        key = g.get_s3_key('', downloaded_file)
 
         set_download_headers(os.path.basename(downloaded_file.item_key))
         set_cache_headers(expires_in=1)
 
-        if escape:
-            return cgi.escape(in_memory_file.getvalue())
-        return in_memory_file.getvalue()
+        def iter_contents():
+            for chunk in key:
+                if escape:
+                    yield cgi.escape(chunk)
+                else:
+                    yield chunk
+
+        return iter_contents()
 
     def _folder(self, *args, **kwargs):
         """
