@@ -76,7 +76,8 @@ from vulcanforge.visualize.model import (
     VisualizerConfig,
     ProcessedArtifactFile,
     S3VisualizerFile,
-    ProcessingStatus
+    ProcessingStatus,
+    VisualizableQueryParam
 )
 
 from vulcanforge.tools.admin.model import *
