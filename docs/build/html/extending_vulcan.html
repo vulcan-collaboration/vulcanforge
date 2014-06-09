@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Extending Vulcan &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="prev" title="Artifact" href="artifact.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="extending-vulcan">
+<h1>Extending Vulcan<a class="headerlink" href="#extending-vulcan" title="Permalink to this headline">¶</a></h1>
+<p>A Vulcan application&#8217;s capabilities can be extended in several ways which allow
+solutions to be custom tailored for a broad range of domains.</p>
+<div class="section" id="custom-visualizers">
+<h2>Custom Visualizers<a class="headerlink" href="#custom-visualizers" title="Permalink to this headline">¶</a></h2>
+<p>Registering custom visualizers capable of rendering proprietary file formats or
+adding new views beyond highlighted source text is remarkably easy with the
+provided Visualizer hooks.</p>
+<div class="section" id="basic-rendering-visualizer">
+<h3>Basic Rendering Visualizer<a class="headerlink" href="#basic-rendering-visualizer" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="basic-processing-visualizer">
+<h3>Basic Processing Visualizer<a class="headerlink" href="#basic-processing-visualizer" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="custom-tools-applications">
+<h2>Custom Tools (<a class="reference internal" href="application.html"><em>Applications</em></a>)<a class="headerlink" href="#custom-tools-applications" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="application.html"><em>Applications</em></a> can be seen as tools available to teams
+(<a class="reference internal" href="project.html"><em>Projects</em></a>) and are sometimes referred to as Tools for
+disambiguation. Adding specific functionality to users within the scope of
+their project is done by adding new Tools to the platform. The Tool system is
+designed to be extended easily.</p>
+<p>Adding a new Tool is done by defining your Tool as a subclass of
+<tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt> and registering it
+as a tool with your Vulcan deployment&#8217;s
+<tt class="xref py py-class docutils literal"><span class="pre">ToolManager</span></tt> class.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Extending Vulcan</a><ul>
+<li><a class="reference internal" href="#custom-visualizers">Custom Visualizers</a><ul>
+<li><a class="reference internal" href="#basic-rendering-visualizer">Basic Rendering Visualizer</a></li>
+<li><a class="reference internal" href="#basic-processing-visualizer">Basic Processing Visualizer</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#custom-tools-applications">Custom Tools (<tt class="docutils literal"><span class="pre">Applications</span></tt>)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="artifact.html"
+                        title="previous chapter">Artifact</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/extending_vulcan.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

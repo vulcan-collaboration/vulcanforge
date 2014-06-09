@@ -1,0 +1,82 @@
+Architecture Component Services
+===============================
+
+An application built on the Vulcan framework uses the following component
+services:
+
+.. graphviz:: component_services.dot
+
+MongoDB Document Store
+----------------------
+
+`MongoDB`_ is used as the primary document store.
+
+This service is horizontally scalable using replication.
+
+.. _MongoDB: http://www.mongodb.org
+
+SOLR Index
+----------
+
+The `SOLR`_ index allows for significantly faster lookups and in some cases
+precaching of views over going straight to the MongoDB database.
+
+.. _SOLR: http://lucene.apache.org/solr/
+
+Redis Object Store
+------------------
+
+`Redis`_ is used for caching, pub/sub communication, and queueing between
+services.
+
+This service is horizontally scalable using replication.
+
+.. _Redis: http://redis.io/
+
+Swift/S3 Object Store
+---------------------
+
+`Swift`_, or another `S3`_ API compatible object store, is used for storing and
+serving files.
+
+.. _Swift: http://swift.openstack.org/
+.. _S3: http://aws.amazon.com/s3/
+
+ForgeApp
+--------
+
+The "ForgeApp" is the `TurboGears`_ web application that serves as the HTTP
+server. Familiarity with `TurboGears`_ and `WSGI`_ will help when developing and
+deploying your own ForgeApp.
+
+This is a horizontally scalable service when used with an HTTP load balancer.
+
+.. _TurboGears: http://turbogears.org/
+
+Taskd
+-----
+
+Taskd (or Task Daemon) is the asynchronous processing service that listens for
+queued tasks and executes them.
+
+This is a horizontally scalable service.
+
+Eventd
+------
+
+Eventd (or Event Daemon) is synchronous service which registers event types and
+handlers then triggers those handlers when notified of a matching event.
+Primarily used by the WebSocketApp to trigger server side processing of client
+events from WebSocket connections.
+
+This is a horizontally scalable service.
+
+WebSocketApp
+------------
+
+The WebSocketApp service offers authenticated WebSocket connections to allow
+real time bidirectional communication between clients and the application
+servers.
+
+This is a horizontally scalable service.
+
