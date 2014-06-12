@@ -92,7 +92,8 @@ class PurgeProject(base.Command):
         assert project is not None, "Project not found."
         assert project.deleted, "Project has not been deleted."
         map(self.purge_app_config, self.iter_app_configs(project._id))
-        Project.query.remove({'_id': project._id})
+        project.delete()
+        ThreadLocalODMSession.flush_all()
 
     def iter_app_configs(self, project_id):
         for app_config in AppConfig.query.find({'project_id': project_id}):
@@ -108,5 +109,5 @@ class PurgeProject(base.Command):
         app = app_config.instantiate()
         for cls in app.iter_mapped_classes():
             cls.query.remove(query_params)
-        AppConfig.query.remove(query_params)
+        app_config.delete()
 
