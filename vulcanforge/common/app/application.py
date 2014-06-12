@@ -198,6 +198,10 @@ class Application(object):
         self.subscribe_admins()
         self.set_acl(acl)
 
+    @classmethod
+    def get_install_option_fields(cls, neighborhood):
+        return []
+
     def uninstall(self, project=None, project_id=None):
         """Whatever logic is required to tear down a tool"""
         from vulcanforge.artifact.model import ArtifactReference, Shortlink

@@ -1181,9 +1181,9 @@ $.extend($vf, {
      * forgemarkdown extras
      */
     $vf.initNewReadMoreTags = function (opt_config) {
-        var defaults = {open: false},
+        var defaults = {open: false, $root: $(document)},
             options = $.extend(true, {}, defaults, opt_config);
-        $('.md-read-more:not(._rendered_)').each(function () {
+        $('.md-read-more:not(._rendered_)', options.$root).each(function () {
             var $theMore = $(this).
                     addClass('_rendered_'),
                 label = $theMore.attr('title') || 'Read more...',

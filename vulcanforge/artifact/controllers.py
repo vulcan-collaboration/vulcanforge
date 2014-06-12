@@ -349,7 +349,7 @@ class AttachmentsController(BaseController):
 
 class AttachmentController(BaseController):
     AttachmentClass = None
-    edit_perm = 'edit'
+    edit_perm = 'write'
 
     def _check_security(self):
         g.security.require_access(self.artifact, 'read')

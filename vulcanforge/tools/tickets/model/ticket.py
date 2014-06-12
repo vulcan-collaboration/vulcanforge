@@ -299,7 +299,7 @@ class Ticket(VersionedArtifact):
     reported_by_id = ForeignIdProperty(User, if_missing=lambda: c.user._id)
     assigned_to_ids = FieldProperty([schema.ObjectId], if_missing=[])
     milestone = FieldProperty(str, if_missing='')
-    status = FieldProperty(str, if_missing='open')
+    status = FieldProperty(str, if_missing=None)
     custom_fields = FieldProperty({str: None})
 
     reported_by = RelationProperty(User, via='reported_by_id')
@@ -702,6 +702,15 @@ class Ticket(VersionedArtifact):
                 continue
             self.attach(attachment.filename, attachment.file,
                         content_type=attachment.type)
+
+        # status
+        status = ticket_form.pop('status', None)
+        if status is None or not status in self.globals.set_of_all_status_names:
+            if self.status:
+                status = self.status
+            else:
+                status = self.globals.open_status_names.split(' ')[0]
+        self.status = status
 
         # other fields
         for k, v in ticket_form.iteritems():
