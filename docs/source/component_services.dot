@@ -1,5 +1,17 @@
 graph component_services {
     rankdir=BT;
+    node [
+        shape=box
+    ] {
+        mongodb,
+        redis,
+        solr,
+        swift
+    }
+    node [
+        shape=oval
+    ]
+
     forgeapp -- {
         mongodb,
         redis,

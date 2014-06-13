@@ -59,9 +59,23 @@ adding new views beyond highlighted source text is remarkably easy with the
 provided Visualizer hooks.</p>
 <div class="section" id="basic-rendering-visualizer">
 <h3>Basic Rendering Visualizer<a class="headerlink" href="#basic-rendering-visualizer" title="Permalink to this headline">¶</a></h3>
+<p>A simple rendering visualizer can be added via the web UI in the designated
+forgeadmin project (specified in the config file.) A visualizer package is a ZIP
+file containing at least an html entry point and a <em>manifest.json</em> which
+declares the entry point.</p>
+<p>When triggered the designated entry point (<em>i.e. - index.html</em>) will be loaded
+with the GET query parameter <em>resource_url</em> being the URL of the file to be
+visualized. The entry point html is responsible for using javascript or some
+other means of retrieving the resource and displaying whatever it is designed
+to display.</p>
 </div>
 <div class="section" id="basic-processing-visualizer">
 <h3>Basic Processing Visualizer<a class="headerlink" href="#basic-processing-visualizer" title="Permalink to this headline">¶</a></h3>
+<p>Processing Visualizers further extend the flexibility of the Visualizer system
+with a preprocessing step. Examples of this feature are calculating metrics out
+of a large proprietary file format into an easily parseable JSON representation
+or processing parametric CAD files into compact tessallated formats to be
+loaded into interactive previews using WebGL.</p>
 </div>
 </div>
 <div class="section" id="custom-tools-applications">
@@ -72,9 +86,9 @@ disambiguation. Adding specific functionality to users within the scope of
 their project is done by adding new Tools to the platform. The Tool system is
 designed to be extended easily.</p>
 <p>Adding a new Tool is done by defining your Tool as a subclass of
-<tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt> and registering it
+<a class="reference internal" href="application.html#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> and registering it
 as a tool with your Vulcan deployment&#8217;s
-<tt class="xref py py-class docutils literal"><span class="pre">ToolManager</span></tt> class.</p>
+<tt class="xref py py-class docutils literal"><span class="pre">ToolManager</span></tt> class&#8217;s <cite>default_tools</cite> dictionary.</p>
 </div>
 </div>
 

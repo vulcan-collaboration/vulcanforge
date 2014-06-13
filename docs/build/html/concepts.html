@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
     <link rel="next" title="User" href="user.html" />
-    <link rel="prev" title="Architecture Component Services" href="architecture_components.html" /> 
+    <link rel="prev" title="WebSocketApp" href="websocketapp.html" /> 
   </head>
   <body>
     <div class="related">
@@ -41,7 +41,7 @@
           <a href="user.html" title="User"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="architecture_components.html" title="Architecture Component Services"
+          <a href="websocketapp.html" title="WebSocketApp"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -54,12 +54,20 @@
             
   <div class="section" id="vulcan-concepts">
 <h1>Vulcan Concepts<a class="headerlink" href="#vulcan-concepts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-ming-object-document-mapper-odm">
+<h2>The Ming Object Document Mapper (ODM)<a class="headerlink" href="#the-ming-object-document-mapper-odm" title="Permalink to this headline">¶</a></h2>
+<p>Vulcan applications use the <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming</a> ODM which sits on <a class="reference external" href="http://api.mongodb.org/python/current/">pymongo</a> to interact
+with the mongodb database. Most of the persisted core object types in a Vulcan
+application subclass <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming</a> <tt class="xref py py-class docutils literal"><span class="pre">ming.odm.MappedClass</span></tt>. The Vulcan
+<tt class="xref doc docutils literal"><span class="pre">middleware</span></tt> handles setting up the database session.</p>
+<p>For more details see the official <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming Documentation</a>.</p>
+</div>
 <div class="section" id="core-object-classes">
 <h2>Core Object Classes<a class="headerlink" href="#core-object-classes" title="Permalink to this headline">¶</a></h2>
 <p>Vulcan provides framework support for organizing secured virtual teams.
 <a class="reference internal" href="project.html"><em>Projects</em></a> are organized into <a class="reference internal" href="neighborhood.html"><em>Neighborhoods</em></a></p>
 <p class="graphviz">
-<img src="_images/graphviz-e9301910f5b32c991fa2ba3a829862e169933936.png" alt="digraph core_object_classes {
+<img src="_images/graphviz-e9301910f5b32c991fa2ba3a829862e169933936.svg" alt="digraph core_object_classes {
     rankdir=BT;
     label=&quot;* denotes an abstract class&quot;;
     &quot;ProjectRole&quot; -&gt; {
@@ -79,7 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="user.html">User</a></li>
 <li class="toctree-l1"><a class="reference internal" href="neighborhood.html">Neighborhood</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">Applications (a.k.a. Tools)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="artifact.html">Artifact</a></li>
 </ul>
 </div>
@@ -106,6 +114,7 @@ parent.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Vulcan Concepts</a><ul>
+<li><a class="reference internal" href="#the-ming-object-document-mapper-odm">The Ming Object Document Mapper (ODM)</a></li>
 <li><a class="reference internal" href="#core-object-classes">Core Object Classes</a></li>
 <li><a class="reference internal" href="#access-control">Access Control</a></li>
 </ul>
@@ -113,8 +122,8 @@ parent.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="architecture_components.html"
-                        title="previous chapter">Architecture Component Services</a></p>
+  <p class="topless"><a href="websocketapp.html"
+                        title="previous chapter">WebSocketApp</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="user.html"
                         title="next chapter">User</a></p>
@@ -153,7 +162,7 @@ parent.</p>
           <a href="user.html" title="User"
              >next</a> |</li>
         <li class="right" >
-          <a href="architecture_components.html" title="Architecture Component Services"
+          <a href="websocketapp.html" title="WebSocketApp"
              >previous</a> |</li>
         <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
       </ul>

@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Taskd (Task Daemon) &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Architecture Component Services" href="architecture_components.html" />
+    <link rel="next" title="Eventd" href="eventd.html" />
+    <link rel="prev" title="ForgeApp" href="forgeapp.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="eventd.html" title="Eventd"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="forgeapp.html" title="ForgeApp"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="architecture_components.html" accesskey="U">Architecture Component Services</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="taskd-task-daemon">
+<h1>Taskd (Task Daemon)<a class="headerlink" href="#taskd-task-daemon" title="Permalink to this headline">¶</a></h1>
+<p>Task (or Task Daemon) is the asynchronous processing service that listens for
+queued tasks and executes them. Typically one Taskd process is started for each
+processing core available on the host machine.</p>
+<p>This is a horizontally scalable service.</p>
+<span class="target" id="module-vulcanforge.taskd"></span><p>Taskd processes line up on a Redis queue for distributing task load. Tasks
+themselves are functions. When a task is queued the current context (User,
+Project, etc...) are stored in a <tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.taskd.model.MonQTask</span></tt>
+object which allows the Taskd process to run the requested task function within
+the same context and using the same arguments with which it was called.</p>
+<p>Declaring a function as an asynchronous task is done with the
+<a class="reference internal" href="#vulcanforge.taskd.task" title="vulcanforge.taskd.task"><tt class="xref py py-func docutils literal"><span class="pre">vulcanforge.taskd.task()</span></tt></a> function decorator. After decoration, the
+function can be called directly as a synchronous function and as an asynchronous
+task with it&#8217;s added <cite>post</cite> method.</p>
+<dl class="function">
+<dt id="vulcanforge.taskd.task">
+<tt class="descclassname">vulcanforge.taskd.</tt><tt class="descname">task</tt><big>(</big><em>func</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/taskd.html#task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.taskd.task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to add some methods to task functions.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">vulcanforge.taskd</span> <span class="kn">import</span> <span class="n">task</span>
+
+<span class="nd">@task</span>
+<span class="k">def</span> <span class="nf">my_method</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="c"># synchronous call</span>
+<span class="n">my_method</span><span class="p">()</span>
+
+<span class="c"># asynchronous call</span>
+<span class="n">my_method</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="vulcanforge.taskd.model_task">
+<tt class="descclassname">vulcanforge.taskd.</tt><tt class="descname">model_task</tt><big>(</big><em>func</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/taskd.html#model_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.taskd.model_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to allow ming MappedClass instances to behave as tasks. Functions
+the same as the task decorator, but called on instance methods.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyMappedClass</span><span class="p">(</span><span class="n">MappedClass</span><span class="p">):</span>
+    <span class="nd">@model_task</span>
+    <span class="k">def</span> <span class="nf">my_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">mc1</span> <span class="o">=</span> <span class="n">MyMappedClass</span><span class="p">()</span>
+<span class="n">mc1</span><span class="o">.</span><span class="n">my_method</span><span class="p">()</span>  <span class="c"># called synchronously</span>
+<span class="n">mc1</span><span class="o">.</span><span class="n">my_method</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>  <span class="c"># called asynchronously</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="forgeapp.html"
+                        title="previous chapter">ForgeApp</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="eventd.html"
+                        title="next chapter">Eventd</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/taskd.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="eventd.html" title="Eventd"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="forgeapp.html" title="ForgeApp"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="architecture_components.html" >Architecture Component Services</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

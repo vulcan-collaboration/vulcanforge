@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
+    'sphinx.ext.graphviz',
     'sphinx.ext.inheritance_diagram',
 ]
 
@@ -101,6 +102,9 @@ pygments_style = 'sphinx'
 
 # Include todo items in rendered output
 todo_include_todos = True
+
+# Graphviz
+graphviz_output_format = 'svg'
 
 
 # -- Options for HTML output ----------------------------------------------
