@@ -1,0 +1,14 @@
+digraph core_object_classes {
+    rankdir=BT;
+    label="* denotes an abstract class";
+    "ProjectRole" -> {
+        "User",
+        "Project"
+    };
+    "Project" -> "Neighborhood";
+    "AppConfig" -> {
+        "Application*",
+        "Project"
+    };
+    "Artifact*" -> "AppConfig";
+}

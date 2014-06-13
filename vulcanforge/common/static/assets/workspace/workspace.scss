@@ -3,6 +3,26 @@
 $workspace-icons: sprite-map("assets/workspace/images/*.png");
 $reference-bin-on-width: 212px;
 
+.bookmark-element::before {
+    content: "☰";
+    font-size: 8px;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: none;
+    font-smoothing: none;
+    line-height: 26px;
+    padding: 0 0 0 4px;
+    text-shadow: 0 -1px 0 black;
+    color: white;
+    opacity: 0.2;
+    cursor: grab;
+}
+
+.bookmark-action-icon::before {
+    opacity: 0.3;
+}
+.bookmark-action-icon:hover::before {
+    opacity: 1;
+}
 
 .bookmark-element.selected {
     background: #404040;
@@ -22,6 +42,9 @@ $reference-bin-on-width: 212px;
     padding: 6px 0 6px 6px;
     width: 14px;
     text-align: center;
+}
+.bookmark-flag-container:empty {
+    display: none;
 }
 .bookmark-element .flag {
     display: inline-block;

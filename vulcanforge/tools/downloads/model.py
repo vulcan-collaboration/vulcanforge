@@ -11,6 +11,7 @@ import os
 from ming.odm import FieldProperty
 
 from pylons import app_globals as g, tmpl_context as c
+from vulcanforge.common.helpers import urlquote
 
 from vulcanforge.common.model.session import visualizable_artifact_session
 from vulcanforge.artifact.model import Artifact, VisualizableArtifact
@@ -28,7 +29,7 @@ class ForgeDownloadsAbstractItem(Artifact):
         return False
 
     def url(self):
-        return self.app_config.url() + 'content' + self.item_key
+        return self.app_config.url() + 'content' + urlquote(self.item_key)
 
 
 class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
@@ -43,6 +44,7 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem, VisualizableArtifact):
         ]
 
     type_s = 'ForgeDownloadsFile'
+    visualizable_kind = 'downloads_file'
 
     def raw_url(self):
         return '/rest' + self.url()

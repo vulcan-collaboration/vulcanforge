@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Vulcan Concepts &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="User" href="user.html" />
+    <link rel="prev" title="WebSocketApp" href="websocketapp.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user.html" title="User"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="websocketapp.html" title="WebSocketApp"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="vulcan-concepts">
+<h1>Vulcan Concepts<a class="headerlink" href="#vulcan-concepts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-ming-object-document-mapper-odm">
+<h2>The Ming Object Document Mapper (ODM)<a class="headerlink" href="#the-ming-object-document-mapper-odm" title="Permalink to this headline">¶</a></h2>
+<p>Vulcan applications use the <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming</a> ODM which sits on <a class="reference external" href="http://api.mongodb.org/python/current/">pymongo</a> to interact
+with the mongodb database. Most of the persisted core object types in a Vulcan
+application subclass <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming</a> <tt class="xref py py-class docutils literal"><span class="pre">ming.odm.MappedClass</span></tt>. The Vulcan
+<tt class="xref doc docutils literal"><span class="pre">middleware</span></tt> handles setting up the database session.</p>
+<p>For more details see the official <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming Documentation</a>.</p>
+</div>
+<div class="section" id="core-object-classes">
+<h2>Core Object Classes<a class="headerlink" href="#core-object-classes" title="Permalink to this headline">¶</a></h2>
+<p>Vulcan provides framework support for organizing secured virtual teams.
+<a class="reference internal" href="project.html"><em>Projects</em></a> are organized into <a class="reference internal" href="neighborhood.html"><em>Neighborhoods</em></a></p>
+<p class="graphviz">
+<img src="_images/graphviz-e9301910f5b32c991fa2ba3a829862e169933936.svg" alt="digraph core_object_classes {
+    rankdir=BT;
+    label=&quot;* denotes an abstract class&quot;;
+    &quot;ProjectRole&quot; -&gt; {
+        &quot;User&quot;,
+        &quot;Project&quot;
+    };
+    &quot;Project&quot; -&gt; &quot;Neighborhood&quot;;
+    &quot;AppConfig&quot; -&gt; {
+        &quot;Application*&quot;,
+        &quot;Project&quot;
+    };
+    &quot;Artifact*&quot; -&gt; &quot;AppConfig&quot;;
+}" />
+</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user.html">User</a></li>
+<li class="toctree-l1"><a class="reference internal" href="neighborhood.html">Neighborhood</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">Applications (a.k.a. Tools)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="artifact.html">Artifact</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="access-control">
+<h2>Access Control<a class="headerlink" href="#access-control" title="Permalink to this headline">¶</a></h2>
+<p>Access control is defined by the use of Access Control Lists (ACLs) and Access
+Control Entries (ACEs). <a class="reference internal" href="neighborhood.html"><em>Neighborhoods</em></a>,
+<a class="reference internal" href="project.html"><em>Projects</em></a>, <a class="reference internal" href="application.html"><em>AppConfigs</em></a>, and
+<a class="reference internal" href="artifact.html"><em>Artifacts</em></a> each have an ACL which inherits entries from it&#8217;s
+parent.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Vulcan Concepts</a><ul>
+<li><a class="reference internal" href="#the-ming-object-document-mapper-odm">The Ming Object Document Mapper (ODM)</a></li>
+<li><a class="reference internal" href="#core-object-classes">Core Object Classes</a></li>
+<li><a class="reference internal" href="#access-control">Access Control</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="websocketapp.html"
+                        title="previous chapter">WebSocketApp</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="user.html"
+                        title="next chapter">User</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/concepts.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user.html" title="User"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="websocketapp.html" title="WebSocketApp"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

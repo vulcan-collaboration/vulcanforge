@@ -1,8 +1,7 @@
 import datetime
 
-from base import Command
-from vulcanforge.resources.stage import StaticResourceStager
-
+from vulcanforge.command.base import Command
+from stage import StaticResourceStager
 
 class StageStaticResources(Command):
     min_args = 1

@@ -1,0 +1,1424 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>vulcanforge.artifact.model &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for vulcanforge.artifact.model</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pformat</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">bson</span>
+
+<span class="kn">from</span> <span class="nn">pylons</span> <span class="kn">import</span> <span class="n">tmpl_context</span> <span class="k">as</span> <span class="n">c</span><span class="p">,</span> <span class="n">app_globals</span> <span class="k">as</span> <span class="n">g</span><span class="p">,</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">webhelpers</span> <span class="kn">import</span> <span class="n">feedgenerator</span> <span class="k">as</span> <span class="n">FG</span>
+<span class="kn">import</span> <span class="nn">tg</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">from</span> <span class="nn">ming</span> <span class="kn">import</span> <span class="n">schema</span> <span class="k">as</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">ming.odm</span> <span class="kn">import</span> <span class="n">state</span><span class="p">,</span> <span class="n">session</span>
+<span class="kn">from</span> <span class="nn">ming.odm</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldProperty</span><span class="p">,</span>
+    <span class="n">ForeignIdProperty</span><span class="p">,</span>
+    <span class="n">RelationProperty</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">ming.odm.declarative</span> <span class="kn">import</span> <span class="n">MappedClass</span>
+<span class="kn">from</span> <span class="nn">ming.utils</span> <span class="kn">import</span> <span class="n">LazyProperty</span>
+
+<span class="kn">from</span> <span class="nn">vulcanforge.common.model.base</span> <span class="kn">import</span> <span class="n">BaseMappedClass</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.s3.model</span> <span class="kn">import</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.model.session</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">artifact_orm_session</span><span class="p">,</span>
+    <span class="n">project_orm_session</span><span class="p">,</span>
+    <span class="n">main_orm_session</span><span class="p">,</span>
+    <span class="n">visualizable_orm_session</span><span class="p">,</span>
+    <span class="n">visualizable_artifact_session</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.helpers</span> <span class="kn">import</span> <span class="n">absurl</span><span class="p">,</span> <span class="n">urlquote</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.util</span> <span class="kn">import</span> <span class="n">nonce</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.util.filesystem</span> <span class="kn">import</span> <span class="n">import_object</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.auth.model</span> <span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.auth.schema</span> <span class="kn">import</span> <span class="n">ACL</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.project.model</span> <span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.neighborhood.model</span> <span class="kn">import</span> <span class="n">Neighborhood</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.notification.util</span> <span class="kn">import</span> <span class="n">gen_message_id</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.taskd</span> <span class="kn">import</span> <span class="n">model_task</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.visualize.base</span> <span class="kn">import</span> <span class="n">VisualizableMixIn</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ArtifactApiMixin"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin">[docs]</a><span class="k">class</span> <span class="nc">ArtifactApiMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Objects that behave as artifacts within the forge need to</span>
+<span class="sd">    implement this</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">preview_url</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">link_type</span> <span class="o">=</span> <span class="s">&#39;generic&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">project_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span>
+
+<div class="viewcode-block" id="ArtifactApiMixin.url"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c"># pragma no cover</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subclasses should implement this, providing the URL to the artifact</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;url&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.index_id"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.index_id">[docs]</a>    <span class="k">def</span> <span class="nf">index_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Globally unique artifact identifier.</span>
+
+<span class="sd">        Used for SOLR ID, shortlinks, and maybe elsewhere</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;index_id&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.shorthand_id"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.shorthand_id">[docs]</a>    <span class="k">def</span> <span class="nf">shorthand_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        How to refer to this artifact within the app instance context.</span>
+
+<span class="sd">        For a wiki page, it might be the title.  For a ticket, it might be the</span>
+<span class="sd">        ticket number.  For a discussion, it might be the message ID. Generally</span>
+<span class="sd">        this should have a strong correlation to the URL.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;shorthand_id&#39;</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">s3_key_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">shorthand_id</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ArtifactApiMixin.link_text"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.link_text">[docs]</a>    <span class="k">def</span> <span class="nf">link_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The link text that will be used when a shortlink to this artifact</span>
+<span class="sd">        is expanded into an &lt;a&gt;&lt;/a&gt; tag.</span>
+
+<span class="sd">        By default this method returns shorthand_id(). Subclasses should</span>
+<span class="sd">        override this method to provide more descriptive link text.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">shorthand_id</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.link_text_short"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.link_text_short">[docs]</a>    <span class="k">def</span> <span class="nf">link_text_short</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shortened version of the link text. Defaults to same as link_text.</span>
+
+<span class="sd">        Used for ReferenceBin</span>
+<span class="sd">        @return: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_text</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.parent_security_context"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.parent_security_context">[docs]</a>    <span class="k">def</span> <span class="nf">parent_security_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;ACL processing should continue at the  AppConfig object. This lets</span>
+<span class="sd">        AppConfigs provide a &#39;default&#39; ACL for all artifacts in the tool.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.primary"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.primary">[docs]</a>    <span class="k">def</span> <span class="nf">primary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If an artifact is a &quot;secondary&quot; artifact (discussion of a ticket, for</span>
+<span class="sd">        instance), return the artifact that is the &quot;primary&quot;.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">refs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="p">:</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s">&#39;index_id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">references</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">refs</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">backrefs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span>
+            <span class="s">&#39;references.index_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">aref</span><span class="o">.</span><span class="n">_id</span> <span class="k">for</span> <span class="n">aref</span> <span class="ow">in</span> <span class="n">q</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_content_to_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;get_content_to_folder&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ArtifactApiMixin.relations"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.relations">[docs]</a>    <span class="k">def</span> <span class="nf">relations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        generator for related artifacts with link context</span>
+
+<span class="sd">        (extra field in ArtifactReference.references)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="c"># get backreferences to this artifact</span>
+        <span class="n">index_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s">&#39;references.index_id&#39;</span><span class="p">:</span> <span class="n">index_id</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">backref</span> <span class="ow">in</span> <span class="n">q</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">backref</span><span class="o">.</span><span class="n">artifact</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s">&#39;index_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">index_id</span><span class="p">,</span>
+                        <span class="n">backref</span><span class="o">.</span><span class="n">references</span><span class="p">):</span>
+                    <span class="n">artifact</span> <span class="o">=</span> <span class="n">backref</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">primary</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+                        <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
+                            <span class="n">artifact</span><span class="o">=</span><span class="n">artifact</span><span class="p">,</span>
+                            <span class="n">index_id</span><span class="o">=</span><span class="n">backref</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                            <span class="n">datetime</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">datetime</span>
+                        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">()</span>
+
+        <span class="c"># get this artifacts references</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">references</span><span class="p">:</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">artifact_by_index_id</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="s">&#39;index_id&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">primary</span><span class="p">()</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+                <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">artifact</span><span class="o">=</span><span class="n">artifact</span><span class="p">,</span> <span class="o">**</span><span class="n">ref</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.has_relations"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.has_relations">[docs]</a>    <span class="k">def</span> <span class="nf">has_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns boolean&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">references</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span>
+                <span class="s">&#39;references.index_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()})</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.ref_category"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.ref_category">[docs]</a>    <span class="k">def</span> <span class="nf">ref_category</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Category for grouping types of relations</span>
+
+<span class="sd">        @return: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_label</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.raw_url"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.raw_url">[docs]</a>    <span class="k">def</span> <span class="nf">raw_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Url at which to download the resource.</span>
+
+<span class="sd">        @return: str</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ArtifactApiMixin.get_discussion_thread"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.get_discussion_thread">[docs]</a>    <span class="k">def</span> <span class="nf">get_discussion_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">generate_if_missing</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the discussion thread for this artifact (possibly made more</span>
+<span class="sd">        specific by the message_data)</span>
+
+<span class="sd">        @rtype: vulcanforge.discussion.model.Thread</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+        <span class="n">thread_class</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">DiscussionClass</span><span class="o">.</span><span class="n">thread_class</span><span class="p">()</span>
+        <span class="n">thread</span> <span class="o">=</span> <span class="n">thread_class</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">thread</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">generate_if_missing</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">thread</span> <span class="o">=</span> <span class="n">thread_class</span><span class="p">(</span>
+                <span class="n">app_config_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config_id</span><span class="p">,</span>
+                <span class="n">discussion_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">discussion_id</span><span class="p">,</span>
+                <span class="n">ref_id</span><span class="o">=</span><span class="n">idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()),</span>
+                <span class="n">subject</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> discussion&#39;</span> <span class="o">%</span> <span class="n">idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;title_s&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_text</span><span class="p">()))</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">flush_self</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">thread</span>
+</div>
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">discussion_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_discussion_thread</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="Artifact"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact">[docs]</a><span class="k">class</span> <span class="nc">Artifact</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">,</span> <span class="n">ArtifactApiMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The base class for anything you want to keep track of.</span>
+
+<span class="sd">    It will automatically be added to solr (see index() method).  It also</span>
+<span class="sd">    gains a discussion thread and can have files attached to it.</span>
+
+<span class="sd">    :var tool_version: default&#39;s to the app&#39;s version</span>
+<span class="sd">    :var acl: dict of permission name =&gt; [roles]</span>
+<span class="sd">    :var labels: list of plain old strings</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">artifact_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;artifact&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;app_config_id&#39;</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">before_save</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">sesh</span> <span class="o">=</span> <span class="n">artifact_orm_session</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sesh</span><span class="p">,</span> <span class="s">&#39;skip_mod_date&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+                <span class="n">data</span><span class="p">[</span><span class="s">&#39;mod_date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Not updating mod_date&#39;</span><span class="p">)</span>
+            <span class="c">#if hasattr(c, &#39;project&#39;) and c.project:</span>
+            <span class="c">#    c.project.last_updated = datetime.utcnow()</span>
+
+    <span class="n">type_s</span> <span class="o">=</span> <span class="s">&#39;Generic Artifact&#39;</span>
+
+    <span class="c"># Artifact base schema</span>
+    <span class="n">mod_date</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="n">app_config_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span>
+        <span class="s">&#39;AppConfig&#39;</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+    <span class="n">tool_version</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span>
+        <span class="p">{</span><span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">},</span>
+        <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tool_name</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">__version__</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">acl</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">ACL</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">([</span><span class="nb">str</span><span class="p">])</span>
+    <span class="n">app_config</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;AppConfig&#39;</span><span class="p">)</span>
+    <span class="n">preview_url</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">attachment_class</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>  <span class="c"># pragma no cover</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;attachment_class&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">translate_query</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">search</span><span class="o">.</span><span class="n">dynamic_postfixes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                    <span class="n">base</span> <span class="o">=</span> <span class="n">f</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+                    <span class="n">actual</span> <span class="o">=</span> <span class="n">f</span>
+                    <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="n">actual</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span><span class="p">)</span>
+                    <span class="k">break</span>
+        <span class="k">return</span> <span class="n">q</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">from_artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">index_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">index_id</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">#</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">index_id</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">shorthand_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>  <span class="c"># pragma no cover</span>
+
+    <span class="k">def</span> <span class="nf">s3_key_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">related_artifacts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">related_artifacts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ref_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">refs</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">backrefs</span><span class="p">:</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">artifact_by_index_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">primary</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">artifact</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">related_artifacts</span><span class="p">:</span>
+                <span class="n">related_artifacts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">related_artifacts</span>
+
+    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;direct&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s">&#39;day&#39;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.notification.model</span> <span class="kn">import</span> <span class="n">Mailbox</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">Mailbox</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">project_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+            <span class="n">app_config_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">artifact</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">unsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.notification.model</span> <span class="kn">import</span> <span class="n">Mailbox</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">Mailbox</span><span class="o">.</span><span class="n">unsubscribe</span><span class="p">(</span>
+            <span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">project_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+            <span class="n">app_config_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">artifact_index_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">autosubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;autosubscribe&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">artifacts_labeled_with</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s">&#39;labels&#39;</span><span class="p">:</span> <span class="n">label</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">email_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s">&#39;artifact&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">subject</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;mailto:</span><span class="si">%s</span><span class="s">?subject=[</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">] Re: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">email_address</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">shortname</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_point</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shorthand_id</span><span class="p">(),</span>
+                <span class="n">subject</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;mailto:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">email_address</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">email_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tg</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s">&#39;forgemail.return_path&#39;</span><span class="p">,</span> <span class="s">&#39;noreply@vulcanforge.org&#39;</span><span class="p">)</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;app&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Artifact.index"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_objects</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">use_posts</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        TODO: update docstring</span>
+
+<span class="sd">        Subclasses should override this, providing a dictionary of</span>
+<span class="sd">        solr_field =&gt; value.</span>
+<span class="sd">        These fields &amp; values will be stored by solr.  Subclasses should call</span>
+<span class="sd">        the this and extend it with more fields.  All these fields will be</span>
+<span class="sd">        included in the &#39;text&#39; field (done by search.solarize())</span>
+
+<span class="sd">        The _s and _t suffixes, for example, follow solr dynamic field naming</span>
+<span class="sd">        pattern.</span>
+<span class="sd">        You probably want to override at least title_s and text to have</span>
+<span class="sd">        meaningful search results and email senders.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">text_objects</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">text_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+            <span class="n">mod_date_dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mod_date</span><span class="p">,</span>
+            <span class="n">title_s</span><span class="o">=</span><span class="s">&#39;Artifact </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">project_id_s</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">_id</span><span class="p">),</span>
+            <span class="n">project_name_t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">project_shortname_t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">shortname</span><span class="p">,</span>
+            <span class="n">tool_name_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">tool_name</span><span class="p">,</span>
+            <span class="n">mount_point_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_point</span><span class="p">,</span>
+            <span class="n">app_config_id_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_config_id</span><span class="p">,</span>
+            <span class="n">is_history_b</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">url_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">(),</span>
+            <span class="n">read_roles</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_read_roles</span><span class="p">(),</span>
+            <span class="n">type_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type_s</span><span class="p">,</span>
+            <span class="n">labels_t</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">),</span>
+            <span class="n">snippet_s</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+            <span class="n">can_reference_b</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+            <span class="n">post_text_s</span><span class="o">=</span><span class="s">&#39;&#39;</span>
+        <span class="p">)</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># FIX: for objects with incorrect read roles:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s">&#39;read_roles&#39;</span><span class="p">]):</span>
+            <span class="n">index</span><span class="p">[</span><span class="s">&#39;read_roles&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;authenticated&#39;</span><span class="p">]</span>
+
+        <span class="c"># no text, generate a sensible default</span>
+        <span class="k">if</span> <span class="s">&#39;text&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">text_objects</span><span class="p">:</span>
+            <span class="n">index</span><span class="p">[</span><span class="s">&#39;text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">u&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">pformat</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">index</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">index_default_text_fields</span>
+            <span class="p">)</span>
+
+        <span class="c"># add discussion threads</span>
+        <span class="k">if</span> <span class="n">use_posts</span><span class="p">:</span>
+            <span class="n">thread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_discussion_thread</span><span class="p">(</span><span class="n">generate_if_missing</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">thread</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">post</span> <span class="ow">in</span> <span class="n">thread</span><span class="o">.</span><span class="n">query_posts</span><span class="p">():</span>
+                    <span class="n">author</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">author</span><span class="p">()</span>
+                    <span class="n">text_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="s">u&quot;{} {} {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">author</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+                                           <span class="n">author</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                                           <span class="n">post</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="c"># append these objects to the text</span>
+        <span class="n">index</span><span class="p">[</span><span class="s">&#39;text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span> <span class="s">&quot;xmlcharrefreplace&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">unicode</span> <span class="k">else</span> <span class="n">x</span>
+            <span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">text_objects</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">index</span>
+</div>
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">link_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_link_content</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Artifact.get_link_content"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.get_link_content">[docs]</a>    <span class="k">def</span> <span class="nf">get_link_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Text content that contains the artifacts shortlinks</span>
+
+<span class="sd">        Used for parsing references</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># TODO: fix subclasses of artifacts to use this instead of index</span>
+        <span class="n">index_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">use_posts</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index_dict</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">index_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;text&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Artifact.index_parent"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.index_parent">[docs]</a>    <span class="k">def</span> <span class="nf">index_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For artifacts whose parent indexes should be updated when they are</span>
+<span class="sd">        updated (e.g. Posts)</span>
+<span class="sd">        @return: artifact | None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">None</span>
+</div>
+    <span class="k">def</span> <span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">att</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_class</span><span class="p">()</span><span class="o">.</span><span class="n">save_attachment</span><span class="p">(</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="n">fp</span><span class="p">,</span> <span class="n">artifact_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">att</span>
+
+<div class="viewcode-block" id="Artifact.get_read_roles"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.get_read_roles">[docs]</a>    <span class="k">def</span> <span class="nf">get_read_roles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        It can only be more restrictive than the project read roles</span>
+<span class="sd">        @return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">roles_with_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">)</span>
+
+</div></div>
+<span class="k">class</span> <span class="nc">Snapshot</span><span class="p">(</span><span class="n">Artifact</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A snapshot of an :class:`Artifact &lt;vulcanforge.artifact.model.Artifact&gt;`,</span>
+<span class="sd">    used in</span>
+<span class="sd">    :class:`VersionedArtifact &lt;vulcanforge.artifact.model.VersionedArtifact&gt;`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">artifact_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;artifact_snapshot&#39;</span>
+        <span class="n">unique_indexes</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;artifact_class&#39;</span><span class="p">,</span> <span class="s">&#39;artifact_id&#39;</span><span class="p">,</span> <span class="s">&#39;version&#39;</span><span class="p">)]</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;artifact_id&#39;</span><span class="p">,</span> <span class="s">&#39;version&#39;</span><span class="p">)]</span>
+
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">artifact_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">artifact_class</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">Int</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">({</span>
+        <span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">,</span>
+        <span class="s">&#39;username&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s">&#39;display_name&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s">&#39;logged_ip&#39;</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">})</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">datetime</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_objects</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">text_objects</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">text_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">()</span>
+        <span class="n">original_text</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">original</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">index</span><span class="p">()</span>
+            <span class="n">original_text</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;text&#39;</span><span class="p">)</span>
+            <span class="n">index</span><span class="p">[</span><span class="s">&#39;title_s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Version </span><span class="si">%d</span><span class="s"> of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">index</span><span class="p">[</span><span class="s">&#39;title_s&#39;</span><span class="p">])</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+            <span class="n">version_i</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">author_username_t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+            <span class="n">author_display_name_t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+            <span class="n">timestamp_dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span>
+            <span class="n">is_history_b</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">index</span><span class="p">[</span><span class="s">&#39;text_objects&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text_objects</span> <span class="o">+</span> <span class="p">[</span><span class="n">original_text</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Snapshot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="o">**</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_current</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">artifact_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">artifact_id</span><span class="p">,</span>
+            <span class="n">artifact_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">artifact_class</span>
+        <span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">original</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span><span class="p">(</span><span class="s">&#39;original&#39;</span><span class="p">)</span>  <span class="c"># pragma no cover</span>
+
+    <span class="k">def</span> <span class="nf">get_link_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">shorthand_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">#</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">()</span><span class="o">.</span><span class="n">shorthand_id</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">author_user</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">VersionedArtifact</span><span class="p">(</span><span class="n">Artifact</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An :class:`Artifact &lt;vulcanforge.artifact.model.Artfiact&gt;` that has versions.</span>
+<span class="sd">    Associated data like attachments and discussion thread are not versioned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">artifact_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;versioned_artifact&#39;</span>
+        <span class="n">history_class</span> <span class="o">=</span> <span class="n">Snapshot</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;last_updated&#39;</span><span class="p">,</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">DESCENDING</span><span class="p">)]</span>
+
+    <span class="n">version</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">Int</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">last_updated</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">DateTime</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save off a snapshot of the artifact and increment the version #&quot;&quot;&quot;</span>
+        <span class="n">session</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span><span class="o">.</span><span class="n">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find_and_modify</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">),</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;$inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;version&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
+            <span class="n">new</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_updated</span> <span class="o">=</span> <span class="n">now</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ip_address</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s">&#39;X_FORWARDED_FOR&#39;</span><span class="p">,</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">remote_addr</span>
+            <span class="p">)</span>
+            <span class="n">ip_address</span> <span class="o">=</span> <span class="n">ip_address</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">ip_address</span> <span class="o">=</span> <span class="s">&#39;0.0.0.0&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">artifact_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">artifact_state</span> <span class="o">=</span> <span class="n">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">artifact_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">artifact_class</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span>
+            <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">author</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                <span class="n">username</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">display_name</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">),</span>
+                <span class="n">logged_ip</span><span class="o">=</span><span class="n">ip_address</span><span class="p">),</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">artifact_state</span><span class="p">)</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">history_class</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">session</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span><span class="o">.</span><span class="n">insert_now</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">state</span><span class="p">(</span><span class="n">ss</span><span class="p">))</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Snapshot version </span><span class="si">%s</span><span class="s"> of </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ss</span>
+
+    <span class="k">def</span> <span class="nf">get_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">+</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">history_class</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">artifact_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">n</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ss</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ss</span>
+
+    <span class="k">def</span> <span class="nf">revert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_version</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+        <span class="n">old_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ss</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">old_version</span>
+
+    <span class="k">def</span> <span class="nf">history</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">history_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">history_class</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">history_cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">artifact_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+        <span class="p">))</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">DESCENDING</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">q</span>
+
+    <span class="k">def</span> <span class="nf">is_current</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+
+<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">Artifact</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A message</span>
+
+<span class="sd">    :var _id: an email friendly (e.g. message-id) string id</span>
+<span class="sd">    :var slug: slash-delimeted random identifier.  Slashes useful for threaded</span>
+<span class="sd">               searching and ordering</span>
+<span class="sd">    :var full_slug: string of slash-delimited &quot;timestamp:slug&quot; components.</span>
+<span class="sd">                    Useful for sorting by timstamp</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">artifact_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;message&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="n">Artifact</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">indexes</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="s">&#39;slug&#39;</span><span class="p">,</span>
+            <span class="s">&#39;parent_id&#39;</span><span class="p">,</span>
+            <span class="s">&#39;timestamp&#39;</span>
+        <span class="p">]</span>
+
+    <span class="n">type_s</span> <span class="o">=</span> <span class="s">&#39;Generic Message&#39;</span>
+
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">gen_message_id</span><span class="p">)</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">nonce</span><span class="p">)</span>
+    <span class="n">full_slug</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+    <span class="n">parent_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">app_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="n">author_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_slugs</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">part</span> <span class="o">=</span> <span class="n">nonce</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">%H%M%S&#39;</span><span class="p">)</span>
+        <span class="n">slug</span> <span class="o">=</span> <span class="n">part</span>
+        <span class="n">full_slug</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> <span class="n">part</span>
+        <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">slug</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">slug</span><span class="p">,</span>
+                    <span class="n">parent</span><span class="o">.</span><span class="n">full_slug</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">full_slug</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">slug</span><span class="p">,</span> <span class="n">full_slug</span>
+
+    <span class="k">def</span> <span class="nf">author</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">author_id</span><span class="p">)</span> <span class="ow">or</span> <span class="n">User</span><span class="o">.</span><span class="n">anonymous</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">reply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">new_id</span> <span class="o">=</span> <span class="n">gen_message_id</span><span class="p">()</span>
+        <span class="n">slug</span><span class="p">,</span> <span class="n">full_slug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_slugs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">document</span><span class="p">,</span>
+            <span class="n">_id</span><span class="o">=</span><span class="n">new_id</span><span class="p">,</span>
+            <span class="n">slug</span><span class="o">=</span><span class="n">slug</span><span class="p">,</span>
+            <span class="n">full_slug</span><span class="o">=</span><span class="n">full_slug</span><span class="p">,</span>
+            <span class="n">parent_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+            <span class="n">author_id</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="o">**</span><span class="n">new_args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;$gt&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">}))</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s">&#39;slug&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">q</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">slug</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">msg</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="k">def</span> <span class="nf">replies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">parent_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_objects</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">text_objects</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">text_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">author</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">author</span><span class="p">()</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">type_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type_s</span><span class="p">,</span>
+                <span class="n">author_user_name_t</span><span class="o">=</span><span class="n">author</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">author_display_name_t</span><span class="o">=</span><span class="n">author</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">),</span>
+                <span class="n">timestamp_dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">index</span><span class="p">[</span><span class="s">&#39;text_objects&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text_objects</span> <span class="o">+</span> <span class="p">[</span>
+                <span class="n">author</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">author</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+            <span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Message</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="o">**</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">shorthand_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span>
+
+
+<span class="k">class</span> <span class="nc">Feed</span><span class="p">(</span><span class="n">MappedClass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Used to generate rss/atom feeds.  This does not need to be extended;</span>
+<span class="sd">    all feed items go into the same collection</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">project_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;artifact_feed&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s">&#39;pubdate&#39;</span><span class="p">,</span>
+            <span class="p">(</span><span class="s">&#39;artifact_ref.project_id&#39;</span><span class="p">,</span> <span class="s">&#39;artifact_ref.mount_point&#39;</span><span class="p">)]</span>
+
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">ref_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;ArtifactReference&#39;</span><span class="p">)</span>
+    <span class="n">neighborhood_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="n">Neighborhood</span><span class="p">)</span>
+    <span class="n">project_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;Project&#39;</span><span class="p">)</span>
+    <span class="n">app_config_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;AppConfig&#39;</span><span class="p">)</span>
+    <span class="n">tool_name</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">pubdate</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">nonce</span><span class="p">(</span><span class="mi">40</span><span class="p">))</span>
+    <span class="n">author_name</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">)</span>
+                           <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">author_link</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">if_missing</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">url</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">artifact_reference</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">Deprecated</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">artifact</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+             <span class="n">author_link</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">author_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a Feed item and returns the item.</span>
+
+<span class="sd">        If anon doesn&#39;t have read access, create does not happen and None</span>
+<span class="sd">        is returned</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># TODO: fix security system so we can do this correctly and fast</span>
+        <span class="n">anon</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">anonymous</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">has_access</span><span class="p">(</span><span class="n">artifact</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">anon</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">has_access</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">anon</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">index</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> modified by </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">idx</span><span class="p">[</span><span class="s">&#39;title_s&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="k">if</span> <span class="n">author</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">author</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span>
+            <span class="n">ref_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+            <span class="n">neighborhood_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">neighborhood_id</span><span class="p">,</span>
+            <span class="n">project_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+            <span class="n">app_config_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config_id</span><span class="p">,</span>
+            <span class="n">tool_name</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">tool_name</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">link</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">url</span><span class="p">(),</span>
+            <span class="n">author_name</span><span class="o">=</span><span class="n">author_name</span> <span class="ow">or</span> <span class="n">author</span><span class="o">.</span><span class="n">get_pref</span><span class="p">(</span><span class="s">&#39;display_name&#39;</span><span class="p">),</span>
+            <span class="n">author_link</span><span class="o">=</span><span class="n">author_link</span> <span class="ow">or</span> <span class="n">author</span><span class="o">.</span><span class="n">url</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">feed_type</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span>
+             <span class="n">since</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">until</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Produces webhelper.feedgenerator Feed&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">link</span><span class="o">=</span><span class="n">absurl</span><span class="p">(</span><span class="n">link</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">language</span><span class="o">=</span><span class="s">u&#39;en&#39;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">feed_type</span> <span class="o">==</span> <span class="s">&#39;atom&#39;</span><span class="p">:</span>
+            <span class="n">feed</span> <span class="o">=</span> <span class="n">FG</span><span class="o">.</span><span class="n">Atom1Feed</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">feed_type</span> <span class="o">==</span> <span class="s">&#39;rss&#39;</span><span class="p">:</span>
+            <span class="n">feed</span> <span class="o">=</span> <span class="n">FG</span><span class="o">.</span><span class="n">Rss201rev2Feed</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="n">query</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">since</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query</span><span class="p">[</span><span class="s">&#39;pubdate&#39;</span><span class="p">][</span><span class="s">&#39;$gte&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">since</span>
+        <span class="k">if</span> <span class="n">until</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query</span><span class="p">[</span><span class="s">&#39;pubdate&#39;</span><span class="p">][</span><span class="s">&#39;$lte&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">until</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s">&#39;pubdate&#39;</span><span class="p">,</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">DESCENDING</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">limit</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+            <span class="n">feed</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                          <span class="n">link</span><span class="o">=</span><span class="n">absurl</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)),</span>
+                          <span class="n">pubdate</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">pubdate</span><span class="p">,</span>
+                          <span class="n">description</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                          <span class="n">unique_id</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span>
+                          <span class="n">author_name</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">author_name</span><span class="p">,</span>
+                          <span class="n">author_link</span><span class="o">=</span><span class="n">absurl</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">author_link</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">feed</span>
+
+
+<span class="k">class</span> <span class="nc">BaseAttachment</span><span class="p">(</span><span class="n">File</span><span class="p">,</span> <span class="n">VisualizableMixIn</span><span class="p">):</span>
+    <span class="n">thumbnail_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">)</span>
+    <span class="n">ArtifactType</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">visualizable_kind</span> <span class="o">=</span> <span class="s">&#39;attachment&#39;</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;attachment&#39;</span>
+        <span class="n">polymorphic_on</span> <span class="o">=</span> <span class="s">&#39;attachment_type&#39;</span>
+        <span class="n">polymorphic_identity</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">visualizable_orm_session</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;artifact_id&#39;</span><span class="p">,</span> <span class="s">&#39;app_config_id&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">File</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">indexes</span>
+
+    <span class="n">artifact_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">app_config_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">attachment_type</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ArtifactType</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">artifact_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">local_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Forge-local URL (not s3. Generally one should use File.url)&quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_thumb</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">+=</span> <span class="s">&#39;/thumb&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">url</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;attachment/&#39;</span> <span class="o">+</span> <span class="n">urlquote</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_embedded</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s">&#39;vehicleforge.macro.att_embedded&#39;</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">metadata_for</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s">&#39;artifact_id&#39;</span><span class="p">:</span> <span class="n">artifact</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="s">&#39;app_config_id&#39;</span><span class="p">:</span> <span class="n">artifact</span><span class="o">.</span><span class="n">app_config_id</span>
+        <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">save_attachment</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">original_meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&quot;attachment&quot;</span><span class="p">,</span> <span class="n">app_config_id</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+        <span class="n">original_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">file_is_image</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
+            <span class="n">thumbnail_meta</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="s">&quot;thumbnail&quot;</span><span class="p">,</span>
+                <span class="s">&#39;app_config_id&#39;</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span>
+            <span class="p">}</span>
+            <span class="n">thumbnail_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">orig</span><span class="p">,</span> <span class="n">thumbnail</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">save_image</span><span class="p">(</span>
+                <span class="n">filename</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span>
+                <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">,</span>
+                <span class="n">square</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="n">thumbnail_size</span><span class="o">=</span><span class="n">cls</span><span class="o">.</span><span class="n">thumbnail_size</span><span class="p">,</span>
+                <span class="n">thumbnail_meta</span><span class="o">=</span><span class="n">thumbnail_meta</span><span class="p">,</span>
+                <span class="n">save_original</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="n">original_meta</span><span class="o">=</span><span class="n">original_meta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">orig</span><span class="p">,</span> <span class="n">thumbnail</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">from_stream</span><span class="p">(</span>
+                    <span class="n">filename</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">,</span> <span class="o">**</span><span class="n">original_meta</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">get_thumb_query_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s">&#39;filename&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="s">&#39;is_thumb&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="s">&#39;app_config_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config_id</span><span class="p">,</span>
+            <span class="s">&#39;artifact_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">artifact_id</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">get_unique_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;attachment.{}.{}.{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attachment_type</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filename</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">artifact_ref_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+
+    <span class="nd">@model_task</span>
+    <span class="k">def</span> <span class="nf">trigger_vis_upload_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># process attachments immediately</span>
+        <span class="k">for</span> <span class="n">visualizer</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">visualize_artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">find_for_processing</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">visualizer</span><span class="o">.</span><span class="n">process_artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error running on_upload hook on </span><span class="si">%s</span><span class="s"> in </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">get_unique_id</span><span class="p">(),</span> <span class="n">visualizer</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="c"># Ephemeral Functions for ArtifactReference</span>
+<span class="n">REPO_SHORTLINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^\((?P&lt;commit&gt;[a-z0-9]+)\)(?P&lt;path&gt;/.*)&#39;</span><span class="p">)</span>
+<span class="n">REPO_INDEX_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^Repo\.&#39;</span><span class="p">)</span>
+<span class="n">SHORTLINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;(?&lt;![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">repo_get_by_index_id</span><span class="p">(</span><span class="n">index_id</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ac_id</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">index_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">g</span><span class="o">.</span><span class="n">context_manager</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">app_config_id</span><span class="o">=</span><span class="n">bson</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">(</span><span class="n">ac_id</span><span class="p">)):</span>
+            <span class="n">ci</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">ci_oid</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ci</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">ci</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Error looking up repo? index_id {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_id</span><span class="p">))</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">artifact</span>
+
+
+<span class="k">def</span> <span class="nf">_get_by_slink_with_context</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="n">ci</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">ci_oid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ci</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ci</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">repo_get_by_shortlink</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">):</span>
+    <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;commit&#39;</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;path&#39;</span><span class="p">)</span>
+    <span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">shortname</span><span class="o">=</span><span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;project&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">project</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">]:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">app_instance</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">app</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s">&#39;repo&#39;</span><span class="p">):</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">_get_by_slink_with_context</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ac</span> <span class="ow">in</span> <span class="n">project</span><span class="o">.</span><span class="n">app_configs</span><span class="p">:</span>
+                <span class="n">app</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">app_instance</span><span class="p">(</span><span class="n">ac</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s">&#39;repo&#39;</span><span class="p">):</span>
+                    <span class="n">artifact</span> <span class="o">=</span> <span class="n">_get_by_slink_with_context</span><span class="p">(</span>
+                        <span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
+                        <span class="k">break</span>
+    <span class="k">return</span> <span class="n">artifact</span>
+
+
+<span class="k">def</span> <span class="nf">repo_ref_id_by_link</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="n">ref_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">artifact</span> <span class="o">=</span> <span class="n">repo_get_by_shortlink</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
+        <span class="n">ref_id</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">upsert</span><span class="p">:</span>
+            <span class="n">Shortlink</span><span class="o">.</span><span class="n">from_artifact</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ref_id</span>
+
+
+<span class="k">def</span> <span class="nf">find_shortlink_refs</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="n">ref_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c"># TODO: include markdown extensions in vulcanforge then uncomment following</span>
+    <span class="c">#fcp = FencedCodeProcessor()</span>
+    <span class="c">#converted = fcp.run(text.split(&#39;\n&#39;))</span>
+    <span class="n">converted</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">converted</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;    &#39;</span><span class="p">):</span>
+            <span class="n">ref_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">Shortlink</span><span class="o">.</span><span class="n">ref_id_by_link</span><span class="p">(</span><span class="n">alink</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">alink</span> <span class="ow">in</span> <span class="n">SHORTLINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">if</span> <span class="n">alink</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ref_ids</span>
+<span class="c"># End Ephemerals</span>
+
+
+<span class="k">class</span> <span class="nc">ArtifactReference</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ArtifactReference manages the artifact graph.</span>
+
+<span class="sd">    fields are all strs, corresponding to Solr index_ids</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">main_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;artifact_reference&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;references.index_id&#39;</span><span class="p">,</span> <span class="s">&#39;artifact_reference.app_config_id&#39;</span><span class="p">]</span>
+
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">artifact_reference</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">module</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">classname</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">project_id</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">,</span>
+        <span class="n">app_config_id</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">,</span>
+        <span class="n">artifact_id</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">Anything</span><span class="p">(</span><span class="n">if_missing</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+    <span class="p">)))</span>
+    <span class="n">references</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">([</span><span class="n">S</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">index_id</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">extra</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>  <span class="c"># extra label information,</span>
+        <span class="n">datetime</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="p">))])</span>
+
+    <span class="c"># patterns for looking up artifacts by index_id when no ArtifactReference</span>
+    <span class="c"># document yet exists, or the artifact is not persisted (repo objects)</span>
+    <span class="n">EPHEMERAL_PATTERNS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">REPO_INDEX_ID_RE</span><span class="p">:</span> <span class="n">repo_get_by_index_id</span>
+    <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">artifact_by_index_id</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">index_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get artifact by index_id. Allows for the existence of ephemeral</span>
+<span class="sd">        artifacts that have no ArtifactReference persisted, such as repo</span>
+<span class="sd">        files and folders.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># find ephemerals</span>
+        <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">index_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">index_id</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
+
+        <span class="c"># standard approach</span>
+        <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">aref</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">index_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">aref</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">aref</span><span class="o">.</span><span class="n">artifact</span>
+
+        <span class="k">return</span> <span class="n">artifact</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_artifact</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">artifact</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upsert logic to generate an ArtifactReference object from an artifact</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span>
+                    <span class="n">_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+                    <span class="n">artifact_reference</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">module</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span>
+                        <span class="n">classname</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                        <span class="n">project_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+                        <span class="n">app_config_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                        <span class="n">artifact_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">_id</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">flush</span><span class="p">:</span>
+                    <span class="n">session</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">flush</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">DuplicateKeyError</span><span class="p">:</span>  <span class="c"># pragma no cover</span>
+                <span class="n">session</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">expunge</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+                <span class="n">session</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">flush</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Look up the artifact referenced&quot;&quot;&quot;</span>
+        <span class="n">aref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">artifact_reference</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;{}:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">aref</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">aref</span><span class="o">.</span><span class="n">classname</span><span class="p">)</span>
+            <span class="n">cls</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">g</span><span class="o">.</span><span class="n">context_manager</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">app_config_id</span><span class="o">=</span><span class="n">aref</span><span class="o">.</span><span class="n">app_config_id</span><span class="p">):</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">aref</span><span class="o">.</span><span class="n">artifact_id</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">artifact</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error loading artifact for </span><span class="si">%s</span><span class="s">: </span><span class="si">%r</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="n">aref</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">upsert_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">references</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ref</span><span class="o">.</span><span class="n">index_id</span> <span class="o">==</span> <span class="n">index_id</span><span class="p">:</span>
+                <span class="n">ref</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">references</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">index_id</span><span class="o">=</span><span class="n">index_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">Shortlink</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Collection mapping shorthand_ids for artifacts to ArtifactReferences&quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">main_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;shortlink&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="s">&#39;project_shortname&#39;</span><span class="p">,</span> <span class="s">&#39;app_mount&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;ref_id&#39;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s">&#39;app_config_id&#39;</span><span class="p">,)</span>
+        <span class="p">]</span>
+
+    <span class="c"># Stored properties</span>
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">ref_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="n">ArtifactReference</span><span class="p">)</span>
+    <span class="n">project_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;Project&#39;</span><span class="p">)</span>
+    <span class="n">project_shortname</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">app_config_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;AppConfig&#39;</span><span class="p">)</span>
+    <span class="n">app_mount</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="c"># Relation Properties</span>
+    <span class="n">project</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;Project&#39;</span><span class="p">)</span>
+    <span class="n">app_config</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;AppConfig&#39;</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;ArtifactReference&#39;</span><span class="p">)</span>
+
+    <span class="c"># Regexes used to find shortlinks</span>
+    <span class="n">_core_re</span> <span class="o">=</span> <span class="s">r&#39;&#39;&#39;(\[</span>
+<span class="s">            (?:(?P&lt;project_id&gt;.*?):)?      # optional project ID</span>
+<span class="s">            (?:(?P&lt;app_id&gt;.*?):)?      # optional tool ID</span>
+<span class="s">            (?P&lt;artifact_id&gt;.*)             # artifact ID</span>
+<span class="s">    \])&#39;&#39;&#39;</span>
+    <span class="n">re_link_1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s&#39;</span> <span class="o">+</span> <span class="n">_core_re</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">)</span>
+    <span class="n">re_link_2</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^&#39;</span> <span class="o">+</span> <span class="n">_core_re</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">)</span>
+
+    <span class="n">re_link_bracket</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*\[([^\]\[]*)]\s*&#39;</span><span class="p">)</span>
+
+    <span class="c"># artifact patterns for ephemeral lookups (see same in ArtifactReference)</span>
+    <span class="n">EPHEMERAL_PATTERNS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">REPO_SHORTLINK_RE</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&#39;ref_id&#39;</span><span class="p">:</span> <span class="n">repo_ref_id_by_link</span><span class="p">,</span>
+            <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">repo_get_by_shortlink</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">u&#39;</span><span class="si">%s</span><span class="s"> -&gt; </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">render_link</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">render_link</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">u&#39;[{}:{}:{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">shortname</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_point</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">link</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">from_links</span><span class="p">(</span><span class="n">link</span><span class="p">)[</span><span class="n">link</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_artifact</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span>
+                    <span class="n">ref_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">index_id</span><span class="p">(),</span>
+                    <span class="n">project_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+                    <span class="n">project_shortname</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">shortname</span><span class="p">,</span>
+                    <span class="n">app_config_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                    <span class="n">app_mount</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_point</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">flush</span><span class="p">:</span>
+                    <span class="n">session</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">.</span><span class="n">flush</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">DuplicateKeyError</span><span class="p">:</span>  <span class="c"># pragma no cover</span>
+                <span class="n">session</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">.</span><span class="n">expunge</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shorthand_id</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">url</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">link</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_links</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">links</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a sequence of shortlinks to matching Shortlink objects&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">link</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">link</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_from_parsed</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">parsed</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># assemble query</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;link&#39;</span><span class="p">:</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">],</span>
+            <span class="s">&#39;project_shortname&#39;</span><span class="p">:</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;project&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">]:</span>
+            <span class="n">query</span><span class="p">[</span><span class="s">&#39;app_mount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">]</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c"># determine link to choose if multiple options</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;app&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_filter_by_context</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">parsed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_filter_by_context</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">parsed</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">slink</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">slink</span><span class="o">.</span><span class="n">app_config_id</span> <span class="o">==</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_id</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">slink</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># favor current project</span>
+            <span class="k">for</span> <span class="n">slink</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">slink</span><span class="o">.</span><span class="n">project_id</span> <span class="o">==</span> <span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">_id</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">slink</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># favor current neighborhood</span>
+                <span class="k">for</span> <span class="n">slink</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">slink</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">neighborhood_id</span> <span class="o">==</span>\
+                       <span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">neighborhood_id</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">slink</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Ambiguous link {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parsed</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse a shortlink into its project/app/artifact parts&quot;&quot;&quot;</span>
+        <span class="n">link_bracket_match</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">re_link_bracket</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">link_bracket_match</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">link_bracket_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">p_shortname</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;project&#39;</span><span class="p">):</span>
+            <span class="n">p_shortname</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="p">,</span> <span class="s">&#39;shortname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">p_shortname</span><span class="p">,</span>
+                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">p_shortname</span><span class="p">,</span>
+                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">artifact_by_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
+
+            <span class="c"># standard method</span>
+            <span class="n">shortlink</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">shortlink</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="n">shortlink</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">artifact</span>
+
+            <span class="c"># try ephemerals</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">artifact</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                        <span class="n">artifact</span> <span class="o">=</span> <span class="n">func</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">](</span><span class="n">parsed</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">artifact</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">ref_id_by_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
+            <span class="n">ref_id</span> <span class="o">=</span> <span class="bp">None</span>
+
+            <span class="c"># standard method</span>
+            <span class="n">shortlink</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">shortlink</span><span class="p">:</span>
+                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">shortlink</span><span class="o">.</span><span class="n">ref_id</span>
+
+            <span class="c"># try ephemerals</span>
+            <span class="k">if</span> <span class="n">ref_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                        <span class="n">ref_id</span> <span class="o">=</span> <span class="n">func</span><span class="p">[</span><span class="s">&#39;ref_id&#39;</span><span class="p">](</span><span class="n">parsed</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="n">upsert</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">ref_id</span>
+
+
+<span class="k">class</span> <span class="nc">VisualizableArtifact</span><span class="p">(</span><span class="n">Artifact</span><span class="p">,</span> <span class="n">VisualizableMixIn</span><span class="p">):</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">visualizable_artifact_session</span>
+
+    <span class="k">def</span> <span class="nf">get_unique_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">artifact_ref_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo-64.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

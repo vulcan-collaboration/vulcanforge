@@ -369,8 +369,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         """
         TODO: update docstring
 
-        ----------------------
-
         Subclasses should override this, providing a dictionary of
         solr_field => value.
         These fields & values will be stored by solr.  Subclasses should call
@@ -839,6 +837,7 @@ class Feed(MappedClass):
 class BaseAttachment(File, VisualizableMixIn):
     thumbnail_size = (96, 96)
     ArtifactType = None
+    visualizable_kind = 'attachment'
 
     class __mongometa__:
         name = 'attachment'
