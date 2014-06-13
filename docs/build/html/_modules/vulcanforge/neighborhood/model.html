@@ -1,0 +1,452 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>vulcanforge.neighborhood.model &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for vulcanforge.neighborhood.model</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">cStringIO</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span> <span class="nn">urllib2</span> <span class="kn">import</span> <span class="n">urlopen</span>
+
+<span class="kn">from</span> <span class="nn">ming</span> <span class="kn">import</span> <span class="n">schema</span> <span class="k">as</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">ming.odm</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldProperty</span><span class="p">,</span>
+    <span class="n">ForeignIdProperty</span><span class="p">,</span>
+    <span class="n">ThreadLocalODMSession</span><span class="p">,</span>
+    <span class="n">state</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">ming.utils</span> <span class="kn">import</span> <span class="n">LazyProperty</span>
+<span class="kn">from</span> <span class="nn">pylons</span> <span class="kn">import</span> <span class="n">request</span><span class="p">,</span> <span class="n">tmpl_context</span> <span class="k">as</span> <span class="n">c</span><span class="p">,</span> <span class="n">app_globals</span> <span class="k">as</span> <span class="n">g</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.model.base</span> <span class="kn">import</span> <span class="n">BaseMappedClass</span>
+
+<span class="kn">from</span> <span class="nn">vulcanforge.common.model.session</span> <span class="kn">import</span> <span class="n">main_orm_session</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.s3.model</span> <span class="kn">import</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.util</span> <span class="kn">import</span> <span class="n">push_config</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.project.exceptions</span> <span class="kn">import</span> <span class="n">ProjectConflict</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">RegistrationError</span>
+
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">NeighborhoodFile</span><span class="p">(</span><span class="n">File</span><span class="p">):</span>
+
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;neighborhood_file&#39;</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">main_orm_session</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;neighborhood_id&#39;</span><span class="p">,</span> <span class="s">&#39;category&#39;</span><span class="p">)]</span> <span class="o">+</span> \
+                  <span class="n">File</span><span class="o">.</span><span class="n">__mongometa__</span><span class="o">.</span><span class="n">indexes</span>
+
+    <span class="n">neighborhood_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">category</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">neighborhood</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Neighborhood</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_id</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">default_keyname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">keyname</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">NeighborhoodFile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">default_keyname</span>
+        <span class="k">return</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span>
+            <span class="s">&#39;Neighborhood&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">url_prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span>
+            <span class="n">keyname</span>
+        <span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">local_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">url</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;icon&#39;</span>
+
+
+<div class="viewcode-block" id="Neighborhood"><a class="viewcode-back" href="../../../neighborhood.html#vulcanforge.neighborhood.model.Neighborhood">[docs]</a><span class="k">class</span> <span class="nc">Neighborhood</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Provide a grouping of related projects.</span>
+
+<span class="sd">    url_prefix - location of neighborhood (may include scheme and/or host)</span>
+<span class="sd">    css - block of CSS text to add to all neighborhood pages</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">__mongometa__</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">main_orm_session</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;neighborhood&#39;</span>
+        <span class="n">polymorphic_on</span> <span class="o">=</span> <span class="s">&#39;kind&#39;</span>
+        <span class="n">polymorphic_identity</span> <span class="o">=</span> <span class="s">&#39;neighborhood&#39;</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;url_prefix&#39;</span><span class="p">,</span> <span class="s">&#39;allow_browse&#39;</span><span class="p">]</span>
+
+    <span class="n">_id</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;neighborhood&#39;</span><span class="p">)</span>
+    <span class="n">url_prefix</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>  <span class="c"># can be absolute or relative</span>
+    <span class="n">shortname_prefix</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">css</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">homepage</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">redirect</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="c">#projects = RelationProperty(&#39;Project&#39;)</span>
+    <span class="n">allow_browse</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">site_specific_html</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">project_template</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">role_aliases</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">({</span><span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">},</span> <span class="n">if_missing</span><span class="o">=</span><span class="p">{})</span>
+    <span class="n">can_register_users</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">enable_marketplace</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">project_registration_enabled</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="c"># extra_sidebars items should have at least name and url</span>
+    <span class="n">extra_sidebars</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">([{</span><span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">}],</span> <span class="n">if_missing</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">moderate_component_publish</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="c"># moderation limits: must wait {seconds} between submission times</span>
+    <span class="n">moderate_component_limit_seconds</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">moderate_deletion</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">delete_moderator_id</span> <span class="o">=</span> <span class="n">ForeignIdProperty</span><span class="p">(</span><span class="s">&#39;User&#39;</span><span class="p">)</span>
+    <span class="n">can_grant_anonymous</span> <span class="o">=</span> <span class="n">FieldProperty</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">if_missing</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="c"># for neighborhood project</span>
+    <span class="n">_default_neighborhood_apps</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s">&#39;neighborhood_home&#39;</span><span class="p">,</span> <span class="s">&#39;home&#39;</span><span class="p">,</span> <span class="s">&#39;Home&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="s">&#39;Admin&#39;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Neighborhood.by_prefix"><a class="viewcode-back" href="../../../neighborhood.html#vulcanforge.neighborhood.model.Neighborhood.by_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">by_prefix</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Prefix without slashes (e.g. projects)&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url_prefix</span><span class="o">=</span><span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_user_neighborhood</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">by_prefix</span><span class="p">(</span><span class="s">&#39;u&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parent_security_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">neighborhood_project</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">neighborhood_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">shortname</span><span class="o">=</span><span class="s">&#39;--init--&#39;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">projects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.project.model</span> <span class="kn">import</span> <span class="n">Project</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;neighborhood_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">delete_moderator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_moderator_id</span><span class="p">:</span>
+            <span class="n">user_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">delete_moderator_id</span><span class="o">.</span><span class="n">related</span>
+            <span class="k">return</span> <span class="n">user_cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delete_moderator_id</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">acl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_project</span><span class="o">.</span><span class="n">acl</span>
+
+    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_prefix</span>
+        <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;//&#39;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">scheme</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> <span class="n">url</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c"># pragma no cover</span>
+                <span class="k">return</span> <span class="s">&#39;http:&#39;</span> <span class="o">+</span> <span class="n">url</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">project_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.project.model</span> <span class="kn">import</span> <span class="n">Project</span>
+        <span class="k">return</span> <span class="n">Project</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">neighborhood_project_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">user_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.auth.model</span> <span class="kn">import</span> <span class="n">User</span>
+        <span class="k">return</span> <span class="n">User</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">controller_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">default_nbhd_controller</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rest_controller_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">default_nbhd_rest_controller</span>
+
+<div class="viewcode-block" id="Neighborhood.user_can_register"><a class="viewcode-back" href="../../../neighborhood.html#vulcanforge.neighborhood.model.Neighborhood.user_can_register">[docs]</a>    <span class="k">def</span> <span class="nf">user_can_register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Whether a user can register on a team project</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_registration_enabled</span>
+</div>
+    <span class="k">def</span> <span class="nf">assert_user_can_register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_can_register</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">RegistrationError</span><span class="p">(</span><span class="s">&#39;User cannot register&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Neighborhood.register_project"><a class="viewcode-back" href="../../../neighborhood.html#vulcanforge.neighborhood.model.Neighborhood.register_project">[docs]</a>    <span class="k">def</span> <span class="nf">register_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shortname</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">project_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">user_project</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">private_project</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">tool_options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a new project in the neighborhood.  The given user will</span>
+<span class="sd">        become the project&#39;s superuser.  If no user is specified, c.user is</span>
+<span class="sd">        used.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.project.model</span> <span class="kn">import</span> <span class="n">ProjectFile</span>
+        <span class="k">if</span> <span class="n">project_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">project_name</span> <span class="o">=</span> <span class="n">shortname</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tool_options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">tool_options</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">default_home_text</span> <span class="o">=</span> <span class="s">&quot;Welcome to your new project.&quot;</span>
+        <span class="k">if</span> <span class="n">project_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default_home_text</span> <span class="o">=</span> <span class="s">&quot;Welcome to the </span><span class="si">%s</span><span class="s"> Project.&quot;</span> <span class="o">%</span> <span class="n">project_name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_template</span><span class="p">:</span>
+            <span class="n">project_template</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_template</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">private_project</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="s">&#39;private&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="n">private_project</span> <span class="o">=</span> <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;private&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">project_template</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;home_text&#39;</span><span class="p">:</span> <span class="n">default_home_text</span><span class="p">}</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">shortname</span><span class="o">=</span><span class="n">shortname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProjectConflict</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span><span class="p">(</span>
+                <span class="n">neighborhood_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                <span class="n">shortname</span><span class="o">=</span><span class="n">shortname</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">project_name</span><span class="p">,</span>
+                <span class="n">short_description</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;You can edit this description in the admin page&#39;</span><span class="p">),</span>
+                <span class="n">homepage_title</span><span class="o">=</span><span class="n">shortname</span><span class="p">,</span>
+                <span class="n">database_uri</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_cls</span><span class="o">.</span><span class="n">default_database_uri</span><span class="p">(</span><span class="n">shortname</span><span class="p">),</span>
+                <span class="n">last_updated</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+                <span class="n">is_root</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kw</span>
+            <span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">configure_project</span><span class="p">(</span>
+                <span class="n">users</span><span class="o">=</span><span class="p">[</span><span class="n">user</span><span class="p">],</span>
+                <span class="n">is_user_project</span><span class="o">=</span><span class="n">user_project</span><span class="p">,</span>
+                <span class="n">is_private_project</span><span class="o">=</span><span class="n">private_project</span><span class="p">,</span>
+                <span class="n">apps</span><span class="o">=</span><span class="n">apps</span><span class="p">)</span>
+
+            <span class="n">offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">ordered_mounts</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s">&#39;ordinal&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">apps</span> <span class="ow">and</span> <span class="s">&#39;tools&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tool</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">project_template</span><span class="p">[</span><span class="s">&#39;tools&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="n">tool_config</span> <span class="o">=</span> <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;tools&#39;</span><span class="p">][</span><span class="n">tool</span><span class="p">]</span>
+                    <span class="k">with</span> <span class="n">push_config</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">):</span>
+                        <span class="n">app_config_options</span> <span class="o">=</span> <span class="n">tool_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">{})</span>
+                        <span class="n">app</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">install_app</span><span class="p">(</span>
+                            <span class="n">tool</span><span class="p">,</span>
+                            <span class="n">mount_label</span><span class="o">=</span><span class="n">tool_config</span><span class="p">[</span><span class="s">&#39;label&#39;</span><span class="p">],</span>
+                            <span class="n">mount_point</span><span class="o">=</span><span class="n">tool_config</span><span class="p">[</span><span class="s">&#39;mount_point&#39;</span><span class="p">],</span>
+                            <span class="n">ordinal</span><span class="o">=</span><span class="n">i</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
+                            <span class="n">acl</span><span class="o">=</span><span class="n">project_template</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;tool_acl&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                                <span class="n">tool_config</span><span class="p">[</span><span class="s">&#39;mount_point&#39;</span><span class="p">]),</span>
+                            <span class="o">**</span><span class="n">app_config_options</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="s">&#39;options&#39;</span> <span class="ow">in</span> <span class="n">tool_config</span><span class="p">:</span>
+                            <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tool_config</span><span class="p">[</span><span class="s">&#39;options&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s">&#39;tool_order&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tool</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">project_template</span><span class="p">[</span><span class="s">&#39;tool_order&#39;</span><span class="p">]):</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">app_config</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ordinal</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">if</span> <span class="s">&#39;labels&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;labels&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s">&#39;home_options&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="n">options</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">app_config</span><span class="p">(</span><span class="s">&#39;home&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+                <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;home_options&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">options</span><span class="p">[</span><span class="n">option</span><span class="p">]</span> <span class="o">=</span> <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;home_options&#39;</span><span class="p">][</span><span class="n">option</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s">&#39;icon&#39;</span> <span class="ow">in</span> <span class="n">project_template</span><span class="p">:</span>
+                <span class="n">icon_file</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">(</span>
+                    <span class="n">urlopen</span><span class="p">(</span><span class="n">project_template</span><span class="p">[</span><span class="s">&#39;icon&#39;</span><span class="p">][</span><span class="s">&#39;url&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                <span class="n">ProjectFile</span><span class="o">.</span><span class="n">save_image</span><span class="p">(</span>
+                    <span class="n">project_template</span><span class="p">[</span><span class="s">&#39;icon&#39;</span><span class="p">][</span><span class="s">&#39;filename&#39;</span><span class="p">],</span>
+                    <span class="n">icon_file</span><span class="p">,</span>
+                    <span class="n">square</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">thumbnail_size</span><span class="o">=</span><span class="p">(</span><span class="mi">48</span><span class="p">,</span> <span class="mi">48</span><span class="p">),</span>
+                    <span class="n">thumbnail_meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s">&#39;icon&#39;</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">ThreadLocalODMSession</span><span class="o">.</span><span class="n">close_all</span><span class="p">()</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error registering project </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">p</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="n">ThreadLocalODMSession</span><span class="o">.</span><span class="n">flush_all</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">push_config</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">):</span>
+            <span class="c"># have to add user to context, since this may occur inside auth code</span>
+            <span class="c"># for user-project reg, and c.user isn&#39;t set yet</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">post_event</span><span class="p">(</span><span class="s">&#39;project_created&#39;</span><span class="p">)</span>
+
+        <span class="n">user</span><span class="o">.</span><span class="n">add_workspace_tab_for_project</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s">&quot;competition&quot;</span> <span class="ow">and</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">monoconcilium</span> <span class="ow">and</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">enable_marketplace</span>
+        <span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s">&quot;{url}home/market/browse_projects&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">neighborhood</span><span class="o">.</span><span class="n">url</span><span class="p">())</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">delete_workspace_tab_to_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">p</span>
+</div>
+    <span class="k">def</span> <span class="nf">register_neighborhood_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">users</span><span class="p">,</span> <span class="n">allow_register</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                      <span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">vulcanforge.project.model</span> <span class="kn">import</span> <span class="n">ProjectRole</span>
+        
+        <span class="n">shortname</span> <span class="o">=</span> <span class="s">&#39;--init--&#39;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_project</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProjectConflict</span><span class="p">()</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;Home Project for </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">database_uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_project_cls</span><span class="o">.</span><span class="n">default_database_uri</span><span class="p">(</span>
+            <span class="n">shortname</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_project_cls</span><span class="p">(</span>
+            <span class="n">neighborhood_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">neighborhood</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">shortname</span><span class="o">=</span><span class="n">shortname</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">short_description</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s">&#39;You can edit this description in the admin page&#39;</span><span class="p">,</span>
+            <span class="n">homepage_title</span><span class="o">=</span><span class="s">&#39;# &#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">,</span>
+            <span class="n">database_uri</span><span class="o">=</span><span class="n">database_uri</span><span class="p">,</span>
+            <span class="n">last_updated</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+            <span class="n">is_root</span><span class="o">=</span><span class="bp">True</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">apps</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">apps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_neighborhood_apps</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">configure_project</span><span class="p">(</span>
+                <span class="n">users</span><span class="o">=</span><span class="n">users</span><span class="p">,</span>
+                <span class="n">is_user_project</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                <span class="n">apps</span><span class="o">=</span><span class="n">apps</span>
+            <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">ThreadLocalODMSession</span><span class="o">.</span><span class="n">close_all</span><span class="p">()</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error registering project </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">p</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">if</span> <span class="n">allow_register</span><span class="p">:</span>
+            <span class="n">role_auth</span> <span class="o">=</span> <span class="n">ProjectRole</span><span class="o">.</span><span class="n">authenticated</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">simple_grant</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">acl</span><span class="p">,</span> <span class="n">role_auth</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="s">&#39;register&#39;</span><span class="p">)</span>
+            <span class="n">state</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">soil</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">p</span>
+
+    <span class="k">def</span> <span class="nf">bind_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">):</span>
+        <span class="n">controller_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_prefix</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="nb">setattr</span><span class="p">(</span>
+            <span class="n">controller</span><span class="p">,</span>
+            <span class="n">controller_attr</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controller_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortname_prefix</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">icon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NeighborhoodFile</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">neighborhood_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="s">&#39;icon&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">icon_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">icon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">icon</span>
+        <span class="k">if</span> <span class="n">icon</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">icon</span><span class="o">.</span><span class="n">url</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">resource_manager</span><span class="o">.</span><span class="n">absurl</span><span class="p">(</span><span class="s">&#39;images/project_default.png&#39;</span><span class="p">)</span>
+
+    <span class="nd">@LazyProperty</span>
+    <span class="k">def</span> <span class="nf">curation_ac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ac</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighborhood_project</span><span class="o">.</span><span class="n">app_configs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ac</span><span class="o">.</span><span class="n">tool_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;curation&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ac</span>
+        <span class="k">return</span> <span class="bp">None</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo-64.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

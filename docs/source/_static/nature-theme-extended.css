@@ -1,0 +1,25 @@
+@import url('nature.css');
+
+a {
+    color: #08c;
+}
+
+a:hover {
+    color: #f80;
+}
+
+p.logo {
+    text-align: center;
+}
+
+div.related {
+    background-color: #f80;
+}
+
+div.related a {
+    color: #fff;
+}
+
+div.body h1, div.body h2, div.body h3, div.body h4, div.body h5, div.body h6 {
+    background-color: #fed;
+}

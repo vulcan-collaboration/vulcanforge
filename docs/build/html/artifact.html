@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Artifact &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Extending Vulcan" href="extending_vulcan.html" />
+    <link rel="prev" title="Application" href="application.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="extending_vulcan.html" title="Extending Vulcan"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Application"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-vulcanforge.artifact">
+<span id="artifact"></span><h1>Artifact<a class="headerlink" href="#module-vulcanforge.artifact" title="Permalink to this headline">¶</a></h1>
+<p class="graphviz">
+<img src="_images/inheritance-3060e1ddc6a9dce7f66cdc0438e2568093a7f0ed.svg" alt="Inheritance diagram of vulcanforge.artifact.model.Artifact" class="inheritance"/>
+</p>
+<dl class="class">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin">
+<em class="property">class </em><tt class="descclassname">vulcanforge.artifact.model.</tt><tt class="descname">ArtifactApiMixin</tt><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Objects that behave as artifacts within the forge need to
+implement this</p>
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.get_discussion_thread">
+<tt class="descname">get_discussion_thread</tt><big>(</big><em>data=None</em>, <em>generate_if_missing=True</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.get_discussion_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.get_discussion_thread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the discussion thread for this artifact (possibly made more
+specific by the message_data)</p>
+<p>&#64;rtype: vulcanforge.discussion.model.Thread</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.has_relations">
+<tt class="descname">has_relations</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.has_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.has_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns boolean</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.index_id">
+<tt class="descname">index_id</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.index_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.index_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally unique artifact identifier.</p>
+<p>Used for SOLR ID, shortlinks, and maybe elsewhere</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.link_text">
+<tt class="descname">link_text</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.link_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.link_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>The link text that will be used when a shortlink to this artifact
+is expanded into an &lt;a&gt;&lt;/a&gt; tag.</p>
+<p>By default this method returns shorthand_id(). Subclasses should
+override this method to provide more descriptive link text.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.link_text_short">
+<tt class="descname">link_text_short</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.link_text_short"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.link_text_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortened version of the link text. Defaults to same as link_text.</p>
+<p>Used for ReferenceBin
+&#64;return: str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.parent_security_context">
+<tt class="descname">parent_security_context</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.parent_security_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.parent_security_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>ACL processing should continue at the  AppConfig object. This lets
+AppConfigs provide a &#8216;default&#8217; ACL for all artifacts in the tool.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.primary">
+<tt class="descname">primary</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.primary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.primary" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an artifact is a &#8220;secondary&#8221; artifact (discussion of a ticket, for
+instance), return the artifact that is the &#8220;primary&#8221;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.raw_url">
+<tt class="descname">raw_url</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.raw_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.raw_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Url at which to download the resource.</p>
+<p>&#64;return: str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.ref_category">
+<tt class="descname">ref_category</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.ref_category"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.ref_category" title="Permalink to this definition">¶</a></dt>
+<dd><p>Category for grouping types of relations</p>
+<p>&#64;return: str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.relations">
+<tt class="descname">relations</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>generator for related artifacts with link context</p>
+<p>(extra field in ArtifactReference.references)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.shorthand_id">
+<tt class="descname">shorthand_id</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.shorthand_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.shorthand_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>How to refer to this artifact within the app instance context.</p>
+<p>For a wiki page, it might be the title.  For a ticket, it might be the
+ticket number.  For a discussion, it might be the message ID. Generally
+this should have a strong correlation to the URL.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.ArtifactApiMixin.url">
+<tt class="descname">url</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclasses should implement this, providing the URL to the artifact</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="vulcanforge.artifact.model.Artifact">
+<em class="property">class </em><tt class="descclassname">vulcanforge.artifact.model.</tt><tt class="descname">Artifact</tt><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.common.model.base.BaseMappedClass</span></tt>, <a class="reference internal" href="#vulcanforge.artifact.model.ArtifactApiMixin" title="vulcanforge.artifact.model.ArtifactApiMixin"><tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.artifact.model.ArtifactApiMixin</span></tt></a></p>
+<p>The base class for anything you want to keep track of.</p>
+<p>It will automatically be added to solr (see index() method).  It also
+gains a discussion thread and can have files attached to it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tool_version</strong> &#8211; default&#8217;s to the app&#8217;s version</li>
+<li><strong>acl</strong> &#8211; dict of permission name =&gt; [roles]</li>
+<li><strong>labels</strong> &#8211; list of plain old strings</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="vulcanforge.artifact.model.Artifact.get_link_content">
+<tt class="descname">get_link_content</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.get_link_content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.get_link_content" title="Permalink to this definition">¶</a></dt>
+<dd><p>Text content that contains the artifacts shortlinks</p>
+<p>Used for parsing references</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.Artifact.get_read_roles">
+<tt class="descname">get_read_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.get_read_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.get_read_roles" title="Permalink to this definition">¶</a></dt>
+<dd><p>It can only be more restrictive than the project read roles
+&#64;return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.Artifact.index">
+<tt class="descname">index</tt><big>(</big><em>text_objects=None</em>, <em>use_posts=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: update docstring</p>
+<p>Subclasses should override this, providing a dictionary of
+solr_field =&gt; value.
+These fields &amp; values will be stored by solr.  Subclasses should call
+the this and extend it with more fields.  All these fields will be
+included in the &#8216;text&#8217; field (done by search.solarize())</p>
+<p>The _s and _t suffixes, for example, follow solr dynamic field naming
+pattern.
+You probably want to override at least title_s and text to have
+meaningful search results and email senders.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.artifact.model.Artifact.index_parent">
+<tt class="descname">index_parent</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.index_parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.index_parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>For artifacts whose parent indexes should be updated when they are
+updated (e.g. Posts)
+&#64;return: artifact | None</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="application.html"
+                        title="previous chapter">Application</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="extending_vulcan.html"
+                        title="next chapter">Extending Vulcan</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/artifact.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="extending_vulcan.html" title="Extending Vulcan"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Application"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

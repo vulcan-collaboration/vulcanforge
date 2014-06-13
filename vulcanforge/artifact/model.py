@@ -369,8 +369,6 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         """
         TODO: update docstring
 
-        ----------------------
-
         Subclasses should override this, providing a dictionary of
         solr_field => value.
         These fields & values will be stored by solr.  Subclasses should call

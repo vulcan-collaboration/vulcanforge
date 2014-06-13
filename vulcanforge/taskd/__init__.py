@@ -1,3 +1,18 @@
+"""
+Taskd processes line up on a Redis queue for distributing task load. Tasks
+themselves are functions. When a task is queued the current context (User,
+Project, etc...) are stored in a :py:class:`vulcanforge.taskd.model.MonQTask`
+object which allows the Taskd process to run the requested task function within
+the same context and using the same arguments with which it was called.
+
+Declaring a function as an asynchronous task is done with the
+:py:func:`vulcanforge.taskd.task` function decorator. After decoration, the
+function can be called directly as a synchronous function and as an asynchronous
+task with it's added `post` method.
+
+"""
+
+
 from ming.odm.odmsession import ThreadLocalODMSession
 from .model import MonQTask
 from vulcanforge.common.util.filesystem import import_object
@@ -5,7 +20,24 @@ from vulcanforge.taskd.exceptions import TaskdException
 
 
 def task(func):
-    """Decorator to add some methods to task functions"""
+    """
+    Decorator to add some methods to task functions.
+
+    Example::
+
+        from vulcanforge.taskd import task
+
+        @task
+        def my_method():
+            pass
+
+        # synchronous call
+        my_method()
+
+        # asynchronous call
+        my_method.post()
+
+    """
     def post(*args, **kwargs):
         return MonQTask.post(func, args, kwargs)
     func.post = post
@@ -84,19 +116,16 @@ class model_task(BaseMethodTask):
     Decorator to allow ming MappedClass instances to behave as tasks. Functions
     the same as the task decorator, but called on instance methods.
 
-    Example:
+    Example::
 
-    class MyMappedClass(MappedClass):
-        ...
+        class MyMappedClass(MappedClass):
+            @model_task
+            def my_method(self):
+                pass
 
-        @model_task
-        def my_method(self):
-            ...
-
-
-    mc1 = MyMappedClass()
-    mc1.my_method()  # called synchronously
-    mc1.my_method.post()  # called asynchronously
+        mc1 = MyMappedClass()
+        mc1.my_method()  # called synchronously
+        mc1.my_method.post()  # called asynchronously
 
     """
     decorator = _model_task_decorator
