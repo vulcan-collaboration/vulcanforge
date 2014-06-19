@@ -444,10 +444,14 @@ class WorkspaceTab(BaseMappedClass):
 
 
 class User(SOLRIndexed):
+    """
+    Vulcan's representation of individual human users.
+    """
     SALT_LEN = 8
 
     class __mongometa__:
         name = 'user'
+        """mongodb collection name"""
         session = solr_indexed_session
         polymorphic_on = 'kind'
         polymorphic_identity = 'user'
@@ -461,7 +465,9 @@ class User(SOLRIndexed):
     _id = FieldProperty(S.ObjectId)
     os_id = FieldProperty(int)
     type_s = 'User'
+    """SOLR indexing object type"""
     kind = FieldProperty(str, if_missing='user')
+    """Ming ODM polymorphism field"""
     username = FieldProperty(str)
     open_ids = FieldProperty([str])
     password = FieldProperty(str)
@@ -469,8 +475,13 @@ class User(SOLRIndexed):
     tool_data = FieldProperty({str: {str: None}})  # entry point: prefs dict
     validate_citizen = FieldProperty(bool, if_missing=False)
     last_login = FieldProperty(datetime, if_missing=datetime.utcnow)
+
     disabled = FieldProperty(bool, if_missing=False)
-    # Don't use directly, use get/set_pref() instead
+    """
+    Don't use directly, instead use the
+    :py:meth:`~vulcanforge.auth.model.User.get_pref` and
+    :py:meth:`~vulcanforge.auth.model.User.set_pref` methods.
+    """
     display_name = FieldProperty(str)
     preferences = FieldProperty(dict(
         results_per_page=S.Int(if_missing=25),
@@ -507,6 +518,9 @@ class User(SOLRIndexed):
     ##################################################################
 
     def __json__(self):
+        """
+        :return: dictionary used for JSON format export
+        """
         return {
             '_id': str(self._id),
             'username': self.username,
@@ -518,6 +532,9 @@ class User(SOLRIndexed):
 
     @property
     def index_dict(self):
+        """
+        :return: dictionary used for SOLR index entry
+        """
         return dict(
             _id_s=str(self._id),
             title_s='User %s (%s)' % (self.username, self.display_name),
@@ -537,11 +554,19 @@ class User(SOLRIndexed):
 
     @property
     def email_addresses(self):
+        """
+        :return: a list of email addresses claimed by this user
+        """
         return [e.email for e in EmailAddress.query.find({
                         'claimed_by_user_id': self._id})]
 
     @property
     def workspace_tabs(self):
+        """
+        :return: A Ming (mongodb) query cursor of this user's workspace tabs
+                 (bookmarks)
+        :rtype: ming.Cursor
+        """
         return WorkspaceTab.query.find({
             'user_id': self._id
         }).sort([
@@ -554,6 +579,17 @@ class User(SOLRIndexed):
         return TrustCache.upsert(self._id)
 
     def needs_agree_component(self, component, request=None):
+        """
+        Tests if this user needs to agree to the Exchange content agreement for
+        the given Exchange Component
+
+        :param component: A VehicleForge Exchange Component object
+        :param request: (optional)
+
+        .. todo::
+
+            remove VehicleFORGE logic from Vulcan class
+        """
         if not g.exchange_content_agreement_message or \
         (request and request.params.get('agreetoterms', 'no') == 'yes'):
             return False
@@ -561,6 +597,17 @@ class User(SOLRIndexed):
                not self.has_content_agreed_artifact(component.index_id())
 
     def needs_agree_category(self, term, request=None):
+        """
+        Tests if this user needs to agree to the Exchange content agreement for
+        the given Exchange Term
+
+        :param term: A VehicleForge Exchange Component Term
+        :param request: (optional)
+
+        .. todo::
+
+            remove VehicleFORGE logic from Vulcan class
+        """
         if not g.exchange_content_agreement_message or \
         (request and request.params.get('agreetoterms', 'no') == 'yes'):
             return False
@@ -690,6 +737,9 @@ class User(SOLRIndexed):
             setattr(self, pref_name, pref_value)
 
     def url(self):
+        """
+        Get a URL for this User.
+        """
         return '/u/{}/'.format(self.username.replace('_', '-'))
 
     def icon_url(self, **gravatar_kwargs):
@@ -701,6 +751,9 @@ class User(SOLRIndexed):
         return g.gravatar(email_address, **gravatar_kwargs)
 
     def landing_url(self):
+        """
+        Get the URL this User should be redirected to upon login.
+        """
         landing_url = self.get_pref('login_landing_url')
         if not landing_url:
             landing_url = config.get(
@@ -724,7 +777,6 @@ class User(SOLRIndexed):
         'active' for now means that a user is not 'anonymous', 'root' or
         'admin'
 
-        :param cls:
         :return: Number of active users
         :rtype: int
         """
@@ -744,6 +796,12 @@ class User(SOLRIndexed):
 
     @classmethod
     def upsert(cls, username):
+        """
+        Get or create a user object for the given username.
+
+        :param username:
+        :type username: basestring
+        """
         u = cls.query.get(username=username)
         if u is not None:
             return u
@@ -756,8 +814,15 @@ class User(SOLRIndexed):
         return u
 
     @classmethod
-    def by_email_address(cls, addr):
-        ea = EmailAddress.by_address(addr)
+    def by_email_address(cls, email_address):
+        """
+        Lookup a User object by an email address.
+
+        :param email_address: The email address to search for
+        :type email_address: basestring
+        :return: A :class:`User` object or ``None``
+        """
+        ea = EmailAddress.by_address(email_address)
         if ea is None:
             return None
         return ea.claimed_by_user()
@@ -817,8 +882,9 @@ class User(SOLRIndexed):
     @classmethod
     def register(cls, doc, make_project=True, neighborhood=None):
         """
-        @return: cls instance
+        Register a new user.
 
+        :return: instance of ``cls`` (:class:`User` or a subclass thereof)
         """
         from vulcanforge.neighborhood.model import Neighborhood
         user = g.auth_provider.register_user(doc, neighborhood)
@@ -853,8 +919,6 @@ class User(SOLRIndexed):
     def get_role_ids(self):
         """
         Find all of the User's ProjectRole IDs
-
-        @return:
         """
         role_cache = g.security.credentials.user_roles(user_id=self._id)
         return list(role_cache.reaching_ids_set)
@@ -893,15 +957,15 @@ class User(SOLRIndexed):
     def get_roles(self):
         """
         Find all of the User's ProjectRoles
-
-        @return:
         """
         from vulcanforge.project.model import ProjectRole
 
         return ProjectRole.query.find({'_id': {'$in': self.get_role_ids()}})
 
     def my_projects(self):
-        """Find the projects for which this user has a named role."""
+        """
+        Find the projects for which this user has a named role.
+        """
         reaching_roles = self.get_roles()
         named_roles = [r for r in reaching_roles if r.name]
         seen_project_ids = set()
@@ -912,6 +976,17 @@ class User(SOLRIndexed):
             seen_project_ids.add(r.project_id)
 
     def set_password(self, new_password, as_admin=False, set_time=True):
+        """
+        Change this User's password.
+
+        :param new_password: plaintext password
+        :type new_password: basestring
+        :param as_admin: passed to the authentication provider
+                         (for instance as required by LDAP)
+        :type as_admin: bool
+        :param set_time: update the ``password_set_at`` and
+                         ``needs_password_reset`` fields of this User
+        """
         result = g.auth_provider.set_password(
             self, self.password, new_password, as_admin)
         if set_time:
@@ -920,6 +995,10 @@ class User(SOLRIndexed):
         return result
 
     def get_workspace_tabs(self):
+        """
+        :return: JSON string of this User's workspace tabs (bookmarks)
+        :rtype: str | unicode
+        """
         return simplejson.dumps([t.__json__() for t in self.workspace_tabs])
 
     def get_workspace_references(self):
@@ -946,10 +1025,16 @@ class User(SOLRIndexed):
 
     @classmethod
     def anonymous(cls):
+        """
+        Get the *anonymous* user
+        """
         return User.query.get(_id=None)
 
     @property
     def is_anonymous(self):
+        """
+        Test if this User is the *anonymous* user
+        """
         return self._id is None
 
     def email_address_header(self):
@@ -960,7 +1045,9 @@ class User(SOLRIndexed):
 
     def get_email_address(self):
         """
-        get the user's primary email address
+        Get this User's primary email address
+
+        :rtype: str | unicode
         """
         from_pref = self.get_pref('email_address')
         if from_pref:
@@ -992,7 +1079,9 @@ class User(SOLRIndexed):
         }
 
     def delete_account(self):
-        """Disables user and resigns from all projects"""
+        """
+        Disables user and resigns from all projects
+        """
         for project in self.my_projects():
             if project.neighborhood.name != 'Users':
                 if len(project.users()) == 1:

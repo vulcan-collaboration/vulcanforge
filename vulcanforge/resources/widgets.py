@@ -99,7 +99,7 @@ class ResourceLink(Resource):
     def compressed(cls, manager, resources):
         rel_hrefs = [r.url()[len(manager.url_base):] for r in resources]
         try:
-            file_hash = manager.write_slim_file(cls.file_type, rel_hrefs)
+            file_hash = manager.hashed_file(cls.file_type, rel_hrefs)
         except Exception:
             LOG.exception('Error writing compressed resource')
             raise exc.HTTPNotFound

@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>vulcanforge.taskd &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for vulcanforge.taskd</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Taskd processes line up on a Redis queue for distributing task load. Tasks</span>
+<span class="sd">themselves are functions. When a task is queued the current context (User,</span>
+<span class="sd">Project, etc...) are stored in a :py:class:`vulcanforge.taskd.model.MonQTask`</span>
+<span class="sd">object which allows the Taskd process to run the requested task function within</span>
+<span class="sd">the same context and using the same arguments with which it was called.</span>
+
+<span class="sd">Declaring a function as an asynchronous task is done with the</span>
+<span class="sd">:py:func:`vulcanforge.taskd.task` function decorator. After decoration, the</span>
+<span class="sd">function can be called directly as a synchronous function and as an asynchronous</span>
+<span class="sd">task with it&#39;s added `post` method.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">ming.odm.odmsession</span> <span class="kn">import</span> <span class="n">ThreadLocalODMSession</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">MonQTask</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.common.util.filesystem</span> <span class="kn">import</span> <span class="n">import_object</span>
+<span class="kn">from</span> <span class="nn">vulcanforge.taskd.exceptions</span> <span class="kn">import</span> <span class="n">TaskdException</span>
+
+
+<div class="viewcode-block" id="task"><a class="viewcode-back" href="../../taskd.html#vulcanforge.taskd.task">[docs]</a><span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator to add some methods to task functions.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        from vulcanforge.taskd import task</span>
+
+<span class="sd">        @task</span>
+<span class="sd">        def my_method():</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        # synchronous call</span>
+<span class="sd">        my_method()</span>
+
+<span class="sd">        # asynchronous call</span>
+<span class="sd">        my_method.post()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MonQTask</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">func</span><span class="o">.</span><span class="n">post</span> <span class="o">=</span> <span class="n">post</span>
+    <span class="k">return</span> <span class="n">func</span>
+
+</div>
+<span class="k">class</span> <span class="nc">BaseMethodTask</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;For calling methods of objects asynchronously&quot;&quot;&quot;</span>
+    <span class="n">decorator</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decorator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BaseTaskDecorator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">task_runner</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseTaskDecorator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_instance_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Used to instantiate the instance&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">get_instance_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">method_path</span> <span class="o">=</span> <span class="s">&#39;{module}:{cls}.{method}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span>
+            <span class="n">cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">method_path</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_instance_args</span><span class="p">()</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">task_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_instance_kwargs</span><span class="p">()</span>
+        <span class="n">task_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MonQTask</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_runner</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">task_kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_run_model_task</span><span class="p">(</span><span class="n">method_path</span><span class="p">,</span> <span class="n">_id</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;this is only run as a task</span>
+
+<span class="sd">    It loads the corresponding model instance and runs the appropriate method</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">method_path</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">cls</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">inst</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">inst</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TaskdException</span><span class="p">(</span><span class="s">&quot;Instance of {} not found with _id {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">_id</span><span class="p">))</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ThreadLocalODMSession</span><span class="o">.</span><span class="n">flush_all</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">resp</span>
+
+
+<span class="k">class</span> <span class="nc">_model_task_decorator</span><span class="p">(</span><span class="n">BaseTaskDecorator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;model task methods are decorated dynamically&quot;&quot;&quot;</span>
+    <span class="n">task_runner</span> <span class="o">=</span> <span class="n">_run_model_task</span>
+
+    <span class="k">def</span> <span class="nf">get_instance_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_id</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="model_task"><a class="viewcode-back" href="../../taskd.html#vulcanforge.taskd.model_task">[docs]</a><span class="k">class</span> <span class="nc">model_task</span><span class="p">(</span><span class="n">BaseMethodTask</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator to allow ming MappedClass instances to behave as tasks. Functions</span>
+<span class="sd">    the same as the task decorator, but called on instance methods.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class MyMappedClass(MappedClass):</span>
+<span class="sd">            @model_task</span>
+<span class="sd">            def my_method(self):</span>
+<span class="sd">                pass</span>
+
+<span class="sd">        mc1 = MyMappedClass()</span>
+<span class="sd">        mc1.my_method()  # called synchronously</span>
+<span class="sd">        mc1.my_method.post()  # called asynchronously</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">decorator</span> <span class="o">=</span> <span class="n">_model_task_decorator</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/logo-64.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Neighborhood &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Project" href="project.html" />
+    <link rel="prev" title="User" href="user.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="project.html" title="Project"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="user.html" title="User"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="neighborhood">
+<span id="id1"></span><h1>Neighborhood<a class="headerlink" href="#neighborhood" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-vulcanforge.neighborhood"></span><p class="graphviz">
+<img src="_images/inheritance-7173b0294b4c98c82e84c23db1cffa1bbbdeb4e2.svg" alt="Inheritance diagram of vulcanforge.neighborhood.model.Neighborhood" class="inheritance"/>
+</p>
+<p>Neighborhood objects are used to group and organize <a class="reference internal" href="project.html"><em>Project</em></a> objects.</p>
+<p>This organization direclty affects the URL of a given project. For instance: A
+project shortnamed <tt class="docutils literal"><span class="pre">my-project</span></tt> in the neighborhood with the prefix
+<tt class="docutils literal"><span class="pre">my-neighborhood</span></tt> will have the URL
+<tt class="docutils literal"><span class="pre">http://my-platform.something/my-neighborhood/my-project</span></tt>.</p>
+<dl class="class">
+<dt id="vulcanforge.neighborhood.model.Neighborhood">
+<em class="property">class </em><tt class="descclassname">vulcanforge.neighborhood.model.</tt><tt class="descname">Neighborhood</tt><a class="reference internal" href="_modules/vulcanforge/neighborhood/model.html#Neighborhood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.neighborhood.model.Neighborhood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide a grouping of related projects.</p>
+<p>url_prefix - location of neighborhood (may include scheme and/or host)
+css - block of CSS text to add to all neighborhood pages</p>
+<dl class="classmethod">
+<dt id="vulcanforge.neighborhood.model.Neighborhood.by_prefix">
+<em class="property">classmethod </em><tt class="descname">by_prefix</tt><big>(</big><em>prefix</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/neighborhood/model.html#Neighborhood.by_prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.neighborhood.model.Neighborhood.by_prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix without slashes (e.g. projects)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.neighborhood.model.Neighborhood.register_project">
+<tt class="descname">register_project</tt><big>(</big><em>shortname</em>, <em>user=None</em>, <em>project_name=None</em>, <em>user_project=False</em>, <em>private_project=False</em>, <em>apps=None</em>, <em>tool_options=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/neighborhood/model.html#Neighborhood.register_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.neighborhood.model.Neighborhood.register_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a new project in the neighborhood.  The given user will
+become the project&#8217;s superuser.  If no user is specified, c.user is
+used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.neighborhood.model.Neighborhood.user_can_register">
+<tt class="descname">user_can_register</tt><big>(</big><em>user=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/neighborhood/model.html#Neighborhood.user_can_register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.neighborhood.model.Neighborhood.user_can_register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether a user can register on a team project</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="user.html"
+                        title="previous chapter">User</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="project.html"
+                        title="next chapter">Project</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/neighborhood.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="project.html" title="Project"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="user.html" title="User"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

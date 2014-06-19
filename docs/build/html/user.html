@@ -1,0 +1,745 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>User &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Neighborhood" href="neighborhood.html" />
+    <link rel="prev" title="Vulcan Concepts" href="concepts.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neighborhood.html" title="Neighborhood"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Vulcan Concepts"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="user">
+<span id="id1"></span><h1>User<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h1>
+<p class="graphviz">
+<img src="_images/inheritance-85bb5e64a4f472eab6b9c1abce030f2e82b6e544.svg" alt="Inheritance diagram of vulcanforge.auth.model.User" class="inheritance"/>
+</p>
+<p>The User object does exactly what one might imagine that it does: represents human users of the platform.</p>
+<dl class="class">
+<dt id="vulcanforge.auth.model.User">
+<em class="property">class </em><tt class="descclassname">vulcanforge.auth.model.</tt><tt class="descname">User</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vulcan&#8217;s representation of individual human users.</p>
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.SALT_LEN">
+<tt class="descname">SALT_LEN</tt><em class="property"> = 8</em><a class="headerlink" href="#vulcanforge.auth.model.User.SALT_LEN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.active">
+<tt class="descname">active</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.active"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.active" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.active_count">
+<em class="property">classmethod </em><tt class="descname">active_count</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.active_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.active_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the total number of active users.</p>
+<p>&#8216;active&#8217; for now means that a user is not &#8216;anonymous&#8217;, &#8216;root&#8217; or
+&#8216;admin&#8217;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Number of active users</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.add_workspace_tab_for_project">
+<tt class="descname">add_workspace_tab_for_project</tt><big>(</big><em>project</em>, <em>with_flash=False</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.add_workspace_tab_for_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.add_workspace_tab_for_project" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.add_workspace_tabs">
+<tt class="descname">add_workspace_tabs</tt><big>(</big><em>tab_descriptors</em>, <em>order=None</em>, <em>safe=True</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.add_workspace_tabs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.add_workspace_tabs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.address_object">
+<tt class="descname">address_object</tt><big>(</big><em>addr</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.address_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.address_object" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.anonymous">
+<em class="property">classmethod </em><tt class="descname">anonymous</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.anonymous"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.anonymous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the <em>anonymous</em> user</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.by_display_name">
+<em class="property">classmethod </em><tt class="descname">by_display_name</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.by_display_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.by_display_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.by_email_address">
+<em class="property">classmethod </em><tt class="descname">by_email_address</tt><big>(</big><em>email_address</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.by_email_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.by_email_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lookup a User object by an email address.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>email_address</strong> (<em>basestring</em>) &#8211; The email address to search for</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A <tt class="xref py py-class docutils literal"><span class="pre">User</span></tt> object or <tt class="docutils literal"><span class="pre">None</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.by_id">
+<em class="property">classmethod </em><tt class="descname">by_id</tt><big>(</big><em>_id</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.by_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.by_username">
+<em class="property">classmethod </em><tt class="descname">by_username</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.by_username"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.by_username" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.claim_address">
+<tt class="descname">claim_address</tt><big>(</big><em>email_address</em>, <em>confirmed=False</em>, <em>is_primary=False</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.claim_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.claim_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.claim_openid">
+<tt class="descname">claim_openid</tt><big>(</big><em>oid_url</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.claim_openid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.claim_openid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.content_agree_artifact">
+<tt class="descname">content_agree_artifact</tt><big>(</big><em>index_id</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.content_agree_artifact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.content_agree_artifact" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.content_agreed_artifacts">
+<tt class="descname">content_agreed_artifacts</tt><a class="headerlink" href="#vulcanforge.auth.model.User.content_agreed_artifacts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.delete_account">
+<tt class="descname">delete_account</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.delete_account"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.delete_account" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disables user and resigns from all projects</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.delete_workspace_tab_for_project">
+<tt class="descname">delete_workspace_tab_for_project</tt><big>(</big><em>project</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.delete_workspace_tab_for_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.delete_workspace_tab_for_project" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.delete_workspace_tab_to_url">
+<tt class="descname">delete_workspace_tab_to_url</tt><big>(</big><em>url</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.delete_workspace_tab_to_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.delete_workspace_tab_to_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.disabled">
+<tt class="descname">disabled</tt><a class="headerlink" href="#vulcanforge.auth.model.User.disabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Don&#8217;t use directly, instead use the
+<a class="reference internal" href="#vulcanforge.auth.model.User.get_pref" title="vulcanforge.auth.model.User.get_pref"><tt class="xref py py-meth docutils literal"><span class="pre">get_pref()</span></tt></a> and
+<a class="reference internal" href="#vulcanforge.auth.model.User.set_pref" title="vulcanforge.auth.model.User.set_pref"><tt class="xref py py-meth docutils literal"><span class="pre">set_pref()</span></tt></a> methods.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.display_name">
+<tt class="descname">display_name</tt><a class="headerlink" href="#vulcanforge.auth.model.User.display_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.email_address_header">
+<tt class="descname">email_address_header</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.email_address_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.email_address_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.email_addresses">
+<tt class="descname">email_addresses</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.email_addresses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.email_addresses" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of email addresses claimed by this user</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.expertise">
+<tt class="descname">expertise</tt><a class="headerlink" href="#vulcanforge.auth.model.User.expertise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_email_address">
+<tt class="descname">get_email_address</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_email_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_email_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get this User&#8217;s primary email address</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str | unicode</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_pref">
+<tt class="descname">get_pref</tt><big>(</big><em>pref_name</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_pref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_pref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_profile_info">
+<tt class="descname">get_profile_info</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_profile_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_profile_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_read_roles">
+<tt class="descname">get_read_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_read_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_read_roles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_role_ids">
+<tt class="descname">get_role_ids</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_role_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_role_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all of the User&#8217;s ProjectRole IDs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_roles">
+<tt class="descname">get_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_roles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all of the User&#8217;s ProjectRoles</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.get_swift_cookies">
+<tt class="descname">get_swift_cookies</tt><a class="headerlink" href="#vulcanforge.auth.model.User.get_swift_cookies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_swift_params">
+<tt class="descname">get_swift_params</tt><big>(</big><em>force_new=False</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_swift_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_swift_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_tool_data">
+<tt class="descname">get_tool_data</tt><big>(</big><em>tool</em>, <em>key</em>, <em>default=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_tool_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_tool_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_trust_history">
+<tt class="descname">get_trust_history</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_trust_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_trust_history" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_trust_info">
+<tt class="descname">get_trust_info</tt><big>(</big><em>force_update=False</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_trust_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_trust_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_workspace_references">
+<tt class="descname">get_workspace_references</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_workspace_references"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_workspace_references" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.get_workspace_tabs">
+<tt class="descname">get_workspace_tabs</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.get_workspace_tabs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.get_workspace_tabs" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">JSON string of this User&#8217;s workspace tabs (bookmarks)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str | unicode</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.has_content_agreed_artifact">
+<tt class="descname">has_content_agreed_artifact</tt><big>(</big><em>index_id</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.has_content_agreed_artifact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.has_content_agreed_artifact" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.icon_url">
+<tt class="descname">icon_url</tt><big>(</big><em>**gravatar_kwargs</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.icon_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.icon_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.index_dict">
+<tt class="descname">index_dict</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.index_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.index_dict" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">dictionary used for SOLR index entry</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.index_text_objects">
+<tt class="descname">index_text_objects</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.index_text_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.index_text_objects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.initialize_workspace_tabs">
+<tt class="descname">initialize_workspace_tabs</tt><big>(</big><em>order=None</em>, <em>safe=False</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.initialize_workspace_tabs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.initialize_workspace_tabs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.interests">
+<tt class="descname">interests</tt><a class="headerlink" href="#vulcanforge.auth.model.User.interests" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.is_anonymous">
+<tt class="descname">is_anonymous</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.is_anonymous"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.is_anonymous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if this User is the <em>anonymous</em> user</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.is_culled">
+<tt class="descname">is_culled</tt><big>(</big><em>competition=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.is_culled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.is_culled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.is_real_user">
+<tt class="descname">is_real_user</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.is_real_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.is_real_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.kind">
+<tt class="descname">kind</tt><a class="headerlink" href="#vulcanforge.auth.model.User.kind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ming ODM polymorphism field</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.landing_url">
+<tt class="descname">landing_url</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.landing_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.landing_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the URL this User should be redirected to upon login.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.last_login">
+<tt class="descname">last_login</tt><a class="headerlink" href="#vulcanforge.auth.model.User.last_login" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.make_private">
+<tt class="descname">make_private</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.make_private"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.make_private" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.make_public">
+<tt class="descname">make_public</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.make_public"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.make_public" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.mission">
+<tt class="descname">mission</tt><a class="headerlink" href="#vulcanforge.auth.model.User.mission" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.my_projects">
+<tt class="descname">my_projects</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.my_projects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.my_projects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the projects for which this user has a named role.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.needs_agree_category">
+<tt class="descname">needs_agree_category</tt><big>(</big><em>term</em>, <em>request=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.needs_agree_category"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.needs_agree_category" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests if this user needs to agree to the Exchange content agreement for
+the given Exchange Term</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>term</strong> &#8211; A VehicleForge Exchange Component Term</li>
+<li><strong>request</strong> &#8211; (optional)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-todo admonition " id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">remove VehicleFORGE logic from Vulcan class</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.needs_agree_component">
+<tt class="descname">needs_agree_component</tt><big>(</big><em>component</em>, <em>request=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.needs_agree_component"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.needs_agree_component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests if this user needs to agree to the Exchange content agreement for
+the given Exchange Component</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>component</strong> &#8211; A VehicleForge Exchange Component object</li>
+<li><strong>request</strong> &#8211; (optional)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-todo admonition " id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">remove VehicleFORGE logic from Vulcan class</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.needs_password_reset">
+<tt class="descname">needs_password_reset</tt><a class="headerlink" href="#vulcanforge.auth.model.User.needs_password_reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.old_password_hashes">
+<tt class="descname">old_password_hashes</tt><a class="headerlink" href="#vulcanforge.auth.model.User.old_password_hashes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.open_ids">
+<tt class="descname">open_ids</tt><a class="headerlink" href="#vulcanforge.auth.model.User.open_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.openid_object">
+<tt class="descname">openid_object</tt><big>(</big><em>oid</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.openid_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.openid_object" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.os_id">
+<tt class="descname">os_id</tt><a class="headerlink" href="#vulcanforge.auth.model.User.os_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.password">
+<tt class="descname">password</tt><a class="headerlink" href="#vulcanforge.auth.model.User.password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.password_set_at">
+<tt class="descname">password_set_at</tt><a class="headerlink" href="#vulcanforge.auth.model.User.password_set_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.preferences">
+<tt class="descname">preferences</tt><a class="headerlink" href="#vulcanforge.auth.model.User.preferences" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.private_project">
+<tt class="descname">private_project</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.private_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.private_project" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.public">
+<tt class="descname">public</tt><a class="headerlink" href="#vulcanforge.auth.model.User.public" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.public_key">
+<tt class="descname">public_key</tt><a class="headerlink" href="#vulcanforge.auth.model.User.public_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.query">
+<tt class="descname">query</tt><em class="property"> = &lt;ming.odm.mapper._ClassQuery object at 0x10aae6fd0&gt;</em><a class="headerlink" href="#vulcanforge.auth.model.User.query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.register">
+<em class="property">classmethod </em><tt class="descname">register</tt><big>(</big><em>doc</em>, <em>make_project=True</em>, <em>neighborhood=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a new user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">instance of <tt class="docutils literal"><span class="pre">cls</span></tt> (<tt class="xref py py-class docutils literal"><span class="pre">User</span></tt> or a subclass thereof)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.registration_neighborhood">
+<tt class="descname">registration_neighborhood</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.registration_neighborhood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.registration_neighborhood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.registration_time">
+<tt class="descname">registration_time</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.registration_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.registration_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.script_name">
+<tt class="descname">script_name</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.script_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.script_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.set_password">
+<tt class="descname">set_password</tt><big>(</big><em>new_password</em>, <em>as_admin=False</em>, <em>set_time=True</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.set_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.set_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change this User&#8217;s password.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>new_password</strong> (<em>basestring</em>) &#8211; plaintext password</li>
+<li><strong>as_admin</strong> (<em>bool</em>) &#8211; passed to the authentication provider
+(for instance as required by LDAP)</li>
+<li><strong>set_time</strong> &#8211; update the <tt class="docutils literal"><span class="pre">password_set_at</span></tt> and
+<tt class="docutils literal"><span class="pre">needs_password_reset</span></tt> fields of this User</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.set_pref">
+<tt class="descname">set_pref</tt><big>(</big><em>pref_name</em>, <em>pref_value</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.set_pref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.set_pref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.set_tool_data">
+<tt class="descname">set_tool_data</tt><big>(</big><em>tool</em>, <em>**kw</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.set_tool_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.set_tool_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.skype_name">
+<tt class="descname">skype_name</tt><a class="headerlink" href="#vulcanforge.auth.model.User.skype_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.state_preferences">
+<tt class="descname">state_preferences</tt><a class="headerlink" href="#vulcanforge.auth.model.User.state_preferences" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.store_old_password_hash">
+<tt class="descname">store_old_password_hash</tt><big>(</big><em>hash</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.store_old_password_hash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.store_old_password_hash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.swift_cookie_url">
+<tt class="descname">swift_cookie_url</tt><big>(</big><em>unset_flag=True</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.swift_cookie_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.swift_cookie_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.swift_params">
+<tt class="descname">swift_params</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.swift_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.swift_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.tool_data">
+<tt class="descname">tool_data</tt><a class="headerlink" href="#vulcanforge.auth.model.User.tool_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.tool_preferences">
+<tt class="descname">tool_preferences</tt><a class="headerlink" href="#vulcanforge.auth.model.User.tool_preferences" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.trust_cache">
+<tt class="descname">trust_cache</tt><em class="property"> = None</em><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.trust_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.trust_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.trust_history">
+<tt class="descname">trust_history</tt><em class="property"> = None</em><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.trust_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.trust_history" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.trust_info">
+<tt class="descname">trust_info</tt><em class="property"> = None</em><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.trust_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.trust_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.type_s">
+<tt class="descname">type_s</tt><em class="property"> = 'User'</em><a class="headerlink" href="#vulcanforge.auth.model.User.type_s" title="Permalink to this definition">¶</a></dt>
+<dd><p>SOLR indexing object type</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.auth.model.User.upsert">
+<em class="property">classmethod </em><tt class="descname">upsert</tt><big>(</big><em>username</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.upsert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.upsert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or create a user object for the given username.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>username</strong> (<em>basestring</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.auth.model.User.url">
+<tt class="descname">url</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a URL for this User.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.user_fields">
+<tt class="descname">user_fields</tt><a class="headerlink" href="#vulcanforge.auth.model.User.user_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.username">
+<tt class="descname">username</tt><a class="headerlink" href="#vulcanforge.auth.model.User.username" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.validate_citizen">
+<tt class="descname">validate_citizen</tt><a class="headerlink" href="#vulcanforge.auth.model.User.validate_citizen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.workspace_references">
+<tt class="descname">workspace_references</tt><a class="headerlink" href="#vulcanforge.auth.model.User.workspace_references" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.workspace_references_last_mod">
+<tt class="descname">workspace_references_last_mod</tt><a class="headerlink" href="#vulcanforge.auth.model.User.workspace_references_last_mod" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="vulcanforge.auth.model.User.workspace_tabs">
+<tt class="descname">workspace_tabs</tt><a class="reference internal" href="_modules/vulcanforge/auth/model.html#User.workspace_tabs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.auth.model.User.workspace_tabs" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Ming (mongodb) query cursor of this user&#8217;s workspace tabs
+(bookmarks)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ming.Cursor</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="previous chapter">Vulcan Concepts</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="neighborhood.html"
+                        title="next chapter">Neighborhood</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/user.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neighborhood.html" title="Neighborhood"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Vulcan Concepts"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
