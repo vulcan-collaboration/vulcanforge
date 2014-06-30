@@ -116,6 +116,7 @@ class PurgeProject(base.Command):
 
 class AddUserToProject(base.Command):
     min_args = 3
+    max_args = 3
     usage = '<ini_file> <project_shortname> <username>'
     summary = 'Grant a user a role on a project'
     parser = base.Command.standard_parser(verbose=True)
