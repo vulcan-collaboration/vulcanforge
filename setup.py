@@ -126,6 +126,7 @@ setup(
     refresh-users = vulcanforge.command.user:RefreshUsersCommand
     vshell = vulcanforge.command.util:VulcanForgeShellCommand
     install_tool = vulcanforge.command.project:InstallTool
+    add-user-to-project = vulcanforge.command.project:AddUserToProject
     wiki-export = vulcanforge.command.wiki_tool:ExportWikiPages
     wiki-import = vulcanforge.command.wiki_tool:ImportWikiPages
     wiki_findbroken = vulcanforge.command.wiki_tool:FindBrokenLinks
