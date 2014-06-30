@@ -39,6 +39,12 @@ class RedisCache(object):
     def delete(self, *names):
         return self.redis.delete(*[self.make_keyname(name) for name in names])
 
+    def expire(self, name, seconds):
+        return self.redis.expire(self.make_keyname(name), seconds)
+
+    def exists(self, name):
+        return self.redis.exists(self.make_keyname(name))
+
     def hget(self, name, key):
         return self.redis.hget(self.make_keyname(name), key)
 
@@ -68,6 +74,15 @@ class RedisCache(object):
 
     def hdel(self, name, *keys):
         return self.redis.hdel(self.make_keyname(name), *keys)
+
+    def sadd(self, name, *values):
+        return self.redis.sadd(self.make_keyname(name), *values)
+
+    def srem(self, name, *values):
+        return self.redis.srem(self.make_keyname(name), *values)
+
+    def smembers(self, name):
+        return self.redis.smembers(self.make_keyname(name))
 
     def _from_json(self, name, value):
         try:

@@ -182,6 +182,42 @@ a.notfound {
 }
 
 
+
+.wiki-multiple-editors-warning-panel {
+    padding: 0.25rem;
+    background: #eee;
+    border-bottom: 1px solid #e8e8e8;
+    color: #800;
+    font-size: 1rem;
+    text-align: center;
+    letter-spacing: 0.1rem;
+}
+.wiki-multiple-editors-warning-panel.alert {
+    background: #800;
+    border-bottom: none;
+    color: white;
+    font-weight: lighter;
+}
+.wiki-multiple-editors-warning-message {
+    margin: 0.75rem;
+}
+.wiki-multiple-editors-warning-message::before {
+    content: '\26a0';
+    display: inline-block;
+    font-size: 2rem;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+.wiki-multiple-editors-warning-suggestion {
+    margin: 0.75rem;
+    color: #888;
+    font-weight: lighter;
+}
+.wiki-multiple-editors-warning-panel.alert .wiki-multiple-editors-warning-suggestion {
+    color: white;
+}
+
+
 @media print {
     .wiki-titlebar-item-with-popup .wiki-titlebar-item-label::after,
     .avatar-list

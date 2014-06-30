@@ -12,7 +12,8 @@ from pylons import tmpl_context as c, app_globals as g
 from tg.decorators import expose, validate
 
 from vulcanforge.common.controllers import BaseController
-from vulcanforge.visualize.model import VisualizerConfig, ProcessedArtifactFile, ProcessingStatus
+from vulcanforge.visualize.model import VisualizerConfig, ProcessedArtifactFile, ProcessingStatus, \
+    VisualizableQueryParam
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:visualize/templates/'
@@ -40,18 +41,10 @@ class VisualizerController(BaseController):
 
     @expose('json')
     def processed_parameters(self, unique_id, **kwargs):
-        cur = ProcessedArtifactFile.query.find({
-            "unique_id": unique_id,
-            "visualizer_config_id": self.visualizer.config._id
-        })
-        refs_checked = set()
-        parameters = {}
-        for pfile in cur:
-            if pfile.ref_id and pfile.ref_id not in refs_checked:
-                refs_checked.add(pfile.ref_id)
-                artifact = pfile.artifact
-                g.security.require_access(artifact, 'read')
-            parameters[pfile.query_param] = pfile.url()
+        parameters = VisualizableQueryParam.get_query_dict(
+            unique_id,
+            self.visualizer.config._id
+        )
         return {"parameters": parameters}
 
     @expose(TEMPLATE_DIR + 'fullscreen.html')

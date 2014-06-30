@@ -79,4 +79,4 @@ class ForgeRequester(object):
             data = {}
         if not '_session_id' in data:
             data['_session_id'] = self._session_id
-        return self._http_request('get', uri, **kw)
+        return self._http_request('post', uri, **kw)

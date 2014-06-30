@@ -1,5 +1,4 @@
 import hashlib
-import re
 import logging
 from datetime import datetime
 import os
@@ -28,6 +27,17 @@ from vulcanforge.common.util.filesystem import import_object
 LOG = logging.getLogger(__name__)
 
 VISUALIZER_PREFIX = 'Visualizer/'
+
+
+def _get_context():
+    context = {}
+    if getattr(c, 'app', None):
+        context['app_config_id'] = c.app.config._id
+    if getattr(c, 'project', None):
+        context['project_id'] = c.project._id
+    if getattr(c, 'neighborhood', None):
+        context['neighborhood_id'] = c.neighborhood._id
+    return context
 
 
 class VisualizerConfig(BaseMappedClass):
@@ -138,20 +148,6 @@ class VisualizerConfig(BaseMappedClass):
         return inst
 
 
-class _BaseVisualizerFile(File):
-    class __mongometa__:
-        name = '_base_visualizer_file'
-
-    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
-    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
-
-    @staticmethod
-    def calculate_hash(data):
-        md5 = hashlib.md5()
-        md5.update(data)
-        return md5.hexdigest()
-
-
 class ProcessingStatus(BaseMappedClass):
     """Represents the status of processing for a visualizable object and
     visualizer, so that a loading animation can be displayed, an error
@@ -168,6 +164,14 @@ class ProcessingStatus(BaseMappedClass):
     status = FieldProperty(
         schema.OneOf('loading', 'ready', 'error', if_missing='loading'))
     reason = FieldProperty(str, if_missing=None)
+
+    # the following properties are only used for management purposes
+    visualizable_kind = FieldProperty(str, if_missing=None)
+    context = FieldProperty(schema.Object({
+        "app_config_id": schema.ObjectId(if_missing=None),
+        "project_id": schema.ObjectId(if_missing=None),
+        "neighborhood_id": schema.ObjectId(if_missing=None)
+    }))
 
     @classmethod
     def get_status_str(cls, unique_id, visualizer_config):
@@ -200,6 +204,8 @@ class ProcessingStatus(BaseMappedClass):
         if st_obj is None:
             try:
                 st_obj = cls(unique_id=visualizable.get_unique_id(),
+                             visualizable_kind=visualizable.visualizable_kind,
+                             context=_get_context(),
                              visualizer_config_id=visualizer_config._id)
                 session(cls).flush(st_obj)
             except DuplicateKeyError:  # pragma no cover
@@ -212,10 +218,59 @@ class ProcessingStatus(BaseMappedClass):
         return st_obj, is_new
 
 
+class VisualizableQueryParam(BaseMappedClass):
+    """Extra query parameters to add to iframe url given visualizer and
+    visualizable
+
+    """
+    class __mongometa__:
+        name = 'visualizable_query_param'
+        session = project_orm_session
+        polymorphic_on = 'kind'
+        polymorphic_identity = None
+        indexes = [('visualizer_config_id', 'unique_id')]
+
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
+    unique_id = FieldProperty(str)  # unique_id of Visualizable
+    query_param = FieldProperty(str, if_missing='resource_url')
+    query_val = FieldProperty(str, if_missing=None)
+
+    @classmethod
+    def get_query_dict(cls, visualizable, visualizer_config_id):
+        cur = cls.query.find({
+            "visualizer_config_id": visualizer_config_id,
+            "unique_id": visualizable.get_unique_id()
+        })
+        return {p.query_param: p.query_val for p in cur}
+
+
+class _BaseVisualizerFile(File):
+    class __mongometa__:
+        name = '_base_visualizer_file'
+
+    visualizer_config_id = ForeignIdProperty(VisualizerConfig, if_missing=None)
+    visualizer = RelationProperty(VisualizerConfig, via="visualizer_config_id")
+
+    @staticmethod
+    def calculate_hash(data):
+        md5 = hashlib.md5()
+        md5.update(data)
+        return md5.hexdigest()
+
+
 class BaseVisualizableFile(_BaseVisualizerFile):
     """File associated with a Visualizable object"""
     unique_id = FieldProperty(str)  # unique_id of Visualizable
     ref_id = ForeignIdProperty("ArtifactReference", if_missing=None)
+
+    # the following properties are only used for management purposes
+    visualizable_kind = FieldProperty(str, if_missing=None)
+    context = FieldProperty(schema.Object({
+        "app_config_id": schema.ObjectId(if_missing=None),
+        "project_id": schema.ObjectId(if_missing=None),
+        "neighborhood_id": schema.ObjectId(if_missing=None)
+    }))
 
     @classmethod
     def get_from_visualizable(cls, visualizable, **kwargs):
@@ -227,13 +282,19 @@ class BaseVisualizableFile(_BaseVisualizerFile):
         return cls.query.find(kwargs)
 
     @classmethod
-    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+    def upsert_from_visualizable(cls, visualizable, filename,
+                                 visualizer_config_id, **kwargs):
         pfile = cls.find_from_visualizable(
-            visualizable, filename=filename).first()
+            visualizable,
+            filename=filename,
+            visualizer_config_id=visualizer_config_id).first()
         if not pfile:
             try:
                 pfile = cls(
                     unique_id=visualizable.get_unique_id(),
+                    visualizable_kind=visualizable.visualizable_kind,
+                    visualizer_config_id=visualizer_config_id,
+                    context=_get_context(),
                     filename=filename)
                 session(cls).flush(pfile)
             except DuplicateKeyError:  # pragma no cover
@@ -288,13 +349,13 @@ class ProcessedArtifactFile(BaseVisualizableFile):
         name = 'visualizer_processed_artifact'
         unique_indexes = [('unique_id', 'filename')]
 
-    query_param = FieldProperty(None, if_missing='resource_url')
     origin_hash = FieldProperty(str, if_missing=None)
 
     @classmethod
-    def upsert_from_visualizable(cls, visualizable, filename, **kwargs):
+    def upsert_from_visualizable(cls, visualizable, filename,
+                                 visualizer_config_id, **kwargs):
         pfile = super(ProcessedArtifactFile, cls).upsert_from_visualizable(
-            visualizable, filename, **kwargs)
+            visualizable, filename, visualizer_config_id, **kwargs)
         if not pfile.origin_hash:
             pfile.origin_hash = cls.calculate_hash(visualizable.read())
         return pfile

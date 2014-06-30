@@ -117,7 +117,7 @@ setup(
     sync_visualizers = vulcanforge.visualize.command:SyncVisualizersCommand
     forgeadmin-tools = vulcanforge.command:ForgeAdminToolsCommand
     createuser = vulcanforge.command.user:CreateUserCommand
-    stage-static-resources = vulcanforge.command.resources:StageStaticResources
+    stage-static-resources = vulcanforge.resources.command:StageStaticResources
     expire-passwords = vulcanforge.command.user:ExpirePasswordsCommand
     reset-password-history = vulcanforge.command.user:ResetPasswordHistoryCommand
     expire-users = vulcanforge.command.user:ExpireUsersCommand

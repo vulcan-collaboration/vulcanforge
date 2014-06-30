@@ -1218,9 +1218,12 @@ class TicketController(BaseTrackerController):
             changes['assigned_to'] = ','.join(
                 u.display_name for u in self.ticket.assigned_to)
             assigned_to_ids = []
+            old_ids = set(self.ticket.assigned_to_ids)
             for user in post_data['assigned_to']:
                 if c.project.user_in_project(user=user):
                     assigned_to_ids.append(user._id)
+                    if user._id not in old_ids:
+                        self.ticket.subscribe(user)
             self.ticket.assigned_to_ids = assigned_to_ids
             changes['assigned_to'] = ','.join(
                 u.display_name for u in self.ticket.assigned_to)

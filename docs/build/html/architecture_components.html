@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Architecture Component Services &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="ForgeApp" href="forgeapp.html" />
+    <link rel="prev" title="Vulcan" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="forgeapp.html" title="ForgeApp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Vulcan"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="architecture-component-services">
+<h1>Architecture Component Services<a class="headerlink" href="#architecture-component-services" title="Permalink to this headline">¶</a></h1>
+<p>An application built on the Vulcan framework uses the following component
+services:</p>
+<p class="graphviz">
+<img src="_images/graphviz-128b55dec78d4bceeb82d657ab1154e7f5aa73de.svg" alt="graph component_services {
+    rankdir=BT;
+    node [
+        shape=box
+    ] {
+        mongodb,
+        redis,
+        solr,
+        swift
+    }
+    node [
+        shape=oval
+    ]
+
+    forgeapp -- {
+        mongodb,
+        redis,
+        solr,
+        swift
+    };
+    taskd -- {
+        mongodb,
+        redis,
+        solr,
+        taskd,
+        swift
+    };
+    eventd -- {
+        mongodb,
+        redis,
+        forgeapp,
+        taskd
+    };
+    websocketapp -- {
+        redis,
+        eventd,
+        forgeapp
+    };
+}" />
+</p>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="mongodb-document-store">
+<h3>MongoDB Document Store<a class="headerlink" href="#mongodb-document-store" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.mongodb.org">MongoDB</a> is used as the primary document store and is primarily accessed
+through the <a class="reference external" href="http://merciless.sourceforge.net/odm.html">Ming ODM</a>.</p>
+<p>This service is horizontally scalable using replication.</p>
+</div>
+<div class="section" id="solr-index">
+<h3>SOLR Index<a class="headerlink" href="#solr-index" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference external" href="http://lucene.apache.org/solr/">SOLR</a> index allows for significantly faster lookups and in some cases
+precaching of views over going straight to the MongoDB database.</p>
+</div>
+<div class="section" id="redis-object-store">
+<h3>Redis Object Store<a class="headerlink" href="#redis-object-store" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/">Redis</a> is used for caching, pub/sub communication, and queueing between
+services.</p>
+<p>This service is horizontally scalable using replication.</p>
+</div>
+<div class="section" id="swift-s3-object-store">
+<h3>Swift/S3 Object Store<a class="headerlink" href="#swift-s3-object-store" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://swift.openstack.org/">Swift</a>, or another <a class="reference external" href="http://aws.amazon.com/s3/">S3</a> API compatible object store, is used for storing and
+serving files.</p>
+</div>
+</div>
+<div class="section" id="vulcan-services">
+<h2>Vulcan Services<a class="headerlink" href="#vulcan-services" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="forgeapp.html">ForgeApp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="taskd.html">Taskd (Task Daemon)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eventd.html">Eventd (Event Daemon)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="websocketapp.html">WebSocketApp</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Architecture Component Services</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a><ul>
+<li><a class="reference internal" href="#mongodb-document-store">MongoDB Document Store</a></li>
+<li><a class="reference internal" href="#solr-index">SOLR Index</a></li>
+<li><a class="reference internal" href="#redis-object-store">Redis Object Store</a></li>
+<li><a class="reference internal" href="#swift-s3-object-store">Swift/S3 Object Store</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#vulcan-services">Vulcan Services</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Vulcan</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="forgeapp.html"
+                        title="next chapter">ForgeApp</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/architecture_components.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="forgeapp.html" title="ForgeApp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Vulcan"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

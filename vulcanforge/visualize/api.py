@@ -4,6 +4,7 @@ import mimetypes
 from urlparse import urlparse
 
 from pylons import app_globals as g
+from vulcanforge.common.helpers import urlunquote
 
 from vulcanforge.visualize.widgets import TabbedVisualizers, TabbedDiffs
 from vulcanforge.visualize.exceptions import VisualizerError
@@ -70,7 +71,7 @@ class BaseVisualizerAPI(object):
 
         return self.full_render_widget.display(
             specs,
-            filename=os.path.basename(self.url),
+            filename=os.path.basename(urlunquote(self.url)),
             download_url=self.download_url,
             **kwargs)
 

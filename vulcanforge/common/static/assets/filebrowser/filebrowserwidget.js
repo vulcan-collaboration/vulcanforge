@@ -212,6 +212,8 @@
             data: null,
 
             // how long to cache pathData (in milliseconds)
+            // a timeout of zero (0) means that it never times out.
+            // actually any "falsy" value means this as well.
             dataCacheTimeout: 5 * 60 * 1000,
 
             //
@@ -542,17 +544,21 @@
         },
 
         goToDirForPathData: function (pathData) {
-            var newTitle;
+            var newTitle,
+                currentURL = window.location.pathname + window.location.hash,
+                newURL = pathData.href || this.options.getURLForPath(pathData.path);
+            console.log(currentURL, newURL);
             // animations
             this._animateListToPathData(pathData);
             this._animatePathToPathData(pathData);
             // history & location management
-            if (window.location.pathname !== pathData.href) {
+            if (currentURL !== newURL) {
+                console.log('pushstate');
                 newTitle = this.options.pageTitleFormat.
                     replace('{path}', pathData.path).
                     replace('{filename}', pathData.name);
                 window.history.pushState({path: pathData.path},
-                    newTitle, pathData.href);
+                    newTitle, newURL);
             } else {
                 window.history.replaceState({path: pathData.path},
                     $('head title').text(), window.location.href);
@@ -699,7 +705,7 @@
             }
             // load new data if missing or expired
             if (path && (
-                opt.reload === true || !pathData || !pathData.isCurrent()
+                opt.reload === true || !pathData || (this.options.dataCacheTimeout && !pathData.isCurrent())
                 )) {
                 this._loadPathData(path, callback, opt.showPleaseWait);
             } else {
@@ -762,7 +768,7 @@
             pathData = this.data[path];
             if (pathData) {
                 pathData.childrenLoaded = true;
-                if (!pathData.expiresAt) {
+                if (this.options.dataCacheTimeout && !pathData.expiresAt) {
                     pathData.expiresAt = Number(new Date()) +
                         this.options.dataCacheTimeout;
                 }
@@ -1177,6 +1183,10 @@
                     that.selectPath(pathData.path);
                 });
 
+            if (pathData.mimetype) {
+                $listItem.attr('data-mimetype', pathData.mimetype);
+            }
+
             $listItemFile = $('<div/>').
                 addClass(this._class('listItem-cell')).
                 addClass(this._class('listItem-cell-file')).
@@ -1204,13 +1214,13 @@
                     attr('data-downloadurl', fileDetails);
             }
 
-            if (pathData.extra.iconURL && pathData.extra.iconURL.indexOf('.') !== -1) {
+            if (pathData.extra && pathData.extra.iconURL && pathData.extra.iconURL.indexOf('.') !== -1) {
                 $listItemIcon = $('<img/>').
                     attr('src', pathData.extra.iconURL);
             } else {
                 $listItemIcon = $('<span/>').
                     addClass(this._class('listItem-link-file-icon-' + typeName));
-                if (pathData.extra.iconURL) {
+                if (pathData.extra && pathData.extra.iconURL) {
                     $listItemIcon.
                         addClass(this._class('listItem-link-file-icon-' +
                             $vf.slugify(pathData.extra.iconURL)));

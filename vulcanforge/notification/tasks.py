@@ -135,19 +135,23 @@ def sendmail(fromaddr, destinations, text, reply_to, subject, message_id,
         html_text = g.forge_markdown(email=True).convert(text)
     html_msg = encode_email_part(html_text, 'html')
     multi_msg = make_multipart_message(plain_msg, html_msg)
-    log_emails = False
-    if log_emails and len(addrs_multi):
-        LOG.info(_LOG_MSG, fromaddr, addrs_multi, reply_to, subject, multi_msg)
     smtp_client.sendmail(
         addrs_multi, fromaddr, reply_to, subject, message_id, in_reply_to,
         multi_msg)
-    if log_emails and len(addrs_plain):
-        LOG.info(_LOG_MSG, fromaddr, addrs_plain, reply_to, subject, plain_msg)
     smtp_client.sendmail(
         addrs_plain, fromaddr, reply_to, subject, message_id,
         in_reply_to, plain_msg)
-    if log_emails and len(addrs_html):
-        LOG.info(_LOG_MSG, fromaddr, addrs_html, reply_to, subject, html_msg)
     smtp_client.sendmail(
         addrs_html, fromaddr, reply_to, subject, message_id, in_reply_to,
         html_msg)
+    log_emails = False
+    if log_emails:
+        if len(addrs_multi):
+            LOG.info(_LOG_MSG, fromaddr, addrs_multi, reply_to, subject,
+                     multi_msg)
+        if len(addrs_plain):
+            LOG.info(_LOG_MSG, fromaddr, addrs_plain, reply_to, subject,
+                     plain_msg)
+        if len(addrs_html):
+            LOG.info(_LOG_MSG, fromaddr, addrs_html, reply_to, subject,
+                     html_msg)

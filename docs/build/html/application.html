@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Applications (a.k.a. Tools) &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Artifact" href="artifact.html" />
+    <link rel="prev" title="Project" href="project.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="project.html" title="Project"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="applications-a-k-a-tools">
+<h1>Applications (a.k.a. Tools)<a class="headerlink" href="#applications-a-k-a-tools" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="user.html#vulcanforge.auth.model.User" title="vulcanforge.auth.model.User"><tt class="xref py py-class docutils literal"><span class="pre">Users</span></tt></a> are members of
+<a class="reference internal" href="project.html#vulcanforge.project.model.Project" title="vulcanforge.project.model.Project"><tt class="xref py py-class docutils literal"><span class="pre">Projects</span></tt></a> which are containers
+for <a class="reference internal" href="#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">Applications</span></tt></a>,
+commonly referred to as <em>Tools</em> here for disambiguation, which can be containers
+for <a class="reference internal" href="artifact.html#vulcanforge.artifact.model.Artifact" title="vulcanforge.artifact.model.Artifact"><tt class="xref py py-class docutils literal"><span class="pre">Artifacts</span></tt></a>.</p>
+<p>Vulcan includes several already made tools (Wiki, Tracker, Downloads,
+Discussions, etc...) along with some functionally required tools (home,
+neighborhood_home)</p>
+<p>A tool is defined in a subclass of
+<a class="reference internal" href="#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.common.app.application.Application</span></tt></a> and registered with
+the <tt class="xref py py-class docutils literal"><span class="pre">ToolManager</span></tt> class&#8217;s <cite>default_tools</cite>
+dictionary.</p>
+<span class="target" id="module-vulcanforge.common.app"></span><span class="target" id="module-vulcanforge.common.app.application"></span><p class="graphviz">
+<img src="_images/inheritance-ebb086b1bb229d135027f499e001cf4c4d5f220a.svg" alt="Inheritance diagram of vulcanforge.common.app.application.Application" class="inheritance"/>
+</p>
+<dl class="class">
+<dt id="vulcanforge.common.app.application.Application">
+<em class="property">class </em><tt class="descclassname">vulcanforge.common.app.application.</tt><tt class="descname">Application</tt><big>(</big><em>project</em>, <em>app_config_object</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The base VulcanForge pluggable application</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>status</strong> &#8211; the status level of this app.  &#8216;production&#8217; apps are available
+to all projects</li>
+<li><strong>searchable</strong> (<em>bool</em>) &#8211; toggle if the search box appears in the left menu</li>
+<li><strong>permissions</strong> &#8211; a dictionary of named permissions used by the app, the values describe what the permissions enable</li>
+<li><strong>sitemap</strong> &#8211; a list of <tt class="xref py py-class docutils literal"><span class="pre">SitemapEntries</span></tt>
+to create an app navigation.</li>
+<li><strong>installable</strong> (<em>bool</em>) &#8211; toggle if the app can be installed in a project</li>
+<li><strong>self.root</strong> (<em>Controller</em>) &#8211; the root Controller used for the app</li>
+<li><strong>self.api_root</strong> (<em>Controller</em>) &#8211; a Controller used for API access at
+/rest/&lt;neighborhood&gt;/&lt;project&gt;/&lt;app&gt;/</li>
+<li><strong>self.admin</strong> (<em>Controller</em>) &#8211; a Controller used in the admin interface</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.admin_menu">
+<tt class="descname">admin_menu</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.admin_menu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.admin_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apps may override this to provide additional admin menu items
+:return: a list of <tt class="xref py py-class docutils literal"><span class="pre">SitemapEntries</span></tt></p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.common.app.application.Application.default_options">
+<em class="property">classmethod </em><tt class="descname">default_options</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.default_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.default_options" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the default config options</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.get_calendar_events">
+<tt class="descname">get_calendar_events</tt><big>(</big><em>date_start</em>, <em>date_end</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.get_calendar_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.get_calendar_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apps can provide events to the Calendar App</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.get_markdown">
+<tt class="descname">get_markdown</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.get_markdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.get_markdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>App definitions can override this method to use a different markdown
+setup.</p>
+<p>&#64;status: Implemented to consolidate which markdown logic to the
+application instance for markdown preview mode. Not used consistently
+throughout codebase.</p>
+<p>&#64;return: an instance of markdown ready to use for conversion</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.handle_message">
+<tt class="descname">handle_message</tt><big>(</big><em>topic</em>, <em>message</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.handle_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.handle_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming email msgs addressed to this tool</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.has_access">
+<tt class="descname">has_access</tt><big>(</big><em>user</em>, <em>topic</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.has_access"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.has_access" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the user has access to send email to the given topic</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.install">
+<tt class="descname">install</tt><big>(</big><em>project</em>, <em>acl=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whatever logic is required to initially set up a tool</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.is_visible_to">
+<tt class="descname">is_visible_to</tt><big>(</big><em>user</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.is_visible_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.is_visible_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the user can view the app.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.iter_mapped_classes">
+<tt class="descname">iter_mapped_classes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.iter_mapped_classes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.iter_mapped_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates yielding each mapped class owned by this application.</p>
+<p>Used under the hood in purging all database objects from a specific app.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.main_menu">
+<tt class="descname">main_menu</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.main_menu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.main_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apps should provide their entries to be added to the main nav
+:return: a list of <tt class="xref py py-class docutils literal"><span class="pre">SitemapEntries</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.set_acl">
+<tt class="descname">set_acl</tt><big>(</big><em>acl_spec=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.set_acl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.set_acl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install default acl. Note that we cannot modify the config acl
+directly, because ming does not note the change.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.sidebar_menu">
+<tt class="descname">sidebar_menu</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.sidebar_menu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.sidebar_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apps should override this to provide their menu
+:return: a list of <tt class="xref py py-class docutils literal"><span class="pre">SitemapEntries</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.common.app.application.Application.uninstall">
+<tt class="descname">uninstall</tt><big>(</big><em>project=None</em>, <em>project_id=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.uninstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.uninstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whatever logic is required to tear down a tool</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="project.html"
+                        title="previous chapter">Project</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="artifact.html"
+                        title="next chapter">Artifact</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/application.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="project.html" title="Project"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Project &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Application" href="application.html" />
+    <link rel="prev" title="Neighborhood" href="neighborhood.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Application"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="neighborhood.html" title="Neighborhood"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-vulcanforge.project">
+<span id="project"></span><h1>Project<a class="headerlink" href="#module-vulcanforge.project" title="Permalink to this headline">¶</a></h1>
+<p class="graphviz">
+<img src="_images/inheritance-d89481caf0788dbb1f1279c1b7991d13abff057f.svg" alt="Inheritance diagram of vulcanforge.project.model.Project" class="inheritance"/>
+</p>
+<dl class="class">
+<dt id="vulcanforge.project.model.Project">
+<em class="property">class </em><tt class="descclassname">vulcanforge.project.model.</tt><tt class="descname">Project</tt><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="classmethod">
+<dt id="vulcanforge.project.model.Project.active_count">
+<em class="property">classmethod </em><tt class="descname">active_count</tt><big>(</big><em>neighborhood_ids=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.active_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.active_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the total number of active projects.</p>
+<p>&#8216;active&#8217; for now means that a project belongs to the &#8216;Projects&#8217;
+neighborhood and is not marked as deleted.</p>
+<p>&#64;param cls:
+&#64;return: Number of active projects
+&#64;rtype: int</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.add_user">
+<tt class="descname">add_user</tt><big>(</big><em>user</em>, <em>role_names</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.add_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.add_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method to add member with the given role(s).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.app_config">
+<tt class="descname">app_config</tt><big>(</big><em>mount_point</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.app_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.app_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>&#64;param mount_point: The mount point of the app
+&#64;type mount_point: str or unicode
+&#64;rtype: AppConfig</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.app_instance">
+<tt class="descname">app_instance</tt><big>(</big><em>mount_point_or_config</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.app_instance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.app_instance" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>&#64;param mount_point_or_config: The mount point or the AppConfig to</dt>
+<dd>lookup</dd>
+</dl>
+<p>&#64;type mount_point_or_config: AppConfig or str or unicode
+&#64;return: The App or None if there is no matching App
+&#64;rtype: None or App</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.project.model.Project.by_id">
+<em class="property">classmethod </em><tt class="descname">by_id</tt><big>(</big><em>_id</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.by_id" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">Project</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.first_mount">
+<tt class="descname">first_mount</tt><big>(</big><em>required_access=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.first_mount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.first_mount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the first (toolbar order) mount, or the first mount to
+which the user has the required access.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.get_expanded_read_roles">
+<tt class="descname">get_expanded_read_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.get_expanded_read_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.get_expanded_read_roles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all roles that have read access</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.get_read_roles">
+<tt class="descname">get_read_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.get_read_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.get_read_roles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns IDs of most basic role(s) that have read access</p>
+<p>For example, if anonymous has read access this method will not return
+authenticated, because authenticated is a subset</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.project.model.Project.icon_urls">
+<em class="property">classmethod </em><tt class="descname">icon_urls</tt><big>(</big><em>projects</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.icon_urls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.icon_urls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict[project_id] = icon_url, efficiently</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="vulcanforge.project.model.Project.menus">
+<em class="property">classmethod </em><tt class="descname">menus</tt><big>(</big><em>projects</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.menus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.menus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict[project_id] = sitemap of sitemaps, efficiently</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.ordered_mounts">
+<tt class="descname">ordered_mounts</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.ordered_mounts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.ordered_mounts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of a projects mounts (tools and sub-projects) in
+toolbar order.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.parent_security_context">
+<tt class="descname">parent_security_context</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.parent_security_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.parent_security_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>ACL processing should proceed up the project hierarchy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.private_project_of">
+<tt class="descname">private_project_of</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.private_project_of"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.private_project_of" title="Permalink to this definition">¶</a></dt>
+<dd><p>If this is a user-project, return the User, else None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.Project.users">
+<tt class="descname">users</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.users"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.users" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all the users who have named roles for this project</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="neighborhood.html"
+                        title="previous chapter">Neighborhood</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="application.html"
+                        title="next chapter">Application</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/project.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Application"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="neighborhood.html" title="Neighborhood"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
