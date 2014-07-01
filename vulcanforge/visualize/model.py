@@ -12,7 +12,7 @@ from ming.odm.property import (
 from ming import schema
 from ming.odm import session
 from ming.utils import LazyProperty
-from pylons import tmpl_context as c
+from pylons import tmpl_context as c, app_globals as g
 from pymongo.errors import DuplicateKeyError
 
 from vulcanforge.s3.model import File
@@ -313,9 +313,8 @@ class BaseVisualizableFile(_BaseVisualizerFile):
         Note that this is not necessarily the original visualizable object.
 
         """
-        from vulcanforge.artifact.model import ArtifactReference
         if self.ref_id:
-            return ArtifactReference.artifact_by_index_id(self.ref_id)
+            return g.artifact.get_artifact_by_index_id(self.ref_id)
 
     # the following are implemented for process chaining
     def get_unique_id(self):

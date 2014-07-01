@@ -1017,9 +1017,8 @@ class User(SOLRIndexed):
         return result
 
     def _make_workspace_reference(self, ref_id):
-        from vulcanforge.artifact.model import ArtifactReference
         from vulcanforge.artifact.widgets import short_artifact_link_data
-        artifact = ArtifactReference.artifact_by_index_id(ref_id)
+        artifact = g.artifact.get_artifact_by_index_id(ref_id)
         if artifact:
             return short_artifact_link_data(artifact)
 

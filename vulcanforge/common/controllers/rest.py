@@ -256,7 +256,7 @@ class UserLinkBinRestController(object):
         ref_ids = c.user.workspace_references
         references = {}
         for ref_id in ref_ids:
-            artifact = ArtifactReference.artifact_by_index_id(ref_id)
+            artifact = g.artifact.get_artifact_by_index_id(ref_id)
             if artifact:
                 references[ref_id] = short_artifact_link_data(artifact)
         return {
@@ -268,7 +268,7 @@ class UserLinkBinRestController(object):
         if not ref_id:
             raise exc.HTTPNotFound("ref_id is a required parameter")
         ref_id = urllib.unquote(ref_id)
-        artifact = ArtifactReference.artifact_by_index_id(ref_id)
+        artifact = g.artifact.get_artifact_by_index_id(ref_id)
         if artifact is None:
             raise exc.HTTPNotFound("artifact does not exist")
         if ref_id in c.user.workspace_references:

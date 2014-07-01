@@ -172,7 +172,7 @@ class ArtifactApiMixin(object):
 
         # get this artifacts references
         for ref in self.ref.references:
-            artifact = ArtifactReference.artifact_by_index_id(ref['index_id'])
+            artifact = g.artifact.get_artifact_by_index_id(ref['index_id'])
             if artifact:
                 artifact = artifact.primary()
                 seen.add(artifact.index_id())
@@ -303,7 +303,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     def related_artifacts(self):
         related_artifacts = []
         for ref_id in self.refs + self.backrefs:
-            artifact = ArtifactReference.artifact_by_index_id(ref_id)
+            artifact = g.artifact.get_artifact_by_index_id(ref_id)
             if artifact is None:
                 continue
             artifact = artifact.primary()
@@ -928,78 +928,6 @@ class BaseAttachment(File, VisualizableMixIn):
                               self.get_unique_id(), visualizer.name)
 
 
-# Ephemeral Functions for ArtifactReference
-REPO_SHORTLINK_RE = re.compile(r'^\((?P<commit>[a-z0-9]+)\)(?P<path>/.*)')
-REPO_INDEX_ID_RE = re.compile(r'^Repo\.')
-SHORTLINK_RE = re.compile(r'(?<![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]')
-
-
-def repo_get_by_index_id(index_id, match=None):
-    artifact = None
-    try:
-        _, ac_id, ci_oid, path = index_id.split('.', 3)
-        with g.context_manager.push(app_config_id=bson.ObjectId(ac_id)):
-            ci = c.app.repo.commit(ci_oid)
-            if ci:
-                artifact = ci.get_path(path)
-    except Exception:
-        LOG.warn('Error looking up repo? index_id {}'.format(index_id))
-        pass
-    return artifact
-
-
-def _get_by_slink_with_context(repo, ci_oid, path):
-    ci = repo.commit(ci_oid)
-    if ci:
-        return ci.get_path(path)
-
-
-def repo_get_by_shortlink(parsed_link, match):
-    artifact = None
-    ci_oid, path = match.group('commit'), match.group('path')
-    project = Project.query.get(shortname=parsed_link['project'])
-    if project:
-        if parsed_link['app']:
-            app = project.app_instance(parsed_link['app'])
-            if app and hasattr(app, 'repo'):
-                artifact = _get_by_slink_with_context(app.repo, ci_oid, path)
-        else:
-            for ac in project.app_configs:
-                app = project.app_instance(ac)
-                if hasattr(app, 'repo'):
-                    artifact = _get_by_slink_with_context(
-                        app.repo, ci_oid, path)
-                    if artifact:
-                        break
-    return artifact
-
-
-def repo_ref_id_by_link(parsed_link, match, upsert=True):
-    ref_id = None
-    artifact = repo_get_by_shortlink(parsed_link, match)
-    if artifact:
-        ref_id = artifact.index_id()
-        if upsert:
-            Shortlink.from_artifact(artifact)
-    return ref_id
-
-
-def find_shortlink_refs(text, **kw):
-    ref_ids = []
-    # TODO: include markdown extensions in vulcanforge then uncomment following
-    #fcp = FencedCodeProcessor()
-    #converted = fcp.run(text.split('\n'))
-    converted = text.split('\n')
-    for line in converted:
-        if not line.startswith('    '):
-            ref_ids.extend(
-                Shortlink.ref_id_by_link(alink.group(1), **kw)
-                for alink in SHORTLINK_RE.finditer(line) if alink
-            )
-    return ref_ids
-# End Ephemerals
-
-
 class ArtifactReference(BaseMappedClass):
     """
     ArtifactReference manages the artifact graph.
@@ -1024,36 +952,6 @@ class ArtifactReference(BaseMappedClass):
         extra=str,  # extra label information,
         datetime=S.DateTime(if_missing=datetime.utcnow)
     ))])
-
-    # patterns for looking up artifacts by index_id when no ArtifactReference
-    # document yet exists, or the artifact is not persisted (repo objects)
-    EPHEMERAL_PATTERNS = {
-        REPO_INDEX_ID_RE: repo_get_by_index_id
-    }
-
-    @classmethod
-    def artifact_by_index_id(cls, index_id):
-        """
-        Get artifact by index_id. Allows for the existence of ephemeral
-        artifacts that have no ArtifactReference persisted, such as repo
-        files and folders.
-
-        """
-        artifact = None
-
-        # find ephemerals
-        for regex, func in cls.EPHEMERAL_PATTERNS.iteritems():
-            match = regex.match(index_id)
-            if match:
-                artifact = func(index_id, match)
-
-        # standard approach
-        if artifact is None:
-            aref = cls.query.get(_id=index_id)
-            if aref:
-                artifact = aref.artifact
-
-        return artifact
 
     @classmethod
     def from_artifact(cls, artifact, flush=True):
@@ -1131,25 +1029,6 @@ class Shortlink(BaseMappedClass):
     app_config = RelationProperty('AppConfig')
     ref = RelationProperty('ArtifactReference')
 
-    # Regexes used to find shortlinks
-    _core_re = r'''(\[
-            (?:(?P<project_id>.*?):)?      # optional project ID
-            (?:(?P<app_id>.*?):)?      # optional tool ID
-            (?P<artifact_id>.*)             # artifact ID
-    \])'''
-    re_link_1 = re.compile(r'\s' + _core_re, re.VERBOSE)
-    re_link_2 = re.compile(r'^' + _core_re, re.VERBOSE)
-
-    re_link_bracket = re.compile(r'\s*\[([^\]\[]*)]\s*')
-
-    # artifact patterns for ephemeral lookups (see same in ArtifactReference)
-    EPHEMERAL_PATTERNS = {
-        REPO_SHORTLINK_RE: {
-            'ref_id': repo_ref_id_by_link,
-            'artifact': repo_get_by_shortlink
-        }
-    }
-
     def __repr__(self):
         return u'%s -> %s' % (self.render_link(), self.ref_id)
 
@@ -1193,13 +1072,13 @@ class Shortlink(BaseMappedClass):
         result = {}
         for link in links:
             if link not in result:
-                parsed = cls._parse_link(link)
+                parsed = g.artifact.parse_shortlink(link)
                 if parsed:
-                    result[link] = cls._get_from_parsed(parsed)
+                    result[link] = cls.get_from_parsed(parsed)
         return result
 
     @classmethod
-    def _get_from_parsed(cls, parsed):
+    def get_from_parsed(cls, parsed):
         result = None
 
         # assemble query
@@ -1243,78 +1122,6 @@ class Shortlink(BaseMappedClass):
                     result = cursor.first()
                     LOG.warn('Ambiguous link {}'.format(parsed))
         return result
-
-    @classmethod
-    def _parse_link(cls, s):
-        """Parse a shortlink into its project/app/artifact parts"""
-        link_bracket_match = cls.re_link_bracket.match(s)
-        if link_bracket_match:
-            s = link_bracket_match.group(1)
-
-        parts = s.split(':', 2)
-        p_shortname = None
-        if hasattr(c, 'project'):
-            p_shortname = getattr(c.project, 'shortname', None)
-        if len(parts) == 3:
-            return {
-                'project': parts[0],
-                'app': parts[1],
-                'artifact': parts[2]
-            }
-        elif len(parts) == 2:
-            return {
-                'project': p_shortname,
-                'app': parts[0],
-                'artifact': parts[1]
-            }
-        elif len(parts) == 1:
-            return {
-                'project': p_shortname,
-                'app': None,
-                'artifact': parts[0]
-            }
-        else:
-            return None
-
-    @classmethod
-    def artifact_by_link(cls, link):
-        parsed = cls._parse_link(link)
-        if parsed:
-            artifact = None
-
-            # standard method
-            shortlink = cls._get_from_parsed(parsed)
-            if shortlink:
-                artifact = shortlink.ref.artifact
-
-            # try ephemerals
-            if not artifact:
-                for regex, func in cls.EPHEMERAL_PATTERNS.iteritems():
-                    match = regex.match(parsed['artifact'])
-                    if match:
-                        artifact = func['artifact'](parsed, match)
-
-            return artifact
-
-    @classmethod
-    def ref_id_by_link(cls, link, upsert=True):
-        parsed = cls._parse_link(link)
-        if parsed:
-            ref_id = None
-
-            # standard method
-            shortlink = cls._get_from_parsed(parsed)
-            if shortlink:
-                ref_id = shortlink.ref_id
-
-            # try ephemerals
-            if ref_id is None:
-                for regex, func in cls.EPHEMERAL_PATTERNS.iteritems():
-                    match = regex.match(parsed['artifact'])
-                    if match:
-                        ref_id = func['ref_id'](parsed, match, upsert=upsert)
-
-            return ref_id
 
 
 class VisualizableArtifact(Artifact, VisualizableMixIn):

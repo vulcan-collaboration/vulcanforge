@@ -337,4 +337,3 @@ class RefreshUsersCommand(Command):
                     upload_ssh_ldap.post(user.username, public_key)
                     count += 1
         print "Uploaded {} public keys.".format(count)
-
