@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
     <link rel="up" title="Vulcan Concepts" href="concepts.html" />
-    <link rel="next" title="Application" href="application.html" />
+    <link rel="next" title="Applications (a.k.a. Tools)" href="application.html" />
     <link rel="prev" title="Neighborhood" href="neighborhood.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="application.html" title="Application"
+          <a href="application.html" title="Applications (a.k.a. Tools)"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="neighborhood.html" title="Neighborhood"
@@ -68,9 +68,18 @@
 <dd><p>Get the total number of active projects.</p>
 <p>&#8216;active&#8217; for now means that a project belongs to the &#8216;Projects&#8217;
 neighborhood and is not marked as deleted.</p>
-<p>&#64;param cls:
-&#64;return: Number of active projects
-&#64;rtype: int</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cls</strong> &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Number of active projects</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -82,21 +91,34 @@ neighborhood and is not marked as deleted.</p>
 <dl class="method">
 <dt id="vulcanforge.project.model.Project.app_config">
 <tt class="descname">app_config</tt><big>(</big><em>mount_point</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.app_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.app_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>&#64;param mount_point: The mount point of the app
-&#64;type mount_point: str or unicode
-&#64;rtype: AppConfig</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mount_point</strong> (<em>str or unicode</em>) &#8211; The mount point of the app</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">AppConfig</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="vulcanforge.project.model.Project.app_instance">
 <tt class="descname">app_instance</tt><big>(</big><em>mount_point_or_config</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#Project.app_instance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.Project.app_instance" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>&#64;param mount_point_or_config: The mount point or the AppConfig to</dt>
-<dd>lookup</dd>
-</dl>
-<p>&#64;type mount_point_or_config: AppConfig or str or unicode
-&#64;return: The App or None if there is no matching App
-&#64;rtype: None or App</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mount_point_or_config</strong> (<em>AppConfig or str or unicode</em>) &#8211; The mount point or the AppConfig to
+lookup</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The App or None if there is no matching App</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">None or App</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="classmethod">
@@ -188,7 +210,7 @@ toolbar order.</p>
                         title="previous chapter">Neighborhood</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="application.html"
-                        title="next chapter">Application</a></p>
+                        title="next chapter">Applications (a.k.a. Tools)</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/project.txt"
@@ -221,7 +243,7 @@ toolbar order.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="application.html" title="Application"
+          <a href="application.html" title="Applications (a.k.a. Tools)"
              >next</a> |</li>
         <li class="right" >
           <a href="neighborhood.html" title="Neighborhood"

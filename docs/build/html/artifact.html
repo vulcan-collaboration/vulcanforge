@@ -26,7 +26,7 @@
     <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
     <link rel="up" title="Vulcan Concepts" href="concepts.html" />
     <link rel="next" title="Extending Vulcan" href="extending_vulcan.html" />
-    <link rel="prev" title="Application" href="application.html" /> 
+    <link rel="prev" title="AppConfig (installed Tool)" href="appconfig.html" /> 
   </head>
   <body>
     <div class="related">
@@ -42,7 +42,7 @@
           <a href="extending_vulcan.html" title="Extending Vulcan"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="application.html" title="Application"
+          <a href="appconfig.html" title="AppConfig (installed Tool)"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
           <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
@@ -70,13 +70,27 @@ implement this</p>
 <tt class="descname">get_discussion_thread</tt><big>(</big><em>data=None</em>, <em>generate_if_missing=True</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.get_discussion_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.get_discussion_thread" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the discussion thread for this artifact (possibly made more
 specific by the message_data)</p>
-<p>&#64;rtype: vulcanforge.discussion.model.Thread</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">vulcanforge.discussion.model.Thread</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="vulcanforge.artifact.model.ArtifactApiMixin.has_relations">
 <tt class="descname">has_relations</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.has_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.has_relations" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns boolean</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -100,7 +114,7 @@ override this method to provide more descriptive link text.</p>
 <tt class="descname">link_text_short</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.link_text_short"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.link_text_short" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shortened version of the link text. Defaults to same as link_text.</p>
 <p>Used for ReferenceBin
-&#64;return: str</p>
+:return: str</p>
 </dd></dl>
 
 <dl class="method">
@@ -121,14 +135,32 @@ instance), return the artifact that is the &#8220;primary&#8221;.</p>
 <dt id="vulcanforge.artifact.model.ArtifactApiMixin.raw_url">
 <tt class="descname">raw_url</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.raw_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.raw_url" title="Permalink to this definition">¶</a></dt>
 <dd><p>Url at which to download the resource.</p>
-<p>&#64;return: str</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a url</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">basestring</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="vulcanforge.artifact.model.ArtifactApiMixin.ref_category">
 <tt class="descname">ref_category</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#ArtifactApiMixin.ref_category"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.ArtifactApiMixin.ref_category" title="Permalink to this definition">¶</a></dt>
 <dd><p>Category for grouping types of relations</p>
-<p>&#64;return: str</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the category</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">basestring</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -185,15 +217,23 @@ gains a discussion thread and can have files attached to it.</p>
 <dl class="method">
 <dt id="vulcanforge.artifact.model.Artifact.get_read_roles">
 <tt class="descname">get_read_roles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.get_read_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.get_read_roles" title="Permalink to this definition">¶</a></dt>
-<dd><p>It can only be more restrictive than the project read roles
-&#64;return:</p>
+<dd><p>It can only be more restrictive than the project read roles</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of role IDs with read permission</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="vulcanforge.artifact.model.Artifact.index">
 <tt class="descname">index</tt><big>(</big><em>text_objects=None</em>, <em>use_posts=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.index" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO: update docstring</p>
-<p>Subclasses should override this, providing a dictionary of
+<dd><p>Subclasses should override this, providing a dictionary of
 solr_field =&gt; value.
 These fields &amp; values will be stored by solr.  Subclasses should call
 the this and extend it with more fields.  All these fields will be
@@ -208,8 +248,17 @@ meaningful search results and email senders.</p>
 <dt id="vulcanforge.artifact.model.Artifact.index_parent">
 <tt class="descname">index_parent</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/artifact/model.html#Artifact.index_parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.artifact.model.Artifact.index_parent" title="Permalink to this definition">¶</a></dt>
 <dd><p>For artifacts whose parent indexes should be updated when they are
-updated (e.g. Posts)
-&#64;return: artifact | None</p>
+updated (e.g. Posts)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the parent artifact if it exists</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Artifact | None</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -226,8 +275,8 @@ updated (e.g. Posts)
               <img class="logo" src="_static/logo-64.png" alt="Logo"/>
             </a></p>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="application.html"
-                        title="previous chapter">Application</a></p>
+  <p class="topless"><a href="appconfig.html"
+                        title="previous chapter">AppConfig (installed Tool)</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="extending_vulcan.html"
                         title="next chapter">Extending Vulcan</a></p>
@@ -266,7 +315,7 @@ updated (e.g. Posts)
           <a href="extending_vulcan.html" title="Extending Vulcan"
              >next</a> |</li>
         <li class="right" >
-          <a href="application.html" title="Application"
+          <a href="appconfig.html" title="AppConfig (installed Tool)"
              >previous</a> |</li>
         <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
           <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 

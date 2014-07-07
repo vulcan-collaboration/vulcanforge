@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
     <link rel="up" title="Vulcan Concepts" href="concepts.html" />
-    <link rel="next" title="Artifact" href="artifact.html" />
+    <link rel="next" title="AppConfig (installed Tool)" href="appconfig.html" />
     <link rel="prev" title="Project" href="project.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="artifact.html" title="Artifact"
+          <a href="appconfig.html" title="AppConfig (installed Tool)"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="project.html" title="Project"
@@ -67,7 +67,9 @@ neighborhood_home)</p>
 <p>A tool is defined in a subclass of
 <a class="reference internal" href="#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.common.app.application.Application</span></tt></a> and registered with
 the <tt class="xref py py-class docutils literal"><span class="pre">ToolManager</span></tt> class&#8217;s <cite>default_tools</cite>
-dictionary.</p>
+dictionary. An installed tool for a
+<a class="reference internal" href="project.html#vulcanforge.project.model.Project" title="vulcanforge.project.model.Project"><tt class="xref py py-class docutils literal"><span class="pre">Project</span></tt></a> is represented by an
+<a class="reference internal" href="appconfig.html#vulcanforge.project.model.AppConfig" title="vulcanforge.project.model.AppConfig"><tt class="xref py py-class docutils literal"><span class="pre">AppConfig</span></tt></a> instance.</p>
 <span class="target" id="module-vulcanforge.common.app"></span><span class="target" id="module-vulcanforge.common.app.application"></span><p class="graphviz">
 <img src="_images/inheritance-ebb086b1bb229d135027f499e001cf4c4d5f220a.svg" alt="Inheritance diagram of vulcanforge.common.app.application.Application" class="inheritance"/>
 </p>
@@ -128,10 +130,17 @@ to create an app navigation.</li>
 <tt class="descname">get_markdown</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/common/app/application.html#Application.get_markdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.common.app.application.Application.get_markdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>App definitions can override this method to use a different markdown
 setup.</p>
-<p>&#64;status: Implemented to consolidate which markdown logic to the
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an instance of markdown ready to use for conversion</td>
+</tr>
+</tbody>
+</table>
+<p>Implemented to consolidate which markdown logic to the
 application instance for markdown preview mode. Not used consistently
 throughout codebase.</p>
-<p>&#64;return: an instance of markdown ready to use for conversion</p>
 </dd></dl>
 
 <dl class="method">
@@ -209,8 +218,8 @@ directly, because ming does not note the change.</p>
   <p class="topless"><a href="project.html"
                         title="previous chapter">Project</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="artifact.html"
-                        title="next chapter">Artifact</a></p>
+  <p class="topless"><a href="appconfig.html"
+                        title="next chapter">AppConfig (installed Tool)</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/application.txt"
@@ -243,7 +252,7 @@ directly, because ming does not note the change.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="artifact.html" title="Artifact"
+          <a href="appconfig.html" title="AppConfig (installed Tool)"
              >next</a> |</li>
         <li class="right" >
           <a href="project.html" title="Project"

@@ -124,6 +124,9 @@ class ForgeRootController(WsgiDispatchController):
     @expose('jinja:front.html')
     @with_trailing_slash
     def index(self, **kwargs):
+        root_redirect = tg.config.get('root_redirect', None)
+        if root_redirect is not None:
+            return tg.redirect(root_redirect)
         if c.user.is_anonymous:
             return self._anonymous_index(**kwargs)
         return self._authenticated_index(**kwargs)

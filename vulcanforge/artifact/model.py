@@ -105,7 +105,7 @@ class ArtifactApiMixin(object):
         Shortened version of the link text. Defaults to same as link_text.
 
         Used for ReferenceBin
-        @return: str
+        :return: str
         """
         return self.link_text()
 
@@ -179,7 +179,9 @@ class ArtifactApiMixin(object):
                 yield dict(artifact=artifact, **ref)
 
     def has_relations(self):
-        """returns boolean"""
+        """
+        :rtype: boolean
+        """
         return bool(
             (self.ref and self.ref.references) or
             ArtifactReference.query.find({
@@ -190,7 +192,8 @@ class ArtifactApiMixin(object):
         """
         Category for grouping types of relations
 
-        @return: str
+        :return: the category
+        :rtype: basestring
         """
         return self.app_config.options.mount_label
 
@@ -198,8 +201,8 @@ class ArtifactApiMixin(object):
         """
         Url at which to download the resource.
 
-        @return: str
-
+        :return: a url
+        :rtype: basestring
         """
         return self.url()
 
@@ -208,7 +211,7 @@ class ArtifactApiMixin(object):
         Return the discussion thread for this artifact (possibly made more
         specific by the message_data)
 
-        @rtype: vulcanforge.discussion.model.Thread
+        :rtype: vulcanforge.discussion.model.Thread
         """
         app = self.app_config.instantiate()
         thread_class = app.DiscussionClass.thread_class()
@@ -367,7 +370,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
 
     def index(self, text_objects=None, use_posts=True, **kwargs):
         """
-        TODO: update docstring
+        .. :TODO: update docstring
 
         Subclasses should override this, providing a dictionary of
         solr_field => value.
@@ -453,7 +456,9 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         """
         For artifacts whose parent indexes should be updated when they are
         updated (e.g. Posts)
-        @return: artifact | None
+
+        :return: the parent artifact if it exists
+        :rtype: Artifact | None
         """
         return None
 
@@ -465,7 +470,9 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     def get_read_roles(self):
         """
         It can only be more restrictive than the project read roles
-        @return:
+
+        :return: list of role IDs with read permission
+        :rtype: list
         """
         return g.security.roles_with_permission(self, 'read')
 
