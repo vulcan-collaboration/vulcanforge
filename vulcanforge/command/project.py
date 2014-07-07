@@ -1,9 +1,11 @@
 import logging
 
 from ming.odm.odmsession import ThreadLocalODMSession
+from pylons import tmpl_context as c
 
 from . import base
 from vulcanforge.auth.schema import ACE
+from vulcanforge.auth.model import User
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project, ProjectRole, AppConfig
 
@@ -111,3 +113,32 @@ class PurgeProject(base.Command):
             cls.query.remove(query_params)
         app_config.delete()
 
+
+class AddUserToProject(base.Command):
+    min_args = 3
+    max_args = 3
+    usage = '<ini_file> <project_shortname> <username>'
+    summary = 'Grant a user a role on a project'
+    parser = base.Command.standard_parser(verbose=True)
+    parser.add_option('-r', '--role', dest='role', default="Member",
+                      help="User's role within the project")
+    parser.add_option('-n', '--neighborhood', dest='neighborhood',
+                      help="specify mount point of neighborhood")
+
+    def command(self):
+        self.basic_setup()
+        shortname = self.args[1]
+        username = self.args[2]
+        proj_query = {"shortname": shortname}
+        if self.options.neighborhood:
+            nbhd = Neighborhood.by_prefix(self.options.neighborhood)
+            assert nbhd is not None, "Neighborhood not found."
+            proj_query["neighborhood_id"] = nbhd._id
+        c.project = Project.query.get(**proj_query)
+        assert c.project is not None, "Project not found."
+
+        c.user = User.by_username(username)
+        assert c.user is not None, "User not found."
+
+        c.project.add_user(c.user, [self.options.role])
+        ThreadLocalODMSession.flush_all()
