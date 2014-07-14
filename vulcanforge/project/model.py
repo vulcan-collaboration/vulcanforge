@@ -347,14 +347,15 @@ class Project(SOLRIndexed):
 
     @classmethod
     def active_count(cls, neighborhood_ids=None):
-        """Get the total number of active projects.
+        """
+        Get the total number of active projects.
 
         'active' for now means that a project belongs to the 'Projects'
         neighborhood and is not marked as deleted.
 
-        @param cls:
-        @return: Number of active projects
-        @rtype: int
+        :param cls:
+        :return: Number of active projects
+        :rtype: int
         """
         query = [
             'type_s:(Project)',
@@ -696,11 +697,11 @@ class Project(SOLRIndexed):
 
     def app_instance(self, mount_point_or_config):
         """
-        @param mount_point_or_config: The mount point or the AppConfig to
+        :param mount_point_or_config: The mount point or the AppConfig to
             lookup
-        @type mount_point_or_config: AppConfig or str or unicode
-        @return: The App or None if there is no matching App
-        @rtype: None or App
+        :type mount_point_or_config: AppConfig or str or unicode
+        :return: The App or None if there is no matching App
+        :rtype: None or App
 
         """
         if isinstance(mount_point_or_config, AppConfig):
@@ -717,9 +718,9 @@ class Project(SOLRIndexed):
 
     def app_config(self, mount_point):
         """
-        @param mount_point: The mount point of the app
-        @type mount_point: str or unicode
-        @rtype: AppConfig
+        :param mount_point: The mount point of the app
+        :type mount_point: str or unicode
+        :rtype: AppConfig
 
         """
         return AppConfig.query.find({
@@ -1145,7 +1146,7 @@ class AppConfig(MappedClass):
     :var options: an object on which various options are stored.
         options.mount_point is the url component for this app instance
     :var acl: a dict that maps permissions (strings) to lists of roles that
-        have the permission
+        have the permission. See :class:`ACL`.
 
     """
 
@@ -1209,14 +1210,22 @@ class AppConfig(MappedClass):
         return self.app.icon_url(size, self.tool_name.lower())
 
     def parent_security_context(self):
-        """ACL processing should terminate at the AppConfig"""
+        """
+        ACL processing should terminate at the AppConfig.
+        """
         return None
 
     def load(self):
+        """
+        Load the Application class for this instance.
+        """
         result = g.tool_manager.tools[self.tool_name.lower()]["app"]
         return result
 
     def instantiate(self):
+        """
+        Instantiate the Application class for this instance.
+        """
         cls = self.load()
         return cls(self.project, self)
 
@@ -1272,6 +1281,12 @@ class AppConfig(MappedClass):
             self, self.visible_to_role, user, project=self.project)
 
     def has_access(self, permission, user=None):
+        """
+        Test if a user has a specific permission in this AppConfig.
+
+        :param permission: The permission to test, (e.g. "read")
+        :param user: The user to test, defaults to `c.user`
+        """
         if user is None:
             user = c.user
         if self.project is None:

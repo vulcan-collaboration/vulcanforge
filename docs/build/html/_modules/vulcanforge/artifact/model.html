@@ -154,7 +154,7 @@
 <span class="sd">        Shortened version of the link text. Defaults to same as link_text.</span>
 
 <span class="sd">        Used for ReferenceBin</span>
-<span class="sd">        @return: str</span>
+<span class="sd">        :return: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_text</span><span class="p">()</span>
 </div>
@@ -228,7 +228,9 @@
                 <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">artifact</span><span class="o">=</span><span class="n">artifact</span><span class="p">,</span> <span class="o">**</span><span class="n">ref</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="ArtifactApiMixin.has_relations"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.ArtifactApiMixin.has_relations">[docs]</a>    <span class="k">def</span> <span class="nf">has_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;returns boolean&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :rtype: boolean</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">references</span><span class="p">)</span> <span class="ow">or</span>
             <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span>
@@ -239,7 +241,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Category for grouping types of relations</span>
 
-<span class="sd">        @return: str</span>
+<span class="sd">        :return: the category</span>
+<span class="sd">        :rtype: basestring</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mount_label</span>
 </div>
@@ -247,8 +250,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Url at which to download the resource.</span>
 
-<span class="sd">        @return: str</span>
-
+<span class="sd">        :return: a url</span>
+<span class="sd">        :rtype: basestring</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">()</span>
 </div>
@@ -257,7 +260,7 @@
 <span class="sd">        Return the discussion thread for this artifact (possibly made more</span>
 <span class="sd">        specific by the message_data)</span>
 
-<span class="sd">        @rtype: vulcanforge.discussion.model.Thread</span>
+<span class="sd">        :rtype: vulcanforge.discussion.model.Thread</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_config</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
         <span class="n">thread_class</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">DiscussionClass</span><span class="o">.</span><span class="n">thread_class</span><span class="p">()</span>
@@ -416,7 +419,7 @@
 
 <div class="viewcode-block" id="Artifact.index"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_objects</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">use_posts</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        TODO: update docstring</span>
+<span class="sd">        .. :TODO: update docstring</span>
 
 <span class="sd">        Subclasses should override this, providing a dictionary of</span>
 <span class="sd">        solr_field =&gt; value.</span>
@@ -502,7 +505,9 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        For artifacts whose parent indexes should be updated when they are</span>
 <span class="sd">        updated (e.g. Posts)</span>
-<span class="sd">        @return: artifact | None</span>
+
+<span class="sd">        :return: the parent artifact if it exists</span>
+<span class="sd">        :rtype: Artifact | None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">None</span>
 </div>
@@ -514,7 +519,9 @@
 <div class="viewcode-block" id="Artifact.get_read_roles"><a class="viewcode-back" href="../../../artifact.html#vulcanforge.artifact.model.Artifact.get_read_roles">[docs]</a>    <span class="k">def</span> <span class="nf">get_read_roles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        It can only be more restrictive than the project read roles</span>
-<span class="sd">        @return:</span>
+
+<span class="sd">        :return: list of role IDs with read permission</span>
+<span class="sd">        :rtype: list</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">roles_with_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">)</span>
 

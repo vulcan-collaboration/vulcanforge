@@ -14,7 +14,9 @@ neighborhood_home)
 A tool is defined in a subclass of
 :py:class:`vulcanforge.common.app.application.Application` and registered with
 the :py:class:`~vulcanforge.config.ToolManager` class's `default_tools`
-dictionary.
+dictionary. An installed tool for a
+:py:class:`~vulcanforge.project.model.Project` is represented by an
+:py:class:`~vulcanforge.project.model.AppConfig` instance.
 
 .. automodule:: vulcanforge.common.app
 

@@ -396,14 +396,15 @@
 </div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Project.active_count"><a class="viewcode-back" href="../../../project.html#vulcanforge.project.model.Project.active_count">[docs]</a>    <span class="k">def</span> <span class="nf">active_count</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">neighborhood_ids</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the total number of active projects.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the total number of active projects.</span>
 
 <span class="sd">        &#39;active&#39; for now means that a project belongs to the &#39;Projects&#39;</span>
 <span class="sd">        neighborhood and is not marked as deleted.</span>
 
-<span class="sd">        @param cls:</span>
-<span class="sd">        @return: Number of active projects</span>
-<span class="sd">        @rtype: int</span>
+<span class="sd">        :param cls:</span>
+<span class="sd">        :return: Number of active projects</span>
+<span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s">&#39;type_s:(Project)&#39;</span><span class="p">,</span>
@@ -745,11 +746,11 @@
 
 <div class="viewcode-block" id="Project.app_instance"><a class="viewcode-back" href="../../../project.html#vulcanforge.project.model.Project.app_instance">[docs]</a>    <span class="k">def</span> <span class="nf">app_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mount_point_or_config</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        @param mount_point_or_config: The mount point or the AppConfig to</span>
+<span class="sd">        :param mount_point_or_config: The mount point or the AppConfig to</span>
 <span class="sd">            lookup</span>
-<span class="sd">        @type mount_point_or_config: AppConfig or str or unicode</span>
-<span class="sd">        @return: The App or None if there is no matching App</span>
-<span class="sd">        @rtype: None or App</span>
+<span class="sd">        :type mount_point_or_config: AppConfig or str or unicode</span>
+<span class="sd">        :return: The App or None if there is no matching App</span>
+<span class="sd">        :rtype: None or App</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mount_point_or_config</span><span class="p">,</span> <span class="n">AppConfig</span><span class="p">):</span>
@@ -766,9 +767,9 @@
 </div>
 <div class="viewcode-block" id="Project.app_config"><a class="viewcode-back" href="../../../project.html#vulcanforge.project.model.Project.app_config">[docs]</a>    <span class="k">def</span> <span class="nf">app_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mount_point</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        @param mount_point: The mount point of the app</span>
-<span class="sd">        @type mount_point: str or unicode</span>
-<span class="sd">        @rtype: AppConfig</span>
+<span class="sd">        :param mount_point: The mount point of the app</span>
+<span class="sd">        :type mount_point: str or unicode</span>
+<span class="sd">        :rtype: AppConfig</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">AppConfig</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">find</span><span class="p">({</span>
@@ -1186,7 +1187,7 @@
         <span class="k">return</span> <span class="n">label_counts</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
 </div>
-<span class="k">class</span> <span class="nc">AppConfig</span><span class="p">(</span><span class="n">MappedClass</span><span class="p">):</span>
+<div class="viewcode-block" id="AppConfig"><a class="viewcode-back" href="../../../appconfig.html#vulcanforge.project.model.AppConfig">[docs]</a><span class="k">class</span> <span class="nc">AppConfig</span><span class="p">(</span><span class="n">MappedClass</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration information for an instantiated</span>
 <span class="sd">    :class:`Application &lt;vulcanforge.common.app.Application&gt;` in a project</span>
@@ -1194,7 +1195,7 @@
 <span class="sd">    :var options: an object on which various options are stored.</span>
 <span class="sd">        options.mount_point is the url component for this app instance</span>
 <span class="sd">    :var acl: a dict that maps permissions (strings) to lists of roles that</span>
-<span class="sd">        have the permission</span>
+<span class="sd">        have the permission. See :class:`ACL`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1257,18 +1258,26 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">icon_url</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tool_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">parent_security_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;ACL processing should terminate at the AppConfig&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AppConfig.parent_security_context"><a class="viewcode-back" href="../../../appconfig.html#vulcanforge.project.model.AppConfig.parent_security_context">[docs]</a>    <span class="k">def</span> <span class="nf">parent_security_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        ACL processing should terminate at the AppConfig.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">None</span>
-
-    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="AppConfig.load"><a class="viewcode-back" href="../../../appconfig.html#vulcanforge.project.model.AppConfig.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the Application class for this instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">tool_manager</span><span class="o">.</span><span class="n">tools</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tool_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="s">&quot;app&quot;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">result</span>
-
-    <span class="k">def</span> <span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="AppConfig.instantiate"><a class="viewcode-back" href="../../../appconfig.html#vulcanforge.project.model.AppConfig.instantiate">[docs]</a>    <span class="k">def</span> <span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiate the Application class for this instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">update_label_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label_count_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_label_counts</span><span class="p">()</span>
 
@@ -1320,7 +1329,13 @@
         <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">has_access</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible_to_role</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">has_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">permission</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AppConfig.has_access"><a class="viewcode-back" href="../../../appconfig.html#vulcanforge.project.model.AppConfig.has_access">[docs]</a>    <span class="k">def</span> <span class="nf">has_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">permission</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test if a user has a specific permission in this AppConfig.</span>
+
+<span class="sd">        :param permission: The permission to test, (e.g. &quot;read&quot;)</span>
+<span class="sd">        :param user: The user to test, defaults to `c.user`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">user</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -1330,7 +1345,7 @@
             <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">has_access</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">,</span> <span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">has_access</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">permission</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">get_read_roles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible_to_role</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;project.&#39;</span><span class="p">):</span>
             <span class="n">split_perm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible_to_role</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;project.&#39;</span><span class="p">)</span>
@@ -1373,7 +1388,7 @@
             <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">icon_file</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">ProjectRole</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Per-project roles, called &quot;Groups&quot; in the UI.</span>
