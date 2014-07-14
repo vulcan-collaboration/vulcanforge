@@ -43,7 +43,7 @@ class ResourceManager(ew.ResourceManager):
         self._url_base = config.get('ew.url_base', '/_ew_resources/')
         self.combine_static_resources = asbool(
             config.get('combine_static_resources', 'false'))
-        self.static_resources_dir = config.get('static_resources_dir')
+        self.static_resources_dir = config['static_resources_dir']
         self.static_recipes_dir = config.get('static_recipes_dir',
                                              self.static_resources_dir)
         self.build_key = config.get('build_key', 'default')

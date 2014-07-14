@@ -2,6 +2,7 @@ import logging
 import ew
 import random
 import string
+from markupsafe import Markup
 
 from pylons import app_globals as g
 
@@ -16,7 +17,7 @@ def short_artifact_link_data(artifact):
         'label': artifact.link_text_short(),
         'fullLabel': artifact.link_text(),
         'refId': artifact.index_id(),
-        'clickURL': artifact.url(),
+        'clickURL': Markup(artifact.url()),
         'shortLink': '[{}:{}:{}]'.format(
             artifact.project.shortname,
             artifact.app_config.options.mount_point,

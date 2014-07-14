@@ -10,9 +10,14 @@ class ArtifactAPI(object):
     references. Mounted on pylons.app_globals as artifact
 
     """
-    # regex to find shortlinks in markdown
+    # regex to extract shortlinks from markdown
     SHORTLINK_RE = re.compile(
-        r'(?<![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]')
+        r'''(?<![\[])\[(  # bracket, not double bracket
+        (([^\]]*?):)?     # project part (optional)
+        (([^\]]*?):)?     # app part (optional)
+        ([^\]]+)          # artifact part
+        )\]               # end bracket
+        ''', re.VERBOSE)
 
     # regex for parsing extracted links
     PARSE_SHORTLINK_RE = re.compile(r'\s*\[([^\]\[]*)]\s*')
