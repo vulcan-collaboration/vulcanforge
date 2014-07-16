@@ -71,7 +71,7 @@ class ArtifactReferenceController(BaseController):
         embedded = asbool(embedded)
         artifact = None
         if artifact_ref:
-            artifact = ArtifactReference.artifact_by_index_id(
+            artifact = g.artifact.get_artifact_by_index_id(
                 urllib.unquote(artifact_ref))
         if not artifact:
             raise AJAXNotFound("Reference doesn't yet exist")
@@ -171,7 +171,7 @@ class BaseArtifactRest(object):
             c.app.config.options.mount_point,
             shortlink
         )
-        artifact = Shortlink.artifact_by_link(full_shortlink)
+        artifact = g.artifact.get_artifact_by_shortlink(full_shortlink)
         return artifact
 
     def _from_index_id(self, index_id):

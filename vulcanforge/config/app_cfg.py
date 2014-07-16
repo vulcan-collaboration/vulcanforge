@@ -29,6 +29,7 @@ from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.exception import S3CreateError
 
 # needed for tg.configuration to work
+from vulcanforge.artifact.api import ArtifactAPI
 from vulcanforge.auth.authentication_provider import (
     LocalAuthenticationProvider)
 from vulcanforge.auth.security_manager import SecurityManager
@@ -121,6 +122,7 @@ class ForgeConfig(AppConfig):
         self.setup_visualize()
         self.setup_event_queue()
         self.setup_visibilitymode()
+        self.setup_artifact()
 
     def register_packages(self):
         """This is a placeholder for now, but soon it will hold our extension
@@ -212,6 +214,15 @@ class ForgeConfig(AppConfig):
         else:
             auth_provider = LocalAuthenticationProvider()
         config['pylons.app_globals'].auth_provider = auth_provider
+
+    def setup_artifact(self):
+        artifact_api_path = config.get('artifact_api')
+        if artifact_api_path:
+            cls = import_object(artifact_api_path)
+            artifact_api = cls()
+        else:
+            artifact_api = ArtifactAPI()
+        config['pylons.app_globals'].artifact = artifact_api
 
     def setup_search(self):
         # Setup SOLR

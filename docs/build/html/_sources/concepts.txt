@@ -30,6 +30,7 @@ Vulcan provides framework support for organizing secured virtual teams.
     neighborhood
     project
     application
+    appconfig
     artifact
 
 Access Control

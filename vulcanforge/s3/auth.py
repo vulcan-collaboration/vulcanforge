@@ -6,7 +6,7 @@ from bson import ObjectId
 from pylons import app_globals as g, tmpl_context as c
 from tg import config
 
-from vulcanforge.artifact.model import Shortlink, ArtifactReference
+from vulcanforge.artifact.model import Shortlink
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.model import Project
 from vulcanforge.s3.model import FileReference
@@ -99,7 +99,7 @@ class SwiftAuthorizer(object):
 
         if shortlink:
             # load artifact and check acl
-            return ArtifactReference.artifact_by_index_id(shortlink.ref_id)
+            return g.artifact.get_artifact_by_index_id(shortlink.ref_id)
 
     def artifact_access(self, match, user, keyname, method):
         # find shortlink for artifact

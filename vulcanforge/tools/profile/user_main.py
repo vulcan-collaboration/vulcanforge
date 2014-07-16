@@ -26,7 +26,6 @@ from vulcanforge.common.app import Application
 from vulcanforge.common.validators import DateTimeConverter
 from vulcanforge.auth.schema import ACE
 from vulcanforge.auth.model import WorkspaceTab
-from vulcanforge.artifact.model import ArtifactReference
 from vulcanforge.artifact.widgets import short_artifact_link_data
 from vulcanforge.messaging.model import ConversationStatus
 from vulcanforge.neighborhood.marketplace.model import UserAdvertisement
@@ -212,7 +211,7 @@ class ReferenceBinController(RestController):
             else:
                 raise exceptions.AJAXNotAcceptable('Link bin was out of sync')
 
-        artifact = ArtifactReference.artifact_by_index_id(ref_id)
+        artifact = g.artifact.get_artifact_by_index_id(ref_id)
 
         return {
             'link_descriptor': short_artifact_link_data(artifact),

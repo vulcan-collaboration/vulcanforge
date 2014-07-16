@@ -52,10 +52,7 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
     ref_id: mod_date
 
     """
-    from vulcanforge.artifact.model import (
-        ArtifactReference,
-        find_shortlink_refs
-    )
+    from vulcanforge.artifact.model import ArtifactReference
     exceptions = []
     if repost_attempt_count > 0:
         LOG.info('add_artifacts repost attempt {} for {}'.format(
@@ -93,7 +90,7 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
                         LOG.info('no solarization found for %s', str(ref_id))
                 if update_refs:
                     if artifact.link_content:
-                        l_ref_ids = find_shortlink_refs(
+                        l_ref_ids = g.artifact.find_shortlink_refs(
                             unescape_unicode(artifact.link_content),
                             upsert=True)
                         for link_ref_id in l_ref_ids:

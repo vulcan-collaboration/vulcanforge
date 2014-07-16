@@ -4,7 +4,7 @@ import logging
 from urlparse import urljoin
 
 from tg import config
-from pylons import tmpl_context as c, request
+from pylons import tmpl_context as c, app_globals as g, request
 from BeautifulSoup import BeautifulSoup
 from feedparser import _HTMLSanitizer
 
@@ -16,7 +16,7 @@ from webhelpers import html
 import webhelpers
 
 from vulcanforge.project.model import Project
-from vulcanforge.artifact.model import Shortlink, ArtifactReference
+from vulcanforge.artifact.model import Shortlink
 from vulcanforge.artifact.widgets import ArtifactLink
 from vulcanforge.common.helpers import urlquote
 
@@ -218,7 +218,7 @@ class ForgeProcessor(object):
         if new_link:
             link_html = None
             if not self._simple_alinks:
-                artifact = ArtifactReference.artifact_by_index_id(
+                artifact = g.artifact.get_artifact_by_index_id(
                     new_link.ref_id)
                 try:
                     link_html = self.artifact_link.display(

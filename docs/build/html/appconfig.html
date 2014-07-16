@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AppConfig (installed Tool) &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="next" title="Artifact" href="artifact.html" />
+    <link rel="prev" title="Applications (a.k.a. Tools)" href="application.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Applications (a.k.a. Tools)"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" accesskey="U">Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="appconfig-installed-tool">
+<h1>AppConfig (installed Tool)<a class="headerlink" href="#appconfig-installed-tool" title="Permalink to this headline">¶</a></h1>
+<p>Custom <a class="reference internal" href="application.html#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> subclasses
+define a tool&#8217;s behavior while <a class="reference internal" href="#vulcanforge.project.model.AppConfig" title="vulcanforge.project.model.AppConfig"><tt class="xref py py-class docutils literal"><span class="pre">AppConfig</span></tt></a>
+instances represent an installed
+<a class="reference internal" href="application.html#vulcanforge.common.app.application.Application" title="vulcanforge.common.app.application.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> within a
+<a class="reference internal" href="project.html#vulcanforge.project.model.Project" title="vulcanforge.project.model.Project"><tt class="xref py py-class docutils literal"><span class="pre">Project</span></tt></a>.</p>
+<p><a class="reference internal" href="artifact.html#vulcanforge.artifact.model.Artifact" title="vulcanforge.artifact.model.Artifact"><tt class="xref py py-class docutils literal"><span class="pre">Artifact</span></tt></a> instances keep a reference to
+their parent <a class="reference internal" href="#vulcanforge.project.model.AppConfig" title="vulcanforge.project.model.AppConfig"><tt class="xref py py-class docutils literal"><span class="pre">AppConfig</span></tt></a> which keep a
+reference to their parent <a class="reference internal" href="project.html#vulcanforge.project.model.Project" title="vulcanforge.project.model.Project"><tt class="xref py py-class docutils literal"><span class="pre">Project</span></tt></a>.</p>
+<dl class="class">
+<dt id="vulcanforge.project.model.AppConfig">
+<em class="property">class </em><tt class="descclassname">vulcanforge.project.model.</tt><tt class="descname">AppConfig</tt><a class="reference internal" href="_modules/vulcanforge/project/model.html#AppConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.AppConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration information for an instantiated
+<tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt> in a project</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>options</strong> &#8211; an object on which various options are stored.
+options.mount_point is the url component for this app instance</li>
+<li><strong>acl</strong> &#8211; a dict that maps permissions (strings) to lists of roles that
+have the permission. See <tt class="xref py py-class docutils literal"><span class="pre">ACL</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="vulcanforge.project.model.AppConfig.has_access">
+<tt class="descname">has_access</tt><big>(</big><em>permission</em>, <em>user=None</em><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#AppConfig.has_access"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.AppConfig.has_access" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if a user has a specific permission in this AppConfig.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>permission</strong> &#8211; The permission to test, (e.g. &#8220;read&#8221;)</li>
+<li><strong>user</strong> &#8211; The user to test, defaults to <cite>c.user</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.AppConfig.instantiate">
+<tt class="descname">instantiate</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#AppConfig.instantiate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.AppConfig.instantiate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate the Application class for this instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.AppConfig.load">
+<tt class="descname">load</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#AppConfig.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.AppConfig.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the Application class for this instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="vulcanforge.project.model.AppConfig.parent_security_context">
+<tt class="descname">parent_security_context</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/vulcanforge/project/model.html#AppConfig.parent_security_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vulcanforge.project.model.AppConfig.parent_security_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>ACL processing should terminate at the AppConfig.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="application.html"
+                        title="previous chapter">Applications (a.k.a. Tools)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="artifact.html"
+                        title="next chapter">Artifact</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/appconfig.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="application.html" title="Applications (a.k.a. Tools)"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="concepts.html" >Vulcan Concepts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
