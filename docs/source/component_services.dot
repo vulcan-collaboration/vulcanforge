@@ -1,12 +1,24 @@
 graph component_services {
-    rankdir=BT;
+    rankdir=LR;
+    overlap=false;
+    splines=true;
+
+    { rank=same; forgeapp websocketapp }
+    { rank=same; taskd eventd }
+
     node [
         shape=box
     ] {
         mongodb,
         redis,
         solr,
+        smtp,
         swift
+    }
+    node [
+        shape=plaintext
+    ] {
+        user
     }
     node [
         shape=oval
@@ -16,14 +28,16 @@ graph component_services {
         mongodb,
         redis,
         solr,
-        swift
+        swift,
+        taskd
     };
     taskd -- {
         mongodb,
         redis,
         solr,
         taskd,
-        swift
+        swift,
+        smtp
     };
     eventd -- {
         mongodb,
@@ -36,4 +50,9 @@ graph component_services {
         eventd,
         forgeapp
     };
+
+    user -- {
+        forgeapp,
+        websocketapp
+    }
 }

@@ -1,5 +1,5 @@
-Architecture Component Services
-===============================
+Component Services
+==================
 
 An application built on the Vulcan framework uses the following component
 services:
@@ -46,6 +46,13 @@ serving files.
 
 .. _Swift: http://swift.openstack.org/
 .. _S3: http://aws.amazon.com/s3/
+
+SMTP Email Service
+^^^^^^^^^^^^^^^^^^
+
+An SMTP server must be present to send emails. Typically this is `Exim`_.
+
+.. _Exim: http://www.exim.org/
 
 Vulcan Services
 ---------------

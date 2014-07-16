@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Architecture Component Services &mdash; Vulcan 0.1.0 documentation</title>
+    <title>Component Services &mdash; Vulcan 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -52,20 +52,32 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="architecture-component-services">
-<h1>Architecture Component Services<a class="headerlink" href="#architecture-component-services" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="component-services">
+<h1>Component Services<a class="headerlink" href="#component-services" title="Permalink to this headline">¶</a></h1>
 <p>An application built on the Vulcan framework uses the following component
 services:</p>
 <p class="graphviz">
-<img src="_images/graphviz-128b55dec78d4bceeb82d657ab1154e7f5aa73de.svg" alt="graph component_services {
-    rankdir=BT;
+<img src="_images/graphviz-6b1ec4aba33e4de304ffddbbe6aea2f27e951991.svg" alt="graph component_services {
+    rankdir=LR;
+    overlap=false;
+    splines=true;
+
+    { rank=same; forgeapp websocketapp }
+    { rank=same; taskd eventd }
+
     node [
         shape=box
     ] {
         mongodb,
         redis,
         solr,
+        smtp,
         swift
+    }
+    node [
+        shape=plaintext
+    ] {
+        user
     }
     node [
         shape=oval
@@ -75,14 +87,16 @@ services:</p>
         mongodb,
         redis,
         solr,
-        swift
+        swift,
+        taskd
     };
     taskd -- {
         mongodb,
         redis,
         solr,
         taskd,
-        swift
+        swift,
+        smtp
     };
     eventd -- {
         mongodb,
@@ -95,6 +109,11 @@ services:</p>
         eventd,
         forgeapp
     };
+
+    user -- {
+        forgeapp,
+        websocketapp
+    }
 }" />
 </p>
 <div class="section" id="dependencies">
@@ -121,6 +140,10 @@ services.</p>
 <p><a class="reference external" href="http://swift.openstack.org/">Swift</a>, or another <a class="reference external" href="http://aws.amazon.com/s3/">S3</a> API compatible object store, is used for storing and
 serving files.</p>
 </div>
+<div class="section" id="smtp-email-service">
+<h3>SMTP Email Service<a class="headerlink" href="#smtp-email-service" title="Permalink to this headline">¶</a></h3>
+<p>An SMTP server must be present to send emails. Typically this is <a class="reference external" href="http://www.exim.org/">Exim</a>.</p>
+</div>
 </div>
 <div class="section" id="vulcan-services">
 <h2>Vulcan Services<a class="headerlink" href="#vulcan-services" title="Permalink to this headline">¶</a></h2>
@@ -146,12 +169,13 @@ serving files.</p>
             </a></p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Architecture Component Services</a><ul>
+<li><a class="reference internal" href="#">Component Services</a><ul>
 <li><a class="reference internal" href="#dependencies">Dependencies</a><ul>
 <li><a class="reference internal" href="#mongodb-document-store">MongoDB Document Store</a></li>
 <li><a class="reference internal" href="#solr-index">SOLR Index</a></li>
 <li><a class="reference internal" href="#redis-object-store">Redis Object Store</a></li>
 <li><a class="reference internal" href="#swift-s3-object-store">Swift/S3 Object Store</a></li>
+<li><a class="reference internal" href="#smtp-email-service">SMTP Email Service</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#vulcan-services">Vulcan Services</a></li>
