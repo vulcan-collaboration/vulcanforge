@@ -118,8 +118,8 @@ class _AuthController(BaseController):
             is_returning_to = True
         else:
             return_to = '/'
-        if config.get('login_template'):
-            override_template(self.index, config.get('login_template'))
+        if config.get('templates.login'):
+            override_template(self.index, config.get('templates.login'))
 
         c.form = self.Forms.login_form
         return {

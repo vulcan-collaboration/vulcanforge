@@ -134,14 +134,8 @@ class UsernameRegistrationField(ew.TextField):
 
 
 API_URL = tg.config.get('recaptcha_api_url', "www.google.com/recaptcha/api")
-PUBLIC_KEY = tg.config.get(
-    'recaptcha_public_key',
-    '6LeTXcsSAAAAAAtmbk_0zHlDWT25db7dy-MYQOIo'
-)
-PRIVATE_KEY = tg.config.get(
-    'recaptcha_private_key',
-    '6LeTXcsSAAAAACxO7xaGEhp1UY9k4COKYiPbu6OO'
-)
+PUBLIC_KEY = tg.config.get('recaptcha_public_key')
+PRIVATE_KEY = tg.config.get('recaptcha_private_key')
 VERIFY_URL = 'http://{}/verify'.format(API_URL)
 
 

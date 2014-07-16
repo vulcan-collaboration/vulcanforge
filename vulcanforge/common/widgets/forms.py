@@ -104,11 +104,12 @@ class PasswordChangeForm(ForgeForm):
         d = super(PasswordChangeForm, self).to_python(value, state)
         if d['password'] != d['password2']:
             raise formencode.Invalid('Passwords must match', value, state)
-        min_levenshtein = int(tg.config.get('auth.pw.min_levenshtein', 3))
-        lev = levenshtein(value['oldpw'], value['password'])
-        if lev < min_levenshtein:
-            raise formencode.Invalid("Too similar to a previous password",
-                                     value, state)
+        min_levenshtein = int(tg.config.get('auth.pw.min_levenshtein', 0))
+        if min_levenshtein > 0:
+            lev = levenshtein(value['oldpw'], value['password'])
+            if lev < min_levenshtein:
+                raise formencode.Invalid("Too similar to a previous password",
+                                         value, state)
         return d
 
 
