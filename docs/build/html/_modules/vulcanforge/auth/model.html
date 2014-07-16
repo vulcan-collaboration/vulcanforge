@@ -1066,9 +1066,8 @@
         <span class="k">return</span> <span class="n">result</span>
 </div>
     <span class="k">def</span> <span class="nf">_make_workspace_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_id</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">vulcanforge.artifact.model</span> <span class="kn">import</span> <span class="n">ArtifactReference</span>
         <span class="kn">from</span> <span class="nn">vulcanforge.artifact.widgets</span> <span class="kn">import</span> <span class="n">short_artifact_link_data</span>
-        <span class="n">artifact</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">artifact_by_index_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">)</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">get_artifact_by_index_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">short_artifact_link_data</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
 
