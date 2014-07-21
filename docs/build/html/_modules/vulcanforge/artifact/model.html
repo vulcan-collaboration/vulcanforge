@@ -221,7 +221,7 @@
 
         <span class="c"># get this artifacts references</span>
         <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">references</span><span class="p">:</span>
-            <span class="n">artifact</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">artifact_by_index_id</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="s">&#39;index_id&#39;</span><span class="p">])</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">get_artifact_by_index_id</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="s">&#39;index_id&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
                 <span class="n">artifact</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">primary</span><span class="p">()</span>
                 <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">())</span>
@@ -355,7 +355,7 @@
     <span class="k">def</span> <span class="nf">related_artifacts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">related_artifacts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">ref_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">refs</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">backrefs</span><span class="p">:</span>
-            <span class="n">artifact</span> <span class="o">=</span> <span class="n">ArtifactReference</span><span class="o">.</span><span class="n">artifact_by_index_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">)</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">get_artifact_by_index_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">artifact</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">primary</span><span class="p">()</span>
@@ -984,78 +984,6 @@
                               <span class="bp">self</span><span class="o">.</span><span class="n">get_unique_id</span><span class="p">(),</span> <span class="n">visualizer</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 
-<span class="c"># Ephemeral Functions for ArtifactReference</span>
-<span class="n">REPO_SHORTLINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^\((?P&lt;commit&gt;[a-z0-9]+)\)(?P&lt;path&gt;/.*)&#39;</span><span class="p">)</span>
-<span class="n">REPO_INDEX_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^Repo\.&#39;</span><span class="p">)</span>
-<span class="n">SHORTLINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;(?&lt;![\[])\[((([^\]]*?):)?(([^\]]*?):)?([^\]]+))\]&#39;</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">repo_get_by_index_id</span><span class="p">(</span><span class="n">index_id</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">ac_id</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">index_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">g</span><span class="o">.</span><span class="n">context_manager</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">app_config_id</span><span class="o">=</span><span class="n">bson</span><span class="o">.</span><span class="n">ObjectId</span><span class="p">(</span><span class="n">ac_id</span><span class="p">)):</span>
-            <span class="n">ci</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">ci_oid</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">ci</span><span class="p">:</span>
-                <span class="n">artifact</span> <span class="o">=</span> <span class="n">ci</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Error looking up repo? index_id {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_id</span><span class="p">))</span>
-        <span class="k">pass</span>
-    <span class="k">return</span> <span class="n">artifact</span>
-
-
-<span class="k">def</span> <span class="nf">_get_by_slink_with_context</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-    <span class="n">ci</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">ci_oid</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ci</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ci</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">repo_get_by_shortlink</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">):</span>
-    <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;commit&#39;</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;path&#39;</span><span class="p">)</span>
-    <span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">shortname</span><span class="o">=</span><span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;project&#39;</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">project</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">]:</span>
-            <span class="n">app</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">app_instance</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">app</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s">&#39;repo&#39;</span><span class="p">):</span>
-                <span class="n">artifact</span> <span class="o">=</span> <span class="n">_get_by_slink_with_context</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">ac</span> <span class="ow">in</span> <span class="n">project</span><span class="o">.</span><span class="n">app_configs</span><span class="p">:</span>
-                <span class="n">app</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">app_instance</span><span class="p">(</span><span class="n">ac</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s">&#39;repo&#39;</span><span class="p">):</span>
-                    <span class="n">artifact</span> <span class="o">=</span> <span class="n">_get_by_slink_with_context</span><span class="p">(</span>
-                        <span class="n">app</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="n">ci_oid</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
-                        <span class="k">break</span>
-    <span class="k">return</span> <span class="n">artifact</span>
-
-
-<span class="k">def</span> <span class="nf">repo_ref_id_by_link</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="n">ref_id</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">artifact</span> <span class="o">=</span> <span class="n">repo_get_by_shortlink</span><span class="p">(</span><span class="n">parsed_link</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">artifact</span><span class="p">:</span>
-        <span class="n">ref_id</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">index_id</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">upsert</span><span class="p">:</span>
-            <span class="n">Shortlink</span><span class="o">.</span><span class="n">from_artifact</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">ref_id</span>
-
-
-<span class="k">def</span> <span class="nf">find_shortlink_refs</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-    <span class="n">ref_ids</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="c"># TODO: include markdown extensions in vulcanforge then uncomment following</span>
-    <span class="c">#fcp = FencedCodeProcessor()</span>
-    <span class="c">#converted = fcp.run(text.split(&#39;\n&#39;))</span>
-    <span class="n">converted</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">converted</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;    &#39;</span><span class="p">):</span>
-            <span class="n">ref_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                <span class="n">Shortlink</span><span class="o">.</span><span class="n">ref_id_by_link</span><span class="p">(</span><span class="n">alink</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">alink</span> <span class="ow">in</span> <span class="n">SHORTLINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">if</span> <span class="n">alink</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ref_ids</span>
-<span class="c"># End Ephemerals</span>
-
-
 <span class="k">class</span> <span class="nc">ArtifactReference</span><span class="p">(</span><span class="n">BaseMappedClass</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    ArtifactReference manages the artifact graph.</span>
@@ -1080,36 +1008,6 @@
         <span class="n">extra</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>  <span class="c"># extra label information,</span>
         <span class="n">datetime</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">if_missing</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
     <span class="p">))])</span>
-
-    <span class="c"># patterns for looking up artifacts by index_id when no ArtifactReference</span>
-    <span class="c"># document yet exists, or the artifact is not persisted (repo objects)</span>
-    <span class="n">EPHEMERAL_PATTERNS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">REPO_INDEX_ID_RE</span><span class="p">:</span> <span class="n">repo_get_by_index_id</span>
-    <span class="p">}</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">artifact_by_index_id</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">index_id</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get artifact by index_id. Allows for the existence of ephemeral</span>
-<span class="sd">        artifacts that have no ArtifactReference persisted, such as repo</span>
-<span class="sd">        files and folders.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
-
-        <span class="c"># find ephemerals</span>
-        <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">index_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                <span class="n">artifact</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">index_id</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
-
-        <span class="c"># standard approach</span>
-        <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">aref</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_id</span><span class="o">=</span><span class="n">index_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">aref</span><span class="p">:</span>
-                <span class="n">artifact</span> <span class="o">=</span> <span class="n">aref</span><span class="o">.</span><span class="n">artifact</span>
-
-        <span class="k">return</span> <span class="n">artifact</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_artifact</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">artifact</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -1187,25 +1085,6 @@
     <span class="n">app_config</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;AppConfig&#39;</span><span class="p">)</span>
     <span class="n">ref</span> <span class="o">=</span> <span class="n">RelationProperty</span><span class="p">(</span><span class="s">&#39;ArtifactReference&#39;</span><span class="p">)</span>
 
-    <span class="c"># Regexes used to find shortlinks</span>
-    <span class="n">_core_re</span> <span class="o">=</span> <span class="s">r&#39;&#39;&#39;(\[</span>
-<span class="s">            (?:(?P&lt;project_id&gt;.*?):)?      # optional project ID</span>
-<span class="s">            (?:(?P&lt;app_id&gt;.*?):)?      # optional tool ID</span>
-<span class="s">            (?P&lt;artifact_id&gt;.*)             # artifact ID</span>
-<span class="s">    \])&#39;&#39;&#39;</span>
-    <span class="n">re_link_1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s&#39;</span> <span class="o">+</span> <span class="n">_core_re</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">)</span>
-    <span class="n">re_link_2</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^&#39;</span> <span class="o">+</span> <span class="n">_core_re</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">)</span>
-
-    <span class="n">re_link_bracket</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*\[([^\]\[]*)]\s*&#39;</span><span class="p">)</span>
-
-    <span class="c"># artifact patterns for ephemeral lookups (see same in ArtifactReference)</span>
-    <span class="n">EPHEMERAL_PATTERNS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">REPO_SHORTLINK_RE</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s">&#39;ref_id&#39;</span><span class="p">:</span> <span class="n">repo_ref_id_by_link</span><span class="p">,</span>
-            <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">repo_get_by_shortlink</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">u&#39;</span><span class="si">%s</span><span class="s"> -&gt; </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">render_link</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_id</span><span class="p">)</span>
 
@@ -1249,13 +1128,13 @@
         <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">link</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-                <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">artifact</span><span class="o">.</span><span class="n">parse_shortlink</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
-                    <span class="n">result</span><span class="p">[</span><span class="n">link</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">link</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_get_from_parsed</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">parsed</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_from_parsed</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">parsed</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="c"># assemble query</span>
@@ -1299,78 +1178,6 @@
                     <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
                     <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Ambiguous link {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parsed</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">result</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_parse_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Parse a shortlink into its project/app/artifact parts&quot;&quot;&quot;</span>
-        <span class="n">link_bracket_match</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">re_link_bracket</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">link_bracket_match</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">link_bracket_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">p_shortname</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s">&#39;project&#39;</span><span class="p">):</span>
-            <span class="n">p_shortname</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">project</span><span class="p">,</span> <span class="s">&#39;shortname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-            <span class="p">}</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">p_shortname</span><span class="p">,</span>
-                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="p">}</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s">&#39;project&#39;</span><span class="p">:</span> <span class="n">p_shortname</span><span class="p">,</span>
-                <span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
-                <span class="s">&#39;artifact&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="p">}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">artifact_by_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
-        <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
-            <span class="n">artifact</span> <span class="o">=</span> <span class="bp">None</span>
-
-            <span class="c"># standard method</span>
-            <span class="n">shortlink</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">shortlink</span><span class="p">:</span>
-                <span class="n">artifact</span> <span class="o">=</span> <span class="n">shortlink</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">artifact</span>
-
-            <span class="c"># try ephemerals</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">artifact</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                    <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">])</span>
-                    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                        <span class="n">artifact</span> <span class="o">=</span> <span class="n">func</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">](</span><span class="n">parsed</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">artifact</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">ref_id_by_link</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="n">parsed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_parse_link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">parsed</span><span class="p">:</span>
-            <span class="n">ref_id</span> <span class="o">=</span> <span class="bp">None</span>
-
-            <span class="c"># standard method</span>
-            <span class="n">shortlink</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_get_from_parsed</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">shortlink</span><span class="p">:</span>
-                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">shortlink</span><span class="o">.</span><span class="n">ref_id</span>
-
-            <span class="c"># try ephemerals</span>
-            <span class="k">if</span> <span class="n">ref_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">EPHEMERAL_PATTERNS</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                    <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s">&#39;artifact&#39;</span><span class="p">])</span>
-                    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                        <span class="n">ref_id</span> <span class="o">=</span> <span class="n">func</span><span class="p">[</span><span class="s">&#39;ref_id&#39;</span><span class="p">](</span><span class="n">parsed</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="n">upsert</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">ref_id</span>
 
 
 <span class="k">class</span> <span class="nc">VisualizableArtifact</span><span class="p">(</span><span class="n">Artifact</span><span class="p">,</span> <span class="n">VisualizableMixIn</span><span class="p">):</span>

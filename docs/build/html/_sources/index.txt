@@ -12,9 +12,10 @@ Here we have organized some introductory documentation to familiarize interested
 developers with setting up a Vulcan deployment and extending it's capabilities.
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    architecture_components
+   configuration
    concepts
    extending_vulcan
 

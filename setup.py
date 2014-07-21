@@ -36,6 +36,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     install_requires=[
+        'tg.devtools == 2.2.2',
         'simplejson >= 3',
         'FormEncode == 1.2.4',
         'ipython',

@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration Files &mdash; Vulcan 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature-theme-extended.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Vulcan 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Vulcan Concepts" href="concepts.html" />
+    <link rel="prev" title="WebSocketApp" href="websocketapp.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Vulcan Concepts"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="websocketapp.html" title="WebSocketApp"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="configuration-files">
+<h1>Configuration Files<a class="headerlink" href="#configuration-files" title="Permalink to this headline">¶</a></h1>
+<p>Vulcan applications are <a class="reference external" href="http://turbogears.org/">TurboGears</a> applications and use
+<a class="reference external" href="https://turbogears.readthedocs.org/en/rtfd2.2.2//main/Config.html">TurboGears congifuration files</a> which are similar to Microsoft Windows INI
+files and are compatible with the Python standard library&#8217;s <a class="reference external" href="https://docs.python.org/2/library/configparser.html">ConfigParser</a>. The
+config file specifies service addresses &amp; credentials, platform options, and
+extensions/overrides.</p>
+<div class="section" id="sections">
+<h2>Sections<a class="headerlink" href="#sections" title="Permalink to this headline">¶</a></h2>
+<p>Some section inheritance is supported with <tt class="docutils literal"><span class="pre">use</span> <span class="pre">=</span> <span class="pre">&lt;PARENT_SECTION_NAME&gt;</span></tt>.</p>
+<div class="section" id="default">
+<h3><tt class="docutils literal"><span class="pre">[DEFAULT]</span></tt><a class="headerlink" href="#default" title="Permalink to this headline">¶</a></h3>
+<p>Parameters defined here are inherited in all sections unless explicitly
+overridden.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">debug:</th><td class="field-body">Boolean stating if debug mode is enabled. <strong>This should always be
+false in production!</strong> Setting this to <tt class="docutils literal"><span class="pre">true</span></tt> will enable an
+interactive debugging console on errors which is a security vulnerability in
+a production deployment but a valuable tool during development.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="server-main">
+<h3><tt class="docutils literal"><span class="pre">[server:main]</span></tt><a class="headerlink" href="#server-main" title="Permalink to this headline">¶</a></h3>
+<p>This section defines server parameters for running the Vulcan application.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">host:</th><td class="field-body">The IP address to serve the Vulcan application on (0.0.0.0 for all)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">port:</th><td class="field-body">The port to bind to the Vulcan application (80 for HTTP)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="app-myapp">
+<h3><tt class="docutils literal"><span class="pre">[app:myapp]</span></tt><a class="headerlink" href="#app-myapp" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>use = egg:MyAppClass
+</pre></div>
+</div>
+<p>This section is used by and named for your Vulcan TurboGears application and is
+where the majority of parameters will be set.</p>
+</div>
+<div class="section" id="app-myapp-test">
+<h3><tt class="docutils literal"><span class="pre">[app:myapp_test]</span></tt><a class="headerlink" href="#app-myapp-test" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># inherit from [app:myapp]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">myapp</span>
+</pre></div>
+</div>
+<p>This section is used when running tests and is useful to set up alternate
+service locations and databases for test data.</p>
+</div>
+<div class="section" id="app-taskd">
+<h3><tt class="docutils literal"><span class="pre">[app:taskd]</span></tt><a class="headerlink" href="#app-taskd" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># inherit from [app:myapp]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">myapp</span>
+
+<span class="c"># set root controller to the task controller</span>
+<span class="n">override_root</span> <span class="o">=</span> <span class="n">task</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="app-event">
+<h3><tt class="docutils literal"><span class="pre">[app:event]</span></tt><a class="headerlink" href="#app-event" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># inherit from [app:myapp]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">myapp</span>
+
+<span class="c"># set root controller to the event controller</span>
+<span class="n">override_root</span> <span class="o">=</span> <span class="n">event</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="websocketserver">
+<h3><tt class="docutils literal"><span class="pre">[websocketserver]</span></tt><a class="headerlink" href="#websocketserver" title="Permalink to this headline">¶</a></h3>
+<p>This section is used by the <cite>websocketapp</cite> but websocket settings can be set in
+the <tt class="docutils literal"><span class="pre">[DEFAULT]</span></tt> section.</p>
+</div>
+</div>
+<div class="section" id="platform-services">
+<h2>Platform Services<a class="headerlink" href="#platform-services" title="Permalink to this headline">¶</a></h2>
+<p>Many of these settings are used in different sections by different services
+and can be defined in the <tt class="docutils literal"><span class="pre">[DEFAULT]</span></tt> section only once instead.</p>
+<div class="section" id="taskd">
+<h3>Taskd<a class="headerlink" href="#taskd" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">monq.poll_interval:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Interval to poll for new tasks if using polling instead of
+a Redis queue.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">task_queue.host:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">The Redis host to use for the task queue</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">task_queue.port:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">task_queue.cls:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.taskd.queue:RedisQueue</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="websocket">
+<h3>WebSocket<a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">websocket.enabled:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Boolean stating whether websockets should be enabled for
+this platform.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">websocket.host:</th><td class="field-body">The IP address to bind the Vulcan Websocket service to</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">websocket.port:</th><td class="field-body">The port to bind the Vulcan Websocket service to</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">websocket.auth_api_root:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Vulcan app api root. This is the URL where the
+websocket service will authenticate and authorize with the Vulcan
+application. Here should be mounted
+<tt class="xref py py-class docutils literal"><span class="pre">vulcanforge.websocket.controllers.WebSocketAPIController</span></tt> or it&#8217;s
+subclass.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="smtp-email">
+<h3>SMTP/Email<a class="headerlink" href="#smtp-email" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">smtp_server:</th><td class="field-body">SMTP service host location (i.e. 127.0.0.1 or smtp.example.com)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">smtp_port:</th><td class="field-body">SMTP service host port</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">forgemail.host:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">forgemail.port:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">forgemail.domain:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">forgemail.url:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">forgemail.return_path:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="redis">
+<h3>Redis<a class="headerlink" href="#redis" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">redis.host:</th><td class="field-body">Redis service host location</td>
+</tr>
+<tr class="field-even field"><th class="field-name">redis.port:</th><td class="field-body">Redis service host port</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="s3-swift">
+<h3>S3/Swift<a class="headerlink" href="#s3-swift" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">s3.enabled:</th><td class="field-body">Boolean stating whether S3/Swift is available for this platform.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">s3.connect_string:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">s3.password:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">s3.ip_address:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">s3.port:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">s3.ssl:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">s3.bucket_name:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">s3.tempurlkey:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">s3.account_name:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">s3.app_prefix:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">s3.prefix:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">swift.serve_local:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Boolean stating if resources should be served through a
+proxy on the Vulcan deployment. This should only be set <tt class="docutils literal"><span class="pre">true</span></tt> if the S3
+server is set up to be not directly accessible to end users.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">swift.auth.deployment_id:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">swift.auth.deployment_param:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">swift.auth.token:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">swift.auth.token_param:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mongodb">
+<h3>Mongodb<a class="headerlink" href="#mongodb" title="Permalink to this headline">¶</a></h3>
+<p>Credentials and settings for the Mongodb connection through <a class="reference external" href="http://merciless.sourceforge.net/tour.html">Ming</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">ming.main.uri:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">ming.main.database:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">ming.main.replica_set:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">ming.main.read_preference:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">ming.main.auto_ensure_indexes:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">ming.project.uri:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">ming.project.database:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">ming.project.replica_set:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">ming.project.read_preference:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">ming.project.auto_ensure_indexes:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="solr">
+<h3>Solr<a class="headerlink" href="#solr" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">solr.host:</th><td class="field-body">Solr service location</td>
+</tr>
+<tr class="field-even field"><th class="field-name">solr.port:</th><td class="field-body">Solr service port</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">solr.vulcan.core:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Identifier of the vulcan Solr core</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="api-services">
+<h2>API Services<a class="headerlink" href="#api-services" title="Permalink to this headline">¶</a></h2>
+<p>These are API credentials for web services used in an application.</p>
+<div class="section" id="recaptcha">
+<h3>ReCaptcha<a class="headerlink" href="#recaptcha" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">recaptcha_api_url:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">www.google.com/recaptcha/api</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">recaptcha_public_key:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">recaptcha_private_key:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="platform-options">
+<h2>Platform Options<a class="headerlink" href="#platform-options" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">theme:</th><td class="field-body">The theme to use. See <cite>themes</cite>.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="passwords-user-authentication">
+<h3>Passwords/User Authentication<a class="headerlink" href="#passwords-user-authentication" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">login_lock.engaged:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Boolean stating if failed login attempts lock a user
+account</td>
+</tr>
+<tr class="field-even field"><th class="field-name">login_lock.num:</th><td class="field-body">Number of failed attempts that trigger a lock</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">login_lock.interval:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Duration of time in minutes that failed login attempts
+count towards an account lock</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">auth.user.inactivity_period:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Time in months, more precisely 30 day periods,
+after which an account with no activity is considered inactive and will be
+disabled with the <tt class="docutils literal"><span class="pre">paster</span> <span class="pre">expire-users</span> <span class="pre">&lt;config&gt;</span></tt> command</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">auth.pw.min_length:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">minimum password length</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">auth.pw.lifetime.months:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Password lifetime after which a user required to
+change their password</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">auth.pw.min_lifetime.hours:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Span of time in hours after a password change
+during which the password cannot be changed again</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">auth.pw.generations:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Number of old passwords that cannot be reused</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">auth.pw.min_levenshtein:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Minimum <a class="reference external" href="http://en.wikipedia.org/wiki/Levenshtein_distance">levenshtein distance</a> allowed between
+consecutive passwords</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">idle_logout_enabled:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Boolean whether users should be logged out automatically
+after a period of inactivity</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">idle_logout_minutes:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Span of time in minutes after which a user should be
+logged out automatically if <tt class="docutils literal"><span class="pre">idle_logout_enabled</span></tt> is true</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">idle_logout_countdown_seconds:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body">Span of time in seconds before automatic logout
+when a user is presented with a dialog to cancel the automatic logout</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo-64.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Configuration Files</a><ul>
+<li><a class="reference internal" href="#sections">Sections</a><ul>
+<li><a class="reference internal" href="#default"><tt class="docutils literal"><span class="pre">[DEFAULT]</span></tt></a></li>
+<li><a class="reference internal" href="#server-main"><tt class="docutils literal"><span class="pre">[server:main]</span></tt></a></li>
+<li><a class="reference internal" href="#app-myapp"><tt class="docutils literal"><span class="pre">[app:myapp]</span></tt></a></li>
+<li><a class="reference internal" href="#app-myapp-test"><tt class="docutils literal"><span class="pre">[app:myapp_test]</span></tt></a></li>
+<li><a class="reference internal" href="#app-taskd"><tt class="docutils literal"><span class="pre">[app:taskd]</span></tt></a></li>
+<li><a class="reference internal" href="#app-event"><tt class="docutils literal"><span class="pre">[app:event]</span></tt></a></li>
+<li><a class="reference internal" href="#websocketserver"><tt class="docutils literal"><span class="pre">[websocketserver]</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#platform-services">Platform Services</a><ul>
+<li><a class="reference internal" href="#taskd">Taskd</a></li>
+<li><a class="reference internal" href="#websocket">WebSocket</a></li>
+<li><a class="reference internal" href="#smtp-email">SMTP/Email</a></li>
+<li><a class="reference internal" href="#redis">Redis</a></li>
+<li><a class="reference internal" href="#s3-swift">S3/Swift</a></li>
+<li><a class="reference internal" href="#mongodb">Mongodb</a></li>
+<li><a class="reference internal" href="#solr">Solr</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api-services">API Services</a><ul>
+<li><a class="reference internal" href="#recaptcha">ReCaptcha</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#platform-options">Platform Options</a><ul>
+<li><a class="reference internal" href="#passwords-user-authentication">Passwords/User Authentication</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="websocketapp.html"
+                        title="previous chapter">WebSocketApp</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="next chapter">Vulcan Concepts</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/configuration.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Vulcan Concepts"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="websocketapp.html" title="WebSocketApp"
+             >previous</a> |</li>
+        <li><a href="index.html">Vulcan 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, ISIS.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
