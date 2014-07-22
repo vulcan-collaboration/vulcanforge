@@ -102,9 +102,9 @@ def temporary_dir(**kw):
 
 
 @contextmanager
-def temporary_zip_extract(fp, **kw):
+def temporary_zip_extract(fp, zip_module=zipfile.ZipFile, **kw):
     with temporary_dir(**kw) as dirname:
-        with zipfile.ZipFile(fp) as zp:
+        with zip_module(fp) as zp:
             safe_extract_zip(zp, dirname)
         yield dirname
 

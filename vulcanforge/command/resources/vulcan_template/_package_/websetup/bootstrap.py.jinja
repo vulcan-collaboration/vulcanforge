@@ -1,0 +1,134 @@
+# -*- coding: utf-8 -*-
+"""Setup the {{package}} application"""
+import logging
+
+from ming import mim
+from ming.session import Session
+from ming.odm.odmsession import ThreadLocalODMSession
+from paste.deploy.converters import asbool
+from pylons import tmpl_context as c, app_globals as g
+import tg
+from vulcanforge.auth.model import User
+from vulcanforge.common.model import ForgeGlobals
+from vulcanforge.common.model.session import main_doc_session
+from vulcanforge.migration.runner import MigrationRunner
+from vulcanforge.migration.model import MigrationLog
+from vulcanforge.neighborhood.model import Neighborhood
+from vulcanforge.project.model import Project
+from vulcanforge.command import EnsureIndexCommand
+
+log = logging.getLogger(__name__)
+
+
+def wipe_all(index=True):
+    wipe_database(index=index)
+    try:
+        g.solr.delete(q='*:*')
+    except Exception:  # pragma no cover
+        log.exception('Error clearing solr index for %s', g.solr)
+    if g.cache:
+        g.cache.clear()
+    g.security.credentials.clear()
+
+
+def bootstrap(command, conf, vars, index=True):
+    """Place any commands to setup {{package}} here"""
+
+    # Clean up all old stuff
+    c.user = c.project = c.app = None
+    wipe_all(index=index)
+
+    # Root and anonymous users
+    log.info('Registering root user & default neighborhoods')
+    root = User(username='root', display_name='root', os_id=0)
+    User(_id=None, username='*anonymous', display_name='Anonymous Coward')
+
+    # create project and user neighborhoods
+    n_projects = Neighborhood(name='Projects', url_prefix='/p/')
+    n_users = Neighborhood(
+        name='Users', url_prefix='/u/', shortname_prefix='u/')
+    p_projects = n_projects.register_neighborhood_project(
+        [root], allow_register=True)
+    p_users = n_users.register_neighborhood_project([root])
+    p_admin = n_projects.register_project(g.site_admin_project, root)
+    ForgeGlobals()
+    ThreadLocalODMSession.flush_all()
+
+    # Migration initialization
+    if MigrationLog.upsert_init():
+        runner = MigrationRunner()
+        for mig_cls in runner.load_migrations():
+            MigrationLog.create_from_migration(mig_cls, status='noop')
+
+
+def bootstrap_testenv():
+    log.info('Registering "regular users" (non-root) and default projects')
+    # since this runs a lot for tests, separate test and default users and
+    # do the minimal needed
+    n_projects = Neighborhood.by_prefix('p')
+    p_admin = Project.query.get(shortname=g.site_admin_project)
+
+    u_admin = User.register(dict(
+        username='test-admin',
+        display_name='Test Admin'
+    ))
+    u_admin.set_password('Foobar2012!')
+    u_admin.claim_address('Beta@wiki.test.vulcan.net')
+
+    u1 = User.register(dict(username='test-user', display_name='Test User'))
+    u1.set_password('Foobar2012!')
+    p0 = n_projects.register_project('test', u_admin)
+    p0._extra_tool_status = ['alpha', 'beta']
+
+    # add the forgeadmin project
+    log.info('Creating forgeadmin project')
+    p_admin.add_user(u_admin, ['Admin'])
+
+    # register apps
+    log.info('Registering initial apps')
+
+    c.project = p0
+    c.user = u_admin
+
+
+def wipe_database(index=True):
+    if asbool(tg.config.get('block_dangerous_tests', False)):
+        raise Exception("Can't let you do that Star Fox! Dangerous tests "
+                        "are disabled on this deployment.")
+    conn = main_doc_session.bind.conn
+    if isinstance(conn, mim.Connection):
+        clear_all_database_tables()
+        for db in conn.database_names():
+            db = conn[db]
+    else:
+        for name, ds in Session._datastores.items():
+            log.info('Wiping database %s', name)
+            db = ds.db
+            for coll in db.collection_names():
+                if coll.startswith('system.'):
+                    continue
+                log.info('Dropping collection %s:%s', db.name, coll)
+                try:
+                    if index:
+                        db.drop_collection(coll)
+                    else:
+                        db[coll].remove()
+                except Exception:
+                    log.exception('dropping collection %s:%s', db.name, coll)
+    if index:
+        cmd = EnsureIndexCommand('ensure_index')
+        cmd.run([])
+    if getattr(g, 'cache', None):
+        g.cache.redis.flushdb()
+
+
+def clear_all_database_tables():
+    conn = main_doc_session.bind.conn
+    for db in conn.database_names():
+        if db == 'local':
+            continue
+        db = conn[db]
+        for coll in db.collection_names():
+            if coll.startswith('system.'):
+                continue
+            db[coll].remove()

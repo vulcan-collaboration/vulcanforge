@@ -1,0 +1,49 @@
+# settings here override those in development.ini
+[DEFAULT]
+debug = false
+combine_static_resources = true
+static_resources_dir = %(here)/data
+is_production = true
+
+[app:main]
+login_lock.engaged = true
+login_lock.num = 5
+login_lock.interval = 60
+auth.user.inactivity_period = 6
+auth.pw.lifetime.months = 6
+auth.pw.min_length = 10
+auth.pw.generations = 10
+auth.pw.min_levenshtein = 3
+auth.pw.min_lifetime.hours = 24
+idle_logout.enabled = true
+idle_logout.minutes = 30
+idle_logout.countdown_seconds = 20
+beaker.session.timeout = 1800
+beaker.session.secure = false
+profile_middleware = false
+auto_reload_templates = false
+
+[logger_root]
+level = WARN
+
+[logger_{{package}}]
+level = WARN
+
+[logger_vulcanforge]
+level = WARN
+
+{%- if repo %}
+
+[logger_vulcanrepo]
+level = WARN
+{%- endif %}
+
+[logger_paste]
+level = WARN
+
+[logger_redis]
+level = WARN
+
+[logger_pylons]
+level = WARN
+

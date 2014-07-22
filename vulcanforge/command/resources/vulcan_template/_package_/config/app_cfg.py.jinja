@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+"""
+Global configuration file for tg2 and vulcanforge settings in {{package}}.
+
+Please note that **all the argument values are strings**. If you want to
+convert them into boolean, for example, you should use the
+:func:`paste.deploy.converters.asbool` function, as in::
+
+    from paste.deploy.converters import asbool
+    setting = asbool(global_conf.get('the_setting'))
+
+"""
+import logging
+
+from tg import config
+from vulcanforge.config import ForgeConfig
+{%- if repo %}
+from vulcanrepo.config import NAMESPACED_STATIC_DIRS
+{%- endif %}
+
+import {{package}}
+import {{package}}.model
+from {{package}}.lib import app_globals, helpers  # do not remove
+
+LOG = logging.getLogger(__name__)
+
+
+class AppConfig(ForgeConfig):
+
+    package = {{package}}
+    static_dirs = ForgeConfig.static_dirs + ['{{package}}:static']
+    template_dirs = ['{{package}}:templates'] + ForgeConfig.template_dirs
+    {%- if repo %}
+    namespaced_static_dirs = dict(
+        ForgeConfig.namespaced_static_dirs, **NAMESPACED_STATIC_DIRS)
+    vulcan_packages = ForgeConfig.vulcan_packages + ['vulcanrepo']
+    {%- endif %}
+
+
+base_config = AppConfig()

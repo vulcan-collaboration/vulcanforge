@@ -1,0 +1,208 @@
+import logging
+from urllib import unquote
+from tg.decorators import with_trailing_slash
+
+from webob import exc
+from pylons import app_globals as g, tmpl_context as c, request
+from tg import expose
+from vulcanforge.project.controllers import ProjectController
+from vulcanforge.tools.wiki.model import Page
+from vulcanforge.auth.model import User
+from vulcanforge.cache.decorators import cache_method, cache_rendered
+from vulcanforge.common.util import re_path_portion
+from vulcanforge.project.model import Project
+
+from {{package}}.controllers.root import RootController
+
+__all__ = ['RootController']
+
+log = logging.getLogger(__name__)
+
+
+class TestController(ProjectController, RootController):
+    """
+    Root controller for testing -- it behaves just like a
+    ProjectController for test/ except that all tools are mounted,
+    on-demand, at the mount point that is the same as their entry point
+    name.
+
+    Also, the test-admin is perpetually logged in here.
+
+    """
+
+    def __init__(self):
+        setattr(self, 'feed.rss', self.feed)
+        setattr(self, 'feed.atom', self.feed)
+        self.dispatch = DispatchTest()
+        self.security = SecurityTests()
+        self._cache = CacheTests()
+        super(TestController, self).__init__()
+
+    def _check_security(self):
+        # remove this when Project Controller is removed as a base cls
+        return True
+
+    @expose('jinja:front.html')
+    @with_trailing_slash
+    def index(self, **kwargs):
+        return RootController.index(self, **kwargs)
+
+    def _set_user_context(self):
+        c.user = g.auth_provider.user_cls.by_username(
+            request.environ.get('username', 'test-admin'))
+
+    def _setup_request(self):
+        super(TestController, self)._setup_request()
+        # This code fixes a race condition in our tests
+        c.project = Project.query.get(shortname='test')
+        c.memoize_cache = {}
+        count = 20
+        while c.project is None:
+            import time
+            time.sleep(0.5)
+            log.warning('Project "test" not found, retrying...')
+            c.project = Project.query.get(shortname='test')
+            count -= 1
+            assert count > 0, 'Timeout waiting for test project to appear'
+        c.neighborhood = c.project.neighborhood
+
+    def _cleanup_request(self):
+        pass
+
+    @expose()
+    def _lookup(self, name, *remainder):
+        if not re_path_portion.match(name):
+            raise exc.HTTPNotFound, name
+        subproject = Project.query.get(
+            shortname=c.project.shortname + '/' + name
+        )
+        if subproject:
+            c.project = subproject
+            c.app = None
+            return ProjectController(), remainder
+        app = c.project.app_instance(name)
+        if app is None:
+            prefix = 'test-app-'
+            ep_name = name
+            if name.startswith(prefix):
+                ep_name = name[len(prefix):]
+            try:
+                c.project.install_app(ep_name, name)
+                app = c.project.app_instance(name)
+            except Exception:
+                app = None
+            if app is None:
+                raise exc.HTTPNotFound, name
+        c.app = app
+        return app.root, remainder
+
+
+class DispatchTest(object):
+
+    @expose()
+    def _lookup(self, *args):
+        if args:
+            return NamedController(args[0]), args[1:]
+        else:
+            raise exc.HTTPNotFound()
+
+
+class NamedController(object):
+
+    def __init__(self, name):
+        self.name = name
+
+    @expose()
+    def index(self, **kw):
+        return 'index ' + self.name
+
+    @expose()
+    def _default(self, *args):
+        return 'default(%s)(%r)' % (self.name, args)
+
+
+class SecurityTests(object):
+
+    @expose()
+    def _lookup(self, name, *args):
+        name = unquote(name)
+        if name == '*anonymous':
+            c.user = User.anonymous()
+        else:
+            c.user = User.by_username(name)
+        return SecurityTest(), args
+
+
+class SecurityTest(object):
+
+    def __init__(self):
+        c.app = c.project.app_instance('wiki')
+        self.page = Page.query.get(
+            app_config_id=c.app.config._id,
+            title='Wiki Home')
+
+    @expose()
+    def forbidden(self):
+        g.security.require(lambda: False, 'Never allowed')
+        return ''
+
+    @expose()
+    def needs_auth(self):
+        g.security.require_authenticated()
+        return ''
+
+    @expose()
+    def needs_project_access_fail(self):
+        g.security.require_access(c.project, 'no_such_permission')
+        return ''
+
+    @expose()
+    def needs_project_access_ok(self):
+        if not g.security.has_access(c.project, 'read'):
+            log.info('Inside needs_project_access, c.user = %s' % c.user)
+            g.security.require(lambda: False)
+        return ''
+
+    @expose()
+    def needs_artifact_access_fail(self):
+        g.security.require_access(self.page, 'no_such_permission')
+        return ''
+
+    @expose()
+    def needs_artifact_access_ok(self):
+        g.security.require_access(self.page, 'read')
+        return ''
+
+
+def patchable_func():
+    """Use mock to patch this to check when it's called"""
+    return True
+
+
+class CacheTests(object):
+
+    @expose('json')
+    @cache_method(name="test_method_name", key="test_method_key")
+    def method(self, **kw):
+        patchable_func()
+        return {
+            'test1': 'val1',
+            'test2': 'val2'
+        }
+
+    @expose('jinja:vulcanforge.common:templates/error.html')
+    @cache_method()
+    def bad_json(self, **kw):
+        patchable_func()
+        return {
+            'code': 403,
+            'resp': True,
+            'status_text': 'Cache testing response',
+            'kill': self
+        }
+
+    @expose()
+    @cache_rendered(append_query=False, timeout=1)
+    def rendered(self, **kw):
+        patchable_func()
+        return '<html><title>Cache Test</test><body>cachemaster</body></html>'

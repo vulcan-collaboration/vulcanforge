@@ -1,0 +1,8 @@
+from ming.odm import Mapper
+
+from vulcanforge.config.model_registry import *
+{%- if repo %}
+from vulcanrepo.model_registry import *
+{%- endif %}
+
+Mapper.compile_all()
