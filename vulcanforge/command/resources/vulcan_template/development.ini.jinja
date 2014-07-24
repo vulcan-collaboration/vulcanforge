@@ -42,10 +42,6 @@ use = egg:Paste#http
 host = 0.0.0.0
 port = 8001
 
-#[filter-app:profile]
-#use=egg:keas.profile#profiler
-#next=main
-
 [app:main]
 use = egg:{{project}}
 
@@ -83,8 +79,8 @@ base_url = http://localhost:8080
 #
 beaker.session.key = vehicleforge
 beaker.session.type = cookie
-beaker.session.validate_key = YOUR_RANDOM_STRING
-beaker.session.encrypt_key = ANOTHER_RANDOM_STRING
+beaker.session.validate_key = {{cookievalidate}}
+beaker.session.encrypt_key = {{cookieencrypt}}
 
 #
 # if secure is set to true, will insist on ssl when sending cookies

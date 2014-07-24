@@ -5,6 +5,7 @@ import zipfile
 import bz2
 import re
 import os
+import random
 from urllib2 import urlopen
 from contextlib import contextmanager
 
@@ -13,6 +14,7 @@ from jinja2.loaders import FileSystemLoader
 
 import vulcanforge.command
 from vulcanforge.command import base
+from vulcanforge.common.util import cryptographic_nonce
 from vulcanforge.common.util.filesystem import temporary_zip_extract
 
 log = logging.getLogger(__name__)
@@ -49,7 +51,9 @@ class CreateVulcanAppCommand(base.Command):
         context = {
             "repo": self.options.repos,
             "package": self.args[0],
-            "project": self.options.name or self.args[0]
+            "project": self.options.name or self.args[0],
+            "cookievalidate": cryptographic_nonce(random.randint(30, 50)),
+            "cookieencrypt": cryptographic_nonce(random.randint(30, 50))
         }
 
         if len(self.args) > 1:
