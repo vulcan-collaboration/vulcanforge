@@ -235,6 +235,19 @@
     {% endif %}
 </script>
 
+{% if g.site_issues_url or g.site_faq_url%}
+<div id="beautiful_sunset">
+    {% if g.site_issues_url %}
+    <a id="report_an_issue" class="ico-tag_fill has-icon"
+       href="{{ g.site_issues_url }}">{{ g.site_issues_label }}</a>
+    {% if g.site_faq_url %}|{% endif %}
+    {% endif %}
+    {% if g.site_faq_url %}
+     <a id="faq_bot_link" href="{{ g.site_faq_url }}">{{ g.site_faq_label }}</a>
+    {% endif %}
+</div>
+{% endif %}
+
 {% for blob in g.resource_manager.emit('js') %}
 {{ blob }}
 {% endfor %}

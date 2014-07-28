@@ -1,0 +1,12 @@
+from vulcanforge.common.controllers import rest
+{%- if repo %}
+from vulcanrepo.controllers import RepoWebServiceAuthController
+{%- endif %}
+
+
+class WebServiceRestController(rest.WebServiceRestController):
+    {%- if repo %}
+    auth = RepoWebServiceAuthController()
+    {%- else %}
+    pass
+    {%- endif %}

@@ -63,7 +63,7 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
         stats_config = dict(global_conf, **app_conf)
         app = StatsMiddleware(app, stats_config)
         # Clear cookies when the CSRF field isn't posted
-    if not app_conf.get('disable_csrf_protection'):
+    if not asbool(app_conf.get('disable_csrf_protection')):
         csrf_blacklist_regex = app_conf.get('csrf_blacklist_regex') or None
         app = CSRFMiddleware(
             app, '_session_id',

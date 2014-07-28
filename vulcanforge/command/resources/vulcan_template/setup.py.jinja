@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+import sys
+
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages
+
+
+setup(
+    name='{{project}}',
+    version='0.1',
+    description='',
+    author='',
+    author_email='',
+    setup_requires=["PasteScript >= 1.7"],
+    paster_plugins=[
+        'PasteScript',
+        'Pylons',
+        'TurboGears2',
+        'tg.devtools',
+        'Ming',
+        {%- if repo %}
+        'VulcanRepo',
+        {%- endif %}
+        'VulcanForge'
+    ],
+    packages=find_packages(exclude=['ez_setup']),
+    install_requires=[
+        'VulcanForge'
+        {%- if repo %},
+        'VulcanRepo'
+        {%- endif %}
+    ],
+    include_package_data=True,
+    test_suite='nose.collector',
+    package_data={'{{package}}': [
+        'i18n/*/LC_MESSAGES/*.mo', 'templates/*/*', 'public/*/*'
+    ]},
+    message_extractors={'{{package}}': [
+            ('**.py', 'python', None),
+            ('templates/**.html', 'genshi', None),
+            ('public/**', 'ignore', None)]},
+    entry_points="""
+    [paste.app_factory]
+    main = {{package}}.config.middleware:make_app
+    task = {{package}}.config.middleware:make_task_app
+    tool_test = {{package}}.config.middleware:make_tool_test_app
+
+    [paste.app_install]
+    main = pylons.util:PylonsInstaller
+    tool_test = pylons.util:PylonsInstaller
+    """,
+    zip_safe=False
+)

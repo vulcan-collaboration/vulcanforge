@@ -1,0 +1,14 @@
+from collections import OrderedDict
+from vulcanforge.config.tool_manager import ToolManager as BaseToolManager
+{%- if repo %}
+from vulcanrepo.config import REPO_TOOL_SPEC
+{%- endif %}
+
+
+class ToolManager(BaseToolManager):
+    {%- if repo %}
+    default_tools = OrderedDict(
+        BaseToolManager.default_tools, **REPO_TOOL_SPEC)
+    {%- else %}
+    pass
+    {%- endif %}

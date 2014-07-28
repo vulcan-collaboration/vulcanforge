@@ -1,0 +1,14 @@
+# -*- coding: utf-8 -*-
+"""Main Controller"""
+
+from tg import expose, redirect
+from vulcanforge.common.controllers.root import ForgeRootController
+
+from {{package}}.controllers.rest import WebServiceRestController
+
+__all__ = ['RootController']
+
+
+class RootController(ForgeRootController):
+    """The root controller for the {{package}} application."""
+    webs = WebServiceRestController()

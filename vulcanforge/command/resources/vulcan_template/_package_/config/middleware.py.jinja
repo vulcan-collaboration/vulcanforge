@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+"""WSGI middleware initialization for the vehicleforge application."""
+import mimetypes
+import pkg_resources
+
+import pylons
+import pylons.middleware  # KEEP THIS, otherwise tg throws an import error
+import tg
+from vulcanforge.config.middleware import (
+    make_wsgi_app,
+    add_forge_middleware,
+    get_base_template_vars
+)
+
+from {{package}}.config.app_cfg import AppConfig
+from {{package}}.lib import helpers as h
+
+__all__ = ['make_app']
+
+
+def make_app(global_conf, full_stack=True, **app_conf):
+    """
+    Set {{package}} up with the settings found in the PasteDeploy
+    configuration file used.
+
+    :param global_conf: The global settings for vehicleforge (those
+        defined under the ``[DEFAULT]`` section).
+    :type global_conf: dict
+    :param full_stack: Should the whole TG2 stack be set up?
+    :type full_stack: str or bool
+    :return: The {{package}} application with all the relevant middleware
+        loaded.
+
+    This is the PasteDeploy factory for the vehicleforge application.
+
+    ``app_conf`` contains all the application-specific settings (those defined
+    under ``[app:main]``.
+
+    """
+    root = app_conf.get('override_root', 'root')
+    base_config = AppConfig(root)
+    app = make_wsgi_app(base_config, global_conf, app_conf, get_template_vars)
+    app = add_forge_middleware(app, base_config, global_conf, app_conf)
+
+    return app
+
+
+def get_template_vars(context):
+    get_base_template_vars(context)
+    context.setdefault('h', h)

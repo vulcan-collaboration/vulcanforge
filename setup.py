@@ -101,6 +101,8 @@ setup(
     },
     entry_points="""
     [paste.paster_command]
+    create-vulcanapp = vulcanforge.command.create_vulcanapp:CreateVulcanAppCommand
+
     eventd = vulcanforge.command.eventd:EventdCommand
     taskd = vulcanforge.command.taskd:TaskdCommand
     task = vulcanforge.command.taskd:TaskCommand

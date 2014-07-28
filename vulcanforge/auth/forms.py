@@ -68,7 +68,8 @@ class UserRegistrationEmailForm(ForgeForm):
                 wide=True,
             )
         ]
-        if not asbool(tg.config.get('disable_captcha_validation', 'false')):
+        if not asbool(tg.config.get('disable_captcha_validation', 'false')) \
+                and tg.config.get('recaptcha_public_key'):
             self.fields.append(
                 ReCaptchaField(
                     name="recaptcha",
@@ -94,7 +95,8 @@ class UserRegistrationEmailForm(ForgeForm):
             value.pop('recaptcha', None)
             raise Invalid("This email has been registered.", value, None)
 
-        if not asbool(tg.config.get('disable_captcha_validation', 'false')):
+        if not asbool(tg.config.get('disable_captcha_validation', 'false')) \
+                and tg.config.get('recaptcha_public_key'):
             recaptcha_validator = ReCaptchaValidator()
             error = recaptcha_validator.validate(value)
             if error:

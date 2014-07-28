@@ -27,7 +27,7 @@ class BaseController(_Base):
 
 
 class BaseTGController(_Base, TGController):
-    """Extends TGController, includes routing."""
+    """Extends TGController, which includes routing."""
     pass
 
 
@@ -35,7 +35,7 @@ class BaseRestController(_Base, RestController):
     pass
 
 
-class WsgiDispatchController(TGController):
+class WsgiDispatchController(BaseTGController):
     """
     Base class for the root controllers in the application.
 

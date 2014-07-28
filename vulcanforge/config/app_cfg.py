@@ -278,7 +278,7 @@ class ForgeConfig(AppConfig):
             port_str=':{}'.format(s3.port) if s3.port not in (80, 443) else '',
         )
 
-        s3_serve_local = asbool(config.get('swift.serve_local', 'f'))
+        s3_serve_local = asbool(config.get('s3.serve_local', 'f'))
         s3_auth = SwiftAuthorizer()
         config['pylons.app_globals'].s3 = s3
         config['pylons.app_globals'].s3_bucket = s3_bucket
@@ -395,7 +395,7 @@ class ForgeConfig(AppConfig):
             loaders = [PackagePathLoader()]
 
             fs_paths = []
-            # static directories have priority
+            # template directories have priority
             for tmpl_entry in self.template_dirs:
                 module, dir_path = tmpl_entry.split(':')
                 os_folder = pkg_resources.resource_filename(module, dir_path)

@@ -70,8 +70,6 @@ class ForgeAppGlobals(object):
         if self.__shared_state:
             return
 
-        self.use_queue = asbool(config.get('use_queue', False))
-
         # Load login/logout urls
         self.login_url = config.get('auth.login_url', '/auth/')
         self.logout_url = config.get('auth.logout_url', '/auth/logout')
@@ -182,10 +180,10 @@ class ForgeAppGlobals(object):
 
         # idle logout
         self.idle_logout_enabled = asbool(
-            config.get('idle_logout_enabled', True))
-        self.idle_logout_minutes = asint(config.get('idle_logout_minutes', 30))
+            config.get('idle_logout.enabled', True))
+        self.idle_logout_minutes = asint(config.get('idle_logout.minutes', 30))
         self.idle_logout_countdown_seconds = asint(
-            config.get('idle_logout_countdown_seconds', 30))
+            config.get('idle_logout.countdown_seconds', 30))
 
         # is openid enabled
         self.openid_enabled = asbool(config.get('openid.enabled', False))
@@ -227,6 +225,12 @@ class ForgeAppGlobals(object):
         self.websocket_enabled = asbool(config.get('websocket.enabled', True))
 
         self.gravatar_default = config.get('gravatar.default', "retro")
+
+        # Global site ticketing system
+        self.site_issues_url = config.get("site_issues_url")
+        self.site_issues_label = config.get("site_issues_label", "Help Desk")
+        self.site_faq_url = config.get("site_faq_url")
+        self.site_faq_label = config.get("site_faq_label", "FAQ")
 
     def gravatar(self, *args, **kwargs):
         options = {
