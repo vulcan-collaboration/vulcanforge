@@ -18,7 +18,6 @@ import pygments.formatters
 from paste.deploy.converters import asbool, asint
 from pylons import tmpl_context as c, request
 from tg import config, session
-from pypeline.markup import markup as pypeline_markup
 from boto.s3.key import Key
 
 from vulcanforge.common import helpers as h
@@ -87,9 +86,6 @@ class ForgeAppGlobals(object):
         self.pygments_formatter = pygments.formatters.HtmlFormatter(
             cssclass='codehilite',
             linenos='inline')
-
-        # Setup Pypeline
-        self.pypeline_markup = pypeline_markup
 
         # Setup analytics
         ga_account = config.get('ga.account', None)
