@@ -69,7 +69,6 @@ setup(
         "pyScss >= 1.2",
         "python-dateutil < 2.0",
         "requests",
-        "Pypeline",
         "jinja2",
         "BeautifulSoup==3.2.1",
         "python-markdown-oembed",
