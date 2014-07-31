@@ -37,7 +37,7 @@ setup(
     ],
     install_requires=[
         'tg.devtools == 2.2.2',
-        'simplejson >= 3',
+        'simplejson == 3.3.2',
         'FormEncode == 1.2.4',
         'ipython',
         "docutils < 0.10",
