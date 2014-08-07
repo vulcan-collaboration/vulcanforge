@@ -58,7 +58,7 @@ setup(
         "python-openid >= 2.2.4",
         "python-dateutil >= 1.4.1",
         "EasyWidgets==0.2dev-20130716",
-        "PIL >= 1.1.7",
+        "Pillow >= 1.1.7",
         "iso8601",
         "chardet == 1.0.1",
         "feedparser >= 5.0.1",
