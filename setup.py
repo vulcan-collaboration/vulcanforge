@@ -66,7 +66,7 @@ setup(
         "jsmin == 2.0.3",
         "cssmin",
         "pycrypto",
-        "pyScss < 1.3",
+        "pyScss == 1.2.0.post3",
         "python-dateutil < 2.0",
         "requests",
         "jinja2",
