@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """WSGI middleware initialization for a forge application."""
 
-from paste.deploy.converters import asbool
+from paste.deploy.converters import asbool, asint
 from paste.registry import RegistryManager
 from beaker.middleware import SessionMiddleware
 from routes.middleware import RoutesMiddleware
+from paste.gzipper import middleware as GzipMiddleware
 import pylons
 from pylons.middleware import StatusCodeRedirect
 from tg import config, error as tg_error, TGApp
@@ -41,6 +42,10 @@ def make_wsgi_app(base_config, global_conf, app_conf, get_template_vars):
 
     # Configure the Pylons environment
     load_environment(global_conf, app_conf)
+
+    if app_conf.get('temp_dir', None):
+        import tempfile
+        tempfile.tempdir = app_conf.get('temp_dir')
 
     app = TGApp()
 
@@ -82,6 +87,10 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
     app = VFMingMiddleware(app)
 
     app = VFMiddleware(app)
+
+    if asbool(config.get('web.compress', False)):
+        level = asint(config.get('web.compress.level', 6))
+        app = GzipMiddleware(app, compress_level=level)
 
     # Converts exceptions to HTTP errors, shows traceback in debug mode
     # Redirect some status codes to /error/document

@@ -73,7 +73,9 @@ $artifact-icons: sprite-map("artifact/images/*.png");
     background-image: url(../design_submission/images/design_icon.png);
 }
 
-
+.artifact-icon.FILE_ZIP {
+  background: sprite($artifact-icons, zip_icon) no-repeat;
+}
 
 .artifact-icon.FILE_IMAGE,
 .artifact-icon.blob,

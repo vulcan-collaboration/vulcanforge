@@ -139,22 +139,18 @@
                 if (this.iconURL) {
 
                     // if it has a specific icon, use that
-
                     switch (this.iconURL) {
 
                     case 'FILE_TEXT':
                     case 'FILE_IMAGE':
                     case 'FILE_DESIGN_SPACE':
                     case 'FILE_TESTBENCH_RESULT':
-
+                    case 'FILE_ZIP':
                         iconE.addClass(this.iconURL);
-
                         break;
 
                     default:
-
                         iconE.css('background-image', 'url(' + this.iconURL + ')');
-
                         break;
 
                     }

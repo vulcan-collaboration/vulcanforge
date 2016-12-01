@@ -36,7 +36,7 @@
 
                 $.ajax({
                     url: that.statePersistenceApiUrl,
-                    headers: { "VF_SESSION_ID": $.cookie( '_session_id' ) },
+                    headers: { "VFSessionID": $.cookie( '_session_id' ) },
                     success: function ( data ) {
                         that.enabled =
                             !(data && data[ that.pageId ] === 'hidden');
@@ -57,18 +57,12 @@
     $vf.Tutorial.prototype = {
 
         containerElement: null,
-
         title: null,
         description: null,
-
         pageId: null,
-
         elements: null,
-
         toolTipped: null,
-
         enabled: undefined,
-
         statePersistenceApiUrl: null,
 
         toggle: function () {
@@ -139,7 +133,7 @@
 
                 $.ajax({
                     url: that.statePersistenceApiUrl,
-                    headers: { "VF_SESSION_ID": $.cookie( '_session_id' ) },
+                    headers: { "VFSessionID": $.cookie( '_session_id' ) },
                     success: function ( data ) {
                         preference = data;
                     },
@@ -158,7 +152,7 @@
                         $.ajax({
                             type: "POST",
                             url: that.statePersistenceApiUrl,
-                            headers: { "VF_SESSION_ID": $.cookie( '_session_id' ) },
+                            headers: { "VFSessionID": $.cookie( '_session_id' ) },
                             data: preference
                         });
                     }

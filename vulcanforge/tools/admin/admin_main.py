@@ -3,7 +3,7 @@ import logging
 from itertools import ifilter
 
 from bson import ObjectId
-from ming.odm import ThreadLocalODMSession, state, session
+from ming.odm import state, session
 from webob import exc
 from formencode import validators as fev, Invalid
 from pylons import tmpl_context as c, app_globals as g
@@ -16,7 +16,7 @@ from vulcanforge.common.app import (
     DefaultAdminController
 )
 from vulcanforge.common.exceptions import ToolError
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.controllers.base import BaseController
 from vulcanforge.common.controllers.decorators import (
     validate_form, require_post, vardec)
@@ -28,6 +28,13 @@ from vulcanforge.common.widgets.util import LightboxWidget
 from vulcanforge.common.widgets.form_fields import MarkdownEdit, LabelEdit
 from vulcanforge.project.model import (
     Project, ProjectFile, ProjectCategory, ProjectRole, AppConfigFile)
+from vulcanforge.project.model.membership import (
+    MembershipRemovalRequest,
+    MembershipRequest,
+    MembershipInvitation,
+    MembershipCancelRequest,
+    RegistrationRequest
+)
 from vulcanforge.project.tasks import update_project_indexes
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.neighborhood.exceptions import RegistrationError
@@ -40,7 +47,6 @@ from vulcanforge.notification.util import gen_message_id
 from vulcanforge.messaging.model import Conversation
 
 from . import widgets as aw
-from . import model as AM
 
 
 LOG = logging.getLogger(__name__)
@@ -138,7 +144,6 @@ class ProjectAdminController(BaseController):
                 'action': 'overview_update',
                 'value': {
                     'name': project.name,
-                    'shortname': project.shortname,
                     'short_description': project.short_description,
                     'description': project.description,
                     'support_page_url': project.support_page_url,
@@ -188,7 +193,7 @@ class ProjectAdminController(BaseController):
                 icon.file,
                 content_type=icon.type,
                 square=True,
-                thumbnail_size=(48, 48),
+                thumbnail_size=(64, 64),
                 thumbnail_meta=dict(project_id=c.project._id, category='icon'))
             reindex = True
             session(ProjectFile).flush()
@@ -249,15 +254,15 @@ class ProjectAdminController(BaseController):
                     m.delete()
             return r
 
-        r_q = AM.MembershipRequest.query.find({
+        r_q = MembershipRequest.query.find({
             'project_id': c.project._id
         })
         requests = filter_mems(r_q)
-        inv_q = AM.MembershipInvitation.query.find({
+        inv_q = MembershipInvitation.query.find({
             'project_id': c.project._id
         })
         invitations = filter_mems(inv_q)
-        c_q = AM.MembershipCancelRequest.query.find({
+        c_q = MembershipCancelRequest.query.find({
             'project_id': c.project._id
         })
         cancellations = filter_mems(c_q, True)
@@ -301,7 +306,7 @@ class ProjectAdminController(BaseController):
             # For Julie, my heart's content
             if c.project.moderated_renounce and \
                     not c.project.user_requested_leave(user):
-                AM.MembershipRemovalRequest.upsert(
+                MembershipRemovalRequest.upsert(
                     user=user, initiator_id=c.user._id
                 )
                 flash("Membership Withdraw Request Initiated")
@@ -316,7 +321,7 @@ class ProjectAdminController(BaseController):
     def rescind_remove(self, username, **kw):
         user = User.by_username(username)
         if user:
-            AM.MembershipRemovalRequest.query.remove({
+            MembershipRemovalRequest.query.remove({
                 'project_id': c.project._id,
                 'user_id': user._id
             })
@@ -329,10 +334,7 @@ class ProjectAdminController(BaseController):
         if not user:
             raise exc.HTTPForbidden('User must be a member of the project')
 
-        pr = c.project.project_role(user)
-        role = ProjectRole.by_display_name('Admin')
-        if role._id not in pr.roles:
-            pr.roles.append(role._id)
+        c.project.add_user(user, ['Admin'])
         return dict(success=True)
 
     @expose('json')
@@ -358,7 +360,7 @@ class ProjectAdminController(BaseController):
     def deny_member(self, username, **kw):
         user = User.by_username(username)
         if user:
-            AM.MembershipRequest.query.remove({
+            MembershipRequest.query.remove({
                 'project_id': c.project._id,
                 'user_id': user._id
             })
@@ -379,13 +381,13 @@ class ProjectAdminController(BaseController):
                     unfound.append(u_id)
                 else:
                     if id_type == 'email':
-                        invite = AM.MembershipInvitation.from_email(
+                        invite = MembershipInvitation.from_email(
                             formatted, text=text
                         )
                         if user:
                             invite.user_id = user._id
                     else:
-                        invite = AM.MembershipInvitation.from_user(
+                        invite = MembershipInvitation.from_user(
                             user, text=text
                         )
                     invite.send()
@@ -398,7 +400,7 @@ class ProjectAdminController(BaseController):
     def rescind_invite(self, invite_id=None, **kw):
         if not invite_id:
             raise exc.HTTPNotFound
-        invite = AM.MembershipInvitation.query.get(_id=ObjectId(invite_id))
+        invite = MembershipInvitation.query.get(_id=ObjectId(invite_id))
         if not invite:
             raise exc.HTTPNotFound
         invite.delete()
@@ -410,7 +412,7 @@ class ProjectAdminController(BaseController):
             raise exc.HTTPNotFound
         requests = []
         request_fields = ['name', 'email']
-        reg_reqs = AM.RegistrationRequest.query.find({
+        reg_reqs = RegistrationRequest.query.find({
             'project_id': c.project._id,
             'status': status
         })
@@ -437,7 +439,7 @@ class ProjectAdminController(BaseController):
     def accept_new_user(self, req_id, **kw):
         if not c.project.can_register_users:
             raise exc.HTTPNotFound
-        req = AM.RegistrationRequest.query.get(_id=ObjectId(req_id))
+        req = RegistrationRequest.query.get(_id=ObjectId(req_id))
         if not req:
             flash("Registration Request not found", "error")
         elif req.status == "tbd":
@@ -452,17 +454,18 @@ class ProjectAdminController(BaseController):
     def deny_new_user(self, req_id, send_mail="yes", **kw):
         if not c.project.can_register_users:
             raise exc.HTTPNotFound
-        req = AM.RegistrationRequest.query.get(_id=ObjectId(req_id))
+        req = RegistrationRequest.query.get(_id=ObjectId(req_id))
         if not req:
             flash("Registration Request not found", "error")
         elif req.status != "tbd":
             flash("User already {}".format(req.status), "warn")
         else:
+            req.deny()
             if send_mail != "no":
                 template = g.jinja2_env.get_template(
                     'admin/mail/deny_new_user.txt')
                 text = template.render({
-                    "forge_name": config.get('forge_name', 'the forge')
+                    "forge_name": g.forge_name
                 })
                 mail_tasks.sendmail.post(
                     fromaddr=g.forgemail_return_path,
@@ -473,8 +476,6 @@ class ProjectAdminController(BaseController):
                     message_id=gen_message_id(),
                     text=text
                 )
-            UsersDenied(email=req.email)
-            req.status = "denied"
             flash("Registration Request Denied")
         return dict(success=True)
 
@@ -702,6 +703,7 @@ class AdminApp(Application):
 
     """
     __version__ = vulcanforge.__version__
+    has_chat = False
     tool_label = 'admin'
     static_folder = "admin"
     default_mount_label = 'Admin'
@@ -713,6 +715,21 @@ class AdminApp(Application):
         self.root = self.controller_cls()
         self.admin = AdminAppAdminController(self)
         self.sitemap = [SitemapEntry('Admin', '.')]
+
+    @classmethod
+    def permissions(cls):
+        perms = {
+            'admin': 'Configure this tool and its permissions',
+            'read': 'View tool interfaces'
+        }
+        return perms
+
+    @classmethod
+    def default_acl(cls):
+        acl = {
+            "Admin": ['admin', 'read']
+        }
+        return acl
 
     def is_visible_to(self, user):
         """Whether the user can view the app."""
@@ -784,7 +801,7 @@ class AdminApp(Application):
                 ui_icon=Icon('', 'ico-wrench'),
                 className='nav_child'))
         pending_str = ''
-        pending = AM.MembershipRequest.query.find({
+        pending = MembershipRequest.query.find({
             'project_id': c.project._id
         }).count()
         if pending:
@@ -797,7 +814,7 @@ class AdminApp(Application):
                 className='nav_child'))
         if c.project.can_register_users:
             pending_str = ''
-            pending = AM.RegistrationRequest.query.find({
+            pending = RegistrationRequest.query.find({
                 'project_id': c.project._id,
                 'status': 'tbd'
             }).count()
@@ -989,17 +1006,12 @@ class GroupsController(BaseController):
 
         # Handle users leaving project
         deleted_from_project = deleted_user_ids.difference(project_user_ids)
-        if c.user._id in deleted_from_project:
-            ThreadLocalODMSession.close_all()
-            flash('You may not remove yourself from the project')
-            raise exc.HTTPForbidden(
-                'You may not remove yourself from the project')
         for uid in deleted_from_project:
             user = User.query.get(_id=uid)
             if user:
                 if c.project.moderated_renounce and\
                         not c.project.user_requested_leave(user):
-                    AM.MembershipRemovalRequest.upsert(
+                    MembershipRemovalRequest.upsert(
                         user=user, initiator_id=c.user._id
                     )
                     flash("Membership Withdraw Request sent to {}".format(
@@ -1009,7 +1021,8 @@ class GroupsController(BaseController):
                         c.project.default_role._id)
                 else:
                     c.project.user_leave_project(
-                        user, notify=True, clean_roles=False, banished=True
+                        user, notify=True, clean_roles=False,
+                        banished=c.user._id == user._id
                     )
         for ev in events:
             ev.notify()

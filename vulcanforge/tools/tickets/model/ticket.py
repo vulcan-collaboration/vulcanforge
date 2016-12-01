@@ -1,11 +1,10 @@
 import logging
 import urllib
-import json
 from datetime import datetime
 import itertools
+import jinja2
 
 import bson
-import pymongo
 from pymongo.errors import OperationFailure
 from pylons import tmpl_context as c, app_globals as g
 
@@ -34,7 +33,7 @@ from vulcanforge.tools.tickets.tasks import refresh_search_counts
 from .session import ticket_orm_session
 
 LOG = logging.getLogger(__name__)
-
+TEMPLATE_DIR = 'vulcanforge.tools.tickets.templates'
 config = ConfigProxy(common_suffix='forgemail.domain')
 
 
@@ -213,6 +212,8 @@ class TicketHistory(Snapshot):
     class __mongometa__:
         name = 'ticket_history'
 
+    type_s = 'Ticket Snapshot'
+
     def original(self):
         return Ticket.query.get(_id=self.artifact_id)
 
@@ -228,14 +229,13 @@ class TicketHistory(Snapshot):
             return User.query.find({"_id": {"$in": self.assigned_to_ids}})
         return []
 
+    @property
+    def title_s(self):
+        return 'Version %d of %s' % (self.version, self.original().summary)
+
     def index(self, **kw):
         return super(TicketHistory, self).index(
-            title_s='Version %d of %s' % (
-                self.version, self.original().summary),
-            type_s='Ticket Snapshot',
-            text_objects=[
-                self.data.summary,
-            ],
+            text_objects=[self.data.summary],
             **kw
         )
 
@@ -316,7 +316,7 @@ class Ticket(VersionedArtifact):
             try:
                 session(ticket).flush(ticket)
                 return ticket
-            except OperationFailure, err:
+            except OperationFailure as err:
                 if 'duplicate' in err.args[0]:
                     LOG.warning('Try to create duplicate ticket %s',
                                 ticket.url())
@@ -324,11 +324,14 @@ class Ticket(VersionedArtifact):
                     continue
                 raise
 
+    @property
+    def title_s(self):
+        return 'Ticket %s' % self.ticket_num
+
     def index(self, **kw):
         assigned_to_name_s = ','.join(sorted(self.assigned_to_names))
         status = self.status or self.default_status
         params = dict(
-            title_s='Ticket %s' % self.ticket_num,
             version_i=self.version,
             type_s=self.type_s,
             ticket_num_i=self.ticket_num,
@@ -547,6 +550,11 @@ class Ticket(VersionedArtifact):
     def url(self):
         return self.app_config.url() + str(self.ticket_num) + '/'
 
+    def email_template(self):
+        template_loader = jinja2.Environment(
+            loader=jinja2.PackageLoader(TEMPLATE_DIR, 'email'))
+        return template_loader.get_template('Ticket.txt')
+
     @LazyProperty
     def next_ticket(self):
         return self.__class__.query.get(ticket_num=self.ticket_num + 1,
@@ -591,7 +599,7 @@ class Ticket(VersionedArtifact):
             'app_config_id': self.app_config_id,
             'artifact_id': self._id,
             'type': 'attachment'
-        })
+        }).all()
 
     def set_as_subticket_of(self, new_super_id):
         # For this to be generally useful we would have to check first that

@@ -1,0 +1,58 @@
+{% extends g.templates['polymer-user'] %}
+
+{% block title %}Two-Factor Authentication{% endblock %}
+
+{% block head %}
+    <style is="custom-style">
+        #login {
+            margin-top: 16px;
+        }
+        #reset {
+            margin-top: 12px;
+        }
+        .instructions {
+            max-width: 375px;
+        }
+        input[type="text"] {
+            color: black;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="layout horizontal center-center wrap">
+        <section class="paper-sheet big-margin big-padding">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="section-icon" icon="vf:login" role="img"></iron-icon>
+                Authentication Code
+            </h2>
+            <p class="instructions">
+                Use your mobile device to generate a code and enter it below.
+            </p>
+            <p class="instructions">
+                If your device is lost or stolen,
+                reset your password, then change your two-factor authentication key.
+            </p>
+            <form action="/auth/do_login2" method="POST" class="layout vertical">
+                <input type="hidden" name="_session_id" value="{{ h.get_csrf_value() }}"/>
+                {% if c.form_errors['_the_form'] %}
+                    <div class="form-error layout horizontal">
+                        <iron-icon icon="warning"></iron-icon>
+                        <div class="flex">{{ c.form_errors['_the_form'] }}</div>
+                    </div>
+                {% endif %}
+                <paper-input-container>
+                    <label>code</label>
+                    <input is="iron-input" type="text" name="totp_code" autofocus required/>
+                </paper-input-container>
+                <button id="login" type="submit" is="vf-button-submit" icon="arrow-forward" label="login" tabindex="-1"></button>
+                <paper-button-link id="reset" href="/auth/password_reset" tabindex="-1">
+                    <div class="layout horizontal center-center flex">
+                        <iron-icon icon="help" class="paper-button-icon" role="img"></iron-icon>
+                        <div class="flex label">reset password</div>
+                    </div>
+                </paper-button-link>
+            </form>
+        </section>
+    </div>
+{% endblock %}

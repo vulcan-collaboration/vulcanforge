@@ -17,4 +17,4 @@ class IndexSortableTicketAssignee(BaseMigration):
             ref_ids = [d['id'] for d in result.docs]
             add_tickets(ref_ids)
             page += 1
-        self.write_output('Reindexed {} tuckets'.format(result.hits))
+        self.write_output('Reindexed {} tickets'.format(result.hits))

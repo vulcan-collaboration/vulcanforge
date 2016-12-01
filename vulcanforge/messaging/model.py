@@ -45,7 +45,6 @@ from ming.odm.property import (
 from tg import config
 
 from vulcanforge.auth.model import User
-from vulcanforge.auth.security_manager import RoleCache
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.project.model import ProjectRole
 
@@ -157,8 +156,8 @@ class Conversation(MappedClass):
         if role_id in self.role_ids:
             return
         self.role_ids.append(role_id)
-        role = ProjectRole.query.find({'_id':role_id})
-        cache = RoleCache(g.security.credentials, role)
+        role = ProjectRole.query.find({'_id': role_id})
+        cache = g.security.RoleCache(g.security.credentials, role)
         for user in cache.users_that_reach:
             if not user.active():
                 continue
@@ -206,24 +205,32 @@ class Conversation(MappedClass):
         else:
             in_reply_to = None
         subject = u"New message on {}: \"{}\"".format(
-            config.get('forge_name', 'the forge'),
+            g.forge_name,
             message.get_summary_text())
         sender = g.forgemail_return_path
-        email_text = (
-            u"You have received a new message from {}:\n\n{}\n\n{}"
-        ).format(
-            message.author_info['name'],
-            message.text,
-            message.get_url()
+        title_html = '<h1 style="vertical-align: middle; font-size: 26px">' \
+                     'You have received a new message from {}</h1>'.format(
+            message.author_info['name']
         )
+        email_text = (
+            u'\n{}\n\n<a href={} style="text-decoration: none">Reply</a>'
+        ).format(
+            message.text,
+            g.url(message.get_url())
+        )
+        footer_html = '<p>You received this email because you have an ' \
+                      'account on {}</p>'.format(g.forge_name)
         recipient_ids = set()
         for user_id in email_recipient_ids:
             user = User.by_id(user_id)
             if user and user.get_pref('message_emails'):
                 recipient_ids.add(user_id)
         sendmail.post(sender, list(recipient_ids), email_text,
-                                 sender, subject, str(message._id),
-                                 in_reply_to)
+                      sender, subject, str(message._id),
+                      in_reply_to,
+                      title_html=title_html,
+                      footer_html=footer_html
+        )
 
 
 class ConversationStatus(MappedClass):

@@ -1,0 +1,598 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<link rel="import" href="../../gold-email-input/gold-email-input.html">
+
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+
+<link rel="import" href="../../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="../../paper-button/paper-button.html">
+<link rel="import" href="../../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../paper-dialog/paper-dialog.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-input/paper-input.html">
+<link rel="import" href="../../paper-input/paper-textarea.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../../file-upload/file-upload.html">
+<link rel="import" href="../dialog_style.html">
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-project-create">
+    <style is="custom-style" include="vf-styles"></style>
+    <style include="dialog_style">
+        paper-autocomplete {
+            --paper-input-container-underline-focus: {
+                background-color: var(--pitch);
+            }
+            --paper-input-container-label-focus: {
+                color:  var(--interactive);
+            }
+        }
+        paper-autocomplete[invalid] {
+            --paper-input-container-underline-focus: {
+                background-color: var(--danger);
+            }
+            --paper-input-container-underline: {
+                background-color: var(--danger);
+            }
+            --paper-input-container-label: {
+                color: var(--danger);
+            }
+            --paper-input-container-label-focus: {
+                color: var(--danger);
+            }
+        }
+        paper-dialog{
+            color: var(--pitch);
+        }
+        paper-dialog .heading {
+            background-color: var(--headingbar);
+            color: var(--interactive);
+            margin-top: 0;
+            padding: 0 8px;
+        }
+        paper-dialog .heading #header-label {
+            color: var(--pristine);
+            font-size: 20px;
+            font-weight: bold;
+        }
+        paper-dialog .heading #close {
+            min-width: 3em;
+            padding-right: 0;
+        }
+        paper-dialog #send-control {
+            margin-top: 16px;
+            margin-bottom: 0;
+            padding: 1em;
+            background-color: var(--subheadingbar);
+        }
+        paper-dialog {
+            margin: 0;
+            padding: 0;
+            width: 500px;
+            height: 75%;
+        }
+        paper-dialog #sections {
+            margin: 0;
+            padding: 0 8px;
+            margin-bottom: 8px;
+            height: 100%;
+            overflow: auto;
+        }
+        paper-dialog .instructions {
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        paper-dialog .subheading {
+            background-color: var(--subheadingbar);
+            font-size: 16px;
+            font-style: normal;
+            font-weight: bold;
+            padding: 4px 2px;
+            margin: 12px 0;
+        }
+        paper-dialog .subheading .flex {
+           margin-top: 4px;
+        }
+        paper-dialog #heading-icon {
+            color: var(--interactive);
+            margin-right: 8px;
+        }
+        paper-dialog .subheading-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+        }
+        paper-dialog .invitee-label-icon {
+            color: var(--pitch);
+            margin-right: 4px;
+            margin-top: 18px;
+        }
+        paper-dialog .invitee-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+            margin-top: 18px;
+        }
+        paper-dialog .team-icon {
+            height: 80px;
+            width: 80px;
+            margin: 8px 24px;
+            color: var(--interactive);
+        }
+        paper-dialog .action {
+            min-width: 3em;
+            cursor: pointer;
+        }
+        paper-dialog .optional {
+            font-style: normal;
+            margin-right: 8px;
+            font-size: 14px;
+            color: var(--subheadingtext);
+        }
+        paper-dialog #invitation-controls {
+            margin-top: 8px;
+        }
+        paper-dialog .invitations {
+            padding-bottom: 20px;
+        }
+        #summary-feedback,
+        #parent-feedback,
+        #name-feedback {
+            display: none;
+        }
+        p.skimpy {
+            margin-top: 4px;
+            margin-bottom: 0;
+        }
+        paper-dialog .feedback {
+            padding: .5em;
+        }
+        paper-dialog .feedback-icon {
+            color: var(--danger);
+            margin-right: 4px;
+        }
+        paper-dialog .feedback-text {
+            color: var(--subheadingtext);
+        }
+        paper-dialog .imaging {
+            min-height: 220px;
+        }
+        paper-dialog .imaging-content {
+            min-height: 92px;
+        }
+        file-upload {
+            --file-upload-button: {
+                color: var(--interactive);
+                background-color: var(--headingbar);
+                margin: 20px 18px 20px -14px;
+                min-width: 3em;
+            }
+            --file-upload-upload-border: {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 8px;
+            }
+        }
+        gold-email-input, paper-input, paper-textarea {
+            --paper-input-container-underline-focus: {
+                background-color: var(--pitch);
+            }
+            --paper-input-container-label-focus: {
+                color: var(--interactive);
+            }
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        paper-checkbox {
+            --paper-checkbox-checked-color: var(--pitch);
+        }
+        @media (max-width: 480px) {
+            paper-dialog {
+                width: 360px;
+            }
+        }
+        @media (max-width: 320px) {
+            paper-dialog {
+                width: 300px;
+            }
+        }
+    </style>
+    <template>
+        <iron-ajax id="usersloader" last-response="{{users}}"></iron-ajax>
+        <iron-ajax id="teamsloader" last-response="{{teams}}"></iron-ajax>
+        <paper-dialog id="createdialog" class="layout vertical flex" modal>
+            <div class="heading layout horizontal center-center">
+                <iron-icon id="heading-icon" icon="social:group-add"></iron-icon>
+                <div id="header-label" class="flex">Create A {{kind}}</div>
+                <paper-button id="close" dialog-dismiss><iron-icon icon="close"></iron-icon></paper-button>
+                <paper-tooltip for="close" position="left">Cancel</paper-tooltip>
+            </div>
+            <div id="sections" class="flex">
+                <div class="instructions">Scroll down for more settings.</div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:people"></iron-icon>
+                    <div class="flex">Identify</div>
+                    <div class="optional">required</div>
+                </div>
+                <paper-input id="name" label="{{kind}} Name"
+                             auto-validate pattern="[A-Za-z]+[A-Za-z0-9 -]*"
+                             error-message="Letter, then letters, numbers, dashes, and spaces."
+                             on-blur="_nameCheck" on-focus="_nameFocus">
+                </paper-input>
+                <div id="name-feedback" class="feedback layout horizontal center-center">
+                    <iron-icon class="feedback-icon" icon="icons:block"></iron-icon>
+                    <div class="feedback-text">{{nameFeedback}}</div>
+                </div>
+                <paper-textarea id="summary" label="Single Line Description"
+                                on-focus="_summaryFocus"></paper-textarea>
+                <div id="summary-feedback" class="feedback layout horizontal center-center">
+                    <iron-icon class="feedback-icon" icon="icons:block"></iron-icon>
+                    <div class="feedback-text">Please provide a single line description.</div>
+                </div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:people"></iron-icon>
+                    <div class="flex">Invite Members</div>
+                    <div class="optional">optional</div>
+                </div>
+                <div class="instructions flex">
+                    Invite current users by name, or new users by email address.
+                    <p class="skimpy"><b>Note:</b> New users will be instructed to register before accepting invitation.</p>
+                </div>
+                <div id="invitation-controls" class="layout horizontal center-center">
+                    <paper-button id="add-user" class="action" raised on-tap="_addInvitee">
+                        <iron-icon icon="social:group-add"></iron-icon>
+                    </paper-button>
+                    <paper-tooltip for="add-user" position="left">Invite current user</paper-tooltip>
+                    <paper-button id="add-email" class="action" raised on-tap="_addEmailInvitee">
+                        <iron-icon icon="icons:mail"></iron-icon>
+                    </paper-button>
+                    <paper-tooltip for="add-email" position="right">Invite new user</paper-tooltip>
+                </div>
+                <div class="invitations flex">
+                    <template id="repeater" is="dom-repeat" items="{{invitees}}">
+                        <div class="layout horizontal center flex">
+                            <iron-icon class="invitee-label-icon" icon="{{_getInviteeIcon(item)}}"></iron-icon>
+                            <template is="dom-if" if="{{_isUser(item)}}">
+                                <paper-autocomplete id="name" label="Name" source="{{userAutoCompleteItems}}"
+                                                    value="{{item.name}}" invalid
+                                                    event-namespace="."
+                                                    on-autocomplete.blur="_userCheck"
+                                                    on-autocomplete.selected="_userSelected"
+                                                    class="flex"></paper-autocomplete>
+                            </template>
+                            <template is="dom-if" if="{{!_isUser(item)}}">
+                                <gold-email-input id="email" class="flex" label="Email Address" value="{{item.name}}" auto-validate></gold-email-input>
+                            </template>
+                            <div class="layout vertical center">
+                                <div style="font-style:italic">Admin</div>
+                                <paper-checkbox id="admin" checked="{{item.isAdmin}}"></paper-checkbox>
+                                <paper-tooltip for="admin" position="left">Invite as adminstrator</paper-tooltip>
+                            </div>
+                            <iron-icon id="delete-invite" class="action invitee-icon" icon="icons:delete" on-tap="_removeInvitee"></iron-icon>
+                            <paper-tooltip for="delete-invite" position="left">Delete invitation</paper-tooltip>
+                        </div>
+                    </template>
+                </div>
+                <paper-textarea id="invitation_text" label="Custom Invitation Message" value="Please join my {{_lowerCase(kind)}}."></paper-textarea>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:people"></iron-icon>
+                    <div class="flex">Custom Icon</div>
+                    <div class="optional">optional</div>
+                </div>
+                <div class="instructions flex">
+                    Custom icons help differentiate teams.
+                    Use images with square aspect ratios.
+                </div>
+                <div class="imaging layout vertical center-center flex">
+                    <div class="imaging-content layout horizontal center flex">
+                        <iron-image class="team-icon" src="{{screen}}" sizing="cover"></iron-image>
+                    </div>
+                    <file-upload id="upload" class="imaging-content flex" droppable raised progress-hidden drop-text="Drop file here" accept="image/*" on-before-upload="_uploadedImage">
+                        <iron-icon id="choose-file" class="button-icon" icon="icons:add-box"></iron-icon>
+                    </file-upload>
+                    <div class="instructions">PNG, GIF, or JPG formats.</div>
+                </div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:people"></iron-icon>
+                    <div class="flex">Privacy</div>
+                    <div class="optional">optional</div>
+                </div>
+                <div class="instructions flex">
+                    By default, all of your {{_lowerCase(kind)}}'s tools, data, and files are
+                    restricted to {{_lowerCase(kind)}} members who you invite or approve.
+                    Making your {{_lowerCase(kind)}} <b>private</b> further makes it <b>invisible</b>
+                    to the remainder of the community.
+                    <p>While sometimes appropriate, adding this restriction weakens the community
+                        and provides <b>no additional {{_lowerCase(kind)}} security</b>.</p>
+                </div>
+                <div class="layout horizontal center-center">
+                    <paper-checkbox id="private"></paper-checkbox>
+                    <div class="flex">Private {{kind}}</div>
+                </div>
+            </div>
+            <div id="send-control" class="layout horizontal center-center">
+                <paper-button id="send" raised tabindex="-1" on-tap="_processRequest">
+                    <div class="container layout horizontal center-center">
+                        <iron-icon icon="check-circle"></iron-icon>
+                        <div class="label" style="margin-left: 6px; padding-right: 3px;">Submit</div>
+                    </div>
+                </paper-button>
+            </div>
+            </paper-dialog>
+        </paper-dialog>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-create",
+                properties: {
+                    neighborhood: {
+                        type: String,
+                        value: "projects"
+                    },
+                    kind: String,
+                    parent: String,
+                    nonce: String,
+                    users: Object,
+                    teams: Object,
+                    screen: Object,
+                    nameFeedback: String,
+                    invitees: {
+                        type: Array,
+                        value: function() { return []; }
+                    },
+                    teamAutoCompleteItems: {
+                        type: Array,
+                        computed: "_makeTeamAutoCompleteItems(teams)"
+                    },
+                    userAutoCompleteItems: {
+                        type: Array,
+                        computed: "_makeUserAutoCompleteItems(users)"
+                    }
+                },
+                _makeURL: function(s) {
+                    return "/" + this.neighborhood + "/" + s;
+                },
+                showDialog: function(kind, parent) {
+                    if (kind == "Subteam" && parent) {
+                        this.kind = kind;
+                        this.parent = parent;
+                    } else {
+                        this.kind = "Team";
+                        this.parent = undefined;
+                    }
+                    this.$.usersloader.url = this._makeURL("existing_users");
+                    this.$.usersloader.generateRequest();
+                    this.$.teamsloader.url = this._makeURL("existing_projects");
+                    this.$.teamsloader.generateRequest();
+                    this.screen = this._makeURL("project_icon_url");
+                    this.$.createdialog.toggle();
+                    this.$.createdialog.notifyResize();
+                },
+                _dataURLtoBlob: function(dataurl) {
+                    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                    while(n--){
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    return new Blob([u8arr], {type:mime});
+                },
+                _blobToDataURL: function(blob, callback) {
+                    var a = new FileReader();
+                    var self = this;
+                    a.onload = function(e) {callback(e.target.result, self);};
+                    a.readAsDataURL(blob);
+                },
+                _loadPreviewImage: function(dataURL, self) {
+                    self.screen = dataURL;
+                },
+                _uploadedImage: function(e) {
+                    var the_file = e.target.files[0];
+                    this.filename = the_file.name;
+                    this._blobToDataURL(the_file, this._loadPreviewImage);
+                    var uploader = this.querySelector("#upload");
+                    uploader.cancel(the_file);
+                    uploader.clear();
+                },
+                _makeTeamAutoCompleteItems: function(teams) {
+                    var items = [];
+                    for (var t in teams) {
+                        items.push({text: t, value: teams[t]});
+                    }
+                    return items.sort(function(a, b) {
+                        return a.text.localeCompare(b.text);
+                    });
+                },
+                _makeUserAutoCompleteItems: function(users) {
+                    var items = [];
+                    for (var t in users) {
+                        items.push({text: t, value: t});
+                    }
+                    return items.sort(function(a, b) {
+                        return a.text.localeCompare(b.text);
+                    });
+                },
+                _makeUserAddresses: function(users) {
+                    var addresses = {};
+                    for (var u in users) {
+                        addresses[users[u].email] = u;
+                    }
+                },
+                _isTeam: function(kind) {
+                    return kind == "Team";
+                },
+                _lowerCase: function(s) {
+                    return s.toLowerCase();
+                },
+                _nameFocus: function(e) {
+                    this.querySelector("#name-feedback").style.display = "none";
+                },
+                _summaryFocus: function(e) {
+                    this.querySelector("#summary-feedback").style.display = "none";
+                },
+                _nameCheck: function(e) {
+                    var name = this.$.name.value;
+                    this.nameFeedback = "This name is currently being used.";
+                    var is_current = name in this.teams;
+                    if (is_current) {
+                        this.querySelector("#name-feedback").style.display = "flex";
+                    } else if (name) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.domHost = this;
+                        xhr.onload = function (e) {
+                            var response = JSON.parse(e.target.response);
+                            var display = (response.found) ? "flex" : "none";
+                            var host = e.target.domHost;
+                            host.querySelector("#name").setAttribute('invalid_exists', response.found);
+                            host.querySelector("#name-feedback").style.display = display;
+                        };
+                        var url = this._makeURL("team_exists");
+                        xhr.open("GET", url + "?name=" + name, true);
+                        xhr.send();
+                    } else {
+                        this.querySelector("#name-feedback").style.display = "none";
+                    }
+                },
+                _parentCheck: function(e) {
+                    var parent = e.target.text;
+                    var host = e.target.domHost;
+                    var display = (parent && !(parent in host.teams)) ? "flex" : "none";
+                    host.querySelector("#parent-feedback").style.display = display;
+                },
+                _parentSelected: function(e) {
+                    var host = e.target.domHost;
+                    host.querySelector("#parent-feedback").style.display = "none";
+                },                
+                _userCheck: function(e) {
+                    var name = e.detail.text;
+                    var valid = name in this.users;
+                    if (valid) {
+                        e.target.removeAttribute('invalid');
+                    } else {
+                        e.target.setAttribute('invalid', true);
+                    }
+                    this.updateStyles();
+                },
+                _userSelected: function(e) {
+                    e.target.removeAttribute('invalid');
+                    this.updateStyles();
+                },
+                _addInvitee: function() {
+                    this.unshift('invitees', {type: "user", name: "", isAdmin: false});
+                },
+                _addEmailInvitee: function() {
+                    this.unshift('invitees', {type: "email", name: "", isAdmin: false});
+                },
+                _isUser: function(item) {
+                    return item.type == "user";
+                },
+                _removeInvitee: function(e) {
+                    var model = e.model;
+                    var index = this.invitees.indexOf(model.item);
+                    this.splice('invitees', index, 1)
+                },
+                _getInviteeIcon: function(item) {
+                   return (item.type == 'user') ? "social:person" : "icons:mail";
+                },
+                _processRequest: function() {
+                    var dialog = this.$.createdialog;
+                    var formData = new FormData();
+                    formData.append("_session_id", this.nonce);
+                    // required: name
+                    var name_input = dialog.querySelector("#name");
+                    if (!name_input.value || name_input.invalid || name_input.getAttribute('invalid_exists') == "true") {
+                        if (!name_input.value) {
+                            this.nameFeedback = "Please provide a name.";
+                            this.querySelector("#name-feedback").style.display = "flex";
+                        } else {
+                            name_input.focus();
+                        }
+                        return;
+                    } else {
+                        formData.append('name', name_input.value)
+                    }
+                    // required: summary
+                    var summary_input = dialog.querySelector("#summary");
+                    if (!summary_input.value) {
+                        this.querySelector("#summary-feedback").style.display = "flex";
+                        return;
+                    } else {
+                        formData.append('summary', summary_input.value)
+                    }
+                    // privacy
+                    var private_checkbox = dialog.querySelector("#private");
+                    if (private_checkbox.checked) {
+                        formData.append("private", true);
+                    }
+                    // validated: invitations
+                    if (this.invitees.length) {
+                        var validated_invitees = [];
+                        var email_regex = /^\S+@\S+$/i;
+                        for (var i=0; i<this.invitees.length; i++) {
+                            var invitee = this.invitees[i];
+                            if (invitee.type == 'user') {
+                                if (invitee.name && invitee.name in this.users) {
+                                    validated_invitees.push({
+                                        username: this.users[invitee.name].username,
+                                        isAdmin: invitee.isAdmin
+                                    });
+                                }
+                            } else {
+                                if (invitee.name && invitee.name.match(email_regex)) {
+                                    validated_invitees.push({
+                                        address: invitee.name,
+                                        isAdmin: invitee.isAdmin
+                                    });
+                                }
+                            }
+                        }
+                        if (validated_invitees.length) {
+                            var msg = this.querySelector("#invitation_text");
+                            formData.append("invitation_msg", msg.value);
+                            formData.append("invitees", JSON.stringify(validated_invitees));
+                        }
+                    }
+                    // icon
+                    if (this.screen.indexOf("data:") == 0) {
+                        var filename = (this.filename) ? this.filename : "camera_image.png";
+                        var blob = this._dataURLtoBlob(this.screen);
+                        formData.append("icon", blob, filename);
+                    }
+                    var xhr = new XMLHttpRequest();
+                    xhr.domHost = this;
+                    xhr.onload = function(e) {
+                        var toast = document.querySelector("paper-toast#toast-notification");
+                        var host = e.target.domHost;
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            var ret = (typeof xhr.response == 'string') ? JSON.parse(xhr.response) : xhr.response;
+                            if (ret.status == 'success') {
+                                toast.show({text: host.kind + " created", duration: 3000});
+                                if (location.href.endsWith("dashboard")) {
+                                    location.reload(true);
+                                } else {
+                                    location.href = "/dashboard";
+                                }
+                            } else {
+                                toast.show({text: host.kind + " creation failed", duration: 3000});
+                            }
+                        } else {
+                            toast.show({text: host.kind + " creation failed", duration: 3000});
+                        }
+                    };
+                    var url = this._makeURL("do_create_team");
+                    xhr.open("POST", url, true);
+                    xhr.responseType = "json";
+                    xhr.send(formData);
+                    dialog.close();
+                }
+            });
+        })();
+    </script>
+
+</dom-module>

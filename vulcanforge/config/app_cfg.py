@@ -17,14 +17,15 @@ import os
 import pkg_resources
 
 from paste.deploy.converters import asbool, asint
-import pysolr
-import tg
-import tg.render
+from formencode.variabledecode import variable_decode
 import jinja2
 from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 import pylons
 from routes import Mapper
+import tg
+import tg.render
 from tg.configuration import AppConfig, config
+import pysolr
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.exception import S3CreateError
 
@@ -45,11 +46,12 @@ from vulcanforge.common.util.debug import (
 from vulcanforge import resources
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.util.model import close_all_mongo_connections
-from vulcanforge.config.render.jinja import PackagePathLoader, JinjaEngine
+from vulcanforge.config.render.jinja import PackagePathLoader
 from vulcanforge.config.render.jsonify import JSONRenderer
 from vulcanforge.config.render.template.filters import jsonify, timesince
 from .tool_manager import ToolManager
 from .context_manager import ContextManager
+from vulcanforge.exchange.api import ExchangeManager
 from vulcanforge.s3.auth import SwiftAuthorizer
 from vulcanforge.search.solr import SolrSearch
 from vulcanforge.search.util import MockSOLR
@@ -71,6 +73,7 @@ class ForgeConfig(AppConfig):
         'auth': ['vulcanforge:auth/static'],
         'dashboard': ['vulcanforge:dashboard/static'],
         'discussion': ['vulcanforge:discussion/static'],
+        'exchange': ['vulcanforge:exchange/static'],
         'neighborhood': ['vulcanforge:neighborhood/static'],
         'notification': ['vulcanforge:notification/static'],
         'project': ['vulcanforge:project/static'],
@@ -83,6 +86,7 @@ class ForgeConfig(AppConfig):
         'auth': ['vulcanforge:auth/templates'],
         'dashboard': ['vulcanforge:dashboard/templates'],
         'discussion': ['vulcanforge:discussion/templates'],
+        'exchange': ['vulcanforge:exchange/templates'],
         'neighborhood': ['vulcanforge:neighborhood/templates'],
         'notification': ['vulcanforge:notification/templates'],
         'project': ['vulcanforge:project/templates'],
@@ -112,6 +116,7 @@ class ForgeConfig(AppConfig):
         self.register_packages()
         self.setup_profiling()
         self.setup_tool_manager()
+        self.setup_exchange_manager()
         self.setup_resource_manager()
         self.setup_context_manager()
         self.setup_security()
@@ -144,12 +149,27 @@ class ForgeConfig(AppConfig):
 
     def setup_tool_manager(self):
         manager_path = config.get('tool_manager')
+        decoded = variable_decode(config)
+        tool_config = decoded.get('tools')
         if manager_path:
             cls = import_object(manager_path)
-            tool_manager = cls(config)
+            tool_manager = cls(tool_config)
         else:
-            tool_manager = ToolManager(config)
+            tool_manager = ToolManager(tool_config)
         config['pylons.app_globals'].tool_manager = tool_manager
+
+    def setup_exchange_manager(self):
+        manager_path = config.get('exchange_manager')
+        decoded = variable_decode(config)
+        xcng_config = decoded.get('exchange', {})
+        if manager_path:
+            exchange_manager_cls = import_object(manager_path)
+        else:
+            exchange_manager_cls = ExchangeManager
+        exchange_manager = exchange_manager_cls(
+            xcng_config,
+            config['pylons.app_globals'].tool_manager)
+        config['pylons.app_globals'].exchange_manager = exchange_manager
 
     def setup_resource_manager(self):
         # load resource manager
@@ -255,7 +275,7 @@ class ForgeConfig(AppConfig):
             aws_access_key_id=config.get('s3.connect_string', ''),
             aws_secret_access_key=config.get('s3.password', ''),
             host=config.get('s3.ip_address', ''),
-            port=asint(config['s3.port']) if 's3.port' in config else None,
+            port=asint(config['s3.port']) if config.get('s3.port') else None,
             is_secure=asbool(config.get('s3.ssl', 'false')),
             calling_format=OrdinaryCallingFormat()
         )
@@ -455,10 +475,10 @@ class ForgeConfig(AppConfig):
 
     def setup_visualize(self):
         if config.get('visualize.artifact_interface'):
-            visualize_artifcact = import_object(
+            visualize_artifact = import_object(
                 config['visualize.artifact_interface'])
         else:
-            visualize_artifcact = ArtifactVisualizerInterface
+            visualize_artifact = ArtifactVisualizerInterface
         if config.get('visualize.url_interface'):
             visualize_url = import_object(config['visualize.url_interface'])
         else:
@@ -470,7 +490,7 @@ class ForgeConfig(AppConfig):
             visualize_mapper_cls = VisualizerConfigMapper
         visualizer_mapper = visualize_mapper_cls()
 
-        config['pylons.app_globals'].visualize_artifact = visualize_artifcact
+        config['pylons.app_globals'].visualize_artifact = visualize_artifact
         config['pylons.app_globals'].visualize_url = visualize_url
         config['pylons.app_globals'].visualizer_mapper = visualizer_mapper
 

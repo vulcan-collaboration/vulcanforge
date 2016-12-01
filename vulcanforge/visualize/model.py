@@ -237,10 +237,10 @@ class VisualizableQueryParam(BaseMappedClass):
     query_val = FieldProperty(str, if_missing=None)
 
     @classmethod
-    def get_query_dict(cls, visualizable, visualizer_config_id):
+    def get_query_dict(cls, unique_id, visualizer_config_id):
         cur = cls.query.find({
             "visualizer_config_id": visualizer_config_id,
-            "unique_id": visualizable.get_unique_id()
+            "unique_id": unique_id
         })
         return {p.query_param: p.query_val for p in cur}
 

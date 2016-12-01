@@ -1,5 +1,4 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
-{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{page.title}} / Edit{% endblock %}
 
 {% block header %}Edit <em>"{{page.title}}"</em>{% endblock %}
@@ -13,11 +12,13 @@
 {% endblock %}
 
 {% block actions %}
-  {{wiki_macros.page_actions(page, subscribed=subscribed, is_editing=True)}}
+    {% if page_exists %}
+        {{ c.menu_bar.display(page, is_editing=True) }}
+    {% endif %}
 {% endblock %}
 
 {% block wiki_content %}
-<form method="POST" class="can-retry" action="update" id="page_edit_form" enctype="multipart/form-data">
+<form method="POST" class="can-retry" action="do_edit" id="page_edit_form" enctype="multipart/form-data">
     <ul class="field-list padded">
         <li>
             <fieldset class="vf-fieldset">
@@ -31,6 +32,9 @@
                     </fieldset>
                 </div>
                 <hr>
+                {% if page.is_home %}
+                <p>This page is set as the <b>Home</b> therefore it is the landing page when you click on links refering to this tool.</p>
+                {% endif %}
                 <p>{{ c.featured_field.display(value=page.featured) }} <em>Featured</em> pages are included in the global navigation menu for easy access.</p>
             </fieldset>
         </li>

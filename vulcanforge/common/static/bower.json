@@ -1,0 +1,17 @@
+{
+  "name": "vf-polymer",
+  "description": "testing",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "homepage": "",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.2.0",
+    "iron-elements": "PolymerElements/iron-elements#^1.0.8",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.7",
+    "gold-elements": "PolymerElements/gold-elements#^1.0.1",
+    "paper-autocomplete": "^1.0.5",
+    "file-upload": "^1.7.5",
+    "vaadin-icons": "^1.0.2"
+  }
+}

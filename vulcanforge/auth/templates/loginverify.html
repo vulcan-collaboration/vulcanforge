@@ -1,0 +1,27 @@
+{% set hide_sidebar = True %}
+{% extends g.templates['master'] %}
+
+{% if bodyClasses is undefined %}
+    {% set bodyClasses = [] %}
+{% endif %}
+{% set bodyClasses = ['Login'] %}
+{% block title %}Login Form{% endblock %}
+
+{% block header %}Account Verification{% endblock %}
+
+{% block content %}
+
+    <div id="loginWrapper">
+        {% if is_returning_to  %}<p class="padded"><b>The request page is only accessible by authenticated users.</b></p>{% endif %}
+        <div id="loginContent" class="padded">
+            <div id="loginform">
+
+                <p>Your account requires verification.  Please enter the code sent to your primary email address.</p>
+
+                <h2><span>Verification Code</span></h2>
+                {{ c.form.display(action='./do_loginverify', value=dict(return_to=return_to, username=username), form_control_box=False, autocomplete=autocomplete) }}
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

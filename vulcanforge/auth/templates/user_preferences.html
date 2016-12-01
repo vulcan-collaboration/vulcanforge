@@ -2,10 +2,11 @@
 
 {% do g.resource_manager.register_css('auth/password_field.scss') %}
 {% do g.resource_manager.register_js('auth/password_field.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.knob.js') %}
 
 {% block title %}{{ c.user.username }} / Preferences{% endblock %}
 
-{% block header %}User Preferences for {{ c.user.username }}{% endblock %}
+{% block header %}User Preferences for {{ c.user.display_name }}{% endblock %}
 
 {% block content %}
 
@@ -16,7 +17,60 @@
             {{ password_change_form.display(requirements_hidden=True) }}
         </fieldset>
     {% endif %}
-    {% if upload_key_form %}
+    {% if two_factor_auth %}
+        <fieldset class="vf-fieldset">
+            <legend>Two-Factor Authentication</legend>
+            <div style="margin-left:16px">
+                <img src="{{g.resource_manager.absurl('images/twofactor1.png')}}" width="500" alt="two-factor overview"/>
+                <p>
+                Two-factor authentication adds an additional element of security when logging in to services on the Internet.
+                It combines something you know (your password) with something you have, like a mobile device, such as a smartphone.
+                </p>
+                <p>
+                The two-factor authentication system employed by this platform is a popular one called Time-based One-Time Passwords (TOTP).
+                An application running on your mobile device is used to generate a unique code (or token) as a
+                second authentication factor each time you log in.
+                </p>
+                <p>
+                You will find free, easy-to-use mobile apps, such as Google Authenticator and Authy, that support TOTP for all major device platforms.   
+                </p>
+            </div>
+            {{ two_factor_auth.display() }}
+        </fieldset>
+    {% endif %}
+    {% if two_factor_credential %}
+        <fieldset class="vf-fieldset">
+            <legend>Two-Factor Authentication Key</legend>
+            <img src="{{g.resource_manager.absurl('images/twofactor2.png')}}" width="440" alt="two-factor configuration"/>
+            <p>
+            The QR code below is used to set up your mobile device application to generate tokens for two-factor logins.
+            If your mobile device is lost or stolen, or your mobile app loses its configuration, you will need to
+            reset your password on this platform and then change this authentication key. 
+            </p>
+            <table>
+                <tr><td>
+                <div id="qrcode">
+                    <img src="/auth/qrcode"></img>
+                </div>
+                </td></td>
+                <tr align="center"><td>
+                <div style="font-size:2.7em;margin-top:10px">{{ two_factor_credential.value['code'] }}</div>
+                </td></tr>
+            </table>
+            <p style="margin-top:20px">
+            If the QR code cannot
+            be read by your mobile application, you can set it up manually using the text above.  
+            </p>
+            <h3 style="margin-top:20px">Confirm Your Setup</h3>
+            <p>If your mobile application is properly configured, then it should be generating the following codes:</p>
+            <div id="totp-code">
+                <div id="code" style="display:inline;font-size:36px;margin-right:8px;vertical-align:12px">------</div>
+                <input type="text" value="30" class="dial">
+            </div>
+            {{ two_factor_credential.display() }}
+        </fieldset>
+    {% endif %}
+    {% if g.user_ssh_public_key and upload_key_form %}
         <div class="forge-form-container">
             <form id="ssh_key_form" class="forge-form" method="post" action="/auth/prefs/upload_sshkey">
                 <fieldset class="vf-fieldset">
@@ -89,6 +143,7 @@
     </fieldset>
     {% endif %}
 
+    {% if g.user_change_primary_email %}
     <form id="email_mod_form" action="update" method="post">
         <fieldset class="vf-fieldset">
             <legend>Email Settings</legend>
@@ -148,22 +203,6 @@
                     <input type="email" id="new_addr.addr" name="new_addr.addr" class="text" value="" tabindex="10">
                     {{ lib.submit_button('Claim Address', name='new_addr.claim') }}
                 </p>
-                <p>
-                    <h4>Email Format</h4>
-                    <div>
-                    <select name="preferences.email_format">
-                        <option value="plain" {{ 'selected' if c.user.preferences.email_format == 'plain' else '' }}>
-                        Plain Text
-                        </option>
-                        <option value="html" {{ 'selected' if c.user.preferences.email_format == 'html' else '' }}>
-                        HTML
-                        </option>
-                        <option value="both" {{ 'selected' if c.user.preferences.email_format == 'both' else '' }}>
-                        Combined
-                        </option>
-                    </select>
-                    </div>
-                </p>
 
                 {% if g.openid_enabled %}
                     <h3>OpenID</h3>
@@ -193,6 +232,7 @@
             </div>
         </fieldset>
     </form>
+    {% endif %}
 
     <form id="delete_account_form" action="delete_account" method="POST">
         <fieldset class="vf-fieldset perilous">
@@ -255,6 +295,63 @@
                     'text area or drag and drop the key file from your ' +
                     'computer onto the text area.</p>');
             }
+            // TOTP confirmation test
+            {% if two_factor_credential %}
+            $(".dial").knob({
+                'min': 0,
+                'max': 30,
+                'readOnly': true,
+                'inputColor': "#777",
+                'height': 50,
+                'width': 50,
+                'bgColor': "#777"
+            });
+            var prev_totp,
+                current_totp,
+                clock = 30,
+                ok_color = "#6C6",
+                alert = 10,
+                alert_color = "#FF6",
+                warn = 5,
+                warn_color = "#FF2400",
+                updateInterval = window.setInterval(function () {
+                    $(document).
+                        trigger("UpdateCheck");
+                }, 1 * 1000);
+            $(document).
+            bind({
+                "UpdateCheck": function () {
+                    testXHR = $.ajax({
+                        url: 'config_test',
+                        success: function (resp) {
+                            if (resp.status == "success") {
+                                current_totp = resp.now;
+                                var color = ok_color;
+                                if (!prev_totp || prev_totp != current_totp) {
+                                    prev_totp = current_totp;
+                                    clock = resp.interval;
+                                } else {
+                                    clock -= 1;
+                                    color = (clock <= alert && clock > warn) ? alert_color :
+                                            (clock <= warn) ? warn_color : ok_color;
+                                }
+                                $('#code').html(current_totp);
+                                $('.dial').trigger(
+                                    'configure',
+                                    {
+                                        "max": resp.interval,
+                                        "fgColor": color
+                                    }
+                                );
+                                $('.dial')
+                                    .val(clock)
+                                    .trigger('change');
+                            }
+                        }
+                    });
+                }
+            }).trigger('UpdateCheck');
+            {% endif %}
         });
     }(jQuery));
 </script>

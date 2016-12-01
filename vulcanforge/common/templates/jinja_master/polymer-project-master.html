@@ -1,0 +1,80 @@
+{% extends g.templates['polymer-master'] %}
+
+{% block toplinks %}
+                <div class="layout horizontal wrap">
+                <paper-button-link href="/dashboard">
+                    <div class="layout horizontal center left-justify flex">
+                        <iron-icon class="site-control-icon" icon="dashboard"></iron-icon>
+                        My Dashboard
+                    </div>
+                </paper-button-link>
+                <paper-button-link href="/dashboard/activity_feed/select/{{c.project._id|safe}}">
+                    <div class="layout horizontal center left-justify flex">
+                        <iron-icon class="site-control-icon" icon="track-changes"></iron-icon>
+                        Activity Feed
+                    </div>
+                </paper-button-link>
+                </div>
+{% endblock %}
+
+{% block footerlinks %}
+            {% if g.site_issues_url %}
+                <paper-button-link href="{{ g.site_issues_url }}">
+                    <div class="layout horizontal center left-justify flex">
+                        <iron-icon class="site-control-icon" icon="vaadin-icons:lifebuoy"></iron-icon>
+                        {{ g.site_issues_label }}
+                    </div>
+                </paper-button-link>
+            {% endif %}
+            {% if g.site_faq_url %}
+                <paper-button-link href="{{ g.site_faq_url }}">
+                    <div class="layout horizontal center left-justify flex">
+                        <iron-icon class="site-control-icon" icon="help"></iron-icon>
+                        {{ g.site_faq_label }}
+                    </div>
+                </paper-button-link>
+            {% endif %}
+            <paper-button-link href="/users">
+                <div class="layout horizontal center left-justify flex">
+                    <iron-icon class="site-control-icon" icon="vaadin-icons:hands-up"></iron-icon>
+                    Community
+                </div>
+            </paper-button-link>
+            <paper-button-link href="/dashboard/teams">
+                <div class="layout horizontal center left-justify flex">
+                    <iron-icon class="site-control-icon" icon="social:people"></iron-icon>
+                    Teams
+                </div>
+            </paper-button-link>
+            <div class="flex"></div>
+            <paper-button tabindex="-1" onclick="openDialog()">
+                <div class="layout horizontal center left-justify flex">
+                    <iron-icon class="site-control-icon" icon="icons:add-circle-outline"></iron-icon>
+                    Team
+                </div>
+            </paper-button>
+            <paper-button-link id="footer-logout" href="/auth/logout">
+                <div class="layout horizontal center left-justify flex">
+                    <iron-icon class="site-control-icon" icon="icons:exit-to-app"></iron-icon>
+                    Logout
+                </div>
+            </paper-button-link>
+
+<vf-project-create id="footer-create-team" kind="Team" nonce="{{ h.get_csrf_value() }}"></vf-project-create>
+{% endblock %}
+{% block extra_js %}
+<script type="text/javascript">
+    function openDialog(kind, parent) {
+        var dialog = document.querySelector("#footer-create-team");
+        dialog.showDialog(kind, parent);
+    }
+    {% if g.idle_logout_enabled %}
+        $('#footer-logout').click(function() {
+            if (store.enabled) {
+                store.set('idleTimerLoggedOut', true);
+            }
+            return false;
+        });
+    {% endif %}
+</script>
+{% endblock %}

@@ -18,30 +18,30 @@
             trigger('change');
         $('input.mailbox_type[value!="digest"]').
             bind('change', function () {
-               $(this).closest('tr').
-                   find('.mailbox_type[value="digest"]').
-                   trigger('change');
+                $(this).closest('tr').
+                    find('.mailbox_type[value="digest"]').
+                    trigger('change');
             });
 
         // collapsible sections
-        $('.project-header').
+        $('.subscription-header').
             bind('click', function () {
                 $(this).
-                    closest('.project-container').
+                    closest('.subscription-container').
                     toggleClass('open').
-                    find('.project-content').
+                    find('.subscription-content').
                     slideToggle();
             }).
             each(function () {
                 var $container = $(this).
-                    closest('.project-container');
+                    closest('.subscription-container');
                 $container.
-                    find('.project-content').
+                    find('.subscription-content').
                     toggle($container.hasClass('open'));
             });
 
         // disable controls
-        $('.app_config-row').
+        $('.subscription-row').
             bind('refresh-row', function () {
                 var disabled = $(this).
                     has('input[type="checkbox"]:checked').
@@ -55,7 +55,7 @@
             find('input[type="checkbox"]').
             bind('change', function () {
                 $(this).
-                    closest('.app_config-row').
+                    closest('.subscription-row').
                     trigger('refresh-row');
             });
     });

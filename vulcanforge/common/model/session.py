@@ -60,6 +60,8 @@ class ArtifactSessionExtension(VFSessionExtension):
         """Update artifact references, and add/update this artifact to solr"""
         if not getattr(self.session, 'disable_artifact_index', False):
             from vulcanforge.artifact.model import ArtifactReference, Shortlink
+            from vulcanforge.exchange.model import ExchangeableArtifact, \
+                ExchangeNode
 
             # start list of affected app configs
             app_configs = set()
@@ -105,6 +107,21 @@ class ArtifactSessionExtension(VFSessionExtension):
             # Update Artifact label counts
             for app_config in app_configs:
                 app_config.update_label_counts()
+
+            # Update Exchange Nodes
+            for obj in self.objects_modified:
+                if issubclass(obj.__class__, ExchangeableArtifact):
+                    exchange_nodes = ExchangeNode.find_from_artifact(obj).all()
+                    if exchange_nodes:
+                        index_fields = obj.exchange_index_fields()
+                        for exchange_node in exchange_nodes:
+                            exchange_node.update_index_fields(
+                                index_fields=index_fields)
+                            # Temporary measure
+                            try:
+                                exchange_node.flush_self()
+                            except:
+                                pass
 
         super(ArtifactSessionExtension, self).after_flush(obj)
 

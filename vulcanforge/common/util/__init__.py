@@ -9,7 +9,7 @@ import tg
 from .filesystem import temporary_file, temporary_dir
 from .http import get_client_ip, set_cache_headers, set_download_headers
 
-re_path_portion = re.compile(r'^[a-z][-a-z0-9]{2,}$')
+re_path_portion = re.compile(r'^[a-z][-_a-z0-9]{2,}$')
 
 
 class ConfigProxy(object):

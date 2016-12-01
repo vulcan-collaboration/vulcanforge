@@ -1,0 +1,8 @@
+
+** <a href="{{prefix}}{{artifact.app_config.url()}}" style="text-decoration: none">{{artifact.app_config.options.mount_label}}</a> > <a href="{{prefix}}{{artifact.parent_url()}}" style="text-decoration: none">{{artifact.filename}}</a>**
+
+- **File name:** {{artifact.filename}}
+- **Size:** {{artifact.pretty_size}}
+- **Container:** <a href="{{prefix}}{{artifact.parent_url()}}" style="text-decoration: none">{{artifact.parent_name()}}</a>
+- **Created:** {{artifact.created_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}{% if artifact.creator %}
+- **Creator:** <a href="{{prefix}}{{artifact.creator.url()}}" style="text-decoration: none">{{artifact.creator.display_name}}</a>{% endif %}

@@ -44,7 +44,7 @@ def bootstrap(command, conf, vars, index=True):
     User(_id=None, username='*anonymous', display_name='Anonymous Coward')
 
     # create project and user neighborhoods
-    n_projects = Neighborhood(name='Projects', url_prefix='/p/')
+    n_projects = Neighborhood(name='Projects', url_prefix='/projects/')
     n_users = Neighborhood(
         name='Users', url_prefix='/u/', shortname_prefix='u/')
     p_projects = n_projects.register_neighborhood_project(

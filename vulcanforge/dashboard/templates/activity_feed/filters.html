@@ -1,6 +1,21 @@
 <ul class="project-filter-list">
+{% for exchange in exchanges %}
+    <li class="dashboard-filter-item">
+        <label for="exchange-filter-{{ exchange.uri }}" class="exchange-label" title="{{ exchange.name }}">
+            <a href="{{ exchange.url }}"><img class="exchange-icon" src="{{ exchange.icon_url }}" alt="{{ exchange.name }} icon"></a>
+            <input type="checkbox" class="exchange-filter-checkbox"
+                   name="exchange-filter-{{ exchange.uri }}"
+                   id="exchange-filter-{{ exchange.uri }}"
+                   value="{{ exchange.uri }}"
+                   {% if exchange_state[exchange.uri] %}
+                   checked="checked"
+                   {% endif %} >
+            {{ exchange.name }}
+        </label>
+    </li>
+{% endfor %}
 {% for project in projects %}
-    <li class="project-filter-item">
+    <li class="dashboard-filter-item">
         <label for="project-filter-{{ project._id }}" class="project-label" title="{{ project.name }}">
             <a href="{{ project.url }}"><img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }} icon"></a>
             <input type="checkbox" class="project-filter-checkbox"
@@ -25,6 +40,9 @@
                                checked="checked"
                                {% endif %} >
                         {{ app_config.options.mount_label }}
+                        {% if app_config._id in app_config_activity %}
+                        <em>({{ app_config_activity[app_config._id] }} new)</em>
+                        {% endif %}
                     </label>
                 </li>
             {% endfor %}

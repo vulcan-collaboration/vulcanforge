@@ -83,13 +83,6 @@ class SwiftAuthorizer(object):
         if user._id == user_id:
             return True
 
-        user_nbhd = Neighborhood.get_user_neighborhood()
-        swift_admin_ids = g.security.credentials.userids_with_named_role(
-            user_nbhd.neighborhood_project._id, 'SwiftAdmin')
-        result = user._id in swift_admin_ids
-        LOG.info('user is a swift admin: %s', result)
-        return result
-
     def _get_artifact_from_match(self, match):
         shorthand_id, key = match.group('shortlink_path').rsplit('#', 1)
         link = u'[{}:{}:{}]'.format(
@@ -105,8 +98,17 @@ class SwiftAuthorizer(object):
         # find shortlink for artifact
         has_permission = False
         bucket_name = match.group('bucket_name')
-        rev_keyname = urllib.quote(
-            keyname.split(bucket_name, 1)[-1].lstrip('/'))
+        keyname_witouth_bucket = keyname.split(bucket_name, 1)[-1].lstrip('/')
+
+        # FIX:
+        # Somewhat of a hack but needed because of special characters in URLs
+        if '#' in keyname_witouth_bucket:
+            parts = keyname_witouth_bucket.split('#')
+            part_2_rev = urllib.quote(parts[1])
+            rev_keyname = urllib.quote("#".join([parts[0], part_2_rev]))
+        else:
+            rev_keyname = urllib.quote(keyname_witouth_bucket)
+
         forge_file = FileReference.get_file_from_key_name(
             rev_keyname)
         if forge_file:
@@ -123,6 +125,17 @@ class SwiftAuthorizer(object):
                 artifact, permission, user=user)
             LOG.info('has_permission:%s for artifact %s', str(has_permission),
                      artifact.index_id())
+
+        # Fallback: if we cannot find the artifact but can identify the app
+        with g.context_manager.push(match.group('project'), match.group('app')):
+            if c.app:
+                if method.upper() == "GET":
+                    permission = 'read'
+                else:
+                    permission = c.app.config.reference_opts['create_perm']
+                has_permission = g.security.has_access(
+                    c.app.config, permission, user=user)
+
         return has_permission
 
     def has_access(self, keyname, method="GET", user=None):

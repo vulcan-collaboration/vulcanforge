@@ -1,0 +1,11 @@
+{% extends 'exchange/master.html' %}
+
+{% block title %}{{ node.title }} in {{ xcng_name }}{% endblock %}
+
+{% block header %}{{ node.display_name }} in {{ xcng_name }}{% endblock %}
+
+{% block actions %}{{ c.menu_bar.display(node) }}{% endblock %}
+
+{% block content %}
+    {{ c.renderer.display(node.artifact, node=node) }}
+{% endblock %}

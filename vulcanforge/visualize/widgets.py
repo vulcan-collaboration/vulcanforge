@@ -68,13 +68,36 @@ class IFrame(Widget):
     )
 
     def get_query(self, value, visualizer, extra_params=None):
+        from base import BaseProcessingVisualizer
         query = visualizer.get_query_for_url(value)
+
         if extra_params:
+            # Special case visualizing files from the exchange that are derived
+            if isinstance(visualizer, BaseProcessingVisualizer) and\
+               extra_params.has_key('resource_url') and\
+               query['resource_url'].startswith('/s3_proxy'):
+
+                extra_params.pop('resource_url')
+
             query.update(extra_params)
         return query
 
     def get_full_urls(self, value, visualizer, extra_params=None):
+        # If extra_params contains node_id make sure to add it to the resource_url
+        node_id = None
+        if extra_params is not None and extra_params.has_key('node_id'):
+            node_id = extra_params.pop('node_id')
+
         query = self.get_query(value, visualizer, extra_params)
+        if node_id is not None:
+            resource_url = query.pop("resource_url")
+            if 'node_id' not in resource_url:
+                if "?" in resource_url:
+                    resource_url += "&node_id={}".format(node_id)
+                else:
+                    resource_url += "?node_id={}".format(node_id)
+            query.update({'resource_url':resource_url})
+
         src_url = visualizer.src_url + '?' + urllib.urlencode(query)
         fs_query = {
             "resource_url": query.pop("resource_url"),
@@ -98,8 +121,17 @@ class ArtifactIFrame(IFrame):
     """Renders iframe given an artifact"""
 
     def get_query(self, value, visualizer, extra_params=None):
+        from base import BaseProcessingVisualizer
         query = visualizer.get_query_for_artifact(value)
+
         if extra_params:
+            # Special case visualizing files from the exchange that are derived
+            if isinstance(visualizer, BaseProcessingVisualizer) and\
+               extra_params.has_key('resource_url') and\
+               query['resource_url'].startswith('/s3_proxy'):
+
+                extra_params.pop('resource_url')
+
             query.update(extra_params)
         return query
 

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<dom-module id="grid_style">
+    <style include="style_base">
+        .grid_container {
+            position: relative;
+            margin: 15px;
+            border-radius: 2px;
+            background-color: var(--subheadingbar);
+            width: 220px;
+            height: 80px;
+        }
+        #elementName {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+        #elementNameFull {
+            text-overflow: wrap;
+            max-width: 140px;
+            position: absolute;
+            margin-top: 0px;
+            left: 46px;
+        }
+        #detailLeftClipped {
+            position:absolute;
+            bottom: 4px;
+            left: 4px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 95px;
+            font-size: 12px;
+            color: var(--subheadingtext);
+            font-style: italic;
+        }
+        #detailLeft {
+            display: inline-block;
+            float: left;
+            margin-top: 8px;
+            margin-left: 6px;
+            font-size: 12px;
+            color: var(--subheadingtext);
+            font-style: italic;
+        }
+        #detailRightClipped {
+            position:absolute;
+            bottom: 4px;
+            right: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 120px;
+            text-overflow: ellipsis;
+            font-size: 12px;
+            color: var(--subheadingtext);
+            font-style: italic;
+        }
+        #detailRight {
+            display: inline-block;
+            float: right;
+            margin-top: 8px;
+            margin-right: 6px;
+            font-size: 12px;
+            color: var(--subheadingtext);
+            font-style: italic;
+        }
+        .detailIcon{
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            color: var(--interactive);
+            opacity: 0;
+        }
+        #bigIcon{
+            width: 34px;
+            height: 34px;
+            padding: 6px;
+        }
+        #infoIcon{
+            color: var(--subheadingtext);
+            position:absolute;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+            top: 30px;
+        }
+        /* Search Bar */
+        #wrap {
+            color: var(--subheadingbar);
+            position: relative;
+            float: right;
+            padding: 0;
+            position: relative;
+        }
+        .searchButton{
+            color: var(--interactive);
+            height: 28px;
+            margin-left: 6px;
+        }
+        input[type="text"] {
+            height: 28px;
+            font-size: 22px;
+            display: inline-block;
+            font-weight: 100;
+            border: none;
+            outline: none;
+            color: #eeeeee;
+            padding-right: 30px;
+            width: 0px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            z-index: 3;
+            transition: width .4s cubic-bezier(0.000, 0.795, 0.000, 1.000);
+            cursor: pointer;
+        }
+        input[type="text"]:focus:hover {
+            color: #eeeeee;
+            border-bottom: 1px solid #BBB;
+        }
+        input[type="text"]:focus {
+            color: #eeeeee;
+            width: 130px;
+            z-index: 1;
+            border-bottom: 1px solid #BBB;
+            cursor: text;
+        }
+        @media (max-width: 320px) {
+            #search {
+                max-width: 80px;
+            }
+        }
+    </style>
+</dom-module>
+
+</html>

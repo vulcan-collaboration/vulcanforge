@@ -20,7 +20,7 @@ class SanitizeVisualizerKeys(BaseMigration):
                 if not g.get_s3_key(keyname, insert_if_missing=False):
                     key0 = g.get_s3_key(prefix + '%23' + path)
                     key1 = g.get_s3_key(keyname)
-                    key1.set_contents_from_string(key0.read())
+                    key1.set_contents_from_string(key0.read(), encrypt_key=g.s3_encryption)
                     key0.delete()
             count += 1
         self.write_output('Sanitized {} visualizers'.format(count))

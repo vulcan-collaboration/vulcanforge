@@ -1,0 +1,7 @@
+{{ page_html }}
+{% if not artifact.hide_attachments and artifact.attachments %}
+    {{ widgets.attachment_list.display(value=artifact) }}
+{% endif %}
+{% if artifact.labels %}
+    {{ widgets.label_list.display(artifact=artifact) }}
+{% endif %}

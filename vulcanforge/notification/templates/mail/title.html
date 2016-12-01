@@ -1,0 +1,11 @@
+<h1 style="vertical-align: middle; font-size: 26px">
+{% if artifact and artifact.app and artifact.app.mime_image_dict %}
+    <img width="32" height="32" src="cid:{{artifact.app.tool_label}}_logo" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 4px" />
+{% endif %}
+{% if artifact and artifact.url() %}
+    <span><a href="{{prefix}}{{artifact.url()}}" style="text-decoration: none">{{notification.title}}</a></span>
+{% else %}
+    <span>{{notification.title}}</span>
+{% endif %}
+
+</h1>

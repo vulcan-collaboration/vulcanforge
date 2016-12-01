@@ -2,8 +2,8 @@ import re
 import logging
 import smtplib
 import email.feedparser
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email import header
 
 import tg
@@ -108,6 +108,7 @@ def parse_message(data):
             result['payload'] = result['payload'].decode(charset)
     return result
 
+
 def identify_sender(peer, email_address, headers, msg):
     from vulcanforge.auth.model import EmailAddress, User
     # Dumb ID -- just look for email address claimed by a particular user
@@ -121,6 +122,7 @@ def identify_sender(peer, email_address, headers, msg):
         return addr.claimed_by_user()
     return User.anonymous()
 
+
 def encode_email_part(content, content_type):
     try:
         return MIMEText(
@@ -128,19 +130,25 @@ def encode_email_part(content, content_type):
     except:
         return MIMEText(content.encode('utf-8'), content_type, 'utf-8')
 
-def make_multipart_message(*parts):
+
+def make_multipart_message(plain_msg, html_msg, images=None):
     msg = MIMEMultipart('related')
     msg.preamble = 'This is a multi-part message in MIME format.'
     alt = MIMEMultipart('alternative')
     msg.attach(alt)
-    for part in parts:
-        alt.attach(part)
+    alt.attach(plain_msg)
+    alt.attach(html_msg)
+    if images:
+        for image in images:
+            msg.attach(image)
     return msg
+
 
 def _parse_message_id(msgid):
     if msgid is None: return []
     return [ mo.group(1)
              for mo in RE_MESSAGE_ID.finditer(msgid) ]
+
 
 def _parse_smtp_addr(addr):
     addr = str(addr)
@@ -149,6 +157,7 @@ def _parse_smtp_addr(addr):
     if '@' in addr: return addr
     # TODO: forgemail reference follows
     return 'noreply@in.vulcanforge.org'
+
 
 def isvalid(addr):
     """

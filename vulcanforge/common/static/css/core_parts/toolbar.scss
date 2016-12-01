@@ -6,12 +6,14 @@
 .toolbar-item {
     display: block;
     -webkit-flex: 0 0 auto;
+    -ms-flex: 0 0 auto;
     flex: 0 0 auto;
     position: relative;
 }
 
 .toolbar-item.toolbar-item-stretchy {
     -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
     flex: 1 1 auto;
 }
 

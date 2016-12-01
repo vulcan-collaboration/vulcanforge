@@ -11,7 +11,8 @@ from vulcanforge.artifact.model import (
     Feed,
     BaseAttachment,
     ArtifactReference,
-    Shortlink
+    Shortlink,
+    LogEntry
 )
 from vulcanforge.auth.model import (
     ApiToken,
@@ -22,13 +23,13 @@ from vulcanforge.auth.model import (
     AuthGlobals,
     WorkspaceTab,
     User,
-    TrustCache,
     PasswordResetToken,
     UserRegistrationToken,
     EmailChangeToken,
-    StaticResourceToken,
     UsersDenied,
-    FailedLogin
+    FailedLogin,
+    LoginVerificationToken,
+    TwoFactorAuthenticationToken
 )
 from vulcanforge.auth.openid.model import (
     OpenIdStore,
@@ -51,6 +52,7 @@ from vulcanforge.discussion.model import (
     AbstractThread
 )
 from vulcanforge.events.model import Event
+from vulcanforge.exchange.model import ExchangeNode, NodeHistory
 from vulcanforge.messaging.model import (
     Conversation,
     ConversationMessage,
@@ -68,7 +70,12 @@ from vulcanforge.project.model import (
     ProjectFile,
     AppConfig,
     AppConfigFile,
-    ProjectRole
+    ProjectRole,
+    RegistrationRequest,
+    MembershipRemovalRequest,
+    MembershipCancelRequest,
+    MembershipInvitation,
+    MembershipRequest
 )
 from vulcanforge.s3.model import File, FileReference
 from vulcanforge.taskd.model import MonQTask
@@ -80,7 +87,6 @@ from vulcanforge.visualize.model import (
     VisualizableQueryParam
 )
 
-from vulcanforge.tools.admin.model import *
 from vulcanforge.tools.downloads.model import (
     ForgeDownloadsFile, ForgeDownloadsDirectory
 )
@@ -88,4 +94,6 @@ from vulcanforge.tools.forum.model import *
 from vulcanforge.tools.home.model import UserJoin, UserExit, PortalConfig
 from vulcanforge.tools.tickets.model import *
 from vulcanforge.tools.wiki.model import *
+from vulcanforge.tools.chat.model import *
 from vulcanforge.migration.model import MigrationLog
+

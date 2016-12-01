@@ -1,10 +1,11 @@
 import logging
 import pymongo
 
-from tg import expose, validate, redirect
-from tg import request
+from tg import expose, validate, redirect, request, flash
+from tg.decorators import with_trailing_slash
 from pylons import app_globals as g, tmpl_context as c, url
 from webob import exc
+from formencode.variabledecode import variable_decode
 
 from vulcanforge.common.controllers.decorators import (
     require_post, validate_form, vardec
@@ -93,8 +94,14 @@ class ForumThreadController(ThreadController):
         if self.thread.discussion.deleted and \
                 not g.security.has_access(c.app, 'admin'):
             redirect(self.thread.discussion.url() + 'deleted')
+
+        show_moderate = c.app.config.options.get('PostingPolicy') != 'ApproveAll'
         return super(ForumThreadController, self).index(
-            limit=limit, page=page, count=count, show_moderate=True, **kw
+            limit=limit,
+            page=page,
+            count=count,
+            show_moderate=show_moderate,
+            **kw
         )
 
     @vardec
@@ -127,8 +134,13 @@ class ForumModerationController(ModerationController):
 class ForumController(BaseDiscussionController):
     Model = ModelConfig
 
+    class Forms(object):
+        new_topic = DW.NewTopicPost(submit_text='Save')
+        subscription_form = DW.SubscriptionForm()
+
     class Widgets(BaseDiscussionController.Widgets):
         discussion = FW.Forum()
+        discussion_header = DW.DiscussionHeader()
 
     thread_controller_cls = ForumThreadController
     moderate_controller_cls = ForumModerationController
@@ -137,7 +149,7 @@ class ForumController(BaseDiscussionController):
         g.security.require_access(self.discussion, 'read')
 
     def __init__(self, forum_id):
-        self.discussion = DM.Forum.query.get(
+        c.discussion = self.discussion = DM.Forum.query.get(
             app_config_id=c.app.config._id,
             shortname=forum_id)
         if not self.discussion:
@@ -152,10 +164,10 @@ class ForumController(BaseDiscussionController):
         else:
             raise exc.HTTPNotFound()
 
-    @expose(BASE_TEMPLATE_DIR + 'index.html')
+    @expose(TEMPLATE_DIR + 'discussion.html')
     def index(self, threads=None, limit=None, page=0, count=0, **kw):
         if self.discussion.deleted and \
-        not g.security.has_access(c.app, 'write'):
+        not g.security.has_access(c.app, 'admin'):
             redirect(self.discussion.url() + 'deleted')
         limit, page, start = g.handle_paging(limit, page)
         threads = DM.ForumThread.query.find({
@@ -164,13 +176,47 @@ class ForumController(BaseDiscussionController):
             ('flags', pymongo.DESCENDING),
             ('mod_date', pymongo.DESCENDING)
         ])
-        return super(ForumController, self).index(
+        return dict(
+            discussion=self.discussion,
             threads=threads.skip(start).limit(int(limit)).all(),
             limit=limit,
             page=page,
             count=threads.count(),
-            **kw
+            show_tutorial=True,
+            widgets=dict(
+                discussion_header=self.Widgets.discussion_header,
+                subscription_form=self.Forms.subscription_form)
         )
+
+    @with_trailing_slash
+    @expose(TEMPLATE_DIR + 'create_topic.html')
+    def create_topic(self, text='', **kw):
+        c.new_topic = self.Forms.new_topic
+        action_url = c.discussion.url() + 'save_new_topic'
+        return dict(action_url=action_url, forums=[], defaults=dict(text=text))
+
+    @vardec
+    @expose()
+    @require_post()
+    @validate_form("new_topic", error_handler=create_topic)
+    def save_new_topic(self, subject=None, text=None, **kw):
+        g.security.require_access(c.discussion, 'post')
+        thd = c.discussion.get_discussion_thread(dict(
+                headers=dict(Subject=subject)))
+        post = thd.post(subject, text)
+        posted_values = variable_decode(request.POST)
+        for attachment in posted_values.pop('new_attachments', []):
+            if not hasattr(attachment, 'file'):
+                continue
+            post.attach(
+                attachment.filename,
+                attachment.file,
+                content_type=attachment.type,
+                post_id=post._id,
+                thread_id=post.thread_id,
+                discussion_id=post.discussion_id)
+        flash('Topic was created')
+        redirect(thd.url())
 
     @expose()
     def icon(self):

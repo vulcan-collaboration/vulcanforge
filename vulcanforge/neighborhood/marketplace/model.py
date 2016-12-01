@@ -69,6 +69,8 @@ class ProjectAdvertisement(SOLRIndexed):
             'type_s': self.type_s,
             'title_s': self.get_title(),
             'url_s': self.url(),
+            'icon_url_s': self.project.icon and self.project.icon_url or '',
+            'home_url_s': self.project.home_ac.url(),
             'pubdate_dt': self.pub_date,
             'project_id_s': str(self.project_id),
             'read_roles': self.get_read_roles(),

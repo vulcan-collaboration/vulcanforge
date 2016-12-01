@@ -38,14 +38,13 @@ class _Jinja2Widget(FieldWidget):
                 self._escape(k), self._escape(v))
 
     def j2_attrs(self, *attrdicts):
-        attrdict={}
+        attrdict = {}
         for ad in attrdicts:
             if ad:
                 attrdict.update(ad)
         result = [
-        self._attr(k,v)
-        for k,v in sorted(attrdict.items())
-        if v is not None ]
+            self._attr(k, v) for k, v in sorted(attrdict.items())
+            if v is not None]
         return literal(' '.join(result))
 
 
@@ -76,7 +75,7 @@ class Resource(object):
 
 
 class ResourceLink(Resource):
-    file_type=None
+    file_type = None
 
     def __init__(self, url, scope, compress):
         self._url = url
@@ -113,9 +112,11 @@ class ResourceLink(Resource):
 
 
 class JSLink(ResourceLink):
-    file_type='js'
+    file_type = 'js'
+
     class WidgetClass(_Jinja2Widget):
-        template=Snippet('<script type="text/javascript" src="{{widget.href}}"></script>',
+        template = Snippet(
+            '<script type="text/javascript" src="{{widget.href}}"></script>',
             'jinja2')
 
     def __init__(self, url, scope='page', compress=True):
@@ -128,7 +129,8 @@ class JSLink(ResourceLink):
 
 
 class CSSLink(ResourceLink):
-    file_type='css'
+    file_type = 'css'
+
     class WidgetClass(_Jinja2Widget):
         template=Snippet('''<link rel="stylesheet"
                 type="text/css"
@@ -145,8 +147,25 @@ class CSSLink(ResourceLink):
         return self.WidgetClass(href=self.url(), attrs=self.attrs)
 
 
+class HTMLLink(ResourceLink):
+    file_type = 'html'
+
+    class WidgetClass(_Jinja2Widget):
+        template=Snippet('''<link rel="import" href="{{widget.href}}">''',
+                         'jinja2')
+
+    def __init__(self, url, scope='page', compress=True, **attrs):
+        super(HTMLLink, self).__init__(url, scope, compress)
+        self.attrs = attrs
+        del self.widget
+
+    @LazyProperty
+    def widget(self):
+        return self.WidgetClass(href=self.url(), attrs=self.attrs)
+
+
 class ResourceScript(Resource):
-    file_type=None
+    file_type = None
 
     def __init__(self, text, scope, compress):
         self.text = text
@@ -168,9 +187,10 @@ class ResourceScript(Resource):
 
 
 class JSScript(ResourceScript):
-    file_type='js'
+    file_type = 'js'
+
     class WidgetClass(_Jinja2Widget):
-        template=Snippet(
+        template = Snippet(
             '<script type="text/javascript">{{widget.text}}</script>',
             'jinja2')
 
@@ -190,9 +210,10 @@ class JSScript(ResourceScript):
 
 
 class CSSScript(ResourceScript):
-    file_type='css'
+    file_type = 'css'
+
     class WidgetClass(_Jinja2Widget):
-        template=Snippet('<style>{{widget.text}}</style>', 'jinja2')
+        template = Snippet('<style>{{widget.text}}</style>', 'jinja2')
 
     def __init__(self, text):
         super(CSSScript, self).__init__(text, 'page', True)

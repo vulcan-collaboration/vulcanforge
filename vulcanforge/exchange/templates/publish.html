@@ -1,0 +1,9 @@
+{% extends 'exchange/master.html' %}
+
+{% block title %}Share in {{ xcng_name }}{% endblock %}
+
+{% block header %}Share in {{ xcng_name }}{% endblock %}
+
+{% block content %}
+    {{ c.publish_form.display(value=value, artifact=artifact, action=publish_action) }}
+{% endblock %}

@@ -1,0 +1,1166 @@
+{% extends g.templates['polymer-user'] %}
+
+{% block title %}{{ config.get('forge_name', 'User') }} dashboard{% endblock %}
+{% block subheading_prefix %}{{ c.user.display_name }}{% endblock %}{% block subheading %}user&nbsp;dashboard{% endblock %}
+{% block head %}
+
+    <style is="custom-style">
+        section {
+            min-width: 400px;
+        }
+        input[type="text"] {
+            color: black;
+        }
+        .organize-buttons {
+            margin: 2rem 0 0 0;
+        }
+        .empty-message {
+            color: var(--toptext);
+            fill: var(--toptext);
+            text-align: center;
+        }
+        .approve-button {
+            color: var(--approve);
+            fill: var(--approve);
+        }
+        .cancel-button,
+        .deny-button {
+            color: var(--danger);
+            fill: var(--danger);
+        }
+        .cancel-button {
+            margin-left: 39px;
+        }
+        .registration-request-email {
+            color: #909090;
+        }
+        .info {
+            font-size: 1em;
+            font-style: italic;
+            font-family: Ubuntu, Roboto, sans-serif;
+            margin-top: -0.75em;
+            margin-bottom: 2em;
+        }
+        .section-icon {
+            margin-right: .5em;
+        }
+        .padded-icon {
+            --iron-icon-height: 50px;
+            --iron-icon-width: 50px;
+            padding: 8px 14px;
+            color: var(--interactive);
+        }
+        .stats-container {
+            background-color: var(--diffuse);
+            padding: .75em;
+        }
+        .stats-container.large {
+            padding: 1.25em;
+        }
+        .stats-header {
+            background-color: var(--subheadingbar);
+            color: var(--pitch);
+            padding: 4px;
+            margin-top: 8px;
+            font-family: Ubuntu, Roboto, sans-serif;
+            font-variant: small-caps;
+            font-size: 20px;
+            border-bottom: 2px solid var(--pristine);
+        }
+        .invitations {
+            margin-top: 30px;
+        }
+        #find-team {
+            margin-right: 2px;
+        }
+        .badge {
+            margin-left: 8px;
+        }
+        #search-submit {
+            margin-left: 2px;
+        }
+        #search-files {
+            margin-top: 3em;
+        }
+        #dataset-search {
+            margin-top: 1em;
+        }
+        .request-label,
+        .invite-label {
+            margin-left: 4px;
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        @media (max-width: 480px), (max-width: 320px) {
+            user-profile,
+            section {
+                min-width: 250px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% raw %}
+    <dom-module id="tool-stat">
+        <style>
+            .container {
+                position: relative;
+                margin-left: 1.5em;
+                margin-top: 4px;
+            }
+            :host.first .container,
+            :host.singleton .container {
+                margin-left: 0;
+            }
+            paper-badge {
+                --paper-badge-opacity: 1.0;
+                --paper-badge-text-color: var(--pitch);
+                --paper-badge-background: var(--pristine);
+            }
+            :host.changed paper-badge {
+                --paper-badge-text-color: var(--pristine);
+                --paper-badge-background: var(--interactive);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            a paper-icon-button,
+            a:active paper-icon-button,
+            a:visited paper-icon-button {
+              background-color: var(--headingbar);
+              color: var(--largefill);
+            }
+            :host paper-icon-button {
+                width: 75px;
+                height: 75px;
+            }
+            :host.large paper-icon-button {
+                width: 100px;
+                height: 100px;
+            }
+            :host.xlarge paper-icon-button {
+                width: 150px;
+                height: 150px;
+            }
+            :host paper-badge {
+                --paper-badge-width: 30px;
+                --paper-badge-height: 30px;
+                --paper-badge-margin-bottom: 0px;
+
+                --paper-badge: {
+                    font-size: 14px;
+                }
+            }
+            :host.xlarge paper-badge {
+                --paper-badge-width: 35px;
+                --paper-badge-height: 35px;
+
+                --paper-badge: {
+                    font-size: 14px;
+                }
+            }
+        </style>
+        <template>
+            <div class="container">
+                <a href$="{{href}}" tabindex="-1">
+                    <paper-icon-button id="icon" icon="{{icon}}" alt="{{label}}" raised></paper-icon-button>
+                    <paper-badge id="badge" for="icon" label="{{badgecount}}"></paper-badge>
+                    <paper-tooltip position="top" for="icon">{{tooltip}}</paper-tooltip>
+                </a>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "tool-stat",
+                    properties: {
+                        href: String,
+                        label: String,
+                        icon: String,
+                        count: Number,
+                        unseen: {
+                            type: Number,
+                            value: 0,
+                            observer: '_unseenChanged'
+                        },
+                        extraValue: {
+                            type: Number,
+                            value: 0
+                        },
+                        maxCount: {
+                            type: Number,
+                            value: 100
+                        },
+                        tiptemplate: String,
+                        badgecount: {
+                            computed: 'getBadgecount(count, unseen)'
+                        },
+                        tooltip: {
+                            computed: 'getTooltip(tiptemplate, count, unseen, extraValue)'
+                        }
+                    },
+                    getBadgecount: function(count, unseen) {
+                        var val = (unseen) ? unseen : count;
+                        return (val < this.maxCount) ? val : (this.maxCount - 1).toString() + "+";
+                    },
+                    getTooltip: function(template, count, unseen, extraValue) {
+                        var s = this.formatString(template);
+                        if (count == 1) {
+                            var re = new RegExp(this.label);
+                            s = s.replace(re, this.label.slice(0, -1));
+                        }
+                        if (unseen) {
+                            s += " (" + unseen.toString() + " new)";
+                        }
+                        return s;
+                    },
+                    formatString: function(template) {
+                        var subst = this.substitute;
+                        return template.replace(/%\w+%/g, subst.bind(this));
+                    },
+                    substitute: function(s) {
+                        var prop = s.slice(1, s.length-1);
+                        return (prop in this) ? this[prop] : "";
+                    },
+                    _unseenChanged: function(newValue, oldValue) {
+                        this.toggleClass('changed', newValue > 0);
+                        this.updateStyles();
+                    },
+                    ready: function() {
+                        this.toggleClass('changed', this.unseen > 0);
+                        this.updateStyles();
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="project-item">
+        <style>
+            .content {
+                background-color: var(--diffuse);
+                padding: .75em;
+                padding-top: 1em;
+                margin-right: 12px;
+                margin-left: 40px;
+            }
+            a paper-icon-button,
+            a:active paper-icon-button,
+            a:visited paper-icon-button {
+              color: var(--subheadingtext);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            .project-icon {
+                margin-right: 8px;
+            }
+            .undersize-icon {
+                height: 35px;
+                width: 35px;
+            }
+            .oversize-icon {
+                height: 45px;
+                width: 45px;
+                margin-top: 3px;
+            }
+            paper-checkbox#pref {
+                margin-left: 4px;
+                margin-bottom: 4px;
+                --paper-checkbox-checked-color: var(--interactive);
+            }
+            paper-checkbox.hidden {
+                display: none;
+            }
+            span#pname.greyed {
+                color: var(--diffuse);
+            }
+            @media (max-width: 320px) {
+                .admin-control {
+                    display: none;
+                }
+            }
+        </style>
+        <template>
+            <div class="header layout horizontal center-center">
+                <paper-checkbox id="pref" class="hidden" checked$="{{project.pref}}" noink on-change="_prefChange"></paper-checkbox>
+                <paper-tooltip for="pref" position="right">Keep on Dashboard"</paper-tooltip>
+                <paper-button-link href="[[project.url]]" class="layout horizontal center flex">
+                    <div class="layout horizontal center left-justify flex">
+                        <iron-icon src="[[project.icon_url]]" role="img" class="project-icon"></iron-icon>
+                        <span id="pname" class$="{{_nameClass(project.pref)}}">{{project.name}}</span>
+                    </div>
+                </paper-button-link>
+                <div class="layout horizontal center">
+                    <template is="dom-if" if="[[project.new]]">
+                        <a class="activity_link" href="/dashboard/activity_feed/select/[[project.project_id]]">
+                            <vf-badge id="badge" count="{{project.new}}"></vf-badge>
+                            <paper-tooltip for="badge" position="left">Team has [[project.new]] new [[_pluralize('item', project.new)]]</paper-tooltip>
+                        </a>
+                    </template>
+                    <template is="dom-if" if="[[project.can_admin]]">
+                        <a class="admin-control" href="[[project.url]]admin" tabindex="=1">
+                            <paper-icon-button icon="icons:build" class="undersize-icon"></paper-icon-button>
+                            <paper-tooltip position="left">Manage</paper-tooltip>
+                        </a>
+                        <a class="admin-control" href="[[project.url]]admin/members" tabindex="=1">
+                            <paper-icon-button icon="social:person-add"></paper-icon-button>
+                            <paper-tooltip position="left">Invite new members</paper-tooltip>
+                        </a>
+                    </template>
+                    <paper-icon-button id="expand-toggle" class="toogle" icon="[[_toggleIcon]]" on-tap="_toggleOpened"></paper-icon-button>
+                    <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+                </div>
+            </div>
+            <iron-collapse id="collapse" opened="{{opened}}">
+                <div class="content">
+                    <div class="layout horizontal center wrap">
+                        <template is="dom-if" if="[[project.tool_info.home]]">
+                            <tool-stat label="members" icon="social:people"
+                                       count="[[ project.tool_info.home.all ]]"
+                                       unseen="[[ project.tool_info.home.new ]]"
+                                       href="[[ project.tool_info.home.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[project.tool_info.Downloads.new]]">
+                            <tool-stat label="files" icon="icons:description"
+                                       count="[[ project.tool_info.Downloads.all ]]"
+                                       unseen="[[ project.tool_info.Downloads.new ]]"
+                                       href="[[ project.tool_info.Downloads.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[ project.tool_info.Discussion.new ]]">
+                            <tool-stat label="posts" icon="communication:forum"
+                                       count="[[ project.tool_info.Discussion.all ]]"
+                                       unseen="[[ project.tool_info.Discussion.new ]]"
+                                       href="[[ project.tool_info.Discussion.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[ project.tool_info.Tickets.new ]]">
+                            <tool-stat label="issues" icon="icons:turned-in"
+                                       count="[[ project.tool_info.Tickets.all ]]"
+                                       unseen="[[ project.tool_info.Tickets.new ]]"
+                                       href="[[ project.tool_info.Tickets.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[ project.tool_info.Wiki.new ]]">
+                            <tool-stat label="pages" icon="communication:import-contacts"
+                                       count="[[ project.tool_info.Wiki.all ]]"
+                                       unseen="[[ project.tool_info.Wiki.new ]]"
+                                       href="[[ project.tool_info.Wiki.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[ project.tool_info.Git.new ]]">
+                            <tool-stat label="Git commits" icon="vaadin-icons:folder-open"
+                                       count="[[ project.tool_info.Git.all ]]"
+                                       unseen="[[ project.tool_info.Git.new ]]"
+                                       href="[[ project.tool_info.Git.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                        <template is="dom-if" if="[[ project.tool_info.Svn.new ]]">
+                            <tool-stat label="Svn commits" icon="vaadin-icons:folder-open-o"
+                                       count="[[ project.tool_info.Svn.all ]]"
+                                       unseen="[[ project.tool_info.Svn.new ]]"
+                                       href="[[ project.tool_info.Svn.url ]]"
+                                       tiptemplate="Team has %count% %label%">
+                            </tool-stat>
+                        </template>
+                    </div>
+                </div>
+            </iron-collapse>
+            <vf-project-create id="dialog" kind="Subteam" parent="{{project.shortname}}" nonce="{{nonce}}"></vf-project-create>
+        </template>
+        <script>
+             HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "project-item",
+                    properties: {
+                        project: Object,
+                        opened: Boolean,
+                        nonce: String,
+                        _toggleIcon: {
+                            type: String,
+                            computed: '_computeToggleIcon(opened)'
+                        }
+                    },
+                    _toggleOpened: function(e) {
+                        this.opened = !this.opened;
+                    },
+                    _computeToggleIcon: function(opened) {
+                        return opened ? 'icons:expand-less' : 'icons:expand-more';
+                    },
+                    _newCount: function(count) {
+                        return (count < 100) ? count : "99+";
+                    },
+                    _pluralize: function(s, count) {
+                        return (count == 1) ? s : s + 's';
+                    },
+                    togglePref: function(flag) {
+                        this.querySelector("#pref").toggleClass('hidden', flag);
+                        this.updateStyles();
+                    },
+                    _prefChange: function(e) {
+                        this.project.pref = e.target.checked;
+                        this.toggleClass('greyed', !e.target.checked, this.$.pname);
+                        this.updateStyles();
+                    },
+                    _nameClass: function(pref) {
+                        return (pref) ? "" : "greyed";
+                    },
+                    _launchDialog: function() {
+                        this.$.dialog.showDialog("Subteam", this.project.shortname);
+                    }
+                });
+             });
+        </script>
+    </dom-module>
+
+    <dom-module id="project-list">
+        <style>
+            .header {
+                background-color: var(--headingbar);
+                padding: .15em;
+                padding-left: .5em;
+            }
+            .header-label {
+                font-style: italic;
+                color: var(--pristine);
+            }
+
+            .header iron-icon {
+                padding-right: 6px;
+                color: var(--interactive);
+            }
+            .list-container {
+                height: 318px;
+                overflow: auto;
+            }
+            .sorter {
+                font-style: italic;
+                font-size: 11px;
+            }
+            #sort-by-left {
+                color: var(--pristine);
+                margin-right: 8px;
+            }
+            #sort-by-right {
+                color: var(--pristine);
+            }
+            paper-toggle-button {
+                --paper-toggle-button-checked-bar-color: var(--diffuse);
+                --paper-toggle-button-checked-button-color: var(--pristine);
+                --paper-toggle-button-checked-ink-color: var(--pristine);
+                --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+                --paper-toggle-button-unchecked-button-color: var(--pristine);
+                --paper-toggle-button-unchecked-ink-color: var(--pristine);
+                --paper-toggle-button-label-color: var(--pristine);
+            }
+
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-style: normal;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            paper-icon-button#prefs {
+                margin-right: 4px;
+            }
+            paper-icon-button#expand-toggle,
+            paper-icon-button#prefs.selected {
+                color: var(--interactive);
+            }
+            project-item.hidden {
+                display: none;
+            }
+        </style>
+        <template>
+            <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+            <iron-ajax id="prefsajax" url="" on-response="_prefsResponse"></iron-ajax>
+            <div class="header layout horizontal center-center">
+                <iron-icon  icon="social:people"></iron-icon>
+                <div class="header-label flex">Teams ([[count]])</div>
+                <div class="sorter layout horizontal center-center">
+                    <div id="sort-by-left">activity</div><paper-toggle-button on-iron-change="sort_order"></paper-toggle-button><div id="sort-by-right">name</div>
+                    <paper-tooltip position="left">Sort options</paper-tooltip>
+                </div>
+                <paper-icon-button id="expand-toggle" class="toggle" icon="[[_toggleIcon]]" on-tap="_toggleExpanded"></paper-icon-button>
+                <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+            </div>
+            <div id="plist" class="list-container">
+                <template id="repeater" is="dom-repeat" items="{{data.projects}}" as="project">
+                    <project-item class$="{{_projectClass(project.pref)}}" project="{{project}}" nonce="{{nonce}}"></project-item>
+                </template>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "project-list",
+                    properties: {
+                        data: Object,
+                        url: String,
+                        count: Number,
+                        nonce: String,
+                        expanded: {
+                            type: Boolean,
+                            value: false
+                        },
+                        _toggleIcon: {
+                            type: String,
+                            computed: '_computeToggleIcon(expanded)'
+                        },
+                        _sortedByName: {
+                            type: Boolean,
+                            value: false
+                        }
+                    },
+                    _toggleExpanded: function(e) {
+                        this.expanded = !this.expanded;
+                        this._projectsOpened(this.expanded);
+                    },
+                    _getItems: function() {
+                        return this.$.plist.querySelectorAll("project-item");
+                    },
+                    _projectsOpened: function(opened) {
+                        var children = this._getItems();
+                        for (var i=0; i<children.length; i++) {
+                            children[i].opened = opened;
+                        }
+                    },
+                    _closeExpansion: function() {
+                        if (this.expanded) {
+                            this._toggleExpanded();
+                        } else {
+                            this._projectsOpened(false);
+                        }
+                    },
+                    _computeToggleIcon: function(expanded) {
+                        return expanded ? 'icons:expand-less' : 'icons:expand-more';
+                    },
+                    prefsSettings: function(mode) {
+                        this._closeExpansion();
+                        var children = this._getItems();
+                        for (var i=0; i<children.length; i++) {
+                            var pitem = children[i];
+                            pitem.togglePref(mode);
+                            pitem.toggleClass("hidden", !pitem.project.pref && mode);
+                            pitem.updateStyles();
+                        }
+                        if (mode) {
+                            var requester = this.$.prefsajax;
+                            var params = {};
+                            for (i = 0; i < this.data.projects.length; i++) {
+                                var project = this.data.projects[i];
+                                params[project.shortname] = project.pref;
+                            }
+                            requester.url = "/dashboard/updatePreferences";
+                            requester.params = {prefs: JSON.stringify(params)};
+                            requester.generateRequest();
+                        }
+                    },
+                    _prefsResponse: function(request) {
+                        var toast = document.querySelector("paper-toast#toast-notification");
+                        toast.show({text: "Dashboard preferences updated", duration: 3000});
+                    },
+                    _projectClass: function(pref) {
+                        return (pref || this.prefsMode) ? "" : "hidden";
+                    },
+                    capitalize: function(s) {
+                        return s.charAt(0).toUpperCase() + s.slice(1);
+                    },
+                    sort_order: function(e) {
+                        var name_sort = e.target.checked;
+                        if (name_sort && !this.sortedByName) {
+                            this._closeExpansion();
+                            this.data.projects.sort(function(a, b) {
+                               return a.name.localeCompare(b.name);
+                            });
+                            this.$.repeater.render();
+                            this._sortedByName = true;
+                        } else if (!name_sort && this._sortedByName) {
+                            this._closeExpansion();
+                            this.data.projects.sort(function(a, b) {
+                                return (a.index < b.index) ? -1 : (a.index > b.index) ? 1 : 0;
+                            });
+                            this.$.repeater.render();
+                            this._sortedByName = false;
+                        }
+                    }
+                });
+             });
+        </script>
+    </dom-module>
+
+    <dom-module id="section-control">
+        <style include="style_base">
+            .label {
+                font-weight: 500;
+                margin-left: 4px;
+                color: var(--pristine);
+                -moz-osx-font-smoothing: grayscale;
+            }
+            .link {
+                text-decoration: none;
+            }
+            paper-button {
+                display: block;
+                margin: 0;
+                padding: 0.3em 0.7em;
+            }
+            :host.organize-control paper-button {
+                padding: 0.3em 0.57em;
+            }
+        </style>
+        <template>
+            <a href="[[url]]" tabindex="-1" class="link">
+                <paper-button raised tabindex="-1">
+                    <div class="container layout horizontal center-center">
+                        <iron-icon icon="[[icon]]"></iron-icon>
+                        <div class="label">[[label]]</div>
+                    </div>
+                </paper-button>
+            </a>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "section-control",
+                    properties: {
+                        url: String,
+                        icon: String,
+                        label: String
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="create-team">
+        <style include="style_base">
+            .label {
+                font-weight: 500;
+                margin-left: 4px;
+                color: var(--pristine);
+                -moz-osx-font-smoothing: grayscale;
+            }
+            paper-button {
+                display: block;
+                margin: 0;
+                padding: 0.3em 0.7em;
+            }
+            :host.organize-control paper-button {
+                padding: 0.3em 0.57em;
+            }
+        </style>
+        <template>
+            <paper-button raised tabindex="-1" on-tap="_showDialog">
+                <div class="container layout horizontal center-center">
+                    <iron-icon icon="[[icon]]"></iron-icon>
+                    <div class="label">[[label]]</div>
+                </div>
+            </paper-button>
+            <vf-project-create id="dialog" kind="Team" nonce="{{nonce}}"></vf-project-create>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "create-team",
+                    properties: {
+                        icon: String,
+                        label: String,
+                        nonce: String
+                    },
+                    _showDialog: function() {
+                        this.$.dialog.showDialog();
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="dashboard-settings">
+        <style include="style_base">
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            #prefs {
+                margin-left: 0;
+                margin-right: 2px;
+            }
+            paper-button {
+                padding: 0.3em 0.57em;
+            }
+        </style>
+        <template>
+            <paper-button id="prefs" raised on-tap="_toggleMode"><iron-icon icon="[[_toggleIcon]]"></iron-icon></paper-button>
+            <paper-tooltip for="prefs" position="right">[[_prefsTooltip]]</paper-tooltip>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "dashboard-settings",
+                    properties: {
+                        prefsMode: {
+                            type: Boolean,
+                            value: false
+                        },
+                        _toggleIcon: {
+                            type: String,
+                            computed: '_computeIcon(prefsMode)'
+                        },
+                        _prefsTooltip: {
+                            type: String,
+                            computed: '_computePrefsTooltip(prefsMode)'
+                        }
+                    },
+                    _computeIcon: function(mode) {
+                        return (mode) ? 'icons:save' : 'icons:settings';
+                    },
+                    _computePrefsTooltip: function(mode) {
+                        return (mode) ? 'Save dashboard preferences' : 'Dashboard preferences';
+                    },
+                    _toggleMode: function() {
+                        document.querySelector("project-list").prefsSettings(this.prefsMode);
+                        this.prefsMode = !this.prefsMode;
+                    }
+                });
+             });
+        </script>
+    </dom-module>
+    <dom-module id="user-profile">
+        <style include="style_base">
+            .section-icon {
+                margin-right: .5em;
+            }
+            .padded-icon {
+                --iron-icon-height: 50px;
+                --iron-icon-width: 50px;
+                padding: 8px 14px;
+                color: var(--interactive);
+            }
+            .info {
+                font-size: 1em;
+                font-style: italic;
+                font-family: Ubuntu, Roboto, sans-serif;
+                margin-top: -0.75em;
+                margin-bottom: 2em;
+            }
+        </style>
+        <template>
+            <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+            <template is="dom-if" if="{{missingInfo}}">
+                <section class="paper-sheet small-margin small-padding flex">
+                    <h2 class="layout horizontal center-center">
+                        <iron-icon class="padded-icon" src="{{icon}}" role="img"></iron-icon>
+                        User Profile
+                    </h2>
+                    <div class="info layout horizontal center-center">Last online: {{_getLastLogin(lastlog)}}</div>
+                    <vf-user-profile url="{{url}}" min-password-length="{{minPasswordLength}}" static-url="{{staticUrl}}" nonce="{{nonce}}" data="{{data}}"></vf-user-profile>
+                </section>
+            </template>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "user-profile",
+                    properties: {
+                        data: Object,
+                        url: String,
+                        staticUrl: String,
+                        minPasswordLength: Number,
+                        nonce: String,
+                        icon: String,
+                        name: String,
+                        lastlog: String,
+                        _avatar: {
+                            type: Number,
+                            value: 0
+                        },
+                        missingInfo: {
+                            type: Boolean,
+                            computed: '_isMissingInfo(data, _avatar)'
+                        }
+                    },
+                    _isMissingInfo: function(data, avatar) {
+                        if (this._missing_info(data) || avatar == 404) {
+                            this.hidden = false;
+                            return true;
+                        } else if (avatar == 0 && data.icon.indexOf("gravatar") > 0) {
+                            var xhr = new XMLHttpRequest();
+                            xhr.onload = function(e) {
+                                var elem = document.querySelector("user-profile");
+                                elem.set("_avatar", xhr.status);
+                            };
+                            var url = data.icon.substring(0, data.icon.indexOf("?")) + "?d=404"
+                            xhr.open("GET", url, true);
+                            xhr.send();
+                        }
+                        return false;
+                    },
+                    _missing_info: function(data) {
+                        //return data.canEdit && (!data.position || !data.company || !data.telephone);
+                        return true;
+                    },
+                    _getLastLogin: function(ts) {
+                        return vffuncs.formatTime(ts);
+                    }
+                 });
+             });
+        </script>
+    </dom-module>
+    <dom-module id="activity-item">
+        <style>
+            .item {
+                padding: 0.25em;
+            }
+            .info {
+                margin-left: 4px;
+            }
+            .user-icon {
+                --iron-image-height: 50px;
+                --iron-image-width: 50px;
+                padding: 4px;
+            }
+            .tool-icon {
+                margin-right: 4px;
+            }
+            .actproject-icon {
+                --iron-image-height: 25px;
+                --iron-image-width: 25px;
+                margin-right: 4px;
+            }
+            .small-tool-icon {
+                --iron-image-height: 20px;
+                --iron-image-width: 20px;
+                margin-right: 4px;
+            }
+            .arrow-icon {
+                --iron-image-height: 25px;
+                --iron-image-width: 25px;
+            }
+            .timestamp {
+                color: var(--diffuse);
+                margin-top: 6px;
+                font-style: italic;
+                font-size: 12px;
+            }
+            .subject a {
+                text-decoration: none;
+                color: var(--subheadingtext);
+            }
+            .subject-line {
+                min-height: 24px;
+            }
+        </style>
+        <template>
+            <div class="item layout horizontal center">
+                <div class="info layout vertical flex">
+                    <template is="dom-if" if="{{!item.exchange_uri}}">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <a href="{{item.project.url}}"><iron-image class="actproject-icon" src="{{item.project.icon_url}}"></iron-image></a>
+                            <iron-icon class="arrow-icon" icon="icons:chevron-right"></iron-icon>
+                            <a href="{{item.app_config.url}}"><iron-image class="tool-icon" src="{{item.app_config.icon_url}}"></iron-image></a>
+                            <div class="subject flex"><a href="{{item.link}}">{{_subjectText(item.subject)}}</a></div>
+                        </div>
+                    </template>
+                    <template is="dom-if" if="{{item.exchange_uri}}">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <a href="{{item.exchange.url}}"><iron-image class="actproject-icon" src="{{item.exchange.icon_url}}"></iron-image></a>
+                            <iron-icon class="arrow-icon" icon="icons:chevron-right"></iron-icon>
+                            <a href="{{item.exchange.url}}"><iron-image class="small-tool-icon" src="{{item.exchange.icon_url}}"></iron-image></a>
+                            <div class="subject flex"><a href="{{item.link}}">{{_subjectText(item.subject)}}</a></div>
+                        </div>
+                    </template>
+                    <div class="timestamp">{{_timestamp(item.pubdate)}}</div>
+                </div>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "activity-item",
+                    properties: {
+                        item: Object
+                    },
+                    _subjectText: function(text) {
+                        var regexp = /\[.*?\] (.*)/;
+                        mo = regexp.exec(text);
+                        if (mo) {
+                            return mo[1];
+                        }
+                        return text;
+                    },
+                    _timestamp: function(olderDate, newerDate) {
+                        return vffuncs.ago(olderDate, newerDate);
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="activity-list">
+        <style>
+            .header {
+                background-color: var(--headingbar);
+                padding: .15em;
+                padding-left: .5em;
+            }
+            .header-label {
+                font-style: italic;
+                color: var(--pristine);
+            }
+            .header iron-icon {
+                padding-right: 6px;
+                color: var(--interactive);
+            }
+            .list-container {
+                height: 380px;
+                overflow: auto;
+                padding-top: 4px;
+            }
+            .empty-message {
+                color: var(--toptext);
+                fill: var(--toptext);
+                text-align: center;
+            }
+            .right-side-icon{
+                //color: #009999;
+                color: var(--interactive);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-style: normal;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+        </style>
+        <template>
+            <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+            <div class="header layout horizontal center-center">
+                <iron-icon icon="vaadin-icons:time-forward"></iron-icon>
+                <div class="header-label flex">Recent Activity</div>
+                <a class="activity-feed-link" href="/dashboard/activity_feed/" tabindex="-1">
+                    <paper-icon-button icon="track-changes" class="right-side-icon"></paper-icon-button>
+                    <paper-tooltip position="left">Activity Feed</paper-tooltip>
+                </a>
+            </div>
+            <template is="dom-if" if="[[_hasNotifications(data)]]">
+                <div id="alist" class="list-container">
+                    <template id="repeater" is="dom-repeat" items="{{data.notifications}}" as="notification">
+                        <activity-item item="{{notification}}"></activity-item>
+                    </template>
+                </div>
+            </template>
+            <template is="dom-if" if="[[!_hasNotifications(data)]]">
+                <div class="layout vertical center">
+                    <div class="empty-message">
+                        <p><iron-icon icon="warning"></iron-icon> No activity</p>
+                    </div>
+                </div>
+            </template>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "activity-list",
+                    properties: {
+                        url: String
+                    },
+                    _hasNotifications: function(o) {
+                        return (o.notifications && o.notifications.length > 0);
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+{% endraw %}
+
+    <div class="layout horizontal wrap">
+        <section id="organize" class="paper-sheet small-margin small-padding layout vertical flex">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="section-icon" icon="social:group" role="img"></iron-icon>
+                Organize
+            </h2>
+            <div class="info layout horizontal center-center">Access and manage your teams.</div>
+            {% if projects %}
+                <project-list url="/dashboard/projects_info/{{c.user.username}}" count="{{ projects }}" nonce="{{ h.get_csrf_value() }}"></project-list>
+            {% else %}
+                <div class="layout vertical center">
+                    <div class="empty-message">
+                        <p><iron-icon icon="warning"></iron-icon>You are not yet a member of any team.</p>
+                    </div>
+                </div>
+            {% endif %}
+            {% if invites|count > 0 %}
+                <pending-info icon="social:people" title="Invitations" count="{{invites|count}}">
+                {% for invite in invites %}
+                    {% if invite['type'] == "user" %}
+                        <div class="layout horizontal center">
+                            {% if invite['can_read'] %}
+                                <paper-button-link href="{{invite['project'].url()}}" class="flex">
+                                    <div class="layout horizontal center left-justify flex">
+                                        <iron-icon src="{{invite['project'].icon_url}}"></iron-icon>
+                                        <span class="invite-label">
+                                        {{invite['project'].name}}
+                                        <paper-tooltip position="right">Visit team</paper-tooltip>
+                                        </span>
+                                    </div>
+                                </paper-button-link>
+                            {% else %}
+                                <paper-button noink class="flex">
+                                    <div class="layout horizontal center left-justify flex">
+                                        <iron-icon icon="social:people"></iron-icon>
+                                        <span class="invite-label">
+                                        {{invite['project'].name}}
+                                        <paper-tooltip position="right">Team is private</paper-tooltip>
+                                        </span>
+                                    </div>
+                                </paper-button>
+                            {% endif %}
+                            <a href="/dashboard/invitation_accept/{{ invite.id }}" class="approve-button">
+                                <paper-icon-button icon="thumb-up"></paper-icon-button>
+                                <paper-tooltip position="left">Accept</paper-tooltip>
+                            </a>
+                            <a href="/dashboard/invitation_decline/{{ invite.id }}" class="deny-button">
+                                <paper-icon-button icon="thumb-down"></paper-icon-button>
+                                <paper-tooltip position="left">Decline</paper-tooltip>
+                            </a>
+                        </div>
+                    {% elif False %}
+                        <div class="layout horizontal center">
+                            <paper-button-link href="{{invite['project'].url()}}" class="flex">
+                                <div class="layout horizontal center left-justify flex">
+                                    <iron-icon src="{{invite['project'].icon_url}}"></iron-icon>
+                                    <span class="invite-label">
+                                    {{invite['project'].name}}
+                                    <paper-tooltip position="right">Inviting Team</paper-tooltip>
+                                    </span>
+                                </div>
+                            </paper-button-link>
+                            <paper-button-link href="{{invite['user'].url()}}" class="flex">
+                                <div class="layout horizontal center left-justify flex">
+                                    <iron-icon src="{{invite['user'].icon_url()}}"></iron-icon>
+                                    <span class="invite-label">
+                                    {{invite['user'].display_name}}
+                                    <paper-tooltip position="right">Invited User</paper-tooltip>
+                                    </span>
+                                </div>
+                            </paper-button-link>
+                            <a href="/dashboard/invitation_rescind/{{ invite.id }}" class="cancel-button">
+                                <paper-icon-button icon="cancel"></paper-icon-button>
+                                <paper-tooltip position="left">Cancel</paper-tooltip>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                </pending-info>
+            {% endif %}
+            {% if mrequests|count > 0 %}
+                <pending-info icon="social:people" title="Membership Requests" count="{{mrequests|count}}">
+                {% for request in mrequests %}
+                    {% if request['type'] == "user" %}
+                        <div class="layout horizontal center">
+                            {% if request['can_read'] %}
+                                <paper-button-link href="{{request['project'].url()}}" class="flex">
+                                    <div class="layout horizontal center left-justify flex">
+                                        <iron-icon src="{{request['project'].icon_url}}" role="img"></iron-icon>
+                                        <span class="request-label">
+                                        {{request['project'].name}}
+                                        <paper-tooltip position="right">Visit team</paper-tooltip>
+                                        </span>
+                                    </div>
+                                </paper-button-link>
+                            {% else %}
+                                <paper-button noink class="flex">
+                                    <div class="layout horizontal center left-justify flex">
+                                        <iron-icon icon="social:people" role="img"></iron-icon>
+                                        <span class="request-label">
+                                        {{request['project'].name}}
+                                        <paper-tooltip position="right">Team is private</paper-tooltip>
+                                        </span>
+                                    </div>
+                                </paper-button>
+                            {% endif %}
+                            <a href="/dashboard/membership_request_rescind/{{ request.id }}" class="cancel-button">
+                                <paper-icon-button icon="cancel"></paper-icon-button>
+                                <paper-tooltip position="left">Cancel</paper-tooltip>
+                            </a>
+                        </div>
+                    {% elif False %}
+                        <div class="layout horizontal center">
+                            <paper-button-link href="{{request['project'].url()}}" class="flex">
+                                <div class="layout horizontal center left-justify flex">
+                                    <iron-icon src="{{request['project'].icon_url}}" role="img"></iron-icon>
+                                    <span class="request-label">
+                                    {{request['project'].name}}
+                                    <paper-tooltip position="right">Requested team</paper-tooltip>
+                                    </span>
+                                </div>
+                            </paper-button-link>
+                            <paper-button-link href="{{request['user'].url()}}" class="flex">
+                                <div class="layout horizontal center left-justify flex">
+                                    <iron-icon src="{{request['user'].icon_url()}}" role="img"></iron-icon>
+                                    <span class="request-label">
+                                    {{request['user'].display_name}}
+                                    <paper-tooltip position="right">Requesting user</paper-tooltip>
+                                    </span>
+                                </div>
+                            </paper-button-link>
+                            <a href="/dashboard/membership_request_accept/{{ request.id }}" class="approve-button">
+                                <paper-icon-button icon="thumb-up"></paper-icon-button>
+                                <paper-tooltip position="left">Accept</paper-tooltip>
+                            </a>
+                            <a href="/dashboard/membership_request_decline/{{ request.id }}" class="deny-button">
+                                <paper-icon-button icon="thumb-down"></paper-icon-button>
+                                <paper-tooltip position="left">Decline</paper-tooltip>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                </pending-info>
+            {% endif %}
+            <div class="organize-buttons layout horizontal center-center wrap">
+                <dashboard-settings></dashboard-settings>
+                <section-control id="find-team"  class="organize-control flex" url="/dashboard/teams" icon="social:group" label="Join"></section-control>
+                <create-team class="organize-control flex" icon="social:group-add" label="Create" nonce="{{ h.get_csrf_value() }}"></create-team>
+            </div>
+        </section>
+        <user-profile url="{{user.url()}}profile/userinfo" nonce="{{ h.get_csrf_value() }}" icon="{{user.icon_url()}}"
+                      min-password-length="{{tg.config.get('auth.pw.min_length', 10)}}" static-url="{{g.resource_manager.absurl('')}}"
+                      name="{{user.display_name}}" lastlog="{{lastLog}}"
+                      class="paper-sheet small-padding small-margin flex" hidden></user-profile>
+        <section id="activity" class="paper-sheet small-margin small-padding flex">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="padded-icon" icon="vaadin-icons:time-forward" role="img"></iron-icon>
+                Activity
+            </h2>
+            <div class="info layout horizontal center-center">View your recent activity.</div>
+            <activity-list url="{{user.url()}}profile/activity"></activity-list>
+        </section>
+    </div>
+{% endblock %}
+{% block extra_js %}
+{{ super() }}
+{% endblock %}

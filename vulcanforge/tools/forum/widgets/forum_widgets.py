@@ -138,7 +138,8 @@ class ThreadHeader(DW.ThreadHeader):
     template = TEMPLATE_DIR + 'thread_header.html'
     defaults = dict(DW.ThreadHeader.defaults,
                     show_subject=True,
-                    show_moderate=True)
+                    show_moderate=True,
+                    show_tag_post=False)
     widgets = dict(DW.ThreadHeader.widgets,
                    moderate_thread=ModerateThread(),
                    announcements_table=AnnouncementsTable())

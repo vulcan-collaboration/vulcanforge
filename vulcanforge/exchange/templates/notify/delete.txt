@@ -1,0 +1,4 @@
+{{ subject }} in the {{ exchange_name }}. If you have any dependent resources
+it may be time to update.
+
+Browse the {{ exchange_name }} here: {{ exchange_url }}

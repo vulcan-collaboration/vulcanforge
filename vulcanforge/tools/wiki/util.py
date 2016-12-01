@@ -40,7 +40,6 @@ class BrokenLinkFinder(object):
             if domain == g.base_url:
                 request_func = self.requester.get
             elif self.user and domain == g.base_s3_url.rstrip('/'):
-                request_kwargs['cookies'] = self.user.get_swift_params()
                 request_func = requests.get
             else:
                 request_func = requests.get

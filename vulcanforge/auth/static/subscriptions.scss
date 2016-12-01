@@ -16,10 +16,10 @@ input[type="week"], select, textarea, label {
 .hidden {display: none;}
 /* ################################################### */
 /* ################################################### */
-.project-container {
+.subscription-container {
     padding: 1em 0;
 }
-.project-header {
+.subscription-header {
     cursor: pointer;
     overflow: auto;
 }
@@ -41,10 +41,10 @@ input[type="week"], select, textarea, label {
 .expand-arrow-open {
     display: none;
 }
-.project-container.open .expand-arrow-closed {
+.subscription-container.open .expand-arrow-closed {
     display: none;
 }
-.project-container.open .expand-arrow-open {
+.subscription-container.open .expand-arrow-open {
     display: block;
 }
 em {
@@ -60,7 +60,8 @@ em {
     width: 40%;
 }
 .project-icon,
-.app_config-icon {
+.app_config-icon,
+.exchange-icon {
     display: inline-block;
     float: left;
     margin: 0 1ex;

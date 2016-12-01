@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import mimetypes
+from pygments.lexers import get_lexer_for_filename
 import re
 import time
 
@@ -196,13 +197,21 @@ class VisualizerConfigMapper(object):
         return False
 
     def _get_mimetype(self, filename):
-        filename = filename.lower()
+        mtype = None
+        lc = filename.lower()
         for ext in self._additional_text_extensions:
-            if filename.endswith(ext):
+            if lc.endswith(ext):
                 mtype = 'text/plain'
                 break
         else:
             mtype = mimetypes.guess_type(filename)[0]
-
+            if mtype is None:
+                # fallback: pygments lexer detection
+                try:
+                    l = get_lexer_for_filename(filename)
+                    if l.mimetypes:
+                        mtype = l.mimetypes[0]
+                except:
+                    pass
         return mtype
 

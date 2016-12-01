@@ -174,6 +174,11 @@
                     e.preventDefault();
                 }
             });
+            $(VIS).on("ready", function(){
+                that.$image.attr('src', VIS.getResourceUrl());
+                that.$image.trigger('load');
+            });
+
             if (this.$image.prop("complete")){
                 this.$image.trigger('load');
             }

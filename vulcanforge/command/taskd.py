@@ -15,6 +15,10 @@ class TaskdCommand(base.Command):
     parser.add_option('--only', dest='only', type='string', default=None,
                       help='only handle tasks of the given name(s) '
                            '(can be comma-separated list)')
+    parser.add_option('--min-priority', dest='min_priority', type='int', default=10,
+                      help='only handle tasks with a minimum priority higher '
+                           'than or equal to this number. '
+                           'The default priority is 1 which includes all tasks.')
 
     def command(self):
         self.basic_setup()
@@ -25,7 +29,9 @@ class TaskdCommand(base.Command):
             self.args[0].split("#")[0],
             name='%s pid %s' % (os.uname()[1], os.getpid()),
             only=self.options.only,
-            log=self.log)
+            log=self.log,
+            min_priority=self.options.min_priority
+        )
         signal.signal(signal.SIGHUP, self.worker.graceful_restart)
         signal.signal(signal.SIGTERM, self.worker.graceful_stop)
         signal.signal(signal.SIGUSR1, self.worker.log_current_task)

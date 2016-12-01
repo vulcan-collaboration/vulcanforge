@@ -1,0 +1,706 @@
+
+.publish-step {
+    width: 100%;
+    margin: 0 !important;
+    min-height: 50px;
+    border-top: 1px solid #bbb;
+    height: auto;
+    position: relative;
+}
+
+.publish-step.on {
+    border-top: 1px solid #39f;
+}
+
+.stepHeader {
+    color: #fff;
+    width: 50px;
+    display: inline-block;
+    padding: 5px 10px 4px 8px;;
+    position: absolute;
+    font-size: 12px;
+    text-align: left;
+}
+
+.stepHeader .line1 {
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.stepHeader {
+    background-color: #bbb;
+}
+
+.on .stepHeader {
+    background-color: #39f;
+}
+
+.stepContent {
+    padding: 15px 8px 10px 84px;
+}
+
+#step3 .stepContent {
+    text-align: center;
+    padding-top: 18px;
+}
+
+.NA {
+    text-transform: uppercase;
+    font-style: italic;
+    text-align: center;
+    color: #aaa;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.componentName {
+    padding-left: 0;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+    text-decoration: underline;
+}
+
+.PT-component .componentName {
+    padding-left: 10px;
+}
+
+#componentName {
+    display: none;
+}
+
+#applyButton {
+    float: right;
+    display: none;
+}
+
+.widgetsList {
+    margin-bottom: 1em;
+    font-size: 12px;
+    width: 100%;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+
+.widgetsList .even {
+    background-color: transparent;
+}
+
+#componentFeatures {
+    display: none;
+}
+
+#saveButton {
+    float: right;
+    display: none;
+}
+
+#uploadHolder {
+    width: 200px;
+    margin-top: 2px;
+}
+
+.drop-area.upload,
+.drop-area.link {
+    display: block;
+    width: 250px;
+    margin: 1em 0;
+}
+
+.link-init{
+    width: 200px;
+    height: 15px;
+    line-height: 15px;
+    color: #333366;
+    background-color: #F1DA36;
+    display: inline-block;
+    font-size: 10px;
+    border: 1px solid #EA5507;
+    text-align: center;
+    padding: 4px 4px 2px;
+}
+
+.lil-spinner {
+    background-image: url("images/loading.gif");
+    background-repeat: no-repeat;
+    background-position: center center;
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    margin: 0px 5px 0px;
+}
+
+.link-init .initText {
+    font-weight: normal;
+}
+
+.link-init .fileName,
+.link-init .fileSize{
+    margin-left: 5px;
+    font-weight: normal;
+}
+
+#removeButton {
+    float: right;
+    margin-top: -4px;
+    display: none;
+}
+
+#packageContentsHolder {
+    display: none;
+    height: auto;
+    margin-left: 0;
+    margin-top: 0;
+    /* background-color: #f99; */
+}
+
+.contentsHeader {
+    padding: 35px 5px 10px 0;
+    font-weight: bold;
+    font-size: 10px;
+    background-image: url(images/publish_contents_decor.png);
+    background-repeat: no-repeat;
+    background-position: 0 2px;
+}
+.contentsHeader.dmd{
+    background-image: url(images/publish_contents_decor_dmd.png);
+}
+.fileLinks {
+    margin: 0;
+    padding: 0 10px;
+    text-align: center;
+}
+
+#step1.ready {
+}
+
+#discoverSearchField {
+    float: right;
+    margin-right: 10px;
+}
+
+#dummySearchResults {
+    display: none;
+}
+
+#dummySearchResults table {
+    width: auto;
+    margin: auto;
+}
+
+.component-list {
+    font-size: 12px;
+
+}
+
+/****************************************/
+/* Added for now                        */
+/****************************************/
+
+.fileLinks {
+    list-style-type: none;
+    padding: 2px;
+    line-height: 21px;
+}
+
+.fileLinks li {
+    padding: 0;
+    display: inline-block;
+}
+
+.fileLinks li a {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-family: Verdana, sans-serif;
+    margin-right: 3px;
+}
+
+.fileLinks li a:link, .fileLinks li a:visited {
+    color: #336;
+    border: 1px dotted #336;
+    background-color: #efefef;
+}
+
+.fileLinks li a:active, .fileLinks li a:hover {
+    color: #36c;
+    text-decoration: none;
+    border: 1px dotted #36c;
+    background-color: #fff;
+}
+
+table.component-preview-table tbody td {
+    text-align: center;
+    padding: 1.3ex;
+}
+
+
+.property_header {
+    background-color: #e5e5e5;
+    text-align: left;
+    text-shadow: #ffffff;
+    font-weight: bold;
+}
+
+#displayWidgetList {
+    width: 600px !important;
+}
+
+#extraPropertiesContainer {
+    padding: 1em;
+    font-size: 11px;
+}
+
+#extraPropertiesContainer ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+.extra-property-label {
+    font-weight: bold;
+    display: inline-block;
+    width: 160px;
+}
+
+.extra-property-value {
+
+}
+
+.vertical.widgetsList {
+    position: relative;
+    padding: 0;
+    margin-left: 0;
+    text-align: left;
+}
+
+.vertical.widgetsList > .widgetSkin {
+    width: 128px;
+    height: 65px;
+    display: inline-block;
+    margin-bottom: 10px;
+    background-color: #f5f5f5;
+    border-right: 1px solid #fff;
+    text-align: center;
+    vertical-align: top;
+}
+
+.vertical.widgetsList .labelContainer {
+    border-color: #FFFFFF;
+    border-style: solid;
+    border-width: 0;
+    margin-bottom: 1px;
+    padding: 5px;
+    text-align: center;
+    background-color: #e5E5E5;
+    text-shadow: 0 1px 0 #FFFFFF;
+    font-size: 11px;
+    font-weight: bold;
+    height: 28px;
+    line-height: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    width: 118px;
+}
+
+.vertical.widgetsList .valueContainer {
+    border-top: 1px solid #fff;
+    padding-top: 2px;
+    height: 21px;
+    line-height: 14px;
+    font-size: 11px;
+    width: 128px;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+
+.vertical.widgetsList .valid .controlContainer {
+    background-image: none;
+    padding-right: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vertical.widgetsList .invalid .controlContainer {
+    width: 106px;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    text-overflow: ellipsis;
+}
+
+.vertical.widgetsList .invalid .controlContainer:hover {
+    max-height: none;
+    overflow-y: visible;
+    background-color: #f5f5f5;
+}
+
+.vertical.widgetsList .hintContainer {
+    position: absolute;
+    z-index: 20000000;
+}
+
+.vertical.widgetsList .valueContainer .hintContainer {
+    display: none;
+}
+
+.vertical.widgetsList .invalid {
+    cursor: pointer;
+}
+
+.vertical.widgetsList .invalid .controlContainer {
+    min-height: 100%;
+}
+
+.vertical.widgetsList .invalid .valueContainer:hover .hintContainer {
+    display: block;
+    background-color: #fff;
+    border: 1px solid red;
+    padding: 3px 6px;
+}
+
+#propertiesDiv {
+    margin-left: -8px;
+    margin-right: -5px;
+}
+
+#basePropertiesHolder {
+    font-size: 12px;
+    text-align: center;
+}
+
+#basePropertiesHolder .property {
+    display: inline-block;
+    margin: 0 10px;
+}
+
+#basePropertiesHolder .labelContainer {
+    display: inline-block;
+    width: auto;
+    margin-right: 5px;
+}
+
+#basePropertiesHolder .value {
+    display: inline-block
+}
+
+#componentContainer {
+    padding-bottom: 15px;
+}
+
+.qq-upload-button {
+    margin-top: -3px !important;
+}
+
+h4.widgetsListLabel {
+    border-bottom: 1px solid #CCCCCC;
+    color: #555;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 4px;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+#componentFeatures .widgetsListLabel {
+    margin: 1em 0 1em 1em;
+}
+
+.licenseInfo{
+    color: #a0a0a0;
+    font-size: 10px;
+}
+
+
+h3 .controls {
+    bottom: 10px;
+    display: inline;
+    float: right;
+    position: relative;
+}
+
+.ui-dialog {
+    /* FIXME this used to be styled better */
+    background-color: grey;
+}
+
+#markdownContainer{
+    width: 100%;
+}
+
+.markdown-tabs {
+    height: 30px;
+}
+
+.ui-corner-all{
+    border-radius: 4px 4px 4px 4px;
+}
+
+.ui-dialog .ui-dialog-titlebar{
+    border: 1px solid #888888;
+}
+
+/* Component containers
+----------------------------------*/
+
+#avm-id-instance_widget.DISPLAY,
+#avm-id-instance_widget.DISPLAY .valueContainer,
+#avm-id-instance_widget.DISPLAY .controlContainer{
+    width: 250px;
+}
+
+#avm-id-instance_widget.DISPLAY .labelContainer{
+    width: 240px;
+}
+
+#componentTable th.asc{
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-image: url("images/sort_asc_narrow.png");
+}
+#componentTable th.desc{
+    background-image: url("images/sort_desc_narrow.png");
+    background-position: right center;
+    background-repeat: no-repeat;
+}
+
+.add-feature-dialog .labelContainer{
+    display: none;
+}
+
+.add-feature-dialog .controlContainer{
+    background: none !important;
+}
+
+.fork-div {
+    margin-top:5px;
+}
+
+.fork-btn {
+    margin-left: 5px;;
+}
+
+#componentForkDetails {
+    display: none;
+}
+
+#componentForkDetails .supercede_params {
+    display: none;
+}
+
+#componentForkDetails {
+}
+
+#publish-withdraw-container{
+    display: none;
+}
+
+.Matrix .INPUT{
+    max-width: 205px;
+}
+
+.Vector .INPUT{
+    max-width: 205px;
+}
+
+
+.validation-container-errors,
+.validation-container-warnings {
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.validation-container-errors h2,
+.validation-container-warnings h2 {
+    margin: 0;
+    padding: 0.5em;
+    height: auto;
+    font-size: 1em;
+    line-height: normal;
+    color: inherit;
+    border: none;
+}
+
+.validation-container-errors ul,
+.validation-container-warnings ul {
+    display: none;
+    margin: 0;
+    padding: 1em 2em;
+}
+
+.validation-container-errors li,
+.validation-container-warnings li {
+    line-height: 1.4em;
+}
+
+.validation-container-errors {
+    background: rgb(225,90,90);
+    color: white;
+}
+
+.validation-container-warnings {
+    background: rgb(215,170,80);
+    color: white;
+}
+
+
+
+.componentTestingStatusWidget {
+    position: relative;
+    display: block;
+    margin: 0;
+    background: #b8b8b8;
+    color: white;
+    letter-spacing: 0.1em;
+    line-height: 1em;
+    white-space: nowrap;
+}
+
+.componentTestingStatusWidget span {
+    display: inline-block;
+    margin: 0;
+    padding: 0.5em;
+}
+
+.componentTestingStatusWidget .flashing {
+    -webkit-animation: flash 2s ease-in-out infinite;
+    -moz-animation: flash 2s ease-in-out infinite;
+    animation: flash 2s ease-in-out infinite;
+}
+
+.componentTestingStatusWidget::before {
+    content: "Unit Tests:";
+    display: inline-block;
+    margin: 0;
+    padding: 0.5em;
+    background: rgba(0,0,0,0.3);
+}
+
+.componentTestingStatusWidget.clickable {
+    cursor: pointer;
+}
+
+.componentTestingStatusWidget.clickable::after {
+    content: "\2935";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    font-family: "ForgeIconicFill";
+    display: inline-block;
+    margin: 0;
+    padding: 0 0.25em;
+    font-weight: normal;
+    font-size: 2em;
+    line-height: 1em;
+    transition: background linear 100ms;
+}
+.componentTestingStatusWidget.clickable:hover::after {
+    background: rgba(0,0,0,0.2);
+}
+
+
+.componentTestingStatusWidget[data-status="testing"] {
+    background: rgb(75,164,245);
+}
+.componentTestingStatusWidget[data-status="failed"] {
+    background: rgb(225,90,90);
+}
+.componentTestingStatusWidget[data-status="success"] {
+    background: rgb(90,170,90);
+}
+
+.componentTestingStatusWidget[data-status="testing"]::after {
+    content: "\e036";
+    font-family: "ForgeIconicFill";
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-block;
+    margin: 0;
+    padding: 0 0.25em;
+    font-weight: normal;
+    font-size: 2em;
+    text-rendering: geometricPrecision;
+    line-height: 1em;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-transform-origin: 50% 49%;
+    transform-origin: 50% 49%;
+    -moz-transform-origin: 48% 47.5%;
+    -webkit-animation: spin 1s ease-in-out infinite;
+    -moz-animation: spin 1s ease-in-out infinite;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { transform:rotate(360deg); } }
+
+@-moz-keyframes flash { from { opacity: 1; } 50% { opacity: 0; } to { opacity: 1;} }
+@-webkit-keyframes flash { from { opacity: 1; } 50% { opacity: 0; } to { opacity: 1;} }
+@keyframes flash { from { opacity: 1; } 50% { opacity: 0; } to { opacity: 1;} }
+
+
+.componentTestingStatusCell {
+    text-align: center;
+}
+
+.componentTestingStatusCell .componentTestingStatusWidget::before {
+    display: none;
+}
+
+
+.embedded-cad {
+    position: relative;
+}
+.embedded-cad .visualizerContainer {
+    border: none;
+    display: block;
+    background: black;
+}
+.threed_images {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    background: black;
+    cursor: pointer;
+}
+.threed_images .threed_image {
+    -ms-flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    height: 200px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.threed_images::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: black;
+    transition: 200ms opacity;
+    opacity: 0;
+}
+.threed_images:hover::before {
+    opacity: 0.8;
+}
+.threed_images:hover::after {
+    content: "Click to view CAD";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    height: 2rem;
+    line-height: 2rem;
+    font-size: 2rem;
+    font-weight: lighter;
+    letter-spacing: 0.1em;
+    color: white;
+    text-align: center;
+}

@@ -4,10 +4,11 @@ import logging
 import os
 from contextlib import contextmanager
 from cStringIO import StringIO
+from datetime import datetime
 
-import Image
+from PIL import Image
 from pylons import app_globals as g
-from ming import schema
+from ming import schema as S
 from ming.odm import FieldProperty
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
@@ -16,6 +17,7 @@ from vulcanforge.common.model.session import project_orm_session
 from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.util import set_download_headers, set_cache_headers
 from vulcanforge.common.util.filesystem import guess_mime_type, temporary_file
+from vulcanforge.virusscan.model import S3VirusScannableMixin
 
 LOG = logging.getLogger(__name__)
 SUPPORTED_BY_PIL = {
@@ -28,7 +30,7 @@ SUPPORTED_BY_PIL = {
 }
 
 
-class File(BaseMappedClass):
+class File(BaseMappedClass, S3VirusScannableMixin):
     """Metadata and convenience utils for a file stored in S3"""
 
     class __mongometa__:
@@ -36,13 +38,21 @@ class File(BaseMappedClass):
         name = 'fs'
         indexes = ['filename']
 
-    _id = FieldProperty(schema.ObjectId)
+    _id = FieldProperty(S.ObjectId)
     filename = FieldProperty(str, if_missing='unknown')
     keyname = FieldProperty(str, if_missing=None)
     content_type = FieldProperty(str)
     bucket_name = FieldProperty(str, if_missing=None)
     is_thumb = FieldProperty(bool, if_missing=False)
     length = FieldProperty(int, if_missing=None)
+
+    # Virus scan status
+    # Partially scanned is used because of limitations these files are assumed
+    # safe but not with 100% certainty
+    virus_scan_status = FieldProperty(
+        S.OneOf('unscanned', 'failed', 'partially_scanned', 'passed',
+                if_missing='unscanned'))
+    virus_scan_date = FieldProperty(datetime, if_missing=None)
 
     artifact = None  # hack cuz of the way the s3 stuff is set up
 
@@ -117,25 +127,32 @@ class File(BaseMappedClass):
         """
         self.length = self.key.size
         FileReference.upsert_from_file_instance(self)
+        if g.clamav_enabled:
+            self.scan_for_virus()
 
     def set_contents_from_file(self, file_pointer, headers=None, **kw):
         if headers is None:
             headers = {}
         headers.update(self._s3_headers)
-        self.key.set_contents_from_file(file_pointer, headers=headers, **kw)
+        kw['encrypt_key'] = g.s3_encryption
+        self.key.set_contents_from_file(
+            file_pointer, headers=headers, **kw)
         self._update_metadata()
 
     def set_contents_from_filename(self, filename, headers=None, **kw):
         if headers is None:
             headers = {}
         headers.update(self._s3_headers)
-        self.key.set_contents_from_filename(filename, headers=headers, **kw)
+        kw['encrypt_key'] = g.s3_encryption
+        self.key.set_contents_from_filename(
+            filename, headers=headers, **kw)
         self._update_metadata()
 
     def set_contents_from_string(self, content_string, headers=None, **kw):
         if headers is None:
             headers = {}
         headers.update(self._s3_headers)
+        kw['encrypt_key'] = g.s3_encryption
         self.key.set_contents_from_string(
             content_string, headers=headers, **kw)
         self._update_metadata()
@@ -159,17 +176,28 @@ class File(BaseMappedClass):
             key.delete()
         super(File, self).delete()
 
-    def remote_url(self):
-        return g.swift_auth_url(self.keyname, self.bucket_name, self.artifact)
+    def get_s3_temp_url(self):
+        key = self.get_key()
+        safe_name = self.filename.encode('utf-8')
+        disposition = 'attachment; filename="{}"'.format(safe_name)
+        content_type = guess_mime_type(self.filename).encode('utf-8')
+        return key.generate_url(
+            g.s3_url_expires_in,
+            query_auth=True,
+            response_headers={
+                'response-content-disposition': disposition,
+                'response-content-type': content_type
+            }
+        )
 
     def local_url(self):
         return '/s3_proxy/{}/{}'.format(
-            self.bucket_name or g.s3_bucket.name,
+            g.s3_bucket.name,
             g.make_s3_keyname(self.keyname, self.artifact))
 
     def url(self, absolute=False, direct_to_remote=False):
         if direct_to_remote and not g.s3_serve_local:
-            url = self.remote_url()
+            url = self.get_s3_temp_url()
         else:
             url = self.local_url()
             if absolute:
@@ -227,8 +255,7 @@ class File(BaseMappedClass):
         set_download_headers(self.filename, str(self.content_type))
         # enable caching
         set_cache_headers(self._id.generation_time)
-        for block in self.key:
-            yield block
+        return iter(self.key)
 
     @staticmethod
     def file_is_image(filename=None, content_type=None):
@@ -313,6 +340,42 @@ class File(BaseMappedClass):
         return (self.content_type
                 and self.content_type.lower() in SUPPORTED_BY_PIL)
 
+    ### Virus scanning related functions
+    @LazyProperty
+    def is_scanned(self):
+        if (g.clamav_enabled and self.virus_scan_status == 'unscanned'):
+            return False
+        else:
+            return True
+
+    def is_zip(self):
+        return self.filename.endswith('.zip')
+
+    def virus_not_found(self, partial_scan=False):
+        self.virus_scan_date = datetime.now()
+        if partial_scan:
+            self.virus_scan_status = 'partially_scanned'
+        else:
+            self.virus_scan_status = 'passed'
+        self.flush_self()
+
+    def virus_found(self):
+        self.virus_scan_date = datetime.now()
+        self.virus_scan_status = 'failed'
+        self.delete()
+        self.notify_virus_found(self)
+
+    def virus_scanner_error(self, error):
+        LOG.error(error)
+
+    def notify_virus_found(self, datasetfile):
+        from vulcanforge.notification.model import Notification
+
+        subject = '{} was deleted'.format(datasetfile.filename)
+        text = "{} detected a virus in the File {}.".format(
+            g.forge_name, datasetfile.filename, self.filename)
+        Notification.post(self, "metadata", text=text, subject=subject)
+
 
 class FileReference(MappedClass):
     """
@@ -336,10 +399,10 @@ class FileReference(MappedClass):
         name = 'file_reference'
         indexes = ['key_name']
 
-    _id = FieldProperty(schema.ObjectId)
-    key_name = FieldProperty(schema.String)
-    file_class_name = FieldProperty(schema.String)
-    file_id = FieldProperty(schema.ObjectId)
+    _id = FieldProperty(S.ObjectId)
+    key_name = FieldProperty(S.String)
+    file_class_name = FieldProperty(S.String)
+    file_id = FieldProperty(S.ObjectId)
 
     def __repr__(self):
         keys = self.query.mapper.property_index.keys()

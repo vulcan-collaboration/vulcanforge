@@ -1,7 +1,7 @@
-<div class="attachment" data-filename="{{ value.filename }}" data-url="{{ value.url() }}" data-thumb-url="{{ thumb_url or '' }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">
-    <a class="attachment-thumb-link" href="{{ link_url }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">{% if thumb_url %}<img class="attachment-thumb" src="{{ thumb_url }}"/>{% endif %}</a>
+<div {% if class %}class="{{class}}"{% endif %} data-filename="{{ value.filename }}" data-url="{{ value.url() }}" data-thumb-url="{{ thumb_url or '' }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}" {% if title %}title="{{title}}"{% endif %}>
+    {% if link_url %}<a class="attachment-thumb-link" href="{{ link_url }}" data-mimetype="{{ mimetype }}" data-extension="{{ extension }}">{% if thumb_url %}<img class="attachment-thumb" src="{{ thumb_url }}"/>{% endif %}</a>{% endif %}
     <div class="attachment-details">
-        <a class="attachment-link" href="{{ link_url }}">{{ value.filename }}</a>
+        {% if link_url %}<a class="attachment-link" href="{{ link_url }}">{{ value.filename }}</a>{% else %}{{ value.filename }}{% endif %}
         <div class="attachment-buttons">
             {{g.icon_button_widget.display('More options', 'more-' ~ value._id, 'attachment-actions more-btn', 'ico-more_options', None)}}
             {% if value.length %}

@@ -16,6 +16,11 @@ def solarize(obj):
     return doc
 
 
+def dictify_facet_list(facet_list):
+    list_iter = iter(facet_list)
+    return dict(zip(list_iter, list_iter))
+
+
 class SolrSearch(object):
 
     dynamic_postfixes = [

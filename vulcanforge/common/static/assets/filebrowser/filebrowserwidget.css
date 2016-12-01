@@ -146,7 +146,7 @@
 */
 
 .vf-filebrowser-status-container {
-    background: #404040;
+    background: #585858;
     color: white;
     box-shadow: inset 0 0 1em #202020;
 }
@@ -162,6 +162,71 @@
     padding-bottom: 1em;
 }
 
+.vf-filebrowser-statusEntry > progress {
+    width: 250px;
+    height: 10px;
+    margin: 5px auto;
+    vertical-align: middle;
+    /* Important Thing */
+    -webkit-appearance: none;
+    -moz-appearance: progress-bar;
+    background: black;
+    border: none;
+    border-radius: 10px;
+}
+
+.vf-filebrowser-statusEntry > progress::-webkit-progress-bar {
+    background: black;
+    border-radius: 10px;
+    padding: 2px;
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2);
+}
+
+.vf-filebrowser-statusEntry > progress::-webkit-progress-value {
+    border-radius: 10px;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+    background:
+        -webkit-linear-gradient(45deg, transparent, transparent 33%, rgba(0, 0, 0, 0.1) 33%, rgba(0, 0, 0, 0.1) 66%, transparent 66%),
+        -webkit-linear-gradient(top, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.2)),
+        -webkit-linear-gradient(left, #01A0F5, #01A0F5);
+
+    /* Looks great, now animating it */
+    background-size: 20px 12px, 100% 100%, 100% 100%;
+    -webkit-animation: move 5s linear 0 infinite;
+}
+
+.vf-filebrowser-statusEntry > progress.inactive::-webkit-progress-value {
+    border-radius: 10px;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+    background:
+        -webkit-linear-gradient(45deg, transparent, transparent 33%, rgba(0, 0, 0, 0.1) 33%, rgba(0, 0, 0, 0.1) 66%, transparent 66%),
+        -webkit-linear-gradient(top, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.2)),
+        -webkit-linear-gradient(left, #999999, #999999);
+
+    /* Looks great, now animating it */
+    background-size: 20px 12px, 100% 100%, 100% 100%;
+    -webkit-animation: move 5s linear 0 infinite;
+}
+
+.vf-filebrowser-statusEntry > progress::-moz-progress-bar {
+    margin: 2px;
+    height: 6px;
+    border-radius: 10px;
+}
+
+.vf-filebrowser-statusEntry > progress.active::-moz-progress-bar {
+    background: #01a0f5;
+}
+
+.vf-filebrowser-statusEntry > progress.inactive::-moz-progress-bar {
+    background: #999999;
+}
+
+.vf-filebrowser-statusEntry > .vf-filebrowser-labelContainer {
+    margin-left: 8px;
+    display: inline-block;
+    width: 500px;
+}
 
 /**
 *  list
@@ -260,13 +325,23 @@
     background-image: linear-gradient(bottom, #aaa, #ccc 1px, #ddd);
 }
 
+.vf-filebrowser-listItem.vf-filebrowser-listItem-selected-4-move {
+    background: #d9dfed;
+    background-image: linear-gradient(bottom, #a8b4e0, #c9d9ff 5%, #e0ebff 95%, #B5C5EB);
+    background-image: -o-linear-gradient(bottom, #a8b4e0, #c9d9ff 5%, #e0ebff 95%, #B5C5EB);
+    background-image: -moz-linear-gradient(bottom, #a8b4e0, #c9d9ff 5%, #e0ebff 95%, #B5C5EB);
+    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #c9d9ff 5%, #e0ebff 95%, #B5C5EB);
+    background-image: -ms-linear-gradient(bottom, #a8b4e0, #c9d9ff 5%, #e0ebff 95%, #B5C5EB);
+    text-shadow: 0 1px 1px #f0f8ff;
+}
+
 .vf-filebrowser-listItem.vf-filebrowser-listItem-selected {
     background: #d9dfed;
-    background-image: linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
-    background-image: -o-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
-    background-image: -moz-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
-    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
-    background-image: -ms-linear-gradient(bottom, #a8b4e0, #B5C5EB 5%, #D1E0FF 95%, #B5C5EB);
+    background-image: linear-gradient(bottom, #a8b4e0, #abbbe1 5%, #c7d6f5 95%, #abbbe1);
+    background-image: -o-linear-gradient(bottom, #a8b4e0, #abbbe1 5%, #c7d6f5 95%, #abbbe1);
+    background-image: -moz-linear-gradient(bottom, #a8b4e0, #abbbe1 5%, #c7d6f5 95%, #abbbe1);
+    background-image: -webkit-linear-gradient(bottom, #a8b4e0, #abbbe1 5%, #c7d6f5 95%, #abbbe1);
+    background-image: -ms-linear-gradient(bottom, #a8b4e0, #abbbe1 5%, #c7d6f5 95%, #abbbe1);
     text-shadow: 0 1px 1px #f0f8ff;
 }
 
@@ -284,7 +359,7 @@
     background: url(file-icon.png) center center;
 }
 
-.vf-filebrowser-listItem-link-file-icon-dir {
+.vf-filebrowser-listItem-link-file-icon-dir, .vf-filebrowser-listItem-link-file-icon-zip_dir{
     background-image: url(folder-icon.png);
 }
 
@@ -312,6 +387,11 @@
     display: inline-block;
     line-height: 14px;
     vertical-align: middle
+}
+
+.vf-filebrowser-listItem-link-file-name.being-virus-scanned{
+    color: #999999;
+    font-style: italic;
 }
 
 .vf-filebrowser-listItem-notes {
@@ -353,4 +433,9 @@
 .avatar {
     display: inline-block;
     vertical-align: top;
+}
+
+.vf-filebrowser-context-menu-download:before {
+    font-family: "ForgeIconicFill";
+    content:"\e042";
 }

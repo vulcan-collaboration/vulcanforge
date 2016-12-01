@@ -1,8 +1,8 @@
 import logging
 from boto.s3.key import Key
 
+from bson import ObjectId
 from webob import exc
-from paste.util.converters import asbool
 from pylons import app_globals as g
 from tg import expose, redirect, config, response
 
@@ -10,6 +10,8 @@ from vulcanforge.common.controllers import BaseController, BaseRestController
 from vulcanforge.common.helpers import urlquote, urlunquote
 from vulcanforge.common.util.controller import get_remainder_path
 from vulcanforge.common.util.filesystem import guess_mime_type
+
+from vulcanforge.exchange.model import ExchangeNode
 
 LOG = logging.getLogger(__name__)
 
@@ -28,26 +30,45 @@ class BucketController(BaseRestController):
     @expose()
     def get_one(self, *args, **kwargs):
         """
-        Get the contents of a key. If force_local=true, serve through this
-        controller, otherwise it will redirect to a direct swift url if that
-        service is available.
+        Get the contents of a key.
 
         """
-        force_local = True  # TODO: work out content-disposition in direct reqs
         keyname = get_remainder_path(map(urlunquote, args))
-        if not g.s3_serve_local and not force_local:
-            # redirect to remote
-            remote_url = '{base_url}{prefix}/{bucket}{key}'.format(
-                base_url=self._base_url,
-                prefix=config.get('swift.auth.url_prefix', 'swiftvf'),
-                bucket=self.bucket.name,
-                key=keyname
-            )
-            redirect(remote_url)
-        g.s3_auth.require_access(self.bucket.name + keyname, method="GET")
+
+        if 'node_id' in kwargs:
+            node_id = kwargs.pop('node_id')
+            node = ExchangeNode.query.get(_id=ObjectId(node_id))
+            if not node:
+                raise exc.HTTPNotFound
+            artifact_keyname = urlunquote(g.make_s3_keyname('', node.artifact))
+            if artifact_keyname in keyname:
+                g.security.require_access(node, 'read')
+            else:
+                raise exc.HTTPUnauthorized
+        else:
+            g.s3_auth.require_access(self.bucket.name + keyname, method="GET")
+
         LOG.debug('S3 Proxy GET Request to %s', keyname)
+
+        not_found = False
         resp = g.s3.make_request("GET", self.bucket, urlquote(keyname))
         if resp.status != 200:
+            not_found = True
+
+            # FIX:
+            # Somewhat of a hack but needed because of special characters in
+            # URLs
+            if '#' in keyname:
+                parts = keyname.split('#')
+                part_2_rev = urlquote(parts[1])
+                rev_keyname = "#".join([parts[0], part_2_rev])
+
+                resp = g.s3.make_request("GET", self.bucket, urlquote(rev_keyname))
+                if resp.status == 200:
+                    not_found = False
+
+        if not_found:
+            # Try again with the
             raise exc.HTTPNotFound(keyname)
         headers = dict(resp.getheaders())
         content_type = headers.get('content-type', Key.DefaultContentType)

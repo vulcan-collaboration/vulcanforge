@@ -7,6 +7,16 @@
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.tmpl.js') %}
 {% do g.resource_manager.register_js('dashboard/activity_feed.js') %}
 
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.time.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.selection.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.flot.resize.js') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.qtip.js', scope='tool') %}
+
+{% do g.resource_manager.register_css('css/vf_stats.css') %}
+{% do g.resource_manager.register_js('js/vf_stats.js') %}
+{% do g.resource_manager.register_js('dashboard/activity_feedTutorial.js') %}
+
 {% block title %}Activity Feed{% endblock %}
 
 {% block header %}Activity Feed{% endblock %}
@@ -16,22 +26,27 @@
          xmlns="http://www.w3.org/1999/html"
          xmlns="http://www.w3.org/1999/html">
         <div id="activity-feed-side">
+            <div id="filters-header">
+                <span class="has-icon ico-activity">Filters</span>
+                <div id="select-all" class="filters-control"><img class="filters-control-icon" title="select all"
+                    src="{{g.resource_manager.absurl('images/checked_checkbox.png')}}"></img></div>
+                <div id="unselect-all" class="filters-control"><img class="filters-control-icon" title="unselect all"
+                    src="{{g.resource_manager.absurl('images/unchecked_checkbox.png')}}"></img></div>
+                <div id="select-new" class="filters-control" title="select new">New</div>
+            </div>
             <div id="filter-list"></div>
             <div id="loading-filters"></div>
         </div>
         <div id="activity-feed-main">
+            <div id="tutorialHolder"></div>
+            <div id="notification-stats"></div>
             <div id="notification-list"></div>
             <div id="loading-notifications"></div>
             <button id="load-more-btn" class="hidden">Load More</button>
             <div id="no-notifications" class="hidden">
                 <h1>You don't have any notifications yet!</h1>
-                <p>Join a team to start seeing some action!</p>
-                <p>&hellip;<em>or just turn some of your filters back on</em></p>
-                <h2>Available Responses:</h2>
-                <ul>
-                    <li><a href="/">Show me the Teams!</a></li>
-                    <li><a href=".">Are you sure? Look again!</a></li>
-                </ul>
+                <p>Join a team and create some content to start seeing some action!</p>
+                <p>&hellip;<em>or, if you've disabled some of your filters, just turn some of them back on</em></p>
             </div>
         </div>
     </div>
@@ -55,13 +70,19 @@
                         {{/if}}
                     </div>
                     <span class="notification-subject">
-                        <a href="{{= project.url}}" title="{{= project.name}}">
-                            <img class="project-icon" src="{{= project.icon_url}}" alt="{{= project.name}}">
-                        </a>
-                        {{if app_config}}
-                        <a href="{{= app_config.url}}" title="{{= app_config.mount_label}}">
-                            <img class="app-icon" src="{{= app_config.icon_url}}" alt="{{= app_config.name}}">
-                        </a>
+                        {{if exchange}}
+                            <a href="{{= exchange.url }}" title="{{= exchange.name }}">
+                                <img class="exchange-icon" src="{{= exchange.icon_url}}" alt="{{= exchange.name }}">
+                            </a>
+                        {{else}}
+                            <a href="{{= project.url}}" title="{{= project.name}}">
+                                <img class="project-icon" src="{{= project.icon_url}}" alt="{{= project.name}}">
+                            </a>
+                            {{if app_config}}
+                            <a href="{{= app_config.url}}" title="{{= app_config.mount_label}}">
+                                <img class="app-icon" src="{{= app_config.icon_url}}" alt="{{= app_config.name}}">
+                            </a>
+                            {{/if}}
                         {{/if}}
                         <a href="{{= link}}">{{= subject}}</a>
                     </span>

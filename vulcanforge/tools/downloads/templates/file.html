@@ -8,11 +8,13 @@
 {% endblock %}
 
 {% block header %}
-{{lib.path_links(fd_file.item_key.split('/')[:-1])}}{{fd_file.item_key.split('/')[-1]}}
+    {{lib.path_links(file_path.split('/')[:-1])}}{{file_path.split('/')[-1]}}
 {% endblock %}
 
+{% block actions %}{{ c.menu_bar.display(fd_file) }}{% endblock %}
+
 {% block relatedArtifacts %}
-{{c.related_artifacts_widget.display(value=fd_file)}}
+    {{c.related_artifacts_widget.display(value=fd_file)}}
 {% endblock %}
 
 {% block content %}

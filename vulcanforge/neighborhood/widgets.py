@@ -9,11 +9,32 @@ from vulcanforge.common.widgets.form_fields import MarkdownEdit
 from vulcanforge.resources.widgets import CSSLink, JSLink
 from vulcanforge.project.validators import (
     ProjectNameValidator,
-    ProjectShortnameValidator
+    AvailableShortnameValidator
 )
 from vulcanforge.project.widgets import ProjectUserSelect
 
 TEMPLATE_DIR = 'jinja:vulcanforge:neighborhood/templates/widgets/'
+
+
+class ToolSpecValidator(fev.StringBool):
+    if_empty = False
+    if_missing = False
+
+    ep_name = None
+    mount_point = None
+    mount_label = None
+
+    def __init__(self, *args, **kw):
+        super(ToolSpecValidator, self).__init__(*args, **kw)
+        if self.mount_point is None:
+            self.mount_point = self.ep_name.lower()
+
+    def _to_python(self, value, state=None):
+        value = super(ToolSpecValidator, self)._to_python(value, state)
+        if value:
+            return self.ep_name, self.mount_point, self.mount_label
+        else:
+            return value
 
 
 class NeighborhoodAddProjectForm(ForgeForm):
@@ -24,14 +45,35 @@ class NeighborhoodAddProjectForm(ForgeForm):
         submit_text='Start',
         neighborhood=None,
         base_url=None)
+    TOOL_OPTIONS = [
+        ('Wiki', 'Docs'),
+        ('Tickets', 'Manage'),
+        ('Downloads', 'Downloads'),
+        ('Discussion', 'Forums')
+    ]
 
     def __init__(self, *args, **kwargs):
         super(NeighborhoodAddProjectForm, self).__init__(*args, **kwargs)
         self._fields_dict = None
 
     @property
+    def tool_fields(self):
+        fields = []
+        for name, label in self.TOOL_OPTIONS:
+            fields.append(
+                ew.Checkbox(
+                    name=name, label=label, attrs={"class": "unlabeled"},
+                    validator=ToolSpecValidator(
+                        ep_name=name.lower(),
+                        mount_label=label
+                    )
+                )
+            )
+        return fields
+
+    @property
     def fields(self):
-        return ew_core.NameList([
+        field_list = [
             ew.HiddenField(
                 label='Public Description', name='project_description'),
             ew.Checkbox(
@@ -47,30 +89,10 @@ class NeighborhoodAddProjectForm(ForgeForm):
                 name='project_unixname',
                 label='Short Name',
                 field_type='text',
-                validator=ProjectShortnameValidator()),
-            ew.Checkbox(
-                name='Wiki', label="Docs", attrs={'class': 'unlabeled'}),
-            ew.Checkbox(
-                name='Repository', label="Repository",
-                attrs={'class': 'unlabeled repositoryCheckbox'}),
-            ew.SingleSelectField(
-                name='RepositoryKind',
-                label="",
-                options=["Git", "Subversion"],
-                attrs={
-                    'class': 'repositoryKindSelect'
-                }),
-            ew.Checkbox(
-                name='Tickets', label="Manage", attrs={'class': 'unlabeled'}),
-            ew.Checkbox(
-                name='Downloads',
-                label="Downloads",
-                attrs={'class': 'unlabeled'}),
-            ew.Checkbox(
-                name='Discussion',
-                label="Forums",
-                attrs={'class': 'unlabeled'})
-        ])
+                validator=AvailableShortnameValidator())
+        ]
+        field_list.extend(self.tool_fields)
+        return ew_core.NameList(field_list)
 
     @property
     def fields_dict(self):

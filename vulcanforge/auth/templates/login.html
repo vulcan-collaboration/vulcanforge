@@ -1,74 +1,90 @@
-{% set hide_sidebar = True %}
-{% extends g.templates['master'] %}
+{% extends g.templates['polymer-user'] %}
 
-{% if bodyClasses is undefined %}
-    {% set bodyClasses = [] %}
-{% endif %}
-{% set bodyClasses = ['Login'] %}
-{% block title %}Login Form{% endblock %}
+{% block title %}Login to {{ tg.config.get('forge_name', "Vulcan") }}{% endblock %}
 
-{% block header %}Login{% endblock %}
+{% block head %}
+    <style is="custom-style">
+        #login-form {
+            max-width: 400px;
+        }
+        #reset {
+            margin-top: 20px;
+        }
+        #login {
+            margin-top: 16px;
+        }
+        #register {
+            display: none;
+        }
+        #reset .label,
+        #register .label {
+            margin-left: 4px;
+        }
+        input[type="text"] {
+            color: black;
+        }
+        @media (max-width: 480px) {
+            #register {
+                margin-top: 20px;
+                display: block;
+            }
+            #reset {
+                margin-top: 0px;
+            }
+        }
+        @media (max-width: 320px) {
+            #login-form {
+                min-width: 280px;
+                @apply(--layout-center);
+            }
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-
-    <div id="loginWrapper">
-        {% if is_returning_to  %}<p class="padded"><b>The request page is only accessible by authenticated users.</b></p>{% endif %}
-        <div id="loginContent" class="padded">
-            <div id="loginform">
-
-                <p>Please use your credentials to login below{% if can_register %} or <a href="register">register here</a> for a new account{% endif %}.</p>
-
-                <h2><span>Password Login</span></h2>
-                {{ c.form.display(action='./do_login', value=dict(return_to=return_to), form_control_box=False, autocomplete=autocomplete) }}
-
-                <p>Forgot your password or username?<br/><a href="{{ g.url('/auth/password_reset/') }}">Click here to reset your password</a> and to retrieve your username.</p>
-
-            </div>
-
-            {% if g.openid_enabled %}
-            <div id="loginform_oid">
-
-                <div class="forge-form-container">
-                    <form class="loginfields forge-form"
-                          action="/auth/login_verify_oid" method="post">
-
-                        <h2><span>OpenID Login</span></h2>
-
-                        <ul class="field-list padded">
-                            <li class="field-list-item field-list-item-wide">
-                                <div class="field-list-item-label">
-                                    <label for="provider">Provider:</label>
-                                </div>
-                                <div class="field-list-item-field">
-                                    <select id="provider" name="provider">
-                                        {%- for label, url in oid_providers %}
-                                            <option value="{{url}}">{{ label }}</option>
-                                        {%- endfor %}
-                                    </select>
-                                </div>
-                            </li>
-                            <li class="field-list-item field-list-item-wide">
-                                <div class="field-list-item-label">
-                                    <label for="username_oid">Username:</label>
-                                </div>
-                                <div class="field-list-item-field">
-                                    <input type="text" id="username_oid"
-                                                    name="username"/>
-                                </div>
-                            </li>
-                        </ul>
-
-                        <input name="return_to" type="hidden"
-                               value="{{return_to}}">
-
-                        <div>
-                            <input class="submit" type="submit" value="Login"
-                                   tabindex="5">
-                        </div>
-                    </form>
+    <div class="layout horizontal center-center wrap">
+        <section id="login-form" class="paper-sheet big-margin big-padding flex">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="section-icon" icon="vf:login" role="img"></iron-icon>
+                Login
+            </h2>
+            <paper-button-link id="terms" href="{{ g.resource_manager.absurl(tg.config.get('site.terms', 'site-terms.pdf'))}}" tabindex="-1">
+                <div class="layout horizontal center-center flex">
+                    <iron-icon icon="icons:account-box" class="paper-button-icon"></iron-icon>
+                    <div class="label">terms of service</div>
                 </div>
-            </div>
-            {% endif %}
-        </div>
+            </paper-button-link>
+            <form action="/auth/do_login" method="POST" class="layout vertical">
+                <input type="hidden" name="_session_id" value="{{ h.get_csrf_value() }}"/>
+                {% if c.form_errors['_the_form'] %}
+                    <div class="form-error layout horizontal">
+                        <iron-icon icon="warning"></iron-icon>
+                        <div class="flex">{{ c.form_errors['_the_form'] }}</div>
+                    </div>
+                {% endif %}
+                <input type="hidden" name="return_to" value="{{c.form_values['return_to']}}"/>
+                <paper-input-container>
+                    <label>username</label>
+                    <input is="iron-input" type="text" name="username" value="{{c.form_values['username']}}" autofocus required/>
+                </paper-input-container>
+                <paper-input-container>
+                    <label>password</label>
+                    <input is="iron-input" type="password" name="password" required/>
+                </paper-input-container>
+                <button id="login" type="submit" is="vf-button-submit" icon="arrow-forward" label="login" tabindex="-1"></button>
+                <paper-button-link id="register" href="/auth/register" tabindex="-1">
+                    <div class="layout horizontal center-center flex">
+                        <iron-icon icon="social:person-add" class="paper-button-icon" role="img"></iron-icon>
+                        <div class="flex label">register</div>
+                    </div>
+                </paper-button-link>
+                <paper-button-link id="reset" href="/auth/password_reset" tabindex="-1">
+                    <div class="layout horizontal center-center flex">
+                        <iron-icon icon="help" class="paper-button-icon" role="img"></iron-icon>
+                        <div class="flex label">recover password</div>
+                    </div>
+                </paper-button-link>
+            </form>
+        </section>
     </div>
 {% endblock %}

@@ -1,0 +1,11 @@
+{% if has_write_access and not node.deleted %}
+    {{ icon_button_widget.display('Edit', icon='ico-edit', href=node.edit_url()) }}
+    {{ icon_button_widget.display('Unpublish', elementId='unpublish-node-btn', className='post-link', icon='ico-undo', href='', action='$vf.unpublishNode(\''+ node.delete_url() +'\'); return false;') }}
+{% endif %}
+{{ icon_button_widget.display('History', icon='ico-history', href=node.history_url()) }}
+{% if has_artifact_read %}
+    {{ icon_button_widget.display('View Original', icon='ico-eye', href=node.cur_artifact.url() + '?node_id={}'.format(node._id)) }}
+{% endif %}
+{% if has_import_access %}
+    {{ icon_button_widget.display('Import Artifact', icon='ico-plus', href=node.import_url()) }}
+{% endif %}

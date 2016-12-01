@@ -36,8 +36,8 @@ $.extend($vf, {
 
     // privates
     var initialized = false,        // stores state
-        tasksAfterInit = [];        // function/attribute pairs which should be called after/when VF is initialized
-
+        tasksAfterInit = [],        // function/attribute pairs which should be called after/when VF is initialized
+        webflashManager;
 
     // this function will go through the functions which should be called after/when VF is initialized. Event handlers
     // are called on $vf as context
@@ -240,12 +240,12 @@ $.extend($vf, {
                 })(userURL+'/profile/updates_dispatcher', defaultFrequency);
 
                 // making polls less frequent when user is idle
-                $( document ).idleTimer( windowIdleTimeOut );
-                $( document ).on( "idle.idleTimer", function(){
+                $( document.body ).idleTimer( windowIdleTimeOut );
+                $( document.body ).on( "idle.idleTimer", function(){
                     $vf.updateService.changeFrequency(idleFrequency);
                     trace('User is not very active.');
                 });
-                $( document ).on( "active.idleTimer", function(){
+                $( document.body ).on( "active.idleTimer", function(){
                     $vf.updateService.changeFrequency(defaultFrequency);
                     trace('User is active again.');
                 });
@@ -561,12 +561,12 @@ $.extend($vf, {
             }).
                 appendTo(result);
 
-            if (this.displayProject && doc.project_shortname_t) {
+            if (this.displayProject && doc.project_shortname_s) {
                 title.append(
                     $('<span/>').text(' in ')
                 ).append(
                     $('<a/>', {href: doc.url_s})
-                        .text(doc.project_name_t)
+                        .text(doc.project_name_s)
                 );
                 result.addClass('project');
             }
@@ -963,19 +963,22 @@ $.extend($vf, {
             h = this.target.height();
             w = this.target.width();
 
-            this.skin.width(w);
-            this.skin.height(h);
+            //this.skin.width(w);
+            //this.skin.height(h);
+            this.skin.width("100%");
+            this.skin.height("100%");
 
             var position = this.skin.position();
 
-            this.skin.css("margin-top", -position.top);
-            this.skin.css("margin-left", -position.left);
+            this.skin.css("top", 0);
+            this.skin.css("left", 0);
+            //this.skin.css("margin-top", -position.top);
+            //this.skin.css("margin-left", -position.left);
 
             h = this.skin.height();
             w = this.skin.width();
 
             this.messageHolder.css("margin-top", h / 2 + 32);
-
             this.messageHolder.text(this.message);
 
             this.spinner.css("top", h / 2 - 46);
@@ -1027,11 +1030,11 @@ $.extend($vf, {
 
         update: function () {
 
-            var h = this.target.outerHeight();
-            var w = this.target.outerWidth();
+            //var h = this.target.outerHeight();
+            //var w = this.target.outerWidth();
 
-            this.skin.width(w);
-            this.skin.height(h);
+            this.skin.width("100%");
+            this.skin.height("100%");
 
             //var offset = this.target.offset();
 
@@ -1163,16 +1166,20 @@ $.extend($vf, {
      * automatic logout
      */
     /** defaults */
+    $vf.session_timeout = 0;
     $vf.idle_logout_enabled = true;
     $vf.idle_logout_minutes = 30;
     $vf.idle_logout_countdown_seconds = 30;
     /** /defaults */
     $vf.afterInit(function () {
         if ($vf.logged_in_as && $vf.idle_logout_enabled) {
-            $.idleLogout({
-                logoutSeconds: $vf.idle_logout_minutes * 60,
-                countdownSeconds: $vf.idle_logout_countdown_seconds,
-                logoutUrl: '/auth/logout'
+            $(document).idleTimeout({
+                redirectUrl: '/auth/logout',
+                idleTimeLimit: ($vf.idle_logout_minutes * 60) - $vf.idle_logout_countdown_seconds,
+                activityEvents: "mousemove keydown DOMMouseScroll mousewheel mousedown touchstart touchmove wheel MSPointerDown MSPointerMove resumableFileProgress",
+                dialogDisplayLimit: $vf.idle_logout_countdown_seconds,
+                sessionKeepAliveTimer: ($vf.session_timeout > 0) ? Math.floor($vf.session_timeout / 2) : false,
+                sessionKeepAliveUrl: "/auth/renew_session"
             });
         }
     });
@@ -1227,28 +1234,47 @@ $.extend($vf, {
      * @method webflash
      * @namespace $vf
      */
-    $vf.webflash = function (options) {
-        var opts = $.extend({}, $vf.webflash.defaults, options);
-        if ($.cookie('webflash')) {
-            var flash_message = JSON.parse($.cookie('webflash'));
-            var messagesEl = $("#" + opts.messagesId);
+    function WebFlashManager(params) {
+        var messagesEl,
+            opts = {
+                messagesId: "messages",
+                timer: 4000
+            };
+        $.extend(opts, params);
 
-            messagesEl.notify(flash_message.message, {
-                    status: flash_message.status,
-                    timer: opts.timer
-                }
-            );
+        messagesEl = $("#" + opts.messagesId);
 
-            $.cookie('webflash', null, {
-                path: '/'
-            });
+        function getMessagefromCookie() {
+            var msgJson = null,
+                flashCookie = $.cookie('webflash');
+            if (flashCookie) {
+                msgJson = JSON.parse(flashCookie);
+                $.cookie('webflash', null, {path: '/'});
+            }
+            return msgJson;
         }
-    };
 
-    $vf.webflash.defaults = {
-        messagesId: "messages",
-        timer: 4000
-    };
+        function webflash (msgJson) {
+            /* msgJson is a json structure with status and message parameters */
+            if (typeof msgJson === 'undefined') {
+                msgJson = getMessagefromCookie();
+            }
+            if (msgJson) {
+                messagesEl.notify(
+                    msgJson.message,
+                    {
+                        status: msgJson.status,
+                        timer: msgJson.timer || opts.timer
+                    }
+                );
+            }
+        }
+
+        this.webflash = webflash;
+    }
+
+    webflashManager = new WebFlashManager();
+    $vf.webflash = webflashManager.webflash;
 
     $vf.ajaxErrorHandler = function (jqXHR, textStatus, errorThrown) {
         var alertParams = {
@@ -1552,30 +1578,98 @@ $.extend($vf, {
         if (size === 1) {
             return "1 byte";
         }
-        var units = [
-                1024,
-                Math.pow(1024, 2),
-                Math.pow(1024, 3),
-                Math.pow(1024, 4),
-                Math.pow(1024, 5)
+        var steps = [
+                1,
+                1000,
+                Math.pow(1000, 2),
+                Math.pow(1000, 3),
+                Math.pow(1000, 4),
+                Math.pow(1000, 5)
             ],
             labels = [
-                'KB', 'MB', 'GB', 'TB', 'PB'
+                'bytes', 'KB', 'MB', 'GB', 'TB', 'PB'
             ],
             i, x;
-        for (i=units.length; i>=0; --i) {
-            x = size / units[i];
+        for (i=steps.length; i>=0; --i) {
+            x = size / steps[i];
             if (x > 1) {
                 return $vf.roundToDecimal(x, 2) + ' ' + labels[i];
             }
         }
-        return size + ' bytes';
+    };
+
+    $vf.prettyPrintByteSpeed = function (sizeInBytes, timeDeltaInSeconds) {
+        if (timeDeltaInSeconds == 0){
+            return;
+        }
+        var speed = sizeInBytes / timeDeltaInSeconds;
+        var steps = [
+                1,
+                1000,
+                Math.pow(1000, 2),
+                Math.pow(1000, 3),
+                Math.pow(1000, 4),
+                Math.pow(1000, 5)
+            ],
+            labels = [
+                'bytes/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s', 'PB/s'
+            ],
+            i, x;
+        for (i=steps.length; i>=0; --i) {
+            x = speed / steps[i];
+            if (x > 1) {
+                return $vf.roundToDecimal(x, 2) + ' ' + labels[i];
+            }
+        }
     };
 
     // round to decimal places
     $vf.roundToDecimal = function (i, places) {
         var factor = Math.pow(10, places);
         return Math.round(i * factor) / factor;
+    };
+
+    $vf.htmlDecode = function(value){
+        return $("<textarea/>").html(value).text();
+    };
+
+    $vf.uriEncodePath = function(path){
+        var i,
+            splitPath = path.split("/");
+        for (i = 0; i < splitPath.length; i++) {
+            splitPath[i] = encodeURIComponent(splitPath[i]);
+        }
+        return splitPath.join("/");
+    };
+
+    $vf.prettyPrintTimeRemaining = function (bytesRemaining, bytesPerSecond) {
+        if (bytesPerSecond == 0){
+            return;
+        }
+        var timeInSeconds = bytesRemaining / bytesPerSecond;
+        var steps = [
+                1,
+                60,
+                Math.pow(60, 2)
+            ],
+            pluralLabels = [
+                'seconds', 'minutes', 'hours'
+            ],
+            labels = [
+                'second', 'minute', 'hour'
+            ],
+            i, x;
+        for (i=steps.length; i>=0; --i) {
+            x = timeInSeconds / steps[i];
+            if (x > 1) {
+                if (x > 2){
+                    return $vf.roundToDecimal(x, 0) + ' ' + pluralLabels[i];
+                } else {
+                    return $vf.roundToDecimal(x, 0) + ' ' + labels[i];
+                }
+
+            }
+        }
     };
 
 

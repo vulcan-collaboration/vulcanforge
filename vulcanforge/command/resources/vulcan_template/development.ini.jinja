@@ -77,7 +77,7 @@ base_url = http://localhost:8080
 #
 # set validate_key and encrypt_key to randomly generated strings
 #
-beaker.session.key = vehicleforge
+beaker.session.key = vulcanforge
 beaker.session.type = cookie
 beaker.session.validate_key = {{cookievalidate}}
 beaker.session.encrypt_key = {{cookieencrypt}}
@@ -97,7 +97,7 @@ s3.connect_string =
 s3.password =
 s3.ip_address =
 s3.port = 443
-s3.ssl = true
+s3.ssl = false
 s3.bucket_name =
 s3.tempurlkey =
 s3.account_name =
@@ -123,6 +123,11 @@ ming.project.database = project-data
 ming.project.replica_set =
 ming.project.read_preference = SECONDARY
 ming.project.auto_ensure_indexes = false
+ming.exchange.uri = mongodb://127.0.0.1:27017
+ming.exchange.database = exchange-data
+ming.exchange.replica_set =
+ming.exchange.read_preference = SECONDARY
+ming.exchange.auto_ensure_indexes = false
 
 ### SOLR setup
 #
@@ -175,7 +180,12 @@ site_admin_project = forgeadmin
 # page the user is redirected to after login. Can be overriden on a per-user
 # basis with the User.preferences.login_landing_url property
 #
-# login_landing_url = /dashboard/
+login_landing_url = /dashboard/
+
+#
+# page the user is directed to after signup, before he or she has a project
+#
+# getting_started_url = /dashboard/
 
 #
 # A forge by any other name...
@@ -223,6 +233,7 @@ visualizer.syntax = vulcanforge.visualize.syntax:SyntaxVisualizer
 visualizer.image = vulcanforge.visualize.image:ImageVisualizer
 visualizer.pdf = vulcanforge.visualize.pdf:PDFVisualizer
 
+{%- if repo %}
 ### Commit Hooks
 #
 # Triggered on each repo commit. To ensure installation, run
@@ -230,20 +241,99 @@ visualizer.pdf = vulcanforge.visualize.pdf:PDFVisualizer
 # Config format is commit_hook.<shortname> = <path_to_commit_hook>
 #
 commit_hook.visualizer = vulcanrepo.base.model.hook:VisualizerHook
+{%- endif %}
 
 ### Global Navigation
 #
 # Customize entries in the global navigation menu
 #
-masternav.root_items = browseprojects browseusers
+masternav.root_items = dashboard browseprojects browseusers
+masternav.root.href = /dashboard/
+masternav.items.dashboard.label = My Dashboard
+masternav.items.dashboard.href = /dashboard/
+masternav.items.dashboard.icon = images/person.png
+masternav.items.dashboard.icon_is_resource = true
 masternav.items.browseprojects.label = Browse All Projects
 masternav.items.browseprojects.href = /browse/
 masternav.items.browseprojects.icon = images/forge_toolbar_icons/projects_icon_on.png
 masternav.items.browseprojects.icon_is_resource = true
 masternav.items.browseusers.label = Browse All Users
-masternav.items.browseusers.href = /designers/
+masternav.items.browseusers.href = /users/
 masternav.items.browseusers.icon = images/forge_toolbar_icons/designers_icon_on.png
 masternav.items.browseusers.icon_is_resource = true
+
+### Global Exchanges
+#
+# Artifacts within tools can be hooked up to the Global Exchange, a means of
+# sharing and browsing artifacts outside of the Team/Neighborhood heirarchy.
+# To enable, simply specify the artifacts in the exchange as a comma separated
+# list. Here is how you would enable this for wiki pages, for an exchange
+# mounted on /exchange/docs:
+#
+# exchange.docs.artifacts = wiki.page
+
+# Custom name. Will default to <Name of Artifact> Exchange
+#
+# exchange.docs.name = Page Exchange
+
+# Custom Interface object for an exchange
+#
+# exchange.docs.interface = vulcanforge.exchange.api:Exchange
+
+# Specify a custom root controller for the artifact's exchange.
+#
+# exchange.docs.root_controller = vulcanforge.exchange.controllers.root:ExchangeRootController
+
+# Custom rest controller:
+#
+# exchange.docs.rest_controller = vulcanforge.exchange.controllers.rest:ExchangeRestController
+
+# Custom Icon to appear in global nav
+#
+# exchange.docs.icon = images/forge_toolbar_icons/components_icon_on.png
+
+# Custom artifact renderer. Used to render artifacts within the exchange.
+# By default, it looks for a widget mounted on the artifact's tool at
+# <Tool_cls>.artifacts[<artifact_name>]["renderer"].
+#
+# exchange.docs.wiki.page.renderer = vulcanforge.tools.wiki.widgets.wiki:PageRenderer
+
+# Custom Exchange Node model. Persists information required to display
+# published artifacts in the browse interface, load the original artifact
+# for display in the view interface, and provide the user designated access
+# control.
+#
+# exchange.docs.node = vulcanforge.exchange.model:ExchangeNode
+# exchange.docs.wiki.page.node = vulcanforge.exchange.model:ExchangeNode
+
+# Custom view controller. Controller to view artifacts within the exchange.
+# The controller can also be overridden on the tool with the
+# <Tool_cls>.artifacts[<artifact_name>]["exchange_controller"] property.
+#
+# exchange.docs.wiki.page.view_controller = vulcanforge.exchange.controllers.view:ArtifactViewController
+
+# Specify a custom publish_controller. The publish_controller displays and
+# processes the form to publish an artifact to the exchange. It can be
+# specified for invidivual artifacts or globally for the exchange. If set
+# explicitly to null, it signifies that that the developer is responsible for
+# the publishing mechanism, and links to publish forms will not appear.
+#
+# exchange.docs.publish_controller = vulcanforge.exchange.controllers.publish:ArtifactPublishController
+# exchange.docs.wiki.page.publish_controller = vulcanforge.exchange.controllers.publish:ArtifactPublishController
+
+# Specify a custom publish_url. The publish icons on an artifact menu bar will
+# link here.
+#
+# exchange.docs.wiki.page.publish_url = /exchange/docs/wiki_page/publish
+
+# Custom publish icon to show up in the artifact menu bar
+#
+# exchange.docs.publish_icon = ico-publish
+# exchange.docs.wiki.page.publish_icon = ico-publish
+
+# Enable/disable search discovery
+#
+# exchange.docs.search = true
 
 ### Security
 #
@@ -307,13 +397,29 @@ moderate_registration = true
 # auth.pw.min_levenshtein = 0
 
 #
+# Password complexity is the mixture of uppercase,
+# lowercase, numbers, and special characters required in passwords.
+# The value of this setting is an encoded string, where U, L, N, and S
+# specify minimum counts for these elements, respectively.  The default
+# requires at least one uppercase, one lowercase, one numeric, and one
+# special character.
+#
+# auth.pw.complexity = U1_L1_N1_S1
+
+#
 # inactivity_period will disable user account after x months without a login.
 # To disable users, one must run paster expire-users
 #
 # auth.user.inactivity_period = 6
 
 #
-# visibility_mode set to closed will disable all pages but the login for unauthenticated users
+# two factor authentication can be supported using TOTP
+#
+# auth.two_factor = true
+
+#
+# visibility_mode set to closed will disable all pages but the login for
+# unauthenticated users.
 #
 # visibility_mode = open
 
@@ -352,7 +458,9 @@ moderate_registration = true
 #
 # Artifact-specific API for shortlinks, relations, etc.
 #
+{%- if repo %}
 artifact_api = vulcanrepo.artifact:RepoArtifactAPI
+{%- endif %}
 
 ### Task queue setup for taskd service.
 #
@@ -510,7 +618,7 @@ override_root = event
 # http://docs.python.org/lib/logging-config-fileformat.html
 
 [loggers]
-keys = root, {{package}}, vulcanforge, vulcanforgecommand, vulcanrepo, paste, redis, pylons, pysolr
+keys = root, {{package}}, vulcanforge, vulcanforgecommand, {% if repo %}vulcanrepo,{% endif %}paste, redis, pylons, pysolr
 
 [handlers]
 keys = console, stats
@@ -534,6 +642,11 @@ qualname = {{package}}
 level = INFO
 handlers =
 qualname = vulcanforge
+
+[logger_vulcanforgecommand]
+level = INFO
+handlers =
+qualname = vulcanforge.command
 
 {%- if repo %}
 

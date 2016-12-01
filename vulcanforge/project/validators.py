@@ -51,14 +51,14 @@ class ProjectNameValidator(fev.UnicodeString):
         return value
 
 
-class ProjectShortnameValidator(fev.Regex):
+class ShortnameValidator(fev.Regex):
     not_empty = True
-    regex = r'^[A-z][-A-z0-9]{2,14}$'
+    regex = r'^[A-z][-A-z0-9]{2,}$'
+    strip = True
     messages = dict(
         fev.Regex._messages,
-        invalid='Please use 3-15 letters, numbers, or dashes.',
-        bad='Invalid value. Please choose another.',
-        taken='That url is already taken, please choose another.'
+        invalid='Must be three or more letters, numbers, or dashes, starting with a letter.',
+        bad='Invalid value. Please choose another.'
     )
 
     BLACKLISTED = [
@@ -71,8 +71,8 @@ class ProjectShortnameValidator(fev.Regex):
     ]
 
     def validate_name(self, value, state=None):
-        """Validates the value without checking for conflicts"""
-        value = super(ProjectShortnameValidator, self).to_python(value, state)
+        """Validates the value"""
+        value = super(ShortnameValidator, self).to_python(value, state)
         # make sure the name isn't blacklisted
         if value in self.BLACKLISTED:
             msg = self.message('bad', state)
@@ -82,17 +82,49 @@ class ProjectShortnameValidator(fev.Regex):
 
     def to_python(self, value, state=None):
         value = self.validate_name(value, state)
+        value = really_unicode(value or '').encode('utf-8').lower()
 
         # no neighborhoods with this shortname
         if Neighborhood.by_prefix(value):
             msg = self.message('bad', state)
             raise fev.Invalid(msg, value, state)
 
+        return value
+
+
+class AvailableShortnameValidator(ShortnameValidator):
+    """Ensures the value is not the shortname of another project."""
+    messages = dict(
+        ShortnameValidator._messages,
+        taken='That url is already taken, please choose another.'
+    )
+
+    def to_python(self, value, state=None):
+        value = super(
+            AvailableShortnameValidator, self).to_python(value, state)
         # make sure the name isn't taken
-        value = really_unicode(value or '').encode('utf-8').lower()
         if Project.query.get(shortname=value):
             raise fev.Invalid(self.message('taken', state), value, state)
         return value
+
+
+class ExistingShortnameValidator(ShortnameValidator):
+    """Ensures the value is the shortname of the given project, and returns
+    the project.
+
+    """
+    messages = dict(
+        ShortnameValidator._messages,
+        notfound='A project with this name was not found'
+    )
+
+    def to_python(self, value, state=None):
+        value = super(ExistingShortnameValidator, self).to_python(value, state)
+        if value:
+            project = Project.query.get(shortname=value)
+            if not project:
+                raise fev.Invalid(self.message('notfound', state), value, state)
+            return project
 
 
 MOUNTPOINT_VALIDATOR = MountPointValidator()

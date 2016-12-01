@@ -1,0 +1,29 @@
+{% extends g.templates['master'] %}
+
+{% if show_tutorial %}
+    {% do g.resource_manager.register_js('discussion/ForumsTutorial.js') %}
+{% endif %}
+
+{% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Discussion{% endblock %}
+
+{% block header %}{{h.really_unicode(discussion.name)}}{{discussion.deleted and " (DELETED)" or ""}}{% endblock %}
+
+{% block actions %}
+{% endblock %}
+
+{% block content %}
+{% if show_tutorial %}
+    <div id="tutorialHolder"></div>
+{% endif %}
+<div class="editbox">{{widgets.discussion_header.display(value=discussion)}}</div>
+<div class="padded top-spaced">
+{{widgets.subscription_form.display(value=discussion,
+                                    threads=threads,
+                                    action=discussion.url() + 'subscribe',
+                                    allow_create_thread=allow_create_thread,
+                                    show_subject=show_subject,
+                                    limit=limit,
+                                    page=page,
+                                    count=count)}}
+</div>
+{% endblock %}

@@ -33,8 +33,8 @@ class ForgeForm(ew.SimpleForm):
         is_lightbox=False,
         links=[])
 
-    def __init__(self, ignore_key_missing=True, *args, **kwargs):
-        super(ForgeForm, self).__init__(*args, **kwargs)
+    def __init__(self, ignore_key_missing=True, **kwargs):
+        super(ForgeForm, self).__init__(**kwargs)
         self.ignore_key_missing = ignore_key_missing
 
     def _make_schema(self):

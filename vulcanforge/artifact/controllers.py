@@ -18,6 +18,7 @@ from vulcanforge.artifact.model import ArtifactReference, Shortlink
 from vulcanforge.artifact.widgets import short_artifact_link_data
 from vulcanforge.discussion.model import Post
 from vulcanforge.project.model import Project
+from vulcanforge.virusscan.model import S3VirusScannableMixin
 
 
 LOG = logging.getLogger(__name__)
@@ -157,6 +158,26 @@ class ArtifactReferenceController(BaseController):
             relations=app_refs,
             loading=True
         )
+
+
+class BaseArtifactController(BaseController):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        super(BaseArtifactController, self).__init__()
+
+    def index(self, **kwargs):
+        """View the artifact"""
+        g.security.require_access(self.artifact, 'read')
+
+    def edit(self, **kwargs):
+        """Edit the artifact"""
+        g.security.require_access(self.artifact, 'write')
+
+    def do_edit(self, **kwargs):
+        g.security.require_access(self.artifact, 'write')
+
+    def delete(self, **kwargs):
+        g.security.require_access(self.artifact, 'write')
 
 
 class BaseArtifactRest(object):
@@ -366,6 +387,8 @@ class AttachmentController(BaseController):
             filename=self.filename,
             **metadata
         )
+        if isinstance(attachment, S3VirusScannableMixin) and not attachment.is_scanned:
+            raise exc.HTTPForbidden("Attachment is being virus scanned")
         if attachment is None:
             raise exc.HTTPNotFound
         return attachment
@@ -384,20 +407,19 @@ class AttachmentController(BaseController):
 
     @expose()
     def index(self, delete=False, embed=True, visualizer_id=None, **kw):
-        if request.method == 'POST':
+        if delete:
             g.security.require_access(self.artifact, self.edit_perm)
-            if delete:
-                self.attachment.delete()
-                try:
-                    if self.thumbnail:
-                        self.thumbnail.delete()
-                except exc.HTTPNotFound:
-                    pass
+            self.attachment.delete()
+            try:
+                if self.thumbnail:
+                    self.thumbnail.delete()
+            except exc.HTTPNotFound:
+                pass
             redirect(request.referer or self.artifact.url())
         elif g.s3_serve_local or request.is_xhr:
-            return self.attachment.serve(embed)
+            return self.attachment.iter_serve()
         else:
-            return redirect(self.attachment.remote_url())
+            return redirect(self.attachment.get_s3_temp_url())
 
     @expose()
     def thumb(self, embed=True):

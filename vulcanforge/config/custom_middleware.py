@@ -47,6 +47,13 @@ class VFMiddleware(object):
 
 
 class VFMingMiddleware(MingMiddleware):
+
+    def __call__(self, environ, start_response):
+        if config['pylons.app_globals'].cache is not None and config['pylons.app_globals'].cache.exists('fail_whale'):
+            return self.app(environ, start_response)
+        else:
+            return super(VFMingMiddleware, self).__call__(environ, start_response)
+
     def _cleanup_request(self):
         try:
             super(VFMingMiddleware, self)._cleanup_request()
@@ -177,7 +184,12 @@ class CSRFMiddleware(object):
                 except KeyError:
                     param = None
             if not param:
+                param = headers.get('VFSessionID', None)
+            if not param:
                 param = headers.get('VF_SESSION_ID', None)
+                if param is not None:
+                    LOG.warning('Using deprecated VF_SESSION_ID header, '
+                        'please use VFSessionID instead.')
             if cookie != param:
                 LOG.warning('CSRF attempt detected to %s, %r != %r',
                             environ['PATH_INFO'], cookie, param)
@@ -289,6 +301,9 @@ class WidgetMiddleware(ew.WidgetMiddleware):
         kwargs['script_name'] = mgr.script_name
         super(WidgetMiddleware, self).__init__(app, **kwargs)
         self.script_name_slim_res = mgr.script_name + '_slim/'
+        self.script_name_slim_html = mgr.script_name + '_slim/html'
+
+        self.fail_whale_url = "/"
 
     def __call__(self, environ, start_response):
         registry = environ['paste.registry']
@@ -301,6 +316,13 @@ class WidgetMiddleware(ew.WidgetMiddleware):
         mgr.init_resource_context()
 
         if not environ['PATH_INFO'].startswith(self.script_name):
+            if config['pylons.app_globals'].cache is not None and config['pylons.app_globals'].cache.exists('fail_whale'):
+                if not environ['PATH_INFO'] == self.fail_whale_url:
+                    # redirecting to site root see matching template override in the index function
+
+                    r = exc.HTTPFound(location=self.fail_whale_url)
+                    return r(environ, start_response)
+
             return self.app(environ, start_response)
 
         if environ['PATH_INFO'] == self.script_name_slim_js:
@@ -310,6 +332,11 @@ class WidgetMiddleware(ew.WidgetMiddleware):
                 environ, start_response)
         elif environ['PATH_INFO'] == self.script_name_slim_css:
             result = self.serve_slim_css(
+                mgr, urlparse.parse_qs(
+                    environ['QUERY_STRING']).get('href', [''])[0],
+                environ, start_response)
+        elif environ['PATH_INFO'] == self.script_name_slim_html:
+            result = self.serve_slim_html(
                 mgr, urlparse.parse_qs(
                     environ['QUERY_STRING']).get('href', [''])[0],
                 environ, start_response)
@@ -390,6 +417,20 @@ class WidgetMiddleware(ew.WidgetMiddleware):
             return exc.HTTPNotFound()(environ, start_response)
         app = fileapp.DataApp(data, [
             ('Content-Type', 'text/css'),
+            ('Content-Encoding', 'gzip'),
+            ('Content-Length', len(data))
+        ])
+        app.cache_control(public=True, max_age=mgr.cache_max_age)
+        app.set_content(data, mtime)
+        return app(environ, start_response)
+
+    def serve_slim_html(self, mgr, res_path, environ, start_response):
+        try:
+            data, mtime = mgr.serve_slim('html', res_path)
+        except (IOError, OSError):
+            return exc.HTTPNotFound()(environ, start_response)
+        app = fileapp.DataApp(data, [
+            ('Content-Type', 'text/html'),
             ('Content-Encoding', 'gzip'),
             ('Content-Length', len(data))
         ])

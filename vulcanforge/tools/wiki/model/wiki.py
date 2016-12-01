@@ -1,10 +1,12 @@
+import logging
+import jinja2
+
 from datetime import datetime
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 from ming import schema
-from ming.odm import FieldProperty, ForeignIdProperty, Mapper, session
-from ming.odm.declarative import MappedClass
+from ming.odm import FieldProperty, ForeignIdProperty, session
 
 from vulcanforge.artifact.model import Snapshot, VersionedArtifact, Feed, \
     BaseAttachment
@@ -15,10 +17,12 @@ from vulcanforge.common.model.session import project_orm_session
 from vulcanforge.common.util import ConfigProxy
 from vulcanforge.common.util.diff import unified_diff
 from vulcanforge.discussion.model import Thread, Post
+from vulcanforge.exchange.model.artifact import ExchangeableArtifact
 from vulcanforge.notification.model import Notification
 
 
 config = ConfigProxy(common_suffix='forgemail.domain')
+TEMPLATE_DIR = 'vulcanforge.tools.wiki.templates'
 
 
 class Globals(BaseMappedClass):
@@ -34,9 +38,11 @@ class Globals(BaseMappedClass):
     root = FieldProperty(str)
 
 
-class PageHistory(Snapshot):
+class PageHistory(Snapshot, ExchangeableArtifact):
     class __mongometa__:
         name = 'page_history'
+
+    type_s = 'WikiPage Snapshot'
 
     def original(self):
         return Page.query.get(_id=self.artifact_id)
@@ -56,14 +62,13 @@ class PageHistory(Snapshot):
     def original_url(self):
         return self.original().url()
 
+    @property
+    def title_s(self):
+        return 'Version %d of %s' % (self.version, self.original().title)
+
     def index(self, **kw):
         return super(PageHistory, self).index(
-            title_s='Version %d of %s' % (
-                self.version, self.original().title),
-            type_s='WikiPage Snapshot',
-            text_objects=[
-                self.data.text,
-            ],
+            text_objects=[self.data.text],
             **kw
         )
 
@@ -85,7 +90,7 @@ class PageHistory(Snapshot):
         return md.convert(self.text)
 
 
-class Page(VersionedArtifact):
+class Page(VersionedArtifact, ExchangeableArtifact):
     class __mongometa__:
         name = 'page'
         history_class = PageHistory
@@ -98,7 +103,6 @@ class Page(VersionedArtifact):
     deleted_time = FieldProperty(datetime)
     deleter_id = FieldProperty(schema.ObjectId, if_missing=lambda: c.user._id)
     type_s = 'Wiki'
-    content_agreement_protected = FieldProperty(bool, if_missing=False)
     hide_attachments = FieldProperty(bool, if_missing=False)
     featured = FieldProperty(bool, if_missing=False)
     featured_label = FieldProperty(str, if_missing=None)
@@ -120,14 +124,16 @@ class Page(VersionedArtifact):
             description = '<pre>' + diff + '</pre>'
             if v1.title != v2.title:
                 subject = '%s renamed page %s to %s' % (
-                    c.user.username, v1.title, v2.title)
+                    c.user.display_name, v1.title, v2.title)
             else:
                 subject = '%s modified page %s' % (
-                    c.user.username, self.title)
+                    c.user.display_name, self.title)
         else:
             description = self.text
             subject = '%s created page %s' % (
-                c.user.username, self.title)
+                c.user.display_name, self.title)
+        if description == '<pre></pre>':
+            description = 'Content of the page was not altered'
         Feed.post(self, title=None, description=description)
         Notification.post(
             artifact=self, topic='metadata', text=description, safe_text='',
@@ -149,10 +155,19 @@ class Page(VersionedArtifact):
     def email_subject(self):
         return 'Discussion for %s page' % self.title
 
+    @property
+    def is_home(self):
+        return self.title == self.app.root_page_name
+
     def url(self):
         s = self.app_config.url() + \
             urlquote(self.title.encode('utf-8')) + '/'
         return s
+
+    def email_template(self):
+        template_loader = jinja2.Environment(
+            loader=jinja2.PackageLoader(TEMPLATE_DIR, 'email'))
+        return template_loader.get_template('Page.txt')
 
     def original_url(self):
         return self.url()
@@ -160,9 +175,12 @@ class Page(VersionedArtifact):
     def shorthand_id(self):
         return self.title
 
+    @property
+    def title_s(self):
+        return 'WikiPage %s' % self.title
+
     def index(self, **kw):
         return super(VersionedArtifact, self).index(
-            title_s='WikiPage %s' % self.title,
             version_i=self.version,
             type_s='WikiPage',
             text_objects=[
@@ -177,7 +195,7 @@ class Page(VersionedArtifact):
         return WikiAttachment.query.find(dict(
             artifact_id=self._id,
             type='attachment'
-        ))
+        )).all()
 
     @classmethod
     def upsert(cls, title, version=None):

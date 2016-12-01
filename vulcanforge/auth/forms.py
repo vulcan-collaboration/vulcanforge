@@ -26,6 +26,23 @@ from vulcanforge.auth.widgets import (
 )
 
 
+class NameField(ew.TextField):
+    defaults = dict(
+        ew.TextField.defaults,
+        label="Name",
+        name="name",
+        wide=True
+    )
+    validator = UnicodeString(
+        min=2,
+        max=255,
+        messages={
+            'empty': "Please specify a display name",
+            'missing': "Please specify a display name"
+        }
+    )
+
+
 class UserRegistrationEmailForm(ForgeForm):
     submit_text = 'request email with activation link'
     style = 'wide'
@@ -48,19 +65,7 @@ class UserRegistrationEmailForm(ForgeForm):
             )
 
         self.fields = [
-            ew.TextField(
-                label="Name",
-                name="name",
-                validator=UnicodeString(
-                    min=2,
-                    max=255,
-                    messages={
-                        'empty': "Please specify a display name",
-                        'missing': "Please specify a display name"
-                    }
-                ),
-                wide=True
-            ),
+            NameField(),
             ew.TextField(
                 label="Email address",
                 validator=EmailValidator(),
@@ -145,11 +150,15 @@ class UserRegistrationForm(ForgeForm):
         if value['password'] != value['password_confirm']:
             raise_invalid("Passwords do not match!")
 
-        user = User.by_username(value['username'])
-        if user:
-            raise_invalid("Username already taken!")
-
         return value
+
+
+class UnnamedUserRegistrationForm(UserRegistrationForm):
+    @property
+    def fields(self):
+        reg_fields = super(UnnamedUserRegistrationForm, self).fields
+        reg_fields.insert(0, NameField())
+        return reg_fields
 
 
 class PasswordResetEmailForm(ForgeForm):
@@ -229,3 +238,31 @@ class PasswordResetForm(ForgeForm):
                           "every {} hours".format(min_hours),
                           value, state)
         return value
+
+
+class TwoFactorAuthenticationForm(ForgeForm):
+    submit_text = "Change Setting"
+    defaults = dict(
+        ForgeForm.defaults,
+        errors=None,
+        show_errors=False,
+        form_id="two_factor_auth_form"
+    )
+
+    @property
+    def fields(self):
+        return [
+            ew.Checkbox(label='Use Two-Factor Authentication',
+                        name='totp_auth')
+        ]
+
+
+class TwoFactorCredentialForm(ForgeForm):
+    submit_text = "Change Key"
+
+    defaults = dict(
+        ForgeForm.defaults,
+        errors=None,
+        show_errors=False,
+        form_id="two_factor_auth_key_form"
+    )

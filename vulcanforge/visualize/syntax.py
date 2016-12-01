@@ -1,7 +1,7 @@
 from pylons import app_globals as g
 
 from vulcanforge.common.util.diff import unified_diff
-from vulcanforge.resources.widgets import Widget, JSLink, CSSLink
+from vulcanforge.resources.widgets import Widget, JSLink, CSSLink, JSScript
 from vulcanforge.visualize.base import BaseVisualizer
 from vulcanforge.visualize.widgets import BaseContentWidget, ArtifactDiff
 
@@ -12,10 +12,11 @@ class SyntaxContent(BaseContentWidget):
     def resources(self):
         for r in super(SyntaxContent, self).resources():
             yield r
-        yield CSSLink('js/lib/google-code-prettify/prettify.css', scope="page")
         yield CSSLink('visualize/syntax/syntaxvis.css', scope="page")
+        yield CSSLink('visualize/highlight/styles/default.css', scope="page")
         yield JSLink('js/vf.js', scope="page")
-        yield JSLink('js/lib/google-code-prettify/prettify.js', scope="page")
+        yield JSLink('visualize/highlight/highlight.pack.js', scope="page")
+        yield JSLink('visualize/highlight/highlight_line_numbers.js', scope="page")
 
 
 class SyntaxArtifactDiff(ArtifactDiff):
@@ -63,3 +64,6 @@ class SyntaxVisualizer(BaseVisualizer):
         "description": "Visualizes code and markup documents",
         "icon": "FILE_TEXT"
     }
+
+    def text_content(self, artifact):
+        return artifact.read()

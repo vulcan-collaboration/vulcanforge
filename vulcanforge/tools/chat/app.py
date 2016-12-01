@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from pylons import app_globals as g
 import pymongo
 from vulcanforge.common.app import Application
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.tools import chat
 from vulcanforge.tools.chat import model as chat_model,\
     controllers as chat_controllers
@@ -25,29 +25,15 @@ class ForgeChatApp(Application):
     default_mount_label = 'Chat'
     default_mount_point = 'chat'
     sitemap = []
-    permissions = [
-        'admin', 'read', 'post', 'moderate', 'unmoderated_post'
-    ]
-    permission_descriptions = {
-        "admin": "edit access control to this tool",
-        "read": "view messages",
-        "moderate": "moderate new messages",
-        "post": "post messages",
-        "unmoderated_post": "add content without moderation"
-    }
-    default_acl = {
-        'Admin': permissions,
-        'Developer': ['moderate'],
-        '*authenticated': ['post', 'unmoderated_post'],
-        '*anonymous': ['read']
-    }
     reference_opts = dict(
         Application.reference_opts,
         can_reference=True,
         can_create=False
     )
     artifacts = {
-        'session': chat_model.ChatSession
+        'session': {
+            "model": chat_model.ChatSession
+        }
     }
     DiscussionClass = chat_model.ChatSession
     PostClass = chat_model.ChatPost

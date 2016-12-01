@@ -17,7 +17,7 @@ from vulcanforge.common.controllers.decorators import (
     require_post,
     validate_form
 )
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.util import push_config
 from vulcanforge.common.validators import MingValidator
 from vulcanforge.common.helpers import ago
@@ -34,9 +34,7 @@ class ForgeVisualizeApp(Application):
     """The definitive Visualize App for VulcanForge"""
     __version__ = "0.1"
     searchable = False
-    permissions = dict(Application.permissions,
-        write='Add new, modify or delete existing visualizer'
-    )
+    has_chat = False
     tool_label = "Visualizers"
     static_folder = 'Visualizers'
     default_mount_label = "Visualizers"
@@ -47,14 +45,22 @@ class ForgeVisualizeApp(Application):
         32: '{ep_name}/images/visualizers-icon_32.png',
         48: '{ep_name}/images/visualizers-icon_48.png'
     }
-    default_acl = {
-        'Admin': permissions.keys(),
-        'Developer': ['read', 'write']
-    }
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
         self.root = VisualizerConfigController(self)
+
+    @classmethod
+    def permissions(cls):
+        perms = super(ForgeVisualizeApp, cls).permissions()
+        perms['write'] = 'Add new, modify or delete existing visualizer'
+        return perms
+
+    @classmethod
+    def default_acl(cls):
+        acl = super(ForgeVisualizeApp, cls).default_acl()
+        acl['Member'] = ['read']
+        return acl
 
     @property
     def sitemap(self):

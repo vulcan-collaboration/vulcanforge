@@ -50,12 +50,90 @@
                 </ul>
             </fieldset>
 
+            <div class="exchanges">
+                {% for exchange_data in exchange_data_items %}
+                    <div class="exchange-container subscription-container{% if exchange_data.subscribed %} open{% endif %}">
+                        <h1 class="exchange-header subscription-header">
+                            <svg class="expand-arrow-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                                <polygon class="expand-arrow expand-arrow-open" points="0,4, 16,4, 8,14"></polygon>
+                                <polygon class="expand-arrow expand-arrow-closed" points="4,0, 14,8, 4,16"></polygon>
+                            </svg>
+                            <img class="exchange-icon" src="{{ exchange_data.icon_url }}" alt="">
+                            {{ exchange_data.name }}
+                        </h1>
+                        <div class="exchange-content subscription-content">
+                            <table class="vf-table project-subscription-table" id="exchange-{{ exchange_data.uri }}-table">
+                                <colgroup>
+                                    <col class="subscribed-column">
+                                    <col class="email-column email-type-direct-column">
+                                    <col class="email-column email-type-digest-column">
+                                    <col class="settings-column">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <td rowspan="2" class="subscribe-header"></td>
+                                        <th colspan="2" class="email-header">email</th>
+                                        <td rowspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="email-header email-direct-header">direct</th>
+                                        <th class="email-header email-digest-header">digest</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="exchange-row subscription-row exchange-{{ exchange_data.uri }}">
+                                        <td>
+                                            <em>subscribe to</em><br>
+                                            {% if exchange_data.mailbox %}
+                                                <input type="hidden" name="mailbox_ids" value="{{ exchange_data.mailbox._id }}">
+                                                <input type="checkbox" name="mailboxes.{{ exchange_data.mailbox._id }}.subscribe" checked="checked">
+                                                <label for="mailboxes.{{ exchange_data.mailbox._id }}.subscribe">All Artifacts</label><br>
+                                            {% else %}
+                                                <input type="checkbox" name="exchanges.{{ exchange_data.uri }}.subscribe">
+                                                <label for="exchanges.{{ exchange_data.uri }}.subscribe">All Artifacts</label><br>
+                                            {% endif %}
+                                            {% if exchange_data.artifact_mailboxes %}
+                                                <hr>
+                                                {% for mailbox in exchange_data.artifact_mailboxes %}
+                                                    <input type="hidden" name="mailbox_ids" value="{{ mailbox._id }}">
+                                                    <input type="checkbox" name="mailboxes.{{ mailbox._id }}.subscribe" checked="checked">
+                                                    <label for="mailboxes.{{ mailbox._id }}.subscribe">{{ mailbox.artifact_title }}</label>
+                                                    <br>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="radio-cell">
+                                            <input type="radio" class="mailbox_type" name="exchanges.{{ exchange_data.uri }}.type" value="direct" {% if exchange_data.type == 'direct' %} checked="checked"{% endif %}>
+                                        </td>
+                                        <td class="radio-cell">
+                                            <input type="radio" class="mailbox_type" name="exchanges.{{ exchange_data.uri }}.type" value="digest" {% if exchange_data.type == 'digest' %} checked="checked"{% endif %}>
+                                        </td>
+                                        <td>
+                                            <div class="digest-settings">
+                                                <label for="exchanges.{{ exchange_data.uri }}.frequency.n">frequency</label>
+                                                <input type="text" name="exchanges.{{ exchange_data.uri }}.frequency.n" value="{{ exchange_data.frequency.n }}">
+                                                <select name="exchanges.{{ exchange_data.uri }}.frequency.unit">
+                                                    <option value="hour" {% if exchange_data.frequency.unit == 'hour' %} selected="selected"{% endif %}>Hour(s)</option>
+                                                    <option value="day" {% if exchange_data.frequency.unit == 'day' %} selected="selected"{% endif %}>Day(s)</option>
+                                                    <option value="week" {% if exchange_data.frequency.unit == 'week' %} selected="selected"{% endif %}>Week(s)</option>
+                                                    <option value="month" {% if exchange_data.frequency.unit == 'month' %} selected="selected"{% endif %}>Month(s)</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
             <div class="projects">
                 {% for project_data in project_data_items %}
-                    <div class="project-container {% if project_data.subscribed %}open{% endif %}">
+                    <div class="project-container subscription-container {% if project_data.subscribed %}open{% endif %}">
                         {% set project = project_data.project %}
                         <input type="hidden" name="project_ids" value="{{ project._id }}">
-                        <h1 class="project-header" id="project-{{ project._id }}-header">
+                        <h1 class="project-header subscription-header" id="project-{{ project._id }}-header">
                             <svg class="expand-arrow-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                                 <polygon class="expand-arrow expand-arrow-open" points="0,4, 16,4, 8,14"></polygon>
                                 <polygon class="expand-arrow expand-arrow-closed" points="4,0, 14,8, 4,16"></polygon>
@@ -63,7 +141,7 @@
                             <img class="project-icon" src="{{ project.icon_url }}" alt="{{ project.name }}">
                             {{ project.name }}
                         </h1>
-                        <div class="project-content">
+                        <div class="project-content subscription-content">
                             <table class="vf-table project-subscription-table" id="project-{{ project._id }}-table">
                                 <colgroup>
                                     <col class="label-column">
@@ -87,7 +165,7 @@
                                 <tbody>
                                     {% for app_config_data in project_data.app_config_data_items %}
                                         {% set app_config = app_config_data.app_config %}
-                                        <tr class="app_config-row app_config-{{ app_config._id }}">
+                                        <tr class="app_config-row subscription-row app_config-{{ app_config._id }}">
                                             <td class="label-cell">
                                                 <input type="hidden" name="app_config_ids" value="{{ app_config._id }}">
                                                 <a href="{{ app_config.url() }}">
@@ -155,36 +233,38 @@
 {% block extra_js %}
     <script type="text/javascript">
         $(function () {
-            $('.project-container').each(function () {
+            $('.subscription-container').each(function () {
                 var $this = $(this),
                     $container = $('.subscribe-header', $this),
                     $checkboxes = $('input[type="checkbox"]', $this);
-                $('<button></button>').
-                    addClass('check-all').
-                    text('check all').
-                    appendTo($container).
-                    click(function (e) {
-                        $checkboxes.each(function () {
-                            $(this).
-                                prop('checked', true).
-                                trigger('change');
+                if ($checkboxes.length > 1) {
+                    $('<button></button>').
+                        addClass('check-all').
+                        text('check all').
+                        appendTo($container).
+                        click(function (e) {
+                            $checkboxes.each(function () {
+                                $(this).
+                                    prop('checked', true).
+                                    trigger('change');
+                            });
+                            e.stopPropagation();
+                            e.preventDefault();
                         });
-                        e.stopPropagation();
-                        e.preventDefault();
-                    });
-                $('<button></button>').
-                    addClass('uncheck-all').
-                    text('uncheck all').
-                    appendTo($container).
-                    click(function (e) {
-                        $checkboxes.each(function () {
-                            $(this).
-                                prop('checked', false).
-                                trigger('change');
+                    $('<button></button>').
+                        addClass('uncheck-all').
+                        text('uncheck all').
+                        appendTo($container).
+                        click(function (e) {
+                            $checkboxes.each(function () {
+                                $(this).
+                                    prop('checked', false).
+                                    trigger('change');
+                            });
+                            e.stopPropagation();
+                            e.preventDefault();
                         });
-                        e.stopPropagation();
-                        e.preventDefault();
-                    });
+                }
             });
         });
     </script>

@@ -37,7 +37,7 @@ setup(
     ],
     install_requires=[
         'tg.devtools == 2.2.2',
-        'simplejson == 3.3.2',
+        'simplejson >= 3.3.2',
         'FormEncode == 1.2.4',
         'ipython',
         "docutils < 0.10",
@@ -46,13 +46,13 @@ setup(
         "WebOb == 1.1.1",
         "TurboGears2==2.2.2",
         "Pylons >= 1.0",
-        "Ming == 0.4.0",
+        "Ming == 0.5.3",
         "boto >= 2.6",
         "PasteScript",
         "Babel >= 0.9.4",
         "pymongo >= 2.0",
         "pysolr",
-        "Markdown >= 2.3.1",
+        "Markdown <= 2.5.2",
         "Pygments >= 1.1.1",
         "PyYAML >= 3.09",
         "python-openid >= 2.2.4",
@@ -71,12 +71,16 @@ setup(
         "requests",
         "jinja2",
         "BeautifulSoup==3.2.1",
-        "python-markdown-oembed",
+        "python-markdown-oembed < 0.2.0",
         "redis == 2.7.2",
         "hiredis",
         "gevent>=1.0",
         "gevent-websocket>=0.9",
-        "jsonschema"
+        "jsonschema",
+        "pdfminer",
+        'pyotp >= 2.1.1',
+        'qrcode >= 5.2.2',
+        "pyclamd"
     ],
     setup_requires=["PasteScript >= 1.7"],
     packages=find_packages(exclude=['ez_setup']),
@@ -110,6 +114,7 @@ setup(
     reindex = vulcanforge.command:ReindexCommand
     reindex_globals = vulcanforge.command:ReindexGlobalsCommand
     reindex_notifications = vulcanforge.command:ReindexNotifications
+    reindex_exchange = vulcanforge.command:ReindexExchangeCommand
     ensure_index = vulcanforge.command:EnsureIndexCommand
     ensure-project-creation = vulcanforge.command:EnsureProjectCreationCommand
     script = vulcanforge.command:ScriptCommand
@@ -117,7 +122,9 @@ setup(
     smtp_server = vulcanforge.command:SMTPServerCommand
     create-neighborhood = vulcanforge.command:CreateNeighborhoodCommand
     sync_visualizers = vulcanforge.visualize.command:SyncVisualizersCommand
+    re_run_visualizers = vulcanforge.visualize.command:ReRunVisualizersCommand
     forgeadmin-tools = vulcanforge.command:ForgeAdminToolsCommand
+    list_users = vulcanforge.command.user:ListUsersCommand
     createuser = vulcanforge.command.user:CreateUserCommand
     stage-static-resources = vulcanforge.resources.command:StageStaticResources
     expire-passwords = vulcanforge.command.user:ExpirePasswordsCommand
@@ -126,6 +133,7 @@ setup(
     enable-user = vulcanforge.command.user:EnableUserCommand
     disable-user = vulcanforge.command.user:DisableUserCommand
     refresh-users = vulcanforge.command.user:RefreshUsersCommand
+    verify-accounts = vulcanforge.command.user:VerifyAccountsCommand
     vshell = vulcanforge.command.util:VulcanForgeShellCommand
     install_tool = vulcanforge.command.project:InstallTool
     add-user-to-project = vulcanforge.command.project:AddUserToProject
@@ -134,9 +142,12 @@ setup(
     wiki_findbroken = vulcanforge.command.wiki_tool:FindBrokenLinks
     purge-project = vulcanforge.command.project:PurgeProject
     cleanup_for_application_start = vulcanforge.command.cleanup:CleanupForApplicationStart
+    turn_fail_whale_on = vulcanforge.command.fail_whale:TurnFailWhaleOnCommand
+    turn_fail_whale_off = vulcanforge.command.fail_whale:TurnFailWhaleOffCommand
+    scan-files = vulcanforge.command.virus_scan:ScanFiles
 
     [easy_widgets.engines]
-    jinja = vulcanforge.config.app_cfg:JinjaEngine
+    jinja = vulcanforge.config.render.jinja:JinjaEngine
     """,
     dependency_links=["http://tg.gy/current/"]
 )

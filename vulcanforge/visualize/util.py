@@ -1,10 +1,10 @@
 import logging
-import urllib
 
 from pylons import app_globals as g
 
 from vulcanforge.common.helpers import pretty_print_file_size
 from vulcanforge.visualize.model import VisualizerConfig
+from vulcanforge.virusscan.model import S3VirusScannableMixin
 
 
 LOG = logging.getLogger(__name__)
@@ -36,6 +36,10 @@ def get_visualizer_options(resource, shortnames=None, dl_too=True, size=None,
             "url": fs_url,
             "title": escaped_name
         })
+
+    if isinstance(resource, S3VirusScannableMixin) and not resource.is_scanned:
+        dl_too = False
+
     if dl_too:
         name = 'Download File...'
         if size is not None:

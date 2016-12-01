@@ -103,15 +103,19 @@ class require_site_admin_access(object):
         self.redir = redir
 
     def __call__(self, func):
-        p_admin = g.get_site_admin_project()
+        if g.cache is not None and g.cache.exists('fail_whale'):
+            pass
+        else:
+            p_admin = g.get_site_admin_project()
 
-        def check_method(remainder, params):
-            if not g.security.has_access(p_admin, 'admin'):
-                if self.redir is not None:
-                    redirect(self.redir)
-                raise exc.HTTPForbidden()
+            def check_method(remainder, params):
+                if not g.security.has_access(p_admin, 'admin'):
+                    if self.redir is not None:
+                        redirect(self.redir)
+                    raise exc.HTTPForbidden()
 
-        before_validate(check_method)(func)
+            before_validate(check_method)(func)
+
         return func
 
 

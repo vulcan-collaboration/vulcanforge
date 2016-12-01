@@ -153,20 +153,35 @@ class ReindexCommand(base.Command):
                     self.log.info('  %s', a_cls)
 
                     # Create artifact references and shortlinks
-                    for a in a_cls.query.find(dict(
-                            app_config_id={'$in': app_config_ids})):
-                        if self.options.verbose:
-                            self.log.info('      %s', a.shorthand_id())
-                        if self.options.refs:
-                            try:
-                                ArtifactReference.from_artifact(a)
-                                Shortlink.from_artifact(a)
-                            except Exception:
-                                self.log.exception(
-                                    'Making Index Objs from %s', a)
-                                continue
-                        ref_ids.append(a.index_id())
-                        self.log.info('adding %s for indexing', a.index_id())
+                    try:
+                        artifacts = a_cls.query.find(dict(
+                            app_config_id={'$in': app_config_ids}))
+                    except Exception:
+                        msg = "Unable to query artifacts of class '{}'."
+                        self.log.exception(msg.format(a_cls.__name__))
+                        artifacts = None
+                    while True:
+                        try:
+                            a = next(artifacts)
+                            if self.options.verbose:
+                                self.log.info('      %s', a.shorthand_id())
+                            if self.options.refs:
+                                try:
+                                    ArtifactReference.from_artifact(a)
+                                    Shortlink.from_artifact(a)
+                                except Exception:
+                                    self.log.exception(
+                                        'Making Index Objs from %s', a)
+                                    continue
+                            ref_ids.append(a.index_id())
+                            self.log.info('adding %s for indexing',
+                                          a.index_id())
+                        except StopIteration:
+                            break
+                        except Exception:
+                            msg = ("Unanticipated exception indexing artifact "
+                                   "of class '{}'.")
+                            self.log.exception(msg.format(a_cls.__name__))
 
                     # prevent nasty session buildup
                     main_orm_session.flush()

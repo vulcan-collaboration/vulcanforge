@@ -15,7 +15,7 @@ from .controllers.root import (
     NeighborhoodHomeRootController,
     NeighborhoodHomeRestController
 )
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.resources import Icon
 
 LOG = logging.getLogger(__name__)
@@ -25,8 +25,9 @@ __all__ = ['NeighborhoodHomeApp']
 class NeighborhoodHomeApp(Application):
     """
     An app that provides the landing and support pages for a neighborhood.
-    """
 
+    """
+    has_chat = False
     tool_label = "Neighborhood"
     static_folder = "Neighborhood"
     default_mount_label = "Home"
@@ -35,12 +36,6 @@ class NeighborhoodHomeApp(Application):
         24: '{ep_name}/images/home_24.png',
         32: '{ep_name}/images/home_32.png',
         48: '{ep_name}/images/home_48.png'
-    }
-    permissions = dict(
-        read = Application.permissions['read']
-    )
-    default_acl = {
-        '*anonymous': ['read']
     }
     is_customizable = False
 
@@ -51,6 +46,18 @@ class NeighborhoodHomeApp(Application):
         self.root = self.root_controller_class(project, app_config_object)
         self.api_root = NeighborhoodHomeRestController()
         self.neighborhood = self.project.neighborhood
+
+    @classmethod
+    def permissions(cls):
+        return {
+            "read": super(NeighborhoodHomeApp, cls).permissions()['read']
+        }
+
+    @classmethod
+    def default_acl(cls):
+        return {
+            '*anonymous': ['read']
+        }
 
     def is_visible_to(self, user):
         """Whether the user can view the app."""

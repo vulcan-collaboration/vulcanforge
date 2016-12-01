@@ -107,6 +107,9 @@ class Neighborhood(BaseMappedClass):
     def get_user_neighborhood(cls):
         return cls.by_prefix('u')
 
+    def is_user_neighboorhood(self):
+        return self.url_prefix == '/u/'
+
     def parent_security_context(self):
         return None
 
@@ -119,7 +122,6 @@ class Neighborhood(BaseMappedClass):
 
     @LazyProperty
     def projects(self):
-        from vulcanforge.project.model import Project
         return self.project_cls.query.find(
             {'neighborhood_id': self._id}
         ).all()
@@ -179,8 +181,7 @@ class Neighborhood(BaseMappedClass):
 
     def register_project(self, shortname, user=None, project_name=None,
                          user_project=False, private_project=False, apps=None,
-                         tool_options=None,
-                         **kw):
+                         tool_options=None, short_description='', **kw):
         """Register a new project in the neighborhood.  The given user will
         become the project's superuser.  If no user is specified, c.user is
         used.
@@ -204,35 +205,40 @@ class Neighborhood(BaseMappedClass):
         else:
             project_template = {'home_text': default_home_text}
 
-        p = self.project_cls.query.get(shortname=shortname)
-        if p:
+        project = self.project_cls.query.get(shortname=shortname)
+        if project:
             raise ProjectConflict()
 
+        if 'description' not in kw:
+            kw['description'] = 'You can edit this description in the admin ' \
+                                'section'
+        elif not short_description:
+            short_description = kw['description']
+
         try:
-            p = self.project_cls(
+            project = self.project_cls(
                 neighborhood_id=self._id,
                 shortname=shortname,
                 name=project_name,
-                short_description='',
-                description=('You can edit this description in the admin page'),
                 homepage_title=shortname,
                 database_uri=self.project_cls.default_database_uri(shortname),
                 last_updated=datetime.utcnow(),
                 is_root=True,
+                short_description=short_description,
                 **kw
             )
-            p.configure_project(
+            project.configure_project(
                 users=[user],
                 is_user_project=user_project,
                 is_private_project=private_project,
                 apps=apps)
 
-            offset = int(p.ordered_mounts()[-1]['ordinal']) + 1
+            offset = int(project.ordered_mounts()[-1]['ordinal']) + 1
 
             if not apps and 'tools' in project_template:
                 for i, tool in enumerate(project_template['tools'].keys()):
                     tool_config = project_template['tools'][tool]
-                    with push_config(c, project=p, user=user):
+                    with push_config(c, project=project, user=user):
                         app_config_options = tool_options.get(tool.lower(), {})
                         app = c.project.install_app(
                             tool,
@@ -247,11 +253,11 @@ class Neighborhood(BaseMappedClass):
                             app.config.options.update(tool_config['options'])
             if 'tool_order' in project_template:
                 for i, tool in enumerate(project_template['tool_order']):
-                    p.app_config(tool).options.ordinal = i
+                    project.app_config(tool).options.ordinal = i
             if 'labels' in project_template:
-                p.labels = project_template['labels']
+                project.labels = project_template['labels']
             if 'home_options' in project_template:
-                options = p.app_config('home').options
+                options = project.app_config('home').options
                 for option in project_template['home_options'].keys():
                     options[option] = project_template['home_options'][option]
             if 'icon' in project_template:
@@ -262,42 +268,42 @@ class Neighborhood(BaseMappedClass):
                     icon_file,
                     square=True,
                     thumbnail_size=(48, 48),
-                    thumbnail_meta=dict(project_id=p._id, category='icon')
+                    thumbnail_meta=dict(project_id=project._id, category='icon')
                 )
         except:
             ThreadLocalODMSession.close_all()
-            LOG.exception('Error registering project %s' % p)
+            LOG.exception('Error registering project %s' % project)
             raise
         ThreadLocalODMSession.flush_all()
-        with push_config(c, project=p, user=user):
-            # have to add user to context, since this may occur inside auth code
-            # for user-project reg, and c.user isn't set yet
+        with push_config(c, project=project, user=user):
+            # have to add user to context, since this may occur inside auth
+            # code for user-project reg, and c.user isn't set yet
             g.post_event('project_created')
 
-        user.add_workspace_tab_for_project(p)
+        user.add_workspace_tab_for_project(project)
         if (
-            p.neighborhood.kind == "competition" and
-            p.neighborhood.monoconcilium and
-            p.neighborhood.enable_marketplace
+            project.neighborhood.kind == "competition" and
+            project.neighborhood.monoconcilium and
+            project.neighborhood.enable_marketplace
         ):
             url = "{url}home/market/browse_projects".format(
-                url=p.neighborhood.url())
+                url=project.neighborhood.url())
             user.delete_workspace_tab_to_url(url)
 
-        return p
+        return project
 
     def register_neighborhood_project(self, users, allow_register=False,
                                       apps=None):
         from vulcanforge.project.model import ProjectRole
         
         shortname = '--init--'
-        p = self.neighborhood_project
-        if p:
+        project = self.neighborhood_project
+        if project:
             raise ProjectConflict()
         name = 'Home Project for %s' % self.name
         database_uri = self.neighborhood_project_cls.default_database_uri(
             shortname)
-        p = self.neighborhood_project_cls(
+        project = self.neighborhood_project_cls(
             neighborhood_id=self._id,
             neighborhood=self,
             shortname=shortname,
@@ -312,20 +318,20 @@ class Neighborhood(BaseMappedClass):
         if apps is None:
             apps = self._default_neighborhood_apps
         try:
-            p.configure_project(
+            project.configure_project(
                 users=users,
                 is_user_project=False,
                 apps=apps
             )
         except:
             ThreadLocalODMSession.close_all()
-            LOG.exception('Error registering project %s' % p)
+            LOG.exception('Error registering project %s' % project)
             raise
         if allow_register:
-            role_auth = ProjectRole.authenticated(p)
-            g.security.simple_grant(p.acl, role_auth._id, 'register')
-            state(p).soil()
-        return p
+            role_auth = ProjectRole.authenticated(project)
+            g.security.simple_grant(project.acl, role_auth._id, 'register')
+            state(project).soil()
+        return project
 
     def bind_controller(self, controller):
         controller_attr = self.url_prefix[1:-1]

@@ -45,7 +45,7 @@ class MigrateVisualizerInfrastructure(BaseMigration):
                 s3_file = S3VisualizerFile(
                     filename=filename,
                     visualizer_config_id=doc['_id'])
-                s3_file.set_contents_from_string(key.read())
+                s3_file.set_contents_from_string(key.read(), encrypt_key=g.s3_encryption)
             coll.save(doc)
 
         ThreadLocalODMSession.flush_all()

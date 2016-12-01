@@ -31,8 +31,9 @@ from vulcanforge.common.controllers.decorators import (
     vardec
 )
 from vulcanforge.common import validators as V, helpers as h
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.util import push_config
+from vulcanforge.common.util.counts import get_history_info
 from vulcanforge.common.util.exception import exceptionless
 from vulcanforge.common.widgets import form_fields as ffw
 from vulcanforge.common.controllers import BaseController
@@ -46,8 +47,8 @@ from vulcanforge.artifact.tasks import add_artifacts
 from vulcanforge.artifact.widgets import (
     VFArtifactLink,
     LabelListWidget,
-    RelatedArtifactsWidget
-)
+    RelatedArtifactsWidget,
+    ArtifactMenuBar)
 from vulcanforge.artifact.widgets.subscription import SubscribeForm
 from vulcanforge.discussion.controllers import AppDiscussionController
 from vulcanforge.discussion.model import Post
@@ -84,16 +85,6 @@ search_validators = dict(
 
 class ForgeTrackerApp(Application):
     __version__ = version.__version__
-    permissions = dict(Application.permissions,
-        admin='Configure this tool, add new ticket properties and configure milestones',
-        read='View tickets',
-        write='Create and modify tickets',
-        moderate='Moderate comments',
-        unmoderated_post='Add comments without moderation',
-        post='Add comments',
-        save_searches='Persist custom searches',
-        edit_protected='Edit ticket fields marked as protected'
-    )
     searchable = True
     tool_label = 'Tickets'
     static_folder = 'Tickets'
@@ -126,14 +117,10 @@ class ForgeTrackerApp(Application):
             "permission": "admin"
         }
     }
-    default_acl = {
-        'Admin': permissions.keys(),
-        'Developer': ['write', 'moderate', 'save_searches'],
-        '*authenticated': ['post', 'unmoderated_post'],
-        '*anonymous': ['read']
-    }
     artifacts = {
-        "ticket": TM.Ticket
+        "ticket": {
+            "model": TM.Ticket
+        }
     }
 
     def __init__(self, project, config):
@@ -141,6 +128,30 @@ class ForgeTrackerApp(Application):
         self.root = RootController(self)
         self.api_root = RootRestController()
         self.admin = TrackerAdminController(self)
+
+    @classmethod
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+        db, coll = TM.TicketHistory.get_pymongo_db_and_collection()
+        return get_history_info(coll, app_configs, app_visits, tool_name)
+
+    @classmethod
+    def permissions(cls):
+        perms = super(ForgeTrackerApp, cls).permissions()
+        perms.update({
+            "admin": 'Configure this tool, add new ticket properties and '
+                     'configure milestones',
+            "read": 'View tickets',
+            "write": 'Create and modify tickets',
+            "save_searches": 'Persist custom searches',
+            'edit_protected': 'Edit ticket fields marked as protected'
+        })
+        return perms
+
+    @classmethod
+    def default_acl(cls):
+        acl = super(ForgeTrackerApp, cls).default_acl()
+        acl['Developer'].append('save_searches')
+        return acl
 
     @LazyProperty
     def globals(self):
@@ -181,7 +192,8 @@ class ForgeTrackerApp(Application):
         admin_url = c.project.url() + 'admin/' + \
             self.config.options.mount_point + '/'
         links = [SitemapEntry('Field Management', admin_url + 'fields')]
-        if self.permissions and g.security.has_access(self, 'admin'):
+        permissions = self.permissions()
+        if permissions and g.security.has_access(self, 'admin'):
             links.append(SitemapEntry(
                 'Permissions',
                 admin_url + 'permissions',
@@ -445,6 +457,61 @@ class ForgeTrackerApp(Application):
                    'reported_by_s:{username}'
         return template.format(base=self.config.url(), username=username)
 
+    def artifact_counts(self, since=None):
+        db, history_coll = TM.TicketHistory.get_pymongo_db_and_collection()
+
+        new_history_count = history_count = total_size = 0
+        history_objs = history_coll.aggregate([
+            {'$match': {
+                'app_config_id': self.config._id,
+                }},
+            {'$group': {
+                '_id': '$artifact_id'
+            }},
+            {'$group': {
+                '_id': 1,
+                'count': { '$sum': 1}
+            }}
+        ])
+
+        if history_objs['result']:
+            history_count = history_objs['result'][0]['count']
+        if since is not None and isinstance(since, datetime) :
+            new_history_objs = history_coll.aggregate([
+                {'$match': {
+                    'app_config_id': self.config._id,
+                    "_id": {"$gt":ObjectId.from_datetime(since)}
+                }},
+                {'$group': {
+                    '_id': '$artifact_id'
+                }},
+                {'$group': {
+                    '_id': 1,
+                    'count': { '$sum': 1}
+                }}
+            ])
+            if new_history_objs['result']:
+                new_history_count = new_history_objs['result'][0]['count']
+
+        db, attachment_coll = TM.TicketAttachment.get_pymongo_db_and_collection()
+        file_aggregate = attachment_coll.aggregate([
+            {'$match': {
+                'app_config_id': self.config._id,
+                }},
+            {'$group': {
+                '_id': 1,
+                'total_size': { '$sum': '$length'}
+            }}
+        ])
+        if file_aggregate['result']:
+                total_size = file_aggregate['result'][0]['total_size']
+
+        return dict(
+            new=new_history_count,
+            all=history_count,
+            total_size=total_size
+        )
+
 
 class BaseTrackerController(BaseController):
 
@@ -524,6 +591,7 @@ class TrackerSearchController(BaseController):
 
     class Widgets(BaseController.Widgets):
         artifact_link = VFArtifactLink()
+        menu_bar = ArtifactMenuBar()
 
     class Forms(BaseController.Forms):
         bin_form = BinForm()
@@ -533,8 +601,8 @@ class TrackerSearchController(BaseController):
     @vardec
     @expose(TEMPLATE_DIR + 'search.html')
     @validate(validators=search_validators)
-    def search(self, query=None, columns=None, limit=None, page=0,
-               sort="ticket_num_i desc", tool_q=None, **kw):
+    def search(self, query=None, columns=None, limit=None, page=0, tool_q=None,
+               sort="ticket_num_i desc", _is_app_root=False, **kw):
         q = kw.pop('q', None)  # temp
         q = tool_q or query or q or '*:*'
         c.bin_form = self.Forms.bin_form
@@ -549,8 +617,33 @@ class TrackerSearchController(BaseController):
         result = TM.Ticket.paged_query(
             q, limit=limit, page=page, sort=sort, columns=columns, **kw
         )
-        result['allow_edit'] = g.security.has_access(c.app, 'write')
-        result['bin'] = bin_
+        allow_edit = g.security.has_access(c.app, 'write')
+
+        # menu bar
+        buttons = []
+        if allow_edit and result["count"]:
+            edit_btn = g.icon_button_widget.display(
+                'Bulk Edit', None, None, 'ico-edit',
+                href=url(c.app.url + 'edit/',
+                         dict(q=q, limit=limit, sort=sort)))
+            buttons.append(edit_btn)
+        if _is_app_root:
+            feed_url = c.app.url + 'feed.rss'
+        else:
+            feed_url = None
+            rss_btn = g.icon_button_widget.display(
+                'RSS feed', None, None, 'ico-rss_alt',
+                href=url(c.app.url+'search_feed/',
+                         dict(q=q, limit=limit, sort=sort)))
+            buttons.append(rss_btn)
+        menu_bar = self.Widgets.menu_bar.display(
+            None, buttons=buttons, feed_url=feed_url)
+
+        result.update({
+            "allow_edit": allow_edit,
+            "bin": bin_,
+            "menu_bar": menu_bar
+        })
         return result
 
     @expose(content_type="text/csv")
@@ -665,6 +758,7 @@ class RootController(BaseTrackerController):
             columns=columns,
             page=page,
             limit=limit,
+            _is_app_root=True,
             **kw)
         c.subscribe_form = self.Forms.subscribe_form
         result['subscribed'] = Mailbox.subscribed()
@@ -727,9 +821,7 @@ class RootController(BaseTrackerController):
     @vardec
     @expose()
     @require_post()
-    @validate({
-        "milestones": ForEach(MilestoneSchema())
-    })
+    @validate({"milestones": ForEach(MilestoneSchema())})
     def update_milestones(self, field_name=None, milestones=None, **kw):
         g.security.require_access(c.app, 'admin')
         update_counts = False
@@ -1106,6 +1198,7 @@ class TicketController(BaseTrackerController):
         attachment_list = ffw.AttachmentList()
         ticket_custom_field = TicketCustomField
         related_artifacts = RelatedArtifactsWidget()
+        menu_bar = ArtifactMenuBar()
 
     class Forms(BaseTrackerController.Forms):
         ticket_update_form = TrackerTicketForm(comment=True)
@@ -1133,32 +1226,40 @@ class TicketController(BaseTrackerController):
         if self.ticket is None:
             raise exc.HTTPNotFound(
                 'Ticket #%s does not exist.' % self.ticket_num)
-        c.thread = self.Widgets.thread
+        c.thread_widget = self.Widgets.thread
         c.attachment_list = self.Widgets.attachment_list
         c.subscribe_form = self.Forms.ticket_subscribe_form
         c.related_artifacts_widget = self.Widgets.related_artifacts
         c.label_list = self.Widgets.label_list
-        tool_subscribed = Mailbox.subscribed()
-        if tool_subscribed:
-            subscribed = False
-        else:
-            subscribed = Mailbox.subscribed(artifact=self.ticket)
         post_count = self.ticket.discussion_thread.post_count
         limit, page = h.paging_sanitizer(limit, page, post_count)
+
+        # menu bar
+        allow_edit = g.security.has_access(self.ticket, 'write')
+        buttons = []
+        if allow_edit:
+            edit_btn = g.icon_button_widget.display(
+                'Edit', None, 'edit_ticket', 'ico-edit',
+                href=self.ticket.url() + 'edit')
+            buttons.append(edit_btn)
+        menu_bar = self.Widgets.menu_bar.display(
+            self.ticket, buttons=buttons,
+            feed_url=self.ticket.url() + 'feed.rss')
+
         return {
             'ticket': self.ticket,
             'globals': c.app.globals,
-            'allow_edit': g.security.has_access(self.ticket, 'write'),
-            'tool_subscribed': tool_subscribed,
-            'subscribed': subscribed,
+            'allow_edit': allow_edit,
             'page': page,
             'limit': limit,
-            'count': post_count
+            'count': post_count,
+            'menu_bar': menu_bar
         }
 
     @without_trailing_slash
     @expose(TEMPLATE_DIR + 'ticket_edit.html')
     def edit(self, **kwargs):
+        g.security.require_access(self.ticket, 'write')
         c.attachment_list = self.Widgets.attachment_list
         c.ticket_update_form = self.Forms.ticket_update_form
         c.related_artifacts_widget = self.Widgets.related_artifacts

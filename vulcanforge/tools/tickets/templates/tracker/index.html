@@ -12,16 +12,7 @@
 
 {% block header %}{{ c.app.config.options.mount_label }}{% endblock %}
 
-{% block actions %}
-    {% if allow_edit %}
-        {{ g.icon_button_widget.display(label='Bulk Edit', icon='ico-edit',
-    href=tg.url(c.app.url+'edit/', dict(q=q, limit=limit, sort=sort))) }}
-    {% endif %}
-
-    {% if c.user and not c.user.is_anonymous %}
-        {{ g.subscription_popup_menu.display(feed_url=c.app.url+'feed.rss') }}
-    {% endif %}
-{% endblock %}
+{% block actions %}{{ menu_bar }}{% endblock %}
 
 {% block content %}
     <div class="padded">

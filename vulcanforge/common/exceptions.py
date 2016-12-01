@@ -73,6 +73,14 @@ class WSGIAJAXException(WSGIHTTPException):
                 start_response)
 
 
+class AJAXCreated(WSGIAJAXException, exc.HTTPCreated):
+    pass
+
+
+class AJAXFound(WSGIAJAXException, exc.HTTPFound):
+    pass
+
+
 class AJAXBadRequest(WSGIAJAXException, exc.HTTPBadRequest):
     pass
 
@@ -113,3 +121,5 @@ class AJAXLocked(WSGIAJAXException, exc.HTTPLocked):
     pass
 
 
+class AJAXServerError(WSGIAJAXException, exc.HTTPServerError):
+    pass

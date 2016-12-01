@@ -1,0 +1,50 @@
+{% extends 'vulcanforge.visualize:templates/widgets/basecontent.html' %}
+
+{% block content %}
+<pre class="highlight embedded"><code id="{{uid}}code"></code></pre>
+<div id="loadingContainer">
+    <progress id="loadingProgressBar"></progress>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function(global){
+        "use strict";
+
+        var $ = global.jQuery,
+                VIS = global.VIS,
+                codeContainer = $('#{{uid}}code');
+
+        $(VIS).on("ready", function(){
+            $('#loadingProgressBar').
+                    attr('max', 100);
+            $.ajax({
+                url: VIS.getResourceUrl(),
+                dataType: "text",
+                xhrFields: {
+                    withCredentials: {% if with_credentials %}true{% else %}false{% endif %}
+                },
+                onprogress: function (e) {
+                    var loadedPercent = Math.floor(e.loaded / e.total * 100);
+                    $('#loadingProgressBar').
+                            attr('value', loadedPercent).
+                            text(loadedPercent + '%');
+                },
+                success: function(resp){
+                    $('#loadingProgressBar').
+                            removeAttr('value').
+                            removeAttr('max');
+                    codeContainer.html(markdown.toHTML(resp));
+                    $('#loadingContainer').
+                            fadeOut('fast', function () {
+                                $(this).remove();
+                                $(this).dequeue();
+                            });
+                }
+            });
+        });
+
+    }(window));
+</script>
+{% endblock %}

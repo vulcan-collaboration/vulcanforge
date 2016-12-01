@@ -9,16 +9,20 @@
     $(function () {
 
         var $password = $('input[name="password"]'),
-            minLength = window.parseInt($('#pwLength').attr('data-length'));
+            minLength = window.parseInt($('#pwLength').attr('data-length')),
+            lowercase = window.parseInt($('#pwLower').attr('data-length')),
+            uppercase = window.parseInt($('#pwUpper').attr('data-length')),
+            numbers = window.parseInt($('#pwNumber').attr('data-length')),
+            specials = window.parseInt($('#pwSpecial').attr('data-length'));
 
         var update = function () {
             var pw = $(this).val();
 
             setState($('#pwLength'), pw.length >= minLength);
-            setState($('#pwLower'), pw.match(/(?=.*[a-z])/) !== null);
-            setState($('#pwUpper'), pw.match(/(?=.*[A-Z])/) !== null);
-            setState($('#pwNumber'), pw.match(/(?=.*[\d])/) !== null);
-            setState($('#pwSpecial'), pw.match(/(?=.*[\W])/) !== null);
+            setState($('#pwLower'), pw.match(/[a-z]/g) !== null && pw.match(/[a-z]/g).length >= lowercase);
+            setState($('#pwUpper'), pw.match(/[A-Z]/g) !== null && pw.match(/[A-Z]/g).length >= uppercase);
+            setState($('#pwNumber'), pw.match(/[\d]/g) !== null && pw.match(/[\d]/g).length >= numbers);
+            setState($('#pwSpecial'), pw.match(/[\W_]/g) !== null && pw.match(/[\W_]/g).length >= specials);
         };
         $password.bind({
             'change': update,

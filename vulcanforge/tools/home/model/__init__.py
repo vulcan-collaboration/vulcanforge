@@ -1,9 +1,14 @@
-from ming.odm import ForeignIdProperty, RelationProperty
+from datetime import datetime
+
+from ming import schema as S
+from ming.odm import ForeignIdProperty, RelationProperty, FieldProperty
 
 from vulcanforge.common.model.session import artifact_orm_session
 from vulcanforge.artifact.model import Artifact
 from vulcanforge.notification.model import Notification
 from vulcanforge.project.model import Project
+from vulcanforge.common.model.base import BaseMappedClass
+from vulcanforge.common.model.session import main_orm_session
 
 from .dashboard import PortalConfig
 
@@ -96,3 +101,29 @@ class UserExit(UserStatusChange):
     def notification_text(self):
         text = "{} has left the {}."
         return text.format(self.user.display_name, self.project_type)
+
+
+class AccessLogChecked(BaseMappedClass):
+
+    class __mongometa__:
+        name = 'access_log_checked'
+        session = main_orm_session
+        indexes = [('user_id', 'app_config_id')]
+
+    _id = FieldProperty(S.ObjectId)
+    user_id = ForeignIdProperty('User', if_missing=None)
+    project_id = ForeignIdProperty('Project', if_missing=None)
+    app_config_id = ForeignIdProperty('AppConfig', if_missing=None)
+
+    last_checked = FieldProperty(datetime, if_missing=None)
+
+    @classmethod
+    def upsert(cls, user_id, app_config_id, project_id):
+        visit = cls.query.get(user_id=user_id, app_config_id=app_config_id)
+        if not visit:
+            visit = cls(user_id=user_id, app_config_id=app_config_id, project_id=project_id)
+
+        visit.last_checked = datetime.utcnow()
+        visit.flush_self()
+
+        return visit

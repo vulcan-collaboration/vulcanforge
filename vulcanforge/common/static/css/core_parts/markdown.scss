@@ -422,7 +422,9 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
         position: relative;
         display: -webkit-box;
         display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -ms-flex-flow: row;
         -webkit-flex-flow: row;
         flex-flow: row;
     }
@@ -446,6 +448,7 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
         width: 40%;
         -webkit-box-flex: 1;
         -webkit-flex: 1 1 40%;
+        -ms-flex: 1 1 40%;
         flex: 1 1 40%;
         border: 0px solid transparent;
         border-right-width: 1em;
@@ -459,6 +462,7 @@ body[data-pagetype='WIKI'] #main-content-holder .markdown_include > .markdown_co
         padding: 1em 1ex;
         -webkit-box-flex: 1;
         -webkit-flex: 1 1 60%;
+        -ms-flex: 1 1 60%;
         flex: 1 1 60%;
         border-radius: 0 1em 1em 0;
     }

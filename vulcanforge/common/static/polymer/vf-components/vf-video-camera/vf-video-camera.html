@@ -1,0 +1,120 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<dom-module id="vf-video-camera">
+<style include="style_base">
+    #videoId {
+        height: var(--vf-video-camera-height, auto);
+        width: var(--vf-video-camera-width, 200px);
+    }
+</style>
+<template>
+    <video id="videoId" on-tap="snap"></video>
+    <canvas id="canvas" style="display:none"></canvas>
+</template>
+<script>
+Polymer({
+    is: "vf-video-camera",
+    properties: {
+        screenshot: {
+            type: String,
+            notify: true
+        },
+        videoelement: {
+            type: Object,
+            notify: true
+        },
+        stream: {
+            type: Object,
+            notify: true,
+            observer: '_stream_changed'           
+        },
+        waitforinput: {
+            type: Boolean,
+            value: false
+        }
+    },
+    attached: function(){
+        // Grab elements, create settings, etc.
+        var canvas = this.$.canvas;
+
+        var video = this.$.videoId;
+
+        this.videoelement = video;
+
+        var context = canvas.getContext("2d"),
+        videoObj = { "video": true },
+        errBack = function(error) {
+            console.log("Video capture error: ", error.code); 
+        };
+
+        // Put video listeners into place
+        var me=this;
+
+        if (navigator.mediaDevices.getUserMedia) {
+            if(!this.waitforinput) {
+                navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(function(stream) {
+                    me.set('videoelement.src', window.URL.createObjectURL(stream));
+                    //me.set('stream', stream);
+                    video.play();
+                });
+            }
+        } else {
+            navigator.getMedia = ( navigator.getUserMedia ||
+            navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia ||
+            navigator.msGetUserMedia);
+
+            if (!this.waitforinput) {
+                navigator.getMedia(videoObj, function (stream) {
+                    me.set('videoelement.src', window.URL.createObjectURL(stream));
+                    me.set('stream', stream);
+                    //video.src=window.URL.createObjectURL(stream);
+                    video.play();
+                }, errBack);
+            }
+        }
+    },
+    _stream_changed: function(){
+        if(navigator.getUserMedia) { 
+            this.set('videoelement.src', this.stream);
+        }else{
+            this.set('videoelement.src', window.URL.createObjectURL(this.stream));
+        }
+    },
+    snap: function(){
+        this.takePicture(true);
+    },
+    takePicture: function(actually){
+        if(actually){
+            var canvas = this.$.canvas;
+            var videoObj = this.$.videoId;
+
+            var context = canvas.getContext('2d');
+
+            videoObj.setAttribute('width', videoObj.clientWidth);
+            videoObj.setAttribute('height', videoObj.clientHeight);
+            /*
+            canvas.width = videoObj.clientWidth;
+            canvas.height = videoObj.clientHeight;
+            context.drawImage(videoObj, 0, 0, canvas.width, canvas.height);
+            */
+
+            canvas.width = 128;
+            canvas.height = 128;
+
+            var sourceX = 200;
+            var sourceY = 75;
+            var sourceWidth = 300;
+            var sourceHeight = 225;
+            var destWidth = 128;
+            var destHeight = 128;
+            var destX = canvas.width / 2 - destWidth / 2;
+            var destY = canvas.height / 2 - destHeight / 2;
+            context.drawImage(videoObj, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+
+            this.screenshot = canvas.toDataURL('image/png');
+        }  
+    }
+});
+</script>
+</dom-module>

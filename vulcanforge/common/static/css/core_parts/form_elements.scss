@@ -393,6 +393,11 @@ form.fix-controls .form-controls {
     margin: 1ex;
 }
 
+.attachment.being-virus-scanned{
+    color: #999999;
+    font-style: italic;
+}
+
 .attachment:hover,
 .attachment.vo-engaged {
     z-index: 11;

@@ -23,7 +23,7 @@
             <td>{{label}}</td>
             <td>
               {% for p in labels[label] %}
-                  <a class="label-page-link" href="{{p.url()}}">{{p.title}}</a>
+                  <a class="label-page-link {{'has-icon ico-home' if p.title == c.app.root_page_name  else ''}}" href="{{p.url()}}">{{p.title}}</a>
               {% endfor %}
             </td>
           </tr>

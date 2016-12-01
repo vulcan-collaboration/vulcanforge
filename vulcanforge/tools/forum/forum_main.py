@@ -1,8 +1,10 @@
 #-*- python -*-
 import logging
 import urllib
+import datetime
 from itertools import islice
 
+from bson import ObjectId
 import pymongo
 from webhelpers.text import truncate
 from pylons import app_globals as g, tmpl_context as c, request
@@ -11,10 +13,10 @@ from ming import schema
 
 from vulcanforge.common.app import (
     Application, DefaultAdminController)
-from vulcanforge.common.types import SitemapEntry, ConfigOption
+from vulcanforge.common.tool import SitemapEntry, ConfigOption
 from vulcanforge.common.util import push_config
 from vulcanforge.common.util.exception import exceptionless
-from vulcanforge.auth.model import User
+from vulcanforge.common.util.counts import get_history_info
 from vulcanforge.resources import Icon
 from vulcanforge.tools.forum import model as DM, util, version
 from .controllers import RootController, RootRestController, TEMPLATE_DIR
@@ -25,12 +27,6 @@ LOG = logging.getLogger(__name__)
 
 class ForgeDiscussionApp(Application):
     __version__ = version.__version__
-    permissions = dict(Application.permissions,
-        write='Create forums and admin them',
-        moderate='Moderate comments',
-        unmoderated_post='Add comments without moderation',
-        post='Create new topics and add comments'
-    )
     config_options = Application.config_options + [
         ConfigOption(
             'PostingPolicy',
@@ -67,12 +63,6 @@ class ForgeDiscussionApp(Application):
         },
         "View Forums": {"url": ""}
     }
-    default_acl = {
-        'Admin': permissions.keys(),
-        'Developer': ['moderate'],
-        '*authenticated': ['post', 'unmoderated_post'],
-        '*anonymous': ['read']
-    }
 
     def __init__(self, project, config):
         Application.__init__(self, project, config)
@@ -81,6 +71,17 @@ class ForgeDiscussionApp(Application):
         self.admin = ForumAdminController(self)
         self.default_forum_preferences = dict(
             subscriptions={})
+
+    @classmethod
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+        db, coll = DM.ForumPostHistory.get_pymongo_db_and_collection()
+        return get_history_info(coll, app_configs, app_visits, tool_name)
+
+    @classmethod
+    def permissions(cls):
+        perms = super(ForgeDiscussionApp, cls).permissions()
+        perms['admin'] = 'Create forums and admin them'
+        return perms
 
     def has_access(self, user, topic):
         f = DM.Forum.query.get(shortname=topic.replace('.', '/'),
@@ -98,6 +99,20 @@ class ForgeDiscussionApp(Application):
             LOG.error("Error looking up forum: %r", shortname)
             return
         self.handle_artifact_message(forum, message)
+
+    def admin_menu(self):
+        admin_url = c.project.url() + 'admin/' + \
+                    self.config.options.mount_point + '/'
+        links = []
+        permissions = self.permissions()
+        if permissions and g.security.has_access(self, 'admin'):
+            links.extend([
+                SitemapEntry(
+                    'Permissions',
+                    admin_url + 'permissions',
+                    className='nav_child')
+            ])
+        return links
 
     def main_menu(self):
         """
@@ -136,105 +151,90 @@ class ForgeDiscussionApp(Application):
         return cursor.all()
 
     def sidebar_menu(self):
-        try:
-            l = []
-            moderate_link = None
-            forum_links = []
-            forums = self.top_forums
-            if forums:
-                for f in forums:
-                    if f.url() in request.url and g.security.has_access(f, 'moderate'):
-                        moderate_link = SitemapEntry(
-                            'Moderate',
-                            "%smoderate/" % f.url(),
-                            ui_icon='ico-moderate',
-                            small=DM.ForumPost.query.find({
-                                'discussion_id': f._id,
-                                'status': {'$ne': 'ok'}
-                            }).count()
-                        )
-                    forum_links.append(
-                        SitemapEntry(
-                            f.name,
-                            f.url(),
-                            ui_icon=Icon('', 'ico-chat'),
-                            className='nav_child'
-                        )
-                    )
-            if g.security.has_access(c.app, 'post'):
+        l = []
+
+        l.append(SitemapEntry('Forums'))
+        l.append(
+            SitemapEntry(
+                'Show All',
+                c.app.url,
+                ui_icon=Icon('','ico-list')))
+        if g.security.has_access(c.app, 'admin'):
+            l.append(
+                SitemapEntry(
+                    'Add Forum',
+                    c.app.url + 'new_forum',
+                    ui_icon=Icon('', 'ico-plus')
+                )
+            )
+            l.append(
+                SitemapEntry(
+                    'Admin Forums',
+                    c.app.url + 'forums',
+                    ui_icon=Icon('', 'ico-cog')
+                )
+            )
+
+        if hasattr(c, "discussion"):
+            l.append(SitemapEntry(c.discussion.name))
+            l.append(
+                SitemapEntry(
+                    'Show Topics',
+                    c.discussion.url(),
+                    ui_icon=Icon('', 'ico-list')))
+            if g.security.has_access(c.app, 'post') and not c.discussion.deleted:
                 l.append(
                     SitemapEntry(
                         'Create Topic',
-                        c.app.url + 'create_topic',
+                        c.discussion.url() + 'create_topic',
                         ui_icon=Icon('', 'ico-plus')
                     )
                 )
-            if g.security.has_access(c.app, 'write'):
+            if g.security.has_access(c.discussion, 'moderate') and \
+                            c.app.config.options.get('PostingPolicy') != 'ApproveAll':
                 l.append(
                     SitemapEntry(
-                        'Add Forum',
-                        c.app.url + 'new_forum',
-                        ui_icon=Icon('', 'ico-plus')
+                        'Moderate',
+                        c.discussion.url() + 'moderate',
+                        ui_icon='ico-moderate',
+                        small=DM.ForumPost.query.find({
+                            'discussion_id': c.discussion._id,
+                            'status': {'$ne': 'ok'}
+                        }).count()
                     )
                 )
-                l.append(
-                    SitemapEntry(
-                        'Admin Forums',
-                        c.app.url + 'forums',
-                        ui_icon=Icon('', 'ico-cog')
-                    )
-                )
-            if moderate_link:
-                l.append(moderate_link)
-            # if we are in a thread and not anonymous, provide placeholder links to use in js
-            if '/thread/' in request.url and c.user and not c.user.is_anonymous:
-                l.append(SitemapEntry(
-                        'Mark as Spam', 'flag_as_spam',
-                        ui_icon=Icon('','ico-star'), className='sidebar_thread_spam'))
-            # Get most recently-posted-to-threads across all discussions in this app
-            recent_threads = (
-                thread for thread in (
-                    DM.ForumThread.query.find(
-                        dict(app_config_id=self.config._id))
-                    .sort([
-                            ('last_post_date', pymongo.DESCENDING),
-                            ('mod_date', pymongo.DESCENDING)])
-                    ))
-            recent_threads = (
-                t for t in recent_threads 
-                if (g.security.has_access(t, 'write') or
-                    not t.discussion.deleted))
-            recent_threads = ( t for t in recent_threads if t.status == 'ok' )
-            # Limit to 3 threads
-            recent_threads = list(islice(recent_threads, 3))
-            # Add to sitemap
-            if recent_threads:
-                l.append(SitemapEntry('Recent Topics'))
-                l += [
-                    SitemapEntry(
-                        truncate(thread.subject, 72),
-                        thread.url(),
-                        className='nav_child', small=thread.post_count)
-                    for thread in recent_threads ]
-            if forum_links:
-                l.append(SitemapEntry('Forums'))
-                l.append(
-                    SitemapEntry(
-                        'Show All',
-                        c.app.url,
-                        ui_icon=Icon('','ico-list')))
-                l = l + forum_links
-            l.append(SitemapEntry('Help'))
-            l.append(
+
+        # Get most recently-posted-to-threads across all discussions in
+        # this app
+        recent_threads = (
+            thread for thread in (
+            DM.ForumThread.query.find(
+                dict(app_config_id=self.config._id))
+                .sort([
+                ('last_post_date', pymongo.DESCENDING),
+                ('mod_date', pymongo.DESCENDING)])
+        ))
+        recent_threads = (t for t in recent_threads if t.status == 'ok' and not t.discussion.deleted)
+        # Limit to 3 threads
+        recent_threads = list(islice(recent_threads, 3))
+        # Add to sitemap
+        if recent_threads:
+            l.append(SitemapEntry('Recent Topics'))
+            l += [
                 SitemapEntry(
-                    'Markdown Syntax',
-                    c.app.url + 'markdown_syntax',
-                    ui_icon=Icon('','ico-info'),
-                    className='nav_child'))
-            return l
-        except Exception: # pragma no cover
-            LOG.exception('sidebar_menu')
-            return []
+                    truncate(thread.subject, 72),
+                    thread.url(),
+                    className='nav_child', small=thread.post_count)
+                for thread in recent_threads]
+
+        l.append(SitemapEntry('Help'))
+        l.append(
+            SitemapEntry(
+                'Markdown Syntax',
+                c.app.url + 'markdown_syntax',
+                ui_icon=Icon('','ico-info'),
+                className='nav_child'))
+        return l
 
     def install(self, project, acl=None):
         """Set up any default permissions and roles here"""
@@ -254,6 +254,64 @@ class ForgeDiscussionApp(Application):
         DM.ForumThread.query.remove(dict(app_config_id=self.config._id))
         DM.ForumPost.query.remove(dict(app_config_id=self.config._id))
         super(ForgeDiscussionApp, self).uninstall(project)
+
+    def artifact_counts(self, since=None):
+        # Rely on page history object only
+
+        db, history_coll = DM.ForumPostHistory.get_pymongo_db_and_collection()
+
+        new_history_count = history_count = total_size = 0
+        history_objs = history_coll.aggregate([
+            {'$match': {
+                'app_config_id': self.config._id,
+                }},
+            {'$group': {
+                '_id': '$artifact_id'
+            }},
+            {'$group': {
+                '_id': 1,
+                'count': { '$sum': 1}
+            }}
+        ])
+
+        if history_objs['result']:
+            history_count = history_objs['result'][0]['count']
+        if since is not None and isinstance(since, datetime.datetime) :
+            new_history_objs = history_coll.aggregate([
+                {'$match': {
+                    'app_config_id': self.config._id,
+                    "_id": {"$gt":ObjectId.from_datetime(since)}
+                }},
+                {'$group': {
+                    '_id': '$artifact_id'
+                }},
+                {'$group': {
+                    '_id': 1,
+                    'count': { '$sum': 1}
+                }}
+            ])
+            if new_history_objs['result']:
+                new_history_count = new_history_objs['result'][0]['count']
+
+        db, attachment_coll = \
+            DM.ForumAttachment.get_pymongo_db_and_collection()
+        file_aggregate = attachment_coll.aggregate([
+            {'$match': {
+                'app_config_id': self.config._id,
+            }},
+            {'$group': {
+                '_id': 1,
+                'total_size': {'$sum': '$length'}
+            }}
+        ])
+        if file_aggregate['result']:
+            total_size = file_aggregate['result'][0]['total_size']
+
+        return dict(
+            new=new_history_count,
+            all=history_count,
+            total_size=total_size
+        )
 
 
 class ForumAdminController(DefaultAdminController):

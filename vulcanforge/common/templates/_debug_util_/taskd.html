@@ -1,0 +1,13 @@
+{% extends '_debug_util_/_debug_base.html' %}
+
+{% block title %}TASKD – {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>TASKD</h2>
+    <h3>Task Counts</h3>
+    <ul>
+        {% for state,count in counts.items() %}
+        <li><strong>{{ state }}</strong> {{ count }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

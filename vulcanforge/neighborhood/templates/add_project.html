@@ -11,16 +11,3 @@
     {{c.add_project.display(action=neighborhood.url() + 'register', value=form_data, neighborhood=neighborhood)}}
 {% endblock %}
 
-{% block extra_js %}
-    <script>
-        $(function () {
-            var $checkbox = $('.repositoryCheckbox'),
-                    $select = $('.repositoryKindSelect'),
-                    updateDisabled = function () {
-                        $select.prop('disabled', !$checkbox.prop('checked'));
-                    };
-            $checkbox.bind('change', updateDisabled);
-            updateDisabled();
-        });
-    </script>
-{% endblock %}

@@ -69,10 +69,12 @@ class BaseVisualizerAPI(object):
             specs.append(spec)
             is_first = False
 
+        download_url = kwargs.pop('download_url', self.download_url)
+
         return self.full_render_widget.display(
             specs,
             filename=os.path.basename(urlunquote(self.url)),
-            download_url=self.download_url,
+            download_url=download_url,
             **kwargs)
 
     def render(self, shortname=None, on_unvisualizable=None, **kwargs):

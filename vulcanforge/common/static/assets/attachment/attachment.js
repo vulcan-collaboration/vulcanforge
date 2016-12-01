@@ -30,7 +30,7 @@
                 $.ajax({
                     type: 'POST',
                     url: href,
-                    headers: {"VF_SESSION_ID": sessionId},
+                    headers: {"VFSessionID": sessionId},
                     data: {delete: true},
                     success: function () {
                         var $messages = $('#messages');

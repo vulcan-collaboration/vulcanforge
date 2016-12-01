@@ -1,0 +1,32 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<dom-module id="vf-idle-timeout">
+    <style>
+    </style>
+    <template>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-idle-timeout",
+                properties: {
+                    timeoutUrl: String,
+                    renewUrl: String,
+                    timeIdle: Number,
+                    timeWarn: Number,
+                    sessionTimeout: Number
+                },
+                ready: function () {
+                    $(document).idleTimeout({
+                        redirectUrl: this.timeoutUrl,
+                        idleTimeLimit: this.timeIdle,
+                        activityEvents: "mousemove keydown DOMMouseScroll mousewheel mousedown touchstart touchmove wheel MSPointerDown MSPointerMove resumableFileProgress",
+                        dialogDisplayLimit: this.timeWarn,
+                        sessionKeepAliveTimer: (this.sessionTimeout > 0) ? Math.floor(this.sessionTimeout / 2) : false,
+                        sessionKeepAliveUrl: this.renewUrl
+                    });
+                }
+            });
+        })();
+    </script>
+</dom-module>

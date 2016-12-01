@@ -16,8 +16,10 @@
             icon='ico-moderate',
             href="#") }}
     {% endif %}
-    {{ g.icon_button_widget.display(label='Tag', css="thread_tag",
-        icon='ico-tag', href="#") }}
+    {% if show_tag_post and g.security.has_access(value, 'post') %}
+        {{ g.icon_button_widget.display(label='Tag', className="thread_tag",
+            icon='ico-tag', href="#") }}
+    {% endif %}
     {% if c.user and not c.user.is_anonymous %}
         {{ g.subscription_popup_menu.display(artifact=thread, feed_url=c.url+'feed.rss') }}
     {% endif %}
@@ -28,9 +30,10 @@
 {% endblock %}
 
 {% block content %}
+    <div id="tutorialHolder"></div>
     <div class="padded">
     {{ c.thread_header.display(value=thread, page=page, limit=limit, count=count) }}
     </div>
 
-    {{ c.thread.display(value=thread, page=page, limit=limit, count=count) }}
+    {{ c.thread_widget.display(value=thread, page=page, limit=limit, count=count) }}
 {% endblock %}

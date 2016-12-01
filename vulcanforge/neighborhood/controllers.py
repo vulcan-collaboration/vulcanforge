@@ -1,12 +1,16 @@
 import logging
 import re
+import simplejson
 from urllib import unquote
 
 import ming.odm
+from ming.odm import ThreadLocalODMSession
+from ming.odm import state, session
 from webob import exc
 from formencode import Invalid
+from paste.deploy.converters import asbool
 from pylons import tmpl_context as c, app_globals as g
-from tg import redirect, flash, override_template
+from tg import config, redirect, flash, override_template
 from tg.decorators import expose, without_trailing_slash, with_trailing_slash
 
 from vulcanforge.common.controllers.base import (
@@ -20,7 +24,7 @@ from vulcanforge.common.controllers.decorators import (
 )
 from vulcanforge.common import helpers as h
 from vulcanforge.common.controllers.rest import ProjectRestController
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.util import re_path_portion
 from vulcanforge.common.widgets.util import PageSize, PageList
 from vulcanforge.auth.model import User
@@ -28,12 +32,18 @@ from vulcanforge.auth.tasks import remove_workspacetabs
 from vulcanforge.neighborhood.marketplace.controllers import (
     NeighborhoodMarketplaceController)
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
-from vulcanforge.project.model import Project
+from vulcanforge.project.model import (
+    Project,
+    ProjectRole,
+    ProjectFile
+)
+from vulcanforge.project.model.membership import MembershipInvitation
 from vulcanforge.project.controllers import (
     ProjectController,
     ProjectBrowseController
 )
 from vulcanforge.project.widgets import ProjectListWidget
+from vulcanforge.common.tasks.index import add_global_objs
 
 from .model import Neighborhood, NeighborhoodFile
 from .exceptions import RegistrationError
@@ -41,7 +51,18 @@ from .widgets import NeighborhoodAddProjectForm, NeighborhoodAdminOverview
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:neighborhood/templates/'
+ADMIN_INVITE = '''
+Hello there!
 
+{user} has invited you to administer Team {team} on {forge_name}.
+Follow the link below to sign up!
+'''
+MEMBER_INVITE = '''
+Hello there!
+
+{user} has invited you to be a member of Team {team} on {forge_name}.
+Follow the link below to sign up!
+'''
 
 class NeighborhoodAdminController(BaseController):
 
@@ -164,6 +185,7 @@ class NeighborhoodController(BaseTGController):
         add_project = NeighborhoodAddProjectForm()
 
     _admin_controller_cls = NeighborhoodAdminController
+    _project_controller_cls = ProjectController
 
     def __init__(self, neighborhood_name, prefix=''):
         self.neighborhood_name = neighborhood_name
@@ -200,7 +222,7 @@ class NeighborhoodController(BaseTGController):
         if project is None:
             project = self.neighborhood.neighborhood_project
             c.project = project
-            return ProjectController()._lookup(pname, *remainder)
+            return self._project_controller_cls()._lookup(pname, *remainder)
 
         c.project = project
         if project is None or (project.deleted and
@@ -208,7 +230,7 @@ class NeighborhoodController(BaseTGController):
             raise exc.HTTPNotFound, pname
         if project.neighborhood.name != self.neighborhood_name:
             redirect(project.url())
-        return ProjectController(), remainder
+        return self._project_controller_cls(), remainder
 
     @expose()
     def index(self):
@@ -221,12 +243,9 @@ class NeighborhoodController(BaseTGController):
     @without_trailing_slash
     def add_project(self, **form_data):
         g.security.require_access(self.neighborhood, 'register')
-        if not self.neighborhood.user_can_register():
-            flash("You are already a member of a team", "error")
-            redirect(self.neighborhood.url())
-        title = "Create a Project"
+        title = "Create a {}".format(self.neighborhood.project_cls.type_label)
         c.add_project = self.Forms.add_project
-        for checkbox in ['Wiki', 'Tickets', 'Discussion', 'Components']:
+        for checkbox in ['Wiki', 'Tickets', 'Discussion', 'Downloads']:
             form_data.setdefault(checkbox, True)
         return dict(
             neighborhood=self.neighborhood,
@@ -254,17 +273,7 @@ class NeighborhoodController(BaseTGController):
             msg = e.msg
         return dict(message=msg)
 
-    @vardec
-    @expose()
-    @validate_form('add_project', error_handler=add_project)
-    @require_post()
-    def register(self, **form_data):
-        """Register a project on this neighborhood"""
-        g.security.require_access(self.neighborhood, 'register')
-        if not self.neighborhood.user_can_register():
-            flash("You are already a member of a team", "error")
-            redirect(self.neighborhood.url())
-
+    def _parse_add_project_data(self, form_data):
         # expand the values
         project_name = h.really_unicode(
             form_data.pop('project_name', '')).encode('utf-8')
@@ -273,11 +282,9 @@ class NeighborhoodController(BaseTGController):
         project_unixname = h.really_unicode(
             form_data.pop('project_unixname', '')).encode('utf-8').lower()
         private_project = form_data.pop('private_project', None)
-        neighborhood = self.neighborhood
 
         tool_options = form_data.pop('tool_options', None)
 
-        apps = []
         tool_info = {
             'Tickets': 'Manage',
             'Wiki': 'Docs',
@@ -295,12 +302,13 @@ class NeighborhoodController(BaseTGController):
                 tool_info[repo_kind] = 'Repository'
                 form_data[repo_kind] = True
 
-        for tool in form_data.keys():
-            if tool in tool_info:
-                label, mp = tool_info[tool], tool_info[tool].lower()
-            else:
-                label, mp = tool, tool.lower()
+        apps = []
+        for tool in form_data:
             if form_data[tool]:
+                if tool in tool_info:
+                    label, mp = tool_info[tool], tool_info[tool].lower()
+                else:
+                    label, mp = tool, tool.lower()
                 apps.append((tool.lower(), mp, label))
         if apps:
             apps = [
@@ -308,18 +316,30 @@ class NeighborhoodController(BaseTGController):
                 ('admin', 'admin', 'Admin'),
                 ('chat', 'chat', 'Chat'),
             ] + apps
+        else:
+            apps = None  # install default
+
+        return project_unixname, {
+            "project_name": project_name,
+            "private_project": private_project,
+            "short_description": project_description,
+            "apps": apps,
+            "tool_options": tool_options
+        }
+
+    @vardec
+    @expose()
+    @validate_form('add_project', error_handler=add_project)
+    @require_post()
+    def register(self, **form_data):
+        """Register a project on this neighborhood"""
+        g.security.require_access(self.neighborhood, 'register')
+        shortname, reg_kwargs = self._parse_add_project_data(form_data)
 
         # install the project
         try:
-            c.project = neighborhood.register_project(
-                project_unixname,
-                project_name=project_name,
-                private_project=private_project,
-                apps=apps or None,
-                tool_options=tool_options
-            )
-            if project_description:
-                c.project.short_description = project_description
+            c.project = self.neighborhood.register_project(
+                shortname, **reg_kwargs)
         except RegistrationError:
             redirect_to = self.neighborhood.url()
             ming.odm.odmsession.ThreadLocalODMSession.close_all()
@@ -345,6 +365,139 @@ class NeighborhoodController(BaseTGController):
         if not icon:
             return redirect(ac.icon_url(32, skip_lookup=True))
         return icon.serve()
+
+    @expose('json')
+    def existing_projects(self):
+        q = {'deleted': False,
+             'neighborhood_id': self.neighborhood._id}
+        return {x.name: x.shortname for x in Project.query.find(q)
+                if x.is_real() and g.security.has_access(x, 'read')}
+
+    @expose('json')
+    def team_exists(self, name):
+        q = {'name': name,
+             'neighborhood_id': self.neighborhood._id}
+        pc = Project.query.find(q)
+        return {"found": pc.count() > 0}
+
+    @expose('json')
+    def existing_users(self):
+        q = {'disabled': False}
+        public_users = asbool(config.get('all_users_public', False))
+        if not public_users:
+            q.update({'public': True})
+        return {x.display_name: {'username': x.username,
+                                 'email': x.get_email_address()}
+                for x in User.query.find(q) if x.is_real_user()}
+
+    @require_post()
+    @expose('json')
+    def do_create_team(self, name, summary, parent=None, private=False,
+                       icon=None, invitation_msg="", invitees="", **kw):
+        g.security.require_access(c.neighborhood, 'register')
+        # name
+        name_regex = re.compile("^[A-Za-z]+[A-Za-z0-9 -]*$")
+        mo = name_regex.match(name)
+        if not mo:
+            return {"status": "error", "reason": "Invalid team name"}
+        else:
+            name = name.encode('utf-8')
+        # generate shortname and ensure uniqueness
+        shortname = re.sub("[^A-Za-z0-9]", "", name).lower()
+        i = 1
+        while True:
+            if Project.query.get(shortname=shortname):
+                i += 1
+                shortname = shortname + unicode(i)
+            else:
+                break
+        # team creation
+        try:
+            project = c.neighborhood.register_project(
+                shortname,
+                project_name=name,
+                short_description=summary.encode('utf-8'),
+                private_project=True if private else False,
+                apps=None
+            )
+        except RegistrationError:
+            ThreadLocalODMSession.close_all()
+            return {"status": "error", "reason": "Team creation failed"}
+
+        # team icon
+        if icon is not None:
+            if project.icon:
+                ProjectFile.remove(dict(
+                    project_id=project._id,
+                    category='icon'
+                ))
+            ProjectFile.save_image(
+                icon.filename,
+                icon.file,
+                content_type=icon.type,
+                square=True,
+                thumbnail_size=(64, 64),
+                thumbnail_meta=dict(project_id=project._id, category='icon'))
+            session(ProjectFile).flush()
+            g.cache.redis.expire('navdata', 0)
+            if state(project).status != "dirty":
+                add_global_objs.post([project.index_id()])
+
+        # invitations
+        admin_text = ADMIN_INVITE.format(
+            user=c.user.display_name,
+            team=project.name,
+            forge_name=config.get("forge_name", "The Forge"),
+            url=g.url("/auth/register")
+        )
+        member_text = MEMBER_INVITE.format(
+            user=c.user.display_name,
+            team=project.name,
+            forge_name=config.get("forge_name", "The Forge"),
+            url=g.url("/auth/register")
+        )
+        if invitees:
+            invited = simplejson.loads(invitees)
+            if (type(invited) is list):
+                itext = invitation_msg or "Please join my team."
+                admin_role = ProjectRole.by_name('Admin', project)
+                member_role = ProjectRole.by_name('Member', project)
+                ac_id = project.home_ac._id
+                with g.context_manager.push(app_config_id=ac_id):
+                    c.project.notifications_disabled = False
+                    for invitee in invited:
+                        # check if email invitee is current user
+                        if 'address' in invitee:
+                            email = invitee['address']
+                            user = User.by_email_address(email)
+                            if user:
+                                invitee['username'] = user.username
+                        # issue invitation
+                        admin = invitee.get('isAdmin', False)
+                        role = admin_role if admin else member_role
+                        if 'username' in invitee:
+                            username = invitee['username']
+                            user = User.by_username(username)
+                            if user and user.username != c.user.username:
+                                if admin:
+                                    project.add_user(user, ['Admin'])
+                                else:
+                                    invite = MembershipInvitation.from_user(
+                                        user, project=project, text=itext)
+                                    invite.send()
+                        elif 'address' in invitee:
+                            email = invitee['address']
+                            etext = admin_text if admin else member_text
+                            invite = MembershipInvitation.from_email(
+                                email, project=project, text=etext,
+                                role_id=role._id)
+                            invite.send()
+
+        return {"status": "success"}
+
+    @expose(content_type="image/*")
+    def project_icon_url(self):
+        redirect(g.resource_manager.absurl('images/project_default.png'))
 
 
 class NeighborhoodProjectBrowseController(ProjectBrowseController):
@@ -460,8 +613,7 @@ class NeighborhoodRestController(object):
         name = self._neighborhood.shortname_prefix + name
         project = Project.query.get(
             shortname=name,
-            neighborhood_id=self._neighborhood._id,
-            deleted=False
+            neighborhood_id=self._neighborhood._id
         )
         if project:
             c.project = project

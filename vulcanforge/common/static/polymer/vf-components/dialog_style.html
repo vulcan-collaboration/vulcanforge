@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<dom-module id="dialog_style">
+    <style include="style_base">
+        .empty-message {
+            color: var(--toptext);
+            fill: var(--toptext);
+            text-align: center;
+        }
+        #dialogHeader{
+            color: var(--pristine);
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .dinfo{
+            padding: 4px;
+            margin: 4px;
+            color: var(--pitch);
+        }
+        paper-dialog .heading {
+            background-color: var(--headingbar);
+            color: var(--interactive);
+            margin-top: 0;
+            padding: 0 8px;
+        }
+        paper-dialog .heading #close {
+            min-width: 3em;
+            padding-right: 0;
+        }
+        paper-dialog .subheadding{
+            background-color: var(--subheadingbar);
+            color: var(--subheadingtext);
+            margin: 12px;
+            font-style: italic;
+            padding: 0 8px;
+        }
+        paper-dialog #send-control {
+            margin-top: 16px;
+        }
+        paper-dialog {
+            margin: 0;
+            padding: 0;
+            width: 400px;
+        }
+        paper-textarea {
+            --paper-input-container-underline-focus: {
+                background-color: #921700;
+            }
+            --paper-input-container-label-focus: {
+                color: var(--interactive);
+            }
+        }
+        #bigicon{
+            width: 64px;
+            height: 64px;
+            padding: 4px;
+            padding-right: 10px;
+        }
+        .infoIcon {
+            padding-right: 4px;
+            color: var(--subheadingtext);
+        }
+        .rightInteractiveIcon{
+            position: absolute;
+            color: var(--interactive);
+            right: 6px;
+        }
+        #message{
+            color: var(--pitch);
+        }
+        paper-toggle-button {
+            --paper-toggle-button-checked-bar-color: var(--diffuse);
+            --paper-toggle-button-checked-button-color: var(--pristine);
+            --paper-toggle-button-checked-ink-color: var(--pristine);
+            --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+            --paper-toggle-button-unchecked-button-color: var(--pristine);
+            --paper-toggle-button-unchecked-ink-color: var(--pristine);
+            --paper-toggle-button-label-color: var(--pristine);
+        }
+    </style>
+</dom-module>
+
+</html>

@@ -1,106 +1,501 @@
-{% extends g.templates['master'] %}
-{% set hide_project_toolbar = true %}
+{% extends g.templates['polymer-user'] %}
 
-{% do g.resource_manager.register_js('js/vf_form.js') %}
-{% do g.resource_manager.register_js('js/project_invitation.js') %}
-
-{% block title %}{{ user.display_name }} / Profile{% endblock %}
-
-{% block header %}{{ user.display_name }}{% endblock %}
-
+{% block title %}{{ config.get('forge_name', 'User') }} Profile{% endblock %}
+{% block subheading_prefix %}{{ user.display_name }}{% endblock %}{% block subheading %}user&nbsp;profile{% endblock %}
 {% block head %}
-    <link rel="alternate" type="application/rss+xml" title="RSS"
-          href="feed.rss">
-    <link rel="alternate" type="application/atom+xml" title="Atom"
-          href="feed.atom">
-{% endblock %}
 
-{% block actions %}
-    {{g.icon_button_widget.display('RSS feed', None, None, 'ico-rss_alt', href=c.app.url+'feed.rss')}}
+<style is="custom-style">
+    section {
+        min-width: 400px;
+    }
+    .section-icon#organize-icon {
+        padding: 7px 0px;
+    }
+    .padded-icon {
+        --iron-icon-height: 50px;
+        --iron-icon-width: 50px;
+        padding: 14px;
+        color: var(--interactive);
+    }
+    #organize-buttons {
+        margin: 2rem 0 0 0;
+    }
+    .empty-message {
+        color: var(--toptext);
+        fill: var(--toptext);
+        text-align: center;
+    }
+    .approve-button {
+        color: darkgreen;
+        fill: darkgreen;
+    }
+    .cancel-button,
+    .deny-button {
+        color: darkred;
+        fill: darkred;
+    }
+    .cancel-button {
+        margin-left: 39px;
+    }
+    .registration-request-email {
+        color: var(--toptext);
+    }
+    .info {
+        font-size: 1em;
+        font-style: italic;
+        font-family: Ubuntu, Roboto, sans-serif;
+        margin-top: -0.75em;
+        margin-bottom: 2em;
+    }
+    .section-icon {
+        margin-right: .5em;
+    }
+    .stats-container {
+        background-color: var(--diffuse);
+        padding: .75em;
+    }
+    .stats-container.large {
+        padding: 1.25em;
+    }
+    .stats-header {
+        background-color: var(--subheadingbar);
+        color: black;
+        padding: 4px;
+        margin-top: 8px;
+        font-family: Ubuntu, Roboto, sans-serif;
+        font-variant: small-caps;
+        font-size: 20px;
+        border-bottom: 2px solid var(--pristine);
+    }
+    .invitations {
+        margin-top: 30px;
+    }
+    #find-team {
+        margin-right: 2px;
+    }
+    .badge {
+        margin-left: 8px;
+    }
+    #search-submit {
+        margin-left: 2px;
+    }
+    #search-files {
+        margin-top: 3em;
+    }
+    #dataset-search {
+        margin-top: 1em;
+    }
+    .request-label,
+    .invite-label {
+        margin-left: 4px;
+    }
+    paper-tooltip {
+        --paper-tooltip: {
+            font-size: 12px;
+            font-weight: bold;
+        }
+    }
+    @media (max-width: 480px) {
+        section {
+            min-width: 250px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+    {% raw %}
+    <dom-module id="project-item">
+        <style>
+            .content {
+                background-color: var(--diffuse);
+                padding: .75em;
+                padding-top: 1em;
+                margin-right: 12px;
+                margin-left: 40px;
+            }
+            a paper-icon-button,
+            a:active paper-icon-button,
+            a:visited paper-icon-button {
+                color: var(--subheadingtext);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            .project-icon {
+                --iron-image-height: 50px;
+                --iron-image-width: 50px;
+                padding: 8px;
+            }
+            .undersize-icon {
+                height: 35px;
+                width: 35px;
+            }
+            .oversize-icon {
+                height: 45px;
+                width: 45px;
+                margin-top: 2px;
+            }
+            paper-checkbox#pref {
+                margin-left: 4px;
+                margin-bottom: 4px;
+                --paper-checkbox-checked-color: var(--interactive);
+            }
+            paper-checkbox.hidden {
+                display: none;
+            }
+            span#pname.greyed {
+                color: var(--diffuse);
+            }
+            .project-name {
+                text-decoration: none;
+                text-transform: uppercase;
+                color: var(--subheadingtext);
+            }
+            .user-info {
+                color: var(--diffuse);
+                margin-top: 6px;
+                margin-right: 12px;
+                font-style: italic;
+                font-size: 12px;
+            }
+            @media (max-width: 320px) {
+                .admin-control {
+                    display: none;
+                }
+            }
+        </style>
+        <template>
+            <div class="item layout horizontal center">
+                <a href="{{project.url}}"><iron-image class="project-icon" src="{{project.icon_url}}"></iron-image></a>
+                <div class="info flex">
+                    <a class="project-name" href="{{project.url}}"><div>{{project.name}}</div></a>
+                    <div class="user-info layout horizontal flex wrap">
+                        <div class="flex">[[project.roles]]</div>
+                        <div>joined {{_getJoinDate(project.joined)}}</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "project-item",
+                    properties: {
+                        project: Object,
+                        opened: Boolean,
+                        _toggleIcon: {
+                            type: String,
+                            computed: '_computeToggleIcon(opened)'
+                        }
+                    },
+                    _getJoinDate: function(date) {
+                        return vffuncs.formatDate(date);
+                    }
+                });
+            });
+        </script>
+    </dom-module>
 
-    <div class="padded">
+    <dom-module id="project-list">
+        <style>
+            .header {
+                background-color: var(--headingbar);
+                padding: .15em;
+                padding-left: .5em;
+            }
+            .header-label {
+                font-style: italic;
+                color: var(--pristine);
+            }
+            .header iron-icon {
+                padding-right: 6px;
+                height: 40px;
+                color: var(--interactive);
+            }
+            .list-container {
+                height: 318px;
+                overflow: auto;
+            }
+            .sorter {
+                font-style: italic;
+                font-size: 11px;
+            }
+            #sort-by-activity {
+                margin-right: 8px;
+            }
+            paper-toggle-button {
+                margin-right: 10px;
+                --paper-toggle-button-checked-bar-color: var(--diffuse);
+                --paper-toggle-button-checked-button-color: var(--pristine);
+                --paper-toggle-button-checked-ink-color: var(--pristine);
+                --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+                --paper-toggle-button-unchecked-button-color: var(--pristine);
+                --paper-toggle-button-unchecked-ink-color: var(--pristine);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-style: normal;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+            paper-icon-button#prefs {
+                margin-right: 4px;
+            }
+            paper-icon-button#prefs.selected {
+                color: var(--interactive);
+            }
+            project-item.hidden {
+                display: none;
+            }
+        </style>
+        <template>
+            <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+            <div class="header layout horizontal center-center">
+                <iron-icon icon="social:people"></iron-icon>
+                <div class="header-label flex">Teams ({{_projectCount(data)}})</div>
+            </div>
+            <template is="dom-if" if="[[_hasProjects(data)]]">
+                <div id="plist" class="list-container">
+                    <template id="repeater" is="dom-repeat" items="{{data.projects}}" as="project">
+                        <project-item project="{{project}}"></project-item>
+                    </template>
+                </div>
+            </template>
+            <template is="dom-if" if="[[!_hasProjects(data)]]">
+                <div class="layout vertical center">
+                    <div class="empty-message">
+                        <p><iron-icon icon="warning"></iron-icon> No projects</p>
+                    </div>
+                </div>
+            </template>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "project-list",
+                    properties: {
+                        data: Object,
+                        url: String,
+                        count: Number
+                    },
+                    _hasProjects: function(o) {
+                        return (o.projects && o.projects.length > 0);
+                    },
+                    _projectCount: function(o) {
+                        if(o.projects)
+                            return o.projects.length;
+                        return 0;
+                    }
+                });
+            });
+        </script>
+    </dom-module>
 
-    {% if not is_self and project_opts %}
-    <p><a href="#" class="btn" id="invite-user">Invite To Your Project</a></p>
-    <div id="invite-form-container"></div>
-    {% endif %}
+    <dom-module id="activity-item">
+        <style>
+            .item {
+                padding: 0.25em;
+            }
+            .info {
+                margin-left: 4px;
+            }
+            .user-icon {
+                --iron-image-height: 50px;
+                --iron-image-width: 50px;
+                padding: 4px;
+            }
+            .tool-icon {
+                margin-right: 4px;
+            }
+            .actproject-icon {
+                --iron-image-height: 25px;
+                --iron-image-width: 25px;
+                margin-right: 4px;
+            }
+            .small-tool-icon {
+                --iron-image-height: 20px;
+                --iron-image-width: 20px;
+                margin-right: 4px;
+            }
+            .arrow-icon {
+                --iron-image-height: 25px;
+                --iron-image-width: 25px;
+            }
+            .timestamp {
+                color: var(--diffuse);
+                margin-top: 6px;
+                font-style: italic;
+                font-size: 12px;
+            }
+            .subject a {
+                text-decoration: none;
+                color: var(--subheadingtext);
+            }
+            .subject-line {
+                min-height: 24px;
+            }
+        </style>
+        <template>
+            <div class="item layout horizontal center">
+                <div class="info layout vertical flex">
+                    <template is="dom-if" if="{{!item.exchange_uri}}">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <a href="{{item.project.url}}"><iron-image class="actproject-icon" src="{{item.project.icon_url}}"></iron-image></a>
+                            <iron-icon class="arrow-icon" icon="icons:chevron-right"></iron-icon>
+                            <a href="{{item.app_config.url}}"><iron-image class="tool-icon" src="{{item.app_config.icon_url}}"></iron-image></a>
+                            <div class="subject flex"><a href="{{item.link}}">{{_subjectText(item.subject)}}</a></div>
+                        </div>
+                    </template>
+                    <template is="dom-if" if="{{item.exchange_uri}}">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <a href="{{item.exchange.url}}"><iron-image class="actproject-icon" src="{{item.exchange.icon_url}}"></iron-image></a>
+                            <iron-icon class="arrow-icon" icon="icons:chevron-right"></iron-icon>
+                            <a href="{{item.exchange.url}}"><iron-image class="small-tool-icon" src="{{item.exchange.icon_url}}"></iron-image></a>
+                            <div class="subject flex"><a href="{{item.link}}">{{_subjectText(item.subject)}}</a></div>
+                        </div>
+                    </template>
+                    <div class="timestamp">{{_timestamp(item.pubdate)}}</div>
+                </div>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "activity-item",
+                    properties: {
+                        item: Object
+                    },
+                    _subjectText: function(text) {
+                        var regexp = /\[.*?\] (.*)/;
+                        mo = regexp.exec(text);
+                        if (mo) {
+                            return mo[1];
+                        }
+                        return text;
+                    },
+                    _timestamp: function(olderDate, newerDate) {
+                        return vffuncs.ago(olderDate, newerDate);
+                    }
+                });
+            });
+        </script>
+    </dom-module>
 
-    {% if user.preferences.email_address %}
-        <p>{{g.avatar.display(user=user, size=48, compact=True, replace_with_userid=True)}}</p>
-    {% endif %}
+    <dom-module id="activity-list">
+        <style>
+            .header {
+                background-color: var(--headingbar);
+                padding: .15em;
+                padding-left: .5em;
+            }
+            .header-label {
+                font-style: italic;
+                color: var(--pristine);
+            }
+            .header iron-icon {
+                padding-right: 6px;
+                color: var(--interactive);
+            }
+            .list-container {
+                height: 318px;
+                overflow: auto;
+                padding-top: 4px;
+            }
+            .empty-message {
+                color: var(--toptext);
+                fill: var(--toptext);
+                text-align: center;
+            }
+            .right-side-icon{
+                //color: #009999;
+                color: var(--interactive);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    font-style: normal;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            }
+        </style>
+        <template>
+            <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+            <div class="header layout horizontal center-center">
+                <iron-icon icon="vaadin-icons:time-forward"></iron-icon>
+                <div class="header-label flex">Recent Activity</div>
+                <a class="activity-feed-link" href="/dashboard/activity_feed/" tabindex="-1">
+                    <paper-icon-button icon="track-changes" class="right-side-icon"></paper-icon-button>
+                    <paper-tooltip position="left">Activity Feed</paper-tooltip>
+                </a>
+            </div>
+            <template is="dom-if" if="[[_hasNotifications(data)]]">
+                <div id="alist" class="list-container">
+                    <template id="repeater" is="dom-repeat" items="{{data.notifications}}" as="notification">
+                        <activity-item item="{{notification}}"></activity-item>
+                    </template>
+                </div>
+            </template>
+            <template is="dom-if" if="[[!_hasNotifications(data)]]">
+                <div class="layout vertical center">
+                    <div class="empty-message">
+                        <p><iron-icon icon="warning"></iron-icon> No activity</p>
+                    </div>
+                </div>
+            </template>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "activity-list",
+                    properties: {
+                        url: String
+                    },
+                    _hasNotifications: function(o) {
+                        return (o.notifications && o.notifications.length > 0);
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+ {% endraw %}
 
-    <h3>Recent Activity</h3>
-    {{ c.activity_feed.display(notifications=notifications) }}
-
-    <h3>Projects</h3>
-    {{ c.project_list.display(projects=projects) }}
-
-    {#
-    {% if is_self %}
-        <div class="address-list grid-18">
-            <h4>Email Addresses</h4>
-            <ul>
-                {% for email in user.email_addresses %}
-                    <li>
-                        {{ lib.email_gravatar(email, size=24) }}
-                        {% if email == user.preferences.email_address %}
-                            <span class="prime email-address">{{ email }}</span>
-                        {% else %}
-                            <span class="email-address">{{ email }}</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="openid-list grid-18">
-            <b>OpenIDs</b>
-            <ul>
-                {% for openid in user.open_ids %}
-                    <li>
-                        <span class="openid">{{ openid }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-    #}
-
+    <div class="layout horizontal wrap">
+        <section class="paper-sheet small-margin small-padding flex">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="padded-icon" src="{{user.icon_url()}}" role="img"></iron-icon>
+                User Profile
+            </h2>
+            <div class="info layout horizontal center-center" id = "lastLog">Last online: </div>
+            <script>
+                var div = document.getElementById('lastLog');
+                div.innerHTML = div.innerHTML + vffuncs.formatTime("{{lastLog}}");
+            </script>
+            <vf-user-profile id="profile" url="userinfo" min-password-length="{{tg.config.get('auth.pw.min_length', 10)}}" static-url="{{g.resource_manager.absurl('')}}" nonce="{{ h.get_csrf_value() }}"></vf-user-profile>
+        </section>
+        <section id="activity" class="paper-sheet small-margin small-padding flex">
+            <h2 class="layout horizontal center-center">
+                <iron-icon class="padded-icon" icon="vaadin-icons:time-forward" role="img"></iron-icon>
+                Activity
+            </h2>
+            <div class="info layout horizontal center-center">View recent user activity</div>
+            <activity-list url="activity"></activity-list>
+        </section>
+        <section id="projects" class="paper-sheet small-margin small-padding layout vertical flex">
+            <h2 class="layout horizontal center-center">
+            <iron-icon class="section-icon" id="organize-icon" icon="social:group" role="img"></iron-icon>
+            Teams
+        </h2>
+            <div class="info layout horizontal center-center">View user's teams.</div>
+            <project-list url="getprojects" count="{{ projects }}"></project-list>
+        </section>
     </div>
-
 {% endblock %}
 
 {% block extra_js %}
-    {% if not is_self and project_opts %}
-    <script type="text/javascript">
-        (function($, $vf){
-            "use strict";
-
-            var inviteForm = null;
-
-            $('#invite-user').click(function() {
-                var btn = $(this);
-                if (inviteForm === null) {
-                    inviteForm = new $vf.InvitationForm({
-                        containerE: $("#invite-form-container"),
-                        action: "{{ c.app.url }}invite_to_project",
-                        context: "user",
-                        project_opts: {{ project_opts|safe }},
-                        onShow: function() {
-                            btn.hide();
-                        },
-                        onHide: function() {
-                            btn.show();
-                        }
-                    });
-                }
-                inviteForm.show();
-                return false;
-            });
-
-        }(jQuery, window.$vf));
-    </script>
-    {% endif %}
+{{ super() }}
 {% endblock %}

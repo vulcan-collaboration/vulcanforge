@@ -170,6 +170,10 @@ class ForumThread(AbstractThread):
     posts = RelationProperty('ForumPost')
     first_post = RelationProperty('ForumPost', via='first_post_id')
 
+    @property
+    def title_s(self):
+        return 'Thread: %s' % (self.subject or '(no subject)')
+
     def index(self, text_objects=None, **kwargs):
         # collect text objects
         if text_objects is None:
@@ -177,9 +181,8 @@ class ForumThread(AbstractThread):
         text_objects.append(self.subject)
 
         # index that noise
-        return Artifact.index(self,
-            type_s=self.type_s,
-            title_s='Thread: %s' % (self.subject or '(no subject)'),
+        return Artifact.index(
+            self,
             name_s=self.subject,
             views_i=self.num_views,
             text_objects=text_objects,

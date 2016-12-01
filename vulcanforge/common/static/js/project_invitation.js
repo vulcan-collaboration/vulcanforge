@@ -1,4 +1,4 @@
-(function(global) {
+(function (global) {
     "use strict";
 
     var $ = global.$,
@@ -12,7 +12,7 @@
         };
     }
 
-    InvitationForm = function(config) {
+    InvitationForm = function (config) {
         var that = this,
             containerE = config.containerE || $(document),
             action = config.action,
@@ -61,24 +61,24 @@
             return $('<tr/>')
                 .append($('<td/>').append($('<label for="users">To:</label>')))
                 .append($('<td/>').append(
-                inputE = $('<input type="text" name="users" />')
-                    .multicomplete({
-                        ignoreRe: /@/,
-                        minLength: 2,
-                        source: function(request, callback) {
-                            $.ajax({
-                                url: autocompleteUrl,
-                                data: {q: request.term},
-                                success: function (data, status, request) {
-                                    callback(data.results);
-                                }
-                            });
-                        },
-                        focus: function() {return false;},
-                        autoFocus: true
-                    })))
-                .append($('<td class="explanation"/>')
-                .append("Enter usernames or email addresses, separated by commas"));
+                    inputE = $('<input type="text" name="users" />')
+                        .multicomplete({
+                            ignoreRe: /@/,
+                            minLength: 2,
+                            source: function(request, callback) {
+                                $.ajax({
+                                    url: autocompleteUrl,
+                                    data: {q: request.term},
+                                    success: function (data, status, request) {
+                                        callback(data.results);
+                                    }
+                                });
+                            },
+                            focus: function() {return false;},
+                            autoFocus: true
+                        })
+                )).append($('<td class="explanation"/>')
+                  .append("Enter usernames or email addresses, separated by commas"));
         }
 
         function makeProjectRow() {

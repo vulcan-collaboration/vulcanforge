@@ -62,7 +62,7 @@ class WsgiDispatchController(BaseTGController):
             response = super(WsgiDispatchController, self).__call__(
                 environ, start_response)
             return self.cleanup_iterator(response)
-        except exc.HTTPException, err:
+        except exc.HTTPException as err:
             return err(environ, start_response)
 
     def cleanup_iterator(self, response):

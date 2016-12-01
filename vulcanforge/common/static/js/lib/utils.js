@@ -1,7 +1,7 @@
 // Utility functions
 /*
  *
- * Loading CSS document and instert it as a link
+ * Loading CSS document and insert it as a link
  *
  */
 function getCSS(url) {
@@ -580,4 +580,27 @@ function getParameterByName(name, myFrame){
         return "";
     else
         return decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+function encodeParameters(obj) {
+    /* encode an object name, value pairs in URL parameter form */
+    var name, queryList = [];
+    for (name in obj) {
+        if (obj.hasOwnProperty(name)) {
+            queryList.push(encodeURIComponent(name) + '=' + encodeURIComponent(obj[name]));
+        }
+    }
+    return queryList.join("&");
+}
+
+if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
 }

@@ -13,6 +13,9 @@
  *   http://www.gnu.org/licenses/gpl.html
  *
 */
+/*
+ * NOTE: This code has been modified to enable option pass through
+ */
 
 (function($, win){
 	
@@ -32,7 +35,14 @@
 			$.data( elem[0], 'idletimeout', this );
 			
 			// start the idle timer
-			$.idleTimer(options.idleAfter * 1000);
+            // Added way to pass idleTimer options through
+            // mainly to introduce events that cause the UI to not be idle
+			$.idleTimer(options.idleAfter * 1000,
+                document,
+                $.extend( {
+                    events: "mousemove keydown DOMMouseScroll mousewheel mousedown touchstart touchmove" // activity is one of these events
+                }, options.idleTimerOptions)
+            );
 			
 			// once the user becomes idle
 			$(document).bind("idle.idleTimer", function(){

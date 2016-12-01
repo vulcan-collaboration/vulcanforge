@@ -7,7 +7,7 @@ from paste.deploy.converters import asbool
 from formencode.validators import FormValidator
 from pylons import tmpl_context as c, app_globals as g, request
 import tg
-from tg import config
+from tg import config, request, response
 from formencode import Invalid, validators
 import ew as ew_core
 from ew.core import validator
@@ -17,8 +17,14 @@ from webob.exc import HTTPUnauthorized
 
 from vulcanforge.common import helpers as h
 from vulcanforge.common.helpers import get_site_protocol
+from vulcanforge.common.util import get_client_ip
 from vulcanforge.common.widgets.forms import ForgeForm
-from vulcanforge.auth.model import FailedLogin, User
+from vulcanforge.auth.model import (
+    FailedLogin,
+    User,
+    LoginVerificationToken,
+    TwoFactorAuthenticationToken
+)
 from vulcanforge.auth.validators import PasswordValidator
 
 LOG = logging.getLogger(__name__)
@@ -56,7 +62,30 @@ class LoginForm(ForgeForm):
             raise Invalid(msg, value, state)
         try:
             value = super(LoginForm, self).validate(value, state)
-            value['username'] = g.auth_provider.login()
+            u = User.query.get(username=value['username'])
+            two_factor = (g.auth_two_factor and
+                          u and u.get_pref('two_factor_auth'))
+            client_ip = get_client_ip()
+            has_known_ips = u and len(u.login_clients) > 0
+            can_check_ip = has_known_ips and client_ip is not None
+            check_unknown = g.verify_login_clients and can_check_ip
+            unknown_ip = (check_unknown and
+                          client_ip.replace(".", "_") not in u.login_clients)
+            verification = (u and u.needs_account_verification) or unknown_ip
+            if two_factor or verification:
+                if u.disabled:
+                    msg = "User disabled"
+                    raise Invalid(msg, dict(username=value['username']), None)
+                valp = g.auth_provider.validate_password
+                if valp(u, value['password']):
+                    value['username'] = u
+                else:
+                    msg = 'Invalid login'
+                    if track_fails:
+                        FailedLogin.from_request(request)
+                    raise Invalid(msg, dict(username=value['username']), None)
+            else:
+                value['username'] = g.auth_provider.login()
         except (Invalid, HTTPUnauthorized):
             # if user needs a password reset
             targeted_user = User.query.get(username=value['username'])
@@ -75,6 +104,132 @@ class LoginForm(ForgeForm):
                 if track_fails:
                     FailedLogin.from_request(request)
             raise Invalid(msg, dict(username=value['username']), None)
+        return value
+
+
+class Login2Form(ForgeForm):
+    submit_text = 'Login'
+    style = 'wide'
+    defaults = dict(ForgeForm.defaults, autocomplete=False)
+
+    class fields(ew_core.NameList):
+
+        totp_code = ew.NumberField(
+            label='Code', attrs=dict(autofocus='autofocus'), wide=False)
+
+    def context_for(self, field):
+        ctx = super(Login2Form, self).context_for(field)
+        if True or not self.autocomplete:
+            ctx.setdefault("attrs", {})['autocomplete'] = 'off'
+        return ctx
+
+    @validator
+    def validate(self, value, state=None):
+        user = username = None
+        track_fails = asbool(config.get('login_lock.engaged', 'false'))
+        if track_fails and FailedLogin.is_locked(request):
+            msg = 'Maximum retry attempts exceeded. Please wait {} minutes' + \
+                  ' and try again.'
+            msg = msg.format(config.get('login_lock.interval', 'a couple'))
+            raise Invalid(msg, value, state)
+        try:
+            value = super(Login2Form, self).validate(value, state)
+            c = request.cookies.pop('auth2', None)
+            if not c:
+                msg = "Maximum time exceeded.  Please begin login again."
+                raise Invalid(msg, value, state)
+            token = TwoFactorAuthenticationToken.query.get(cookie=c)
+            if not (token and token.is_valid):
+                msg = "Maximum time exceeded.  Please begin login again."
+                raise Invalid(msg, value, state)
+            if not token.verify(value['totp_code']):
+                msg = "Invalid code"
+                raise Invalid(msg, value, state)
+            if token.user.needs_account_verification:
+                value['username'] = token.user
+            else:
+                g.auth_provider.login(token.user)
+            value['destination'] = token.destination
+            token.delete()
+            response.delete_cookie('auth2')
+        except HTTPUnauthorized:
+            # if user needs a password reset
+            if user and user.disabled:
+                msg = 'Your account has been disabled. ' \
+                      'Please contact us to re-enable your account.'
+            elif user is not None and user.needs_password_reset:
+                tg.flash('Your password has expired and must be reset.',
+                         'error')
+                tg.redirect('/auth/password_reset')
+            raise Invalid(msg, dict(username=username), None)
+        except Invalid as e:
+            if track_fails:
+                d = dict(params={'username': username}, environ=request.environ)
+                req = type('failed_request', (object,), d)
+                FailedLogin.from_request(req)
+            raise e
+        return value
+
+
+class LoginVerifyForm(ForgeForm):
+    submit_text = 'Verify'
+    style = 'wide'
+    defaults = dict(ForgeForm.defaults, autocomplete=False)
+
+    class fields(ew_core.NameList):
+
+        code = ew.NumberField(
+            label='Code', attrs=dict(autofocus='autofocus'), wide=False)
+
+    def context_for(self, field):
+        ctx = super(LoginVerifyForm, self).context_for(field)
+        if True or not self.autocomplete:
+            ctx.setdefault("attrs", {})['autocomplete'] = 'off'
+        return ctx
+
+    @validator
+    def validate(self, value, state=None):
+        user = username = None
+        track_fails = asbool(config.get('login_lock.engaged', 'false'))
+        if track_fails and FailedLogin.is_locked(request):
+            msg = 'Maximum retry attempts exceeded. Please wait {} minutes' + \
+                  ' and try again.'
+            msg = msg.format(config.get('login_lock.interval', 'a couple'))
+            raise Invalid(msg, value, state)
+        try:
+            value = super(LoginVerifyForm, self).validate(value, state)
+            c = request.cookies.pop('authverify', None)
+            if not c:
+                msg = "Maximum time exceeded.  Please begin login again."
+                raise Invalid(msg, value, state)
+            token = LoginVerificationToken.query.get(cookie=c)
+            if not (token and token.is_valid):
+                msg = "Maximum time exceeded.  Please begin login again."
+                raise Invalid(msg, value, state)
+            if value['code'] != int(token.nonce):
+                msg = "Invalid code"
+                raise Invalid(msg, value, state)
+            g.auth_provider.login(token.user)
+            value['destination'] = token.destination
+            token.user.needs_account_verification = False
+            token.delete()
+            response.delete_cookie('authverify')
+        except HTTPUnauthorized:
+            # if user needs a password reset
+            if user and user.disabled:
+                msg = 'Your account has been disabled. ' \
+                      'Please contact us to re-enable your account.'
+            elif user is not None and user.needs_password_reset:
+                tg.flash('Your password has expired and must be reset.',
+                         'error')
+                tg.redirect('/auth/password_reset')
+            raise Invalid(msg, dict(username=username), None)
+        except Invalid as e:
+            if track_fails:
+                d = dict(params={'username': username}, environ=request.environ)
+                req = type('failed_request', (object,), d)
+                FailedLogin.from_request(req)
+            raise e
         return value
 
 

@@ -77,8 +77,6 @@ class ChatSession(Discussion):
 class ChatThread(Thread):
 
     class __mongometa__:
-        name = 'thread'
-        polymorphic_on = 'kind'
         polymorphic_identity = 'chat_thread'
         indexes = [
             ('ref_id',),

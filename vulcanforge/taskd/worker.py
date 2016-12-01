@@ -17,13 +17,14 @@ from vulcanforge.taskd.exceptions import QueueConnectionError, TaskdException
 class TaskdWorker(object):
 
     def __init__(self, config_path, name='worker', only=None,
-                 relative_path=None, log=None):
+                 relative_path=None, log=None, min_priority=10):
         self.config_path = config_path
         if relative_path is None:
             relative_path = os.getcwd()
         self.relative_path = relative_path
         self.name = name
         self.only = only
+        self.min_priority = min_priority
         self.keep_running = True
         self.restart_when_done = False
         if log is None:
@@ -72,7 +73,7 @@ class TaskdWorker(object):
                 'wsgi.errors': self.wsgi_error_log or self.log,
             })
             result = list(self.wsgi_app(r.environ, start_response))
-        except TaskdException, e:
+        except TaskdException as e:
             # task failed to complete
             self.log.error(
                 'taskd worker failed; %s; %s -- %s',
@@ -107,21 +108,28 @@ class TaskdWorker(object):
             waitfunc = self._waitfunc_noq
 
         # run any available tasks on startup
-        for task in MonQTask.event_loop(process=self.name, only=only):
+        for task in MonQTask.event_loop(process=self.name,
+                                        only=only,
+                                        min_priority=self.min_priority):
             if task:
                 self.run_task(task)
             else:
                 break
 
         # enter the loop
-        eloop = MonQTask.event_loop(waitfunc, process=self.name, only=only)
+        eloop = MonQTask.event_loop(waitfunc,
+                                    process=self.name,
+                                    only=only,
+                                    min_priority=self.min_priority)
         while self.keep_running:
             try:
                 self.task = next(eloop)
             except QueueConnectionError:
                 self.log.exception("taskd cannot connect to task_queue")
                 eloop = MonQTask.event_loop(
-                    self._waitfunc_noq, process=self.name, only=only)
+                    self._waitfunc_noq, process=self.name,
+                    only=only,
+                    min_priority=self.min_priority)
                 self.task = None
             if self.task:
                 self.run_task(self.task)

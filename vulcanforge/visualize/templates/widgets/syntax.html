@@ -1,7 +1,7 @@
 {% extends 'vulcanforge.visualize:templates/widgets/basecontent.html' %}
 
 {% block content %}
-<pre class="highlight embedded prettyprint"><code id="{{uid}}code"></code></pre>
+<pre class="highlight embedded"><code id="{{uid}}code"></code></pre>
 <div id="loadingContainer">
     <progress id="loadingProgressBar"></progress>
 </div>
@@ -36,7 +36,9 @@
                             removeAttr('value').
                             removeAttr('max');
                     resp = $vf.xmlEscape(resp);
-                    codeContainer.html(prettyPrintOne(resp, null, true));
+                    codeContainer.html(resp);
+                    hljs.highlightBlock(codeContainer.get(0));
+                    hljs.lineNumbersBlock(codeContainer.get(0));
                     $('#loadingContainer').
                             fadeOut('fast', function () {
                                 $(this).remove();

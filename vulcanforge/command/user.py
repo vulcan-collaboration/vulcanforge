@@ -20,6 +20,24 @@ class UserCommandError(Exception):
     pass
 
 
+class ListUsersCommand(Command):
+
+    min_args = 1
+    max_args = 1
+
+    usage = "ini_file"
+    summary = "list users"
+
+    parser = Command.standard_parser(verbose=True)
+
+    def command(self):
+        self.basic_setup()
+        map(self.print_user, User.query.find())
+
+    def print_user(self, user):
+        self.log.info('{0.username}'.format(user))
+
+
 class CreateUserCommand(Command):
 
     min_args = 5
@@ -337,3 +355,25 @@ class RefreshUsersCommand(Command):
                     upload_ssh_ldap.post(user.username, public_key)
                     count += 1
         print "Uploaded {} public keys.".format(count)
+
+
+class VerifyAccountsCommand(Command):
+    min_args = 1
+    max_args = 1
+
+    usage = "ini_file"
+    summary = "Mark all users for account verification"
+
+    parser = Command.standard_parser(verbose=True)
+
+
+    def command(self):
+        self.basic_setup()
+
+        users = [x for x in User.query.find() if x.is_real_user()]
+        count = 0
+        for user in users:
+            user.needs_account_verification = True
+            count += 1
+        User.query.session.flush()
+        print "Marked {} users for account verification.".format(count)

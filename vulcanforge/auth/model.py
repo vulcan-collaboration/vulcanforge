@@ -1,35 +1,37 @@
-import types
-import os
-import re
 import logging
 import urllib
 import hmac
 import hashlib
-from markupsafe import Markup
-import simplejson
 import time
-import iso8601
 from email import header
 from datetime import timedelta, datetime
 from hashlib import sha256
+import os
+import re
+import random
+import string
 
+from markupsafe import Markup
+import simplejson
+import iso8601
 from bson.objectid import ObjectId
 import pymongo
+import pyotp
 from pylons import tmpl_context as c, app_globals as g
 from tg import config, flash
 from ming import schema as S
-from ming.odm import session, state
 from ming.odm import (
+    session,
+    state,
     FieldProperty,
     RelationProperty,
-    ForeignIdProperty,
-    Mapper
+    ForeignIdProperty
 )
 from ming.odm.declarative import MappedClass
-from ming.utils import LazyProperty
+
+from vulcanforge.common.helpers import smartencode
 from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.model.globals import ForgeGlobals
-
 from vulcanforge.common.model.index import SOLRIndexed
 from vulcanforge.common.model.session import (
     solr_indexed_session,
@@ -37,57 +39,16 @@ from vulcanforge.common.model.session import (
 )
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import get_client_ip, nonce, cryptographic_nonce
-#from vulcanforge.project.model import Project, ProjectRole
+from vulcanforge.auth.exceptions import (
+    PasswordCannotBeChangedError,
+    PasswordInvalidError
+)
 from vulcanforge.auth.schema import ACE
+from vulcanforge.common.util.model import VFRelationProperty
 from vulcanforge.notification import tasks as mail_tasks
 from vulcanforge.notification.util import gen_message_id
 
 LOG = logging.getLogger(__name__)
-
-
-def smart_str(s, encoding='utf-8', strings_only=False, errors='strict'):
-    """
-    Returns a bytestring version of 's', encoded as specified in 'encoding'.
-
-    If strings_only is True, don't convert (some) non-string-like objects.
-
-    This function was borrowed from Django
-
-    """
-    if strings_only and isinstance(s, (types.NoneType, int)):
-        return s
-    elif not isinstance(s, basestring):
-        try:
-            return str(s)
-        except UnicodeEncodeError:
-            if isinstance(s, Exception):
-                # An Exception subclass containing non-ASCII data that doesn't
-                # know how to print itself properly. We shouldn't raise a
-                # further exception.
-                return ' '.join([smart_str(arg, encoding, strings_only,
-                        errors) for arg in s])
-            return unicode(s).encode(encoding, errors)
-    elif isinstance(s, unicode):
-        r = s.encode(encoding, errors)
-        return r
-    elif s and encoding != 'utf-8':
-        return s.decode('utf-8', errors).encode(encoding, errors)
-    else:
-        return s
-
-
-def generate_smart_str(params):
-    for (key, value) in params:
-        yield smart_str(key), smart_str(value)
-
-
-def urlencode(params):
-    """
-    A version of Python's urllib.urlencode() function that can operate on
-    unicode strings. The parameters are first case to UTF-8 encoded strings an
-    then encoded as per normal.
-    """
-    return urllib.urlencode([i for i in generate_smart_str(params)])
 
 
 class ApiAuthMixIn(object):
@@ -97,14 +58,14 @@ class ApiAuthMixIn(object):
             # Validate timestamp
             timestamp = iso8601.parse_date(params['api_timestamp'])
             timestamp_utc = timestamp.replace(tzinfo=None) - \
-                            timestamp.utcoffset()
+                timestamp.utcoffset()
             if abs(datetime.utcnow() - timestamp_utc) > timedelta(minutes=10):
                 return False
             # Validate signature
             api_signature = params['api_signature']
             params = sorted((k, v) for k, v in params.iteritems()
                             if k != 'api_signature')
-            string_to_sign = path + '?' + urlencode(params)
+            string_to_sign = path + '?' + smartencode(params)
             digest = hmac.new(self.secret_key, string_to_sign, hashlib.sha256)
             return digest.hexdigest() == api_signature
         except KeyError:
@@ -126,7 +87,7 @@ class ApiAuthMixIn(object):
         if not has_api_timestamp:
             params.append(('api_timestamp', datetime.utcnow().isoformat()))
         if not has_api_signature:
-            string_to_sign = path + '?' + urlencode(sorted(params))
+            string_to_sign = path + '?' + smartencode(sorted(params))
             digest = hmac.new(self.secret_key, string_to_sign, hashlib.sha256)
             params.append(('api_signature', digest.hexdigest()))
         return params
@@ -443,6 +404,32 @@ class WorkspaceTab(BaseMappedClass):
         return tab, isnew
 
 
+class AppVisit(BaseMappedClass):
+
+    class __mongometa__:
+        name = 'app_visit'
+        session = main_orm_session
+        indexes = [('user_id', 'app_config_id')]
+
+    _id = FieldProperty(S.ObjectId)
+    user_id = ForeignIdProperty('User', if_missing=None)
+    project_id = ForeignIdProperty('Project', if_missing=None)
+    app_config_id = ForeignIdProperty('AppConfig', if_missing=None)
+
+    last_visit = FieldProperty(datetime, if_missing=None)
+
+    @classmethod
+    def upsert(cls, user_id, app_config_id, project_id):
+        visit = cls.query.get(user_id=user_id, app_config_id=app_config_id)
+        if not visit:
+            visit = cls(user_id=user_id, app_config_id=app_config_id, project_id=project_id)
+
+        visit.last_visit = datetime.utcnow()
+        visit.flush_self()
+
+        return visit
+
+
 class User(SOLRIndexed):
     """
     Vulcan's representation of individual human users.
@@ -462,59 +449,60 @@ class User(SOLRIndexed):
         ]
         unique_indexes = ['username', 'os_id']
 
-    _id = FieldProperty(S.ObjectId)
-    os_id = FieldProperty(int)
     type_s = 'User'
-    """SOLR indexing object type"""
-    kind = FieldProperty(str, if_missing='user')
-    """Ming ODM polymorphism field"""
-    username = FieldProperty(str)
-    open_ids = FieldProperty([str])
-    password = FieldProperty(str)
-    tool_preferences = FieldProperty({str: {str: None}})
-    tool_data = FieldProperty({str: {str: None}})  # entry point: prefs dict
-    validate_citizen = FieldProperty(bool, if_missing=False)
-    last_login = FieldProperty(datetime, if_missing=datetime.utcnow)
 
+    _id = FieldProperty(S.ObjectId)
+    os_id = FieldProperty(int)  # used for repository auth
+    kind = FieldProperty(str, if_missing='user')  # Ming ODM polymorphism field
+    display_name = FieldProperty(str)
+    username = FieldProperty(str)
+    password = FieldProperty(str)
+    open_ids = FieldProperty([str])
+    public_key = FieldProperty(str, if_missing='')
+
+    last_login = FieldProperty(datetime, if_missing=datetime.utcnow)
+    has_project = FieldProperty(bool, if_missing=False)
     disabled = FieldProperty(bool, if_missing=False)
+    needs_password_reset = FieldProperty(bool, if_missing=False)
+    password_set_at = FieldProperty(datetime, if_missing=datetime.utcnow)
+    old_password_hashes = FieldProperty([str], if_missing=[])
+
     """
     Don't use directly, instead use the
     :py:meth:`~vulcanforge.auth.model.User.get_pref` and
     :py:meth:`~vulcanforge.auth.model.User.set_pref` methods.
     """
-    display_name = FieldProperty(str)
     preferences = FieldProperty(dict(
         results_per_page=S.Int(if_missing=25),
         email_address=S.String(if_missing=''),
         email_format=S.String(if_missing='both'),
         autosubscribe=S.Bool(if_missing=True),
         message_emails=S.Bool(if_missing=True),
-        login_landing_url=S.String()
+        login_landing_url=S.String(),
+        two_factor_auth=S.Bool(if_missing=False)
     ))
-
-    user_fields = FieldProperty({str: None})
+    tool_preferences = FieldProperty({str: {str: None}})
+    tool_data = FieldProperty({str: {str: None}})  # entry point: prefs dict
+    # created for ui element state persistence
+    state_preferences = FieldProperty(None, if_missing={})
 
     #workspace_tabs = FieldProperty([{str: None}], if_missing=[])
     workspace_references = FieldProperty([str], if_missing=[])
     workspace_references_last_mod = FieldProperty(
         datetime, if_missing=datetime(1978, 6, 5))
-    public_key = FieldProperty(str, if_missing='')
-
-    needs_password_reset = FieldProperty(bool, if_missing=False)
-    password_set_at = FieldProperty(datetime, if_missing=datetime.utcnow)
-    old_password_hashes = FieldProperty([str], if_missing=[])
 
     mission = FieldProperty(str, if_missing="")
     interests = FieldProperty(str, if_missing="")
     expertise = FieldProperty(str, if_missing="")
-    skype_name = FieldProperty(str, if_missing=None)
     public = FieldProperty(bool, if_missing=True)
 
     content_agreed_artifacts = FieldProperty([str], if_missing=[])
     get_swift_cookies = FieldProperty(bool, if_missing=False)
 
-    # created for ui element state persistence
-    state_preferences = FieldProperty(None, if_missing={})
+    user_fields = FieldProperty({str: None})  # from signup form
+
+    login_clients = FieldProperty({str: None})
+    needs_account_verification = FieldProperty(bool, if_missing=False)
     ##################################################################
 
     def __json__(self):
@@ -546,7 +534,7 @@ class User(SOLRIndexed):
             expertise_s=self.expertise,
             public_b=self.public,
             disabled_b=self.disabled,
-            trustscore_f=self.trust_info['score']
+            autocomplete_t=self.display_name
         )
 
     def is_culled(self, competition=None):
@@ -557,8 +545,8 @@ class User(SOLRIndexed):
         """
         :return: a list of email addresses claimed by this user
         """
-        return [e.email for e in EmailAddress.query.find({
-                        'claimed_by_user_id': self._id})]
+        query = {'claimed_by_user_id': self._id}
+        return [e.email for e in EmailAddress.query.find(query)]
 
     @property
     def workspace_tabs(self):
@@ -573,55 +561,6 @@ class User(SOLRIndexed):
             ("order", pymongo.ASCENDING),
             ("title", pymongo.ASCENDING)
         ])
-
-    @LazyProperty
-    def trust_cache(self):
-        return TrustCache.upsert(self._id)
-
-    def needs_agree_component(self, component, request=None):
-        """
-        Tests if this user needs to agree to the Exchange content agreement for
-        the given Exchange Component
-
-        :param component: A VehicleForge Exchange Component object
-        :param request: (optional)
-
-        .. todo::
-
-            remove VehicleFORGE logic from Vulcan class
-        """
-        if not g.exchange_content_agreement_message or \
-        (request and request.params.get('agreetoterms', 'no') == 'yes'):
-            return False
-        return component.is_published and not component.is_msd and \
-               not self.has_content_agreed_artifact(component.index_id())
-
-    def needs_agree_category(self, term, request=None):
-        """
-        Tests if this user needs to agree to the Exchange content agreement for
-        the given Exchange Term
-
-        :param term: A VehicleForge Exchange Component Term
-        :param request: (optional)
-
-        .. todo::
-
-            remove VehicleFORGE logic from Vulcan class
-        """
-        if not g.exchange_content_agreement_message or \
-        (request and request.params.get('agreetoterms', 'no') == 'yes'):
-            return False
-        return not term.is_msd and \
-               not self.has_content_agreed_artifact(term.index_id())
-
-    def has_content_agreed_artifact(self, index_id):
-        return index_id in self.content_agreed_artifacts
-
-    def content_agree_artifact(self, index_id):
-        if not index_id in self.content_agreed_artifacts:
-            artifact_id_list = self.content_agreed_artifacts
-            artifact_id_list.append(index_id)
-            self.content_agreed_artifacts = artifact_id_list
 
     def initialize_workspace_tabs(self, order=None, safe=False):
         # Edit own profile
@@ -678,42 +617,6 @@ class User(SOLRIndexed):
     def delete_workspace_tab_for_project(self, project):
         self.delete_workspace_tab_to_url("{prefix}home/".format(prefix = project.url()))
 
-    def get_trust_info(self, force_update=False):
-        if force_update or self.trust_cache.needs_update():
-            reputation = 0.5
-            percentile = 0.5
-            r = g.trustforge_request(
-                'get',
-                'user/reputation/%s' % str(self._id))
-            if r and r.status_code == 200:
-                reputation = r.json.get('reputation', 0.5)
-                percentile = r.json.get('percentile', 0.5)
-            self.trust_cache.update(reputation, percentile)
-
-        trust_data = {
-            "score": self.trust_cache.reputation,
-            "percentile": self.trust_cache.percentile
-        }
-        return trust_data
-
-    @LazyProperty
-    def trust_info(self):
-        return self.get_trust_info()
-
-    def get_trust_history(self):
-        r = g.trustforge_request(
-            'get',
-            'user/reputation_history/%s' % str(self._id))
-        if r and r.status_code == 200:
-            history = r.json['history']
-        else:
-            history = [[0., 0.5]]
-        return history
-
-    @LazyProperty
-    def trust_history(self):
-        return self.get_trust_history()
-
     @property
     def index_text_objects(self):
         return [self.display_name, self.expertise, self.interests]
@@ -740,12 +643,12 @@ class User(SOLRIndexed):
         """
         Get a URL for this User.
         """
-        return '/u/{}/'.format(self.username.replace('_', '-'))
+        return '/u/{}/'.format(self.username)
 
     def icon_url(self, **gravatar_kwargs):
         user_project = self.private_project()
         if user_project and user_project.icon:
-            return '/u/'+self.username.replace('_', '-')+'/user_icon'
+            return '/u/' + self.username + '/user_icon'
         email_address = (self.preferences.email_address or
                          "{}@vulcanforge.org".format(self.username))
         return g.gravatar(email_address, **gravatar_kwargs)
@@ -756,8 +659,12 @@ class User(SOLRIndexed):
         """
         landing_url = self.get_pref('login_landing_url')
         if not landing_url:
-            landing_url = config.get(
-                'login_landing_url', '/dashboard/activity_feed/')
+            if self.has_project:
+                landing_url = config.get(
+                    'login_landing_url', '/dashboard/activity_feed/')
+            else:
+                landing_url = config.get(
+                    'getting_started_url', '/dashboard/teamup/')
         return landing_url
 
     def registration_neighborhood(self):
@@ -959,7 +866,6 @@ class User(SOLRIndexed):
         Find all of the User's ProjectRoles
         """
         from vulcanforge.project.model import ProjectRole
-
         return ProjectRole.query.find({'_id': {'$in': self.get_role_ids()}})
 
     def my_projects(self):
@@ -975,7 +881,8 @@ class User(SOLRIndexed):
             yield r.project
             seen_project_ids.add(r.project_id)
 
-    def set_password(self, new_password, as_admin=False, set_time=True):
+    def set_password(self, new_password, as_admin=False, set_time=True,
+                     current=None):
         """
         Change this User's password.
 
@@ -986,7 +893,26 @@ class User(SOLRIndexed):
         :type as_admin: bool
         :param set_time: update the ``password_set_at`` and
                          ``needs_password_reset`` fields of this User
+        :param current: plaintext current password
         """
+        # the following performs the auth.pw.min_length, auth.pw.max_length,
+        # complexity and similarity (auth.pw.min_levenshtein) checks
+        from vulcanforge.auth.validators import validate_password
+        validation = validate_password(new_password, current)
+        if validation != 'success':
+            raise PasswordInvalidError(validation)
+        # the following performs the minimum password lifetime check
+        if self.password_set_at is None:
+            self.password_set_at = datetime.utcnow()
+        else:
+            min_hours = int(config.get('auth.pw.min_lifetime.hours', 24))
+            age = datetime.utcnow() - self.password_set_at
+            # min_check addresses newly created users
+            min_check = age > timedelta(seconds=5)
+            if min_check and age < timedelta(hours=min_hours):
+                msg = "Password minimum lifetime not yet exceeded."
+                raise PasswordCannotBeChangedError(msg)
+        # the following performs the auth.pw.generations check
         result = g.auth_provider.set_password(
             self, self.password, new_password, as_admin)
         if set_time:
@@ -1037,10 +963,10 @@ class User(SOLRIndexed):
         return self._id is None
 
     def email_address_header(self):
-        h = header.Header()
-        h.append(u'"%s" ' % self.get_pref('display_name'))
-        h.append(u'<%s>' % self.get_email_address())
-        return h
+        email_header = header.Header()
+        email_header.append(u'"%s" ' % self.get_pref('display_name'))
+        email_header.append(u'<%s>' % self.get_email_address())
+        return email_header
 
     def get_email_address(self):
         """
@@ -1067,14 +993,13 @@ class User(SOLRIndexed):
             "fullName": self.display_name,
             "profileImage": self.icon_url(),
             "username": self.username,
-            "trustInfo": self.trust_info,
             "mission": self.mission,
             "interests": self.interests,
             "expertise": self.expertise,
-            "skypeName": self.skype_name,
             "userSince": h.ago_ts(self.registration_time),
             "projects": [p.shortname for p in self.my_projects()
-                         if p and p.is_real()]
+                         if p and p.is_real()],
+            "user_fields": self.user_fields
         }
 
     def delete_account(self):
@@ -1087,68 +1012,6 @@ class User(SOLRIndexed):
                     project.delete_project()
                 project.user_leave_project(self)
         self.disabled = True
-
-    def get_swift_params(self, force_new=False):
-        if force_new:
-            st = StaticResourceToken.new_from_user(self)
-        else:
-            st = StaticResourceToken.upsert(user=self)
-        dep_key = config.get('swift.auth.deployment_param', 'vfdkey')
-        tok_key = config.get('swift.auth.token_param', 'vf_swift_token')
-        params = {
-            dep_key: config['swift.auth.deployment_id'],
-            tok_key: st.api_key
-        }
-        return params
-
-    @property
-    def swift_params(self):
-        return self.get_swift_params()
-
-    def swift_cookie_url(self, unset_flag=True):
-        url = '{base_url}swiftvf/set_cookie?{query}'.format(
-            base_url=g.base_s3_url,
-            query=urllib.urlencode(self.swift_params)
-        )
-        if unset_flag:
-            self.get_swift_cookies = False
-            session(self.__class__).flush(self)
-        return url
-
-
-class TrustCache(BaseMappedClass):
-    TRUSTDATE_FREQUENCY = timedelta(days=1)
-
-    class __mongometa__:
-        name = 'trustcache'
-        session = main_orm_session
-        indexes = ['user_id']
-
-    _id = FieldProperty(S.ObjectId)
-    user_id = ForeignIdProperty(User, if_missing=None)
-    last_update = FieldProperty(datetime, if_missing=None)
-    reputation = FieldProperty(float, if_missing=0.5)
-    percentile = FieldProperty(float, if_missing=0.5)
-
-    @classmethod
-    def upsert(cls, user_id):
-        cache = cls.query.get(user_id=user_id)
-        if not cache:
-            cache = cls(user_id=user_id)
-            session(cls).flush(cache)
-        return cache
-
-    def needs_update(self):
-        if self.last_update:
-            cutoff = datetime.utcnow() - self.TRUSTDATE_FREQUENCY
-            if self.last_update > cutoff:
-                return False
-        return True
-
-    def update(self, reputation, percentile):
-        self.reputation = reputation
-        self.percentile = percentile
-        self.last_update = datetime.utcnow()
 
 
 class PasswordResetToken(BaseMappedClass):
@@ -1189,6 +1052,7 @@ class PasswordResetToken(BaseMappedClass):
                  self.user.username, self.email)
         template = g.jinja2_env.get_template('auth/mail/password_reset.txt')
         text = template.render({
+            'name': self.user.display_name,
             'username': self.user.username,
             'url': self.reset_url(),
             'forge_name': config.get('forge_name')
@@ -1224,7 +1088,10 @@ class UserRegistrationToken(BaseMappedClass):
     approved_already = FieldProperty(bool, if_missing=False)
 
     # adds user to project on registration
-    project_id = FieldProperty(S.ObjectId, if_missing=None)
+    project_id = ForeignIdProperty('Project', if_missing=None)
+    project = VFRelationProperty('Project', via="project_id")
+    project_role_id = ForeignIdProperty('ProjectRole', if_missing=None)
+    project_role = VFRelationProperty('ProjectRole', via="project_role_id")
 
     @property
     def email_subject(self):
@@ -1235,6 +1102,20 @@ class UserRegistrationToken(BaseMappedClass):
     def is_valid(self):
         expired = self.expiry_date < datetime.utcnow()
         return bool(not expired and self.nonce)
+
+    @property
+    def full_registration_url(self):
+        base_url = self.registration_url or '/auth/register'
+        return g.url(base_url, token=self.nonce)
+
+    @property
+    def email_text(self):
+        template = g.jinja2_env.get_template('auth/mail/user_registration.txt')
+        return template.render({
+            'url': self.full_registration_url,
+            'name': self.name,
+            'forge_name': config.get('forge_name')
+        })
 
     def send(self):
         text = self.email_text
@@ -1247,21 +1128,6 @@ class UserRegistrationToken(BaseMappedClass):
             text=text
         )
         LOG.info('User registration email:\n{}'.format(text))
-
-    @property
-    def email_text(self):
-        template = g.jinja2_env.get_template('auth/mail/user_registration.txt')
-        base_url = self.registration_url or '/auth/register'
-        return template.render({
-            'url': g.url(base_url, token=self.nonce),
-            'name': self.name,
-            'forge_name': config.get('forge_name')
-        })
-
-    @LazyProperty
-    def project(self):
-        from vulcanforge.project.model import Project
-        return Project.query.get(_id=self.project_id)
 
 
 class EmailChangeToken(BaseMappedClass):
@@ -1321,58 +1187,105 @@ class EmailChangeToken(BaseMappedClass):
         return True
 
 
-class StaticResourceToken(BaseMappedClass):
-    """Tokens for swift auth"""
+class LoginVerificationToken(BaseMappedClass):
 
     class __mongometa__:
-        name = 'swift_token'
         session = main_orm_session
-        indexes = ['api_key', 'user_id', ('expires', pymongo.DESCENDING)]
+        name = 'login_verification_token'
+        indexes = [('user_id',), ('cookie',)]
 
     _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty('User')
-    api_key = FieldProperty(str, if_missing=lambda: cryptographic_nonce(128))
-    expires = FieldProperty(
-        datetime, if_missing=lambda: datetime.utcnow() + timedelta(days=1))
-    created = FieldProperty(datetime, if_missing=datetime.utcnow)
+    email = FieldProperty(str)
+    client_ip = FieldProperty(str)
+    nonce = FieldProperty(str, if_missing='')
+    cookie = FieldProperty(str, if_missing='')
+    destination = FieldProperty(str, if_missing='')
+    reason = FieldProperty(str, if_missing='')
+    expiry_date = FieldProperty(datetime, if_missing=datetime.utcnow)
 
-    user = RelationProperty('User')
+    _user = None
 
-    @classmethod
-    def new_from_user(cls, user, flush=True):
-        token = cls(user_id=user._id)
-        if flush:
-            session(cls).flush(token)
-        return token
+    @property
+    def user(self):
+        if not self._user:
+            self._user = User.query.get(_id=self.user_id)
+        return self._user
 
+    @property
+    def is_valid(self):
+        expired = self.expiry_date < datetime.utcnow()
+        return not expired and self.nonce and self.user
 
-    @classmethod
-    def upsert(cls, flush=True, user=None):
-        if user is None:
-            user = c.user
-        token = cls.query.find({
-            'user_id': user._id
-        }).sort('expires', pymongo.DESCENDING).first()
-        if not token or token.is_expired():
-            if token:
-                token.delete()
-            token = cls.new_from_user(user, flush=flush)
-        return token
+    def generate_nonce(self, length):
+        return ''.join(random.SystemRandom().choice(string.digits)
+                       for _ in range(length))
 
-    def refresh_key(self):
-        self.api_key = cryptographic_nonce(128)
-        self.expires = datetime.utcnow() + timedelta(days=1)
-
-    def is_expired(self, dt=0):
-        epoch = datetime.utcnow() + timedelta(seconds=dt)
-        if self.expires and epoch > self.expires:
-            return True
-        return False
-
-    def authenticate_request(self, environ):
-        if self.is_expired():
+    def send_email(self):
+        if not self.is_valid:
+            LOG.warn('Invalid login verification: %s', self)
+            self.delete()
             return False
+        LOG.info('Sending login verification to %s (%s) for %s',
+                 self.user.username, self.email, self.reason)
+        tname = "unknown_ip" if self.reason == "clientip" else "verify_acct"
+        tbase = "vulcanforge.auth:templates/mail/"
+        template = g.jinja2_env.get_template(tbase + tname + ".html")
+        reason =  "Access" if self.reason == "clientip" else "Account"
+        subject = "{} {} Verification".format(g.forge_name, reason)
+        tdict = dict(user=self.user.display_name,
+                     forge_name=g.forge_name,
+                     nonce=self.nonce)
+        if self.reason == "clientip":
+            tdict['ip'] = self.client_ip
+        text = template.render(tdict)
+        LOG.info('Login verification email:\n%s', text)
+        mail_tasks.sendmail.post(
+            destinations=[self.email],
+            fromaddr=g.forgemail_return_path,
+            reply_to='',
+            subject=subject,
+            message_id=gen_message_id(),
+            text='',
+            title_html='<h1>' + subject + '</h1>',
+            html_text=text)
         return True
+
+
+class TwoFactorAuthenticationToken(BaseMappedClass):
+
+    class __mongometa__:
+        session = main_orm_session
+        name = 'two_factor_authentication_token'
+        indexes = [('user_id',), ('cookie',)]
+
+    _id = FieldProperty(S.ObjectId)
+    user_id = ForeignIdProperty('User')
+    client_ip = FieldProperty(str)
+    cookie = FieldProperty(str, if_missing='')
+    destination = FieldProperty(str, if_missing='')
+    expiry_date = FieldProperty(datetime, if_missing=datetime.utcnow)
+
+    _user = None
+
+    @property
+    def user(self):
+        if not self._user:
+            self._user = User.query.get(_id=self.user_id)
+        return self._user
+
+    @property
+    def is_valid(self):
+        expired = self.expiry_date < datetime.utcnow()
+        return not expired and self.cookie and self.user
+
+    def verify(self, code):
+        if self.user:
+            conf = self.user.user_fields.get('totp', None)
+            if conf:
+                t = pyotp.TOTP(conf)
+                return t.verify(code)
+        return False
 
 
 class UsersDenied(BaseMappedClass):

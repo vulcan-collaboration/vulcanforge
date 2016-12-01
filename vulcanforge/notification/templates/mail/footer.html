@@ -1,0 +1,9 @@
+<p>You received this email because you have an account on {{forge_name}}<br/>
+{% if artifact %}
+    <span><a href="{{prefix}}{{artifact.app_config.url()}}" style="text-decoration: none">Tool</a></span>
+    &#124;
+    <span><a href="{{prefix}}{{artifact.url()}}" style="text-decoration: none">Artifact</a></span>
+    &#124;
+{% endif %}
+<span><a href="{{prefix}}/auth/prefs/subscriptions" style="text-decoration: none">Manage Subscriptions</a></span>
+</p>

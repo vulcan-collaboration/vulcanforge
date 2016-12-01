@@ -21,7 +21,7 @@ class ActivityFeedItemWidget(ew.Widget):
     def prepare_context(self, context):
         context = super(ActivityFeedItemWidget, self).prepare_context(context)
         notification = context.get('notification', None)
-        artifact = notification.get_artifact()
+        artifact = notification.artifact
         if artifact is not None:
             thread = artifact.get_discussion_thread(generate_if_missing=False)
             context = dict(

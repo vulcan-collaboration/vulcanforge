@@ -1,0 +1,8 @@
+
+** <a href="{{prefix}}{{artifact.app_config.url()}}" style="text-decoration: none">{{artifact.app_config.options.mount_label}}</a> > <a href="{{prefix}}{{artifact.url()}}" style="text-decoration: none">{{artifact.title}}</a>**
+
+- **Title:** {{artifact.title}}{% if artifact.labels.__len__() %}
+- **Labels:** {% for label in artifact.labels %}{{label}} {% else %}None{% endfor %}{% endif %}
+- **Created:** {{artifact.created_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}{% if (artifact.mod_date - artifact.created_date).days >= 0 %}
+- **Last Updated:** {{artifact.mod_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}{% endif %}{% if artifact.attachments.__len__() %}
+- **Attachments:** {{artifact.attachments.__len__()}}{% endif %}

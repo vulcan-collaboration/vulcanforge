@@ -121,6 +121,9 @@ class BaseVisualizer(object):
         return self.artifact_diff_widget.display(
             artifact1, artifact2, self, **kwargs)
 
+    def text_content(self, artifact):
+        return ""
+
     # hooks
     def on_upload(self, artifact):
         pass
@@ -142,7 +145,7 @@ class BaseProcessingVisualizer(BaseVisualizer):
         query["processingResourceId"] = unique_id
 
         params = VisualizableQueryParam.get_query_dict(
-            artifact, self.config._id)
+            artifact.get_unique_id(), self.config._id)
         query.update(params)
         return query
 
@@ -182,6 +185,9 @@ class OnUploadProcessingVisualizer(OnDemandProcessingVisualizer):
 class VisualizableMixIn(object):
      # for differentiating on processed artifacts
     visualizable_kind = 'base_visualizable'
+
+    def __iter__(self):
+        return iter(self.read())
 
     # subclasses should implement the following not implemented methods
     def get_unique_id(self):
@@ -359,12 +365,15 @@ class SingleFileProcessor(BaseFileProcessor):
     def check_for_duplicates(self):
         duplicate_pfile = self.result_file.find_duplicates().first()
         if duplicate_pfile:
-            has_duplicate = True
-            LOG.info("Duplicate file found, using contents from %s",
-                     duplicate_pfile.url())
-            # NOTE: could optimize with in-server copy
-            self.result_file.set_contents_from_string(duplicate_pfile.read())
-            self.set_status("ready")
+            try:
+                has_duplicate = True
+                LOG.info("Duplicate file found, using contents from %s",
+                         duplicate_pfile.url())
+                # NOTE: could optimize with in-server copy
+                self.result_file.set_contents_from_string(duplicate_pfile.read())
+                self.set_status("ready")
+            except:
+                has_duplicate = False
         else:
             has_duplicate = False
         return has_duplicate

@@ -1,14 +1,11 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
 {% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
-{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / {{title}}{% endblock %}
 
 {% block header %}Change history of <i>"{{title}}"</i>{% endblock %}
 
-{% block actions %}
-{{wiki_macros.page_actions(artifact, subscribed=subscribed)}}
-{% endblock %}
+{% block actions %}{{ c.menu_bar.display(artifact) }}{% endblock %}
 
 
 {% block wiki_content %}

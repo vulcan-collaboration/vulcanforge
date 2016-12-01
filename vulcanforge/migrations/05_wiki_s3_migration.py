@@ -68,7 +68,7 @@ class MigrateWikiAttachmentS3Keys(BaseMigration):
                 key_data.seek(0)
                 new_key = g.get_s3_key(wiki_attachment.keyname,
                                        wiki_attachment.artifact)
-                new_key.set_contents_from_file(key_data)
+                new_key.set_contents_from_file(key_data, encrypt_key=g.s3_encryption)
 
                 old_key.delete()
             except Exception, e:

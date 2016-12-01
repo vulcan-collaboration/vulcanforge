@@ -1,0 +1,1271 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-collapse/iron-collapse.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+
+<link rel="import" href="../../paper-button/paper-button.html">
+<link rel="import" href="../../paper-dialog/paper-dialog.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-input/paper-input.html">
+<link rel="import" href="../../paper-input/paper-textarea.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
+
+<link rel="import" href="../../file-upload/file-upload.html">
+
+<link rel="import" href="../vf-video-camera/vf-video-camera.html">
+<link rel="import" href="../dialog_style.html">
+<link rel="import" href="../vf-styles.html">
+<link rel="import" href="../vf-helpers/vf-helpers.html">
+
+<dom-module id="vf-user-profile">
+    <style is="custom-style" include="vf-styles">
+        .header {
+            background-color: var(--headingbar);
+            padding: .15em;
+            padding-left: .5em;
+        }
+        .header-label {
+            font-style: italic;
+            color: var(--pristine);
+        }
+        .header iron-icon {
+            padding-right: 6px;
+            height: 40px;
+            color: var(--interactive);
+        }
+        a {
+            color:var(--interactive);
+            text-decoration: none;
+        }
+        .detail {
+            margin-left: 30px;
+            color: var(--diffuse);
+            margin-bottom: 2px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .right-detail {
+            color: var(--pristine);
+            margin-right: 8px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .right-detail-right {
+            color: var(--pristine);
+            margin-right: 14px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .picker-detail {
+            color: var(--interactive);
+            margin-right: 8px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        #sort-by-activity {
+            margin-right: 8px;
+        }
+        paper-toggle-button {
+            --paper-toggle-button-checked-bar-color: var(--diffuse);
+            --paper-toggle-button-checked-button-color: var(--pristine);
+            --paper-toggle-button-checked-ink-color: var(--pristine);
+            --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+            --paper-toggle-button-unchecked-button-color: var(--pristine);
+            --paper-toggle-button-unchecked-ink-color: var(--pristine);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        paper-icon-button {
+            width: 25px;
+            height: 25px;
+            padding: 0px;
+        }
+        paper-icon-button#prefs {
+            margin-right: 4px;
+        }
+        paper-icon-button#prefs.selected {
+            color: var(--interactive);
+        }
+        project-item.hidden {
+            display: none;
+        }
+        .subject-line {
+            padding: 4px;
+        }
+        .subject {
+            margin-left: 4px;
+        }
+        .collapse-line {
+            padding: 8px;
+            margin-bottom: 2px;
+            background-color: var(--subheadingbar);
+        }
+        .offset{
+            margin-left:4px;
+        }
+        .notice {
+            margin: 40px;
+        }
+        .notice paper-icon-button {
+            height: 60px;
+            width: 60px;
+            color: var(--interactive);
+            margin-right: 8px;
+        }
+        paper-icon-button#no-twofactor {
+            height: 50px;
+            width: 50px;
+        }
+        .admin-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+        }
+        #notifications-admin {
+            margin-right: 8px;
+        }
+    </style>
+    <template>
+        <iron-ajax id="userajax" url="[[url]]" last-response="{{data}}"></iron-ajax>
+        <iron-ajax id="modajax" url="" on-response="_toggleResponse"></iron-ajax>
+        <div class="header layout horizontal center-center">
+            <iron-icon icon="icons:info"></iron-icon>
+            <div class="header-label flex">User Profile</div>
+            <template is="dom-if" if="{{data.disabled}}">
+                <span class="picker-detail">(User Disabled)</span>
+            </template>
+            <template is="dom-if" if="{{data.canMod}}">
+                <div class="sorter layout horizontal center-center">
+                    <div id="sort-left" class="right-detail">enabled</div>
+                    <paper-toggle-button on-change="_toggleUserEnabled" checked="{{data.disabled}}"></paper-toggle-button>
+                    <div id="sort-right" class="right-detail-right">disabled</div>
+                    <paper-tooltip position="left">User Activation</paper-tooltip>
+                </div>
+            </template>
+            <template is="dom-if" if="{{data.canEdit}}">
+                <!--
+                <div id="notifications-control">
+                    <paper-icon-button id="notifications-admin" icon="icons:mail" class="admin-icon" on-tap="_editNotifications"></paper-icon-button>
+                    <paper-tooltip for="notifications-admin" position="left">Edit notifications</paper-tooltip>
+                </div>
+                -->
+                <div id="admin-control">
+                    <paper-icon-button id="admin" icon="icons:settings" class="admin-icon" on-tap="_editProfile"></paper-icon-button>
+                    <paper-tooltip for="admin" position="top">Edit profile</paper-tooltip>
+                    <paper-icon-button id="security" icon="vaadin-icons:shield" class="admin-icon" on-tap="_openSecurity"></paper-icon-button>
+                    <paper-tooltip for="security" position="top">Edit Security</paper-tooltip>
+                </div>
+            </template>
+        </div>
+        <div class="offset">
+            <div class="item layout horizontal center-center">
+                <div class="info flex">
+                    <div class="subject-line layout horizontal center-center flex">
+                        <iron-icon icon="social:person-outline"></iron-icon>
+                        <div class="subject flex" >{{data.username}}</div>
+                        <template is="dom-if" if="{{!data.canEdit}}">
+                            <a target="_blank" href="/dashboard/messages/start_conversation?recipients={{data.username}}"><iron-icon icon="communication:forum" class="righticon"></iron-icon></a>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="item layout horizontal center">
+                <div class="info flex">
+                    <div class="subject-line layout horizontal center-center flex">
+                        <iron-icon icon="communication:email"></iron-icon>
+                        <div class="subject flex">{{data.email}}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="item layout horizontal center">
+                <div class="info flex">
+                    <div class="subject-line layout horizontal center-center flex">
+                        <iron-icon icon="icons:alarm"></iron-icon>
+                        <div class="subject flex">Joined {{_formatDate(data.joined)}}</div>
+                    </div>
+                    <template is="dom-if" if="{{data.affil}}">
+                        <div class="detail">{{_getJoinInfo()}}</div>
+                    </template>
+                </div>
+            </div>
+            <template is="dom-if" if="{{data.company}}">
+                <div class="item layout horizontal center">
+                    <div class="info flex">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <iron-icon icon="icons:home"></iron-icon>
+                            <div class="subject flex">{{_getPosition(data.company, data.position)}}</div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template is="dom-if" if="{{data.telephone}}">
+                <div class="item layout horizontal center">
+                    <div class="info flex">
+                        <div class="subject-line layout horizontal center-center flex">
+                            <iron-icon icon="communication:phone"></iron-icon>
+                            <div class="subject flex">{{data.telephone}}</div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template is="dom-if" if="{{data.expertise}}">
+                <div class="item layout horizontal center">
+                    <div class="info flex">
+                        <div class="collapse-line layout horizontal center-center flex">
+                            <iron-icon icon="icons:assessment"></iron-icon>
+                            <div class="subject flex">Expertise</div>
+                            <paper-icon-button id="expand-toggle" icon="[[_toggleExpIcon]]" on-tap="_toggleExpOpened"></paper-icon-button>
+                            <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <iron-collapse id="collapse" opened="{{expopened}}">
+                <div class="content">
+                    <div class="layout horizontal center wrap">
+                        {{data.expertise}}
+                    </div>
+                </div>
+            </iron-collapse>
+            <template is="dom-if" if="{{data.mission}}">
+                <div class="item layout horizontal center">
+                    <div class="info flex">
+                        <div class="collapse-line layout horizontal center-center flex">
+                            <iron-icon icon="icons:assignment"></iron-icon>
+                            <div class="subject flex">Mission</div>
+                            <paper-icon-button id="expand-toggle" icon="[[_toggleMisIcon]]" on-tap="_toggleMisOpened"></paper-icon-button>
+                            <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <iron-collapse id="collapse" opened="{{misopened}}">
+                <div class="content">
+                    <div class="layout horizontal center wrap">
+                        {{data.mission}}
+                    </div>
+                </div>
+            </iron-collapse>
+            <template is="dom-if" if="{{data.interests}}">
+                <div class="item layout horizontal center">
+                    <div class="info flex">
+                        <div class="collapse-line layout horizontal center-center flex">
+                            <iron-icon icon="icons:assignment-ind"></iron-icon>
+                            <div class="subject flex">Interests</div>
+                            <paper-icon-button id="expand-toggle" icon="[[_toggleIntIcon]]" on-tap="_toggleIntOpened"></paper-icon-button>
+                            <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <iron-collapse id="collapse" opened="{{intopened}}">
+                <div class="content">
+                    <div class="layout horizontal center wrap">
+                        {{data.interests}}
+                    </div>
+                </div>
+            </iron-collapse>
+        </div>
+        <template is="dom-if" if="{{_nag}}">
+            <div class="notice layout horizontal center-center flex">
+                <paper-icon-button id="missing-edit" icon="icons:settings" on-tap="_editProfile"></paper-icon-button>
+                <paper-tooltip for="missing-edit" position="right">Edit profile</paper-tooltip>
+                <h4 class="flex">Your user profile is missing important information.</h4>
+            </div>
+        </template>
+        <template is="dom-if" if="{{data.twofactor_notice}}">
+            <div class="notice layout horizontal center-center flex">
+                <paper-icon-button id="no-twofactor" icon="vaadin-icons:shield" on-tap="_openSecurity"></paper-icon-button>
+                <paper-tooltip for="no-twofactor" position="right">Edit settings</paper-tooltip>
+                <h4 class="flex">You are not using two-factor authentication.</h4>
+            </div>
+        </template>
+        <vf-user-security-settings id="securitydialog" profile-url="{{_baseURL(url)}}" min-password-length="{{minPasswordLength}}" static-url="{{staticUrl}}" nonce="{{nonce}}"></vf-user-security-settings>
+        <vf-user-profile-settings id="editprofile" data="{{data}}" nonce="{{nonce}}"></vf-user-profile-settings>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-user-profile",
+                properties: {
+                    data: Object,
+                    url: String,
+                    count: Number,
+                    nonce: String,
+                    staticUrl: String,
+                    minPasswordLength: Number,
+                    expopened: {
+                        type: Boolean,
+                        value: false
+                    },
+                    misopened: {
+                        type: Boolean,
+                        value: false
+                    },
+                    intopened: {
+                        type: Boolean,
+                        value: false
+                    },
+                    expanded: {
+                        type: Boolean,
+                        value: false
+                    },
+                    _avatar: {
+                        type: Number,
+                        value: 0
+                    },
+                    _nag: {
+                        type: Boolean,
+                        computed: '_computeNagging(data, _avatar)'
+                    },
+                    _toggleExpIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(expopened)'
+                    },
+                    _toggleMisIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(misopened)'
+                    },
+                    _toggleIntIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(intopened)'
+                    },
+                    _sortedByName: {
+                        type: Boolean,
+                        value: false
+                    }
+                },
+                _formatDate: function(ds) {
+                    return vffuncs.ago(ds)
+                },
+                _toggleUserEnabled: function() {
+                    var requester = this.$.modajax;
+                    requester.url = this.data.disabled ? "disable_user" : "enable_user";
+                    console.log("Toggling User: Disabled -> " + this.data.disabled + " - calling: " + requester.url);
+                    requester.generateRequest();
+                },
+                _toggleResponse: function(val) {
+                    this.data.disabled = val.detail.response.value;
+                },
+                _getPosition: function(company, position) {
+                    var dat = company;
+                    if(position)
+                    {
+                        dat = company + " - " + position;
+                    }
+                    return dat;
+                },
+                _getJoinInfo: function() {
+                    var dat = "";
+                    if(this.data.approver && this.data.affil)
+                    {
+                        dat = "(Approved by " + this.data.approver + " for " + this.data.affil + ")";
+                    }
+                    else if(this.data.approver)
+                    {
+                        dat = "(Approved by " + this.data.approver +" for " + this.data.forge_name + ")";
+                    }
+                    else if(this.data.affil)
+                    {
+                        dat = "(Approved by " + this.data.forge_name + " for " + this.data.affil+")";
+                    }
+                    // most egregious hack to quickly solve Pratt &amp; Whitney
+                    return dat.replace("&amp;", "&");
+                },
+                _toggleExpOpened: function() {
+                    this.expopened = !this.expopened;
+                },
+                _toggleMisOpened: function() {
+                    this.misopened = !this.misopened;
+                },
+                _toggleIntOpened: function() {
+                    this.intopened = !this.intopened;
+                },
+                _computeToggleIcon: function(expanded) {
+                    return expanded ? 'icons:expand-less' : 'icons:expand-more';
+                },
+                _computeNagging: function(data, avatar) {
+                    if (this._missing_info(data) || avatar == 404) {
+                        return true;
+                    } else if (data.canEdit && avatar == 0 && data.icon.indexOf("gravatar") > 0) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.domHost = this;
+                        xhr.onload = function(e) {
+                            e.target.domHost.set("_avatar", xhr.status);
+                        };
+                        var url = data.icon.substring(0, data.icon.indexOf("?")) + "?d=404";
+                        xhr.open("GET", url, true);
+                        xhr.send();
+                    }
+                    return false;
+                },
+                _editProfile: function() {
+                    this.$.editprofile._open();
+                },
+                _missing_info: function(data) {
+                    return data.canEdit && (!data.position || !data.company || !data.telephone);
+                },
+                _openSecurity: function()  {
+                    this.$.securitydialog._open();
+                },
+                _baseURL: function(url) {
+                    return url.substring(0, url.lastIndexOf('/')+1);
+                },
+                ready: function() {
+                    if (!this.data) {
+                        var requester = this.$.userajax;
+                        requester.generateRequest();
+                    }
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-user-profile-settings">
+    <style is="custom-style" include="vf-styles"></style>
+    <style include="dialog_style">
+        paper-dialog .heading {
+            background-color: var(--headingbar);
+            color: var(--interactive);
+            margin-top: 0;
+            padding: 0 8px;
+        }
+        paper-dialog #heading-icon {
+            color: var(--interactive);
+            margin-right: 8px;
+        }
+        paper-dialog .heading #header-label {
+            color: var(--pristine);
+            font-size: 20px;
+            font-weight: bold;
+        }
+        paper-dialog .heading #close {
+            min-width: 3em;
+            padding-right: 0;
+        }
+        paper-dialog #send-control {
+            margin-top: 16px;
+            margin-bottom: 0;
+            padding: 1em;
+            background-color: #eee;
+        }
+        paper-dialog {
+            margin: 0;
+            padding: 0;
+            width: 500px;
+            height: 75%;
+        }
+        paper-dialog #sections {
+            margin: 0;
+            padding: 0 8px;
+            margin-bottom: 8px;
+            height: 100%;
+            overflow: auto;
+        }
+        paper-dialog .instructions {
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        paper-dialog .subheading {
+            background-color: var(--subheadingbar);
+            font-size: 16px;
+            font-style: normal;
+            font-weight: bold;
+            padding: 4px 2px;
+            margin-top: 8px;
+        }
+        paper-dialog .subheading .flex {
+           margin-top: 4px;
+        }
+        paper-dialog .subheading-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+        }
+        paper-dialog .user-icon {
+            height: 80px;
+            width: 80px;
+            margin: 8px 24px;
+            color: var(--interactive);
+        }
+        paper-dialog #use-camera {
+            min-width: 3em;
+        }
+        paper-dialog .imaging {
+            min-height: 220px;
+        }
+        paper-dialog .imaging-content {
+            min-height: 92px;
+        }
+        vf-video-camera {
+            position: relative;
+            --vf-video-camera-width: 200px !important;
+            --vf-video-camera-height: auto !important;
+        }
+        file-upload {
+            --file-upload-button: {
+                color: var(--interactive);
+                background-color: var(--headingbar);
+                margin: 20px 18px 20px -14px;
+                min-width: 3em;
+            }
+            --file-upload-upload-border: {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 8px;
+            }
+        }
+        paper-input, paper-textarea {
+            --paper-input-container-underline-focus: {
+                background-color: var(--danger);
+            }
+            --paper-input-container-label-focus: {
+                color: var(--interactive);
+            }
+        }
+        @media (max-width: 480px) {
+            paper-dialog {
+                width: 360px;
+            }
+        }
+        @media (max-width: 320px) {
+            paper-dialog {
+                width: 300px;
+            }
+        }
+    </style>
+    <template>
+        <paper-dialog id="dialog" class="layout vertical flex" modal>
+            <div class="heading layout horizontal center-center">
+                <iron-icon id="heading-icon" icon="icons:settings"></iron-icon>
+                <div id="header-label" class="flex" >Edit User Profile</div>
+                <paper-button id="close" dialog-dismiss><iron-icon icon="close" on-tap="_cancelEdit"></iron-icon></paper-button>
+                <paper-tooltip for="close" position="left">Cancel</paper-tooltip>
+            </div>
+            <div id="sections" class="flex">
+                <div class="instructions">Scroll down for more settings.</div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:person"></iron-icon>
+                    <div class="flex">User Image</div>
+                </div>
+                <div class="instructions flex">
+                    Please use a recent headshot to benefit the community.
+                    Use images with square aspect ratios.
+                </div>
+                <div class="imaging layout vertical center-center flex">
+                    <div class="imaging-content layout horizontal center flex">
+                        <template is="dom-if" if="{{_hasUserMedia()}}">
+                            <paper-button id="use-camera" raised on-tap="_enableCamera">
+                                <iron-icon class="button-icon" icon="icons:camera-enhance"></iron-icon>
+                            </paper-button>
+                            <paper-tooltip for="use-camera" position="right">Use camera</paper-tooltip>
+                        </template>
+                        <iron-image class="user-icon" src="{{screen}}" sizing="cover"></iron-image>
+                    </div>
+                    <template is="dom-if" if="{{!useCamera}}">
+                        <file-upload id="upload" class="imaging-content flex" droppable raised progress-hidden drop-text="Drop file here" accept="image/*" on-before-upload="_uploadedImage">
+                            <iron-icon id="choose-file" class="button-icon" icon="icons:add-box"></iron-icon>
+                        </file-upload>
+                        <div class="instructions">PNG, GIF, or JPG formats.</div>
+                    </template>
+                    <template is="dom-if" if="{{useCamera}}">
+                        <div id="video-container" class="layout vertical center-center">
+                            <vf-video-camera screenshot="{{screen}}"></vf-video-camera>
+                            <div class="instructions">Click or tap to snap picture.</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:person"></iron-icon>
+                    <div class="flex">Profile Information</div>
+                </div>
+                <paper-input id="display_name" label="Display Name" value="{{data.name}}"></paper-input>
+                <paper-input id="company" label="Organization" value="{{data.company}}"></paper-input>
+                <paper-input id="position" label="Position" value="{{data.position}}"></paper-input>
+                <paper-input id="telephone" label="Telephone" value="{{data.telephone}}"></paper-input>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="social:person"></iron-icon>
+                    <div class="flex">Optional Information</div>
+                </div>
+                <paper-textarea id="expertise" label="Expertise" value="{{data.expertise}}"></paper-textarea>
+                <paper-textarea id="interests" label="Interests" value="{{data.interests}}"></paper-textarea>
+                <paper-textarea id="mission" label="Mission" value="{{data.mission}}"></paper-textarea>
+            </div>
+            <div id="send-control" class="layout horizontal center-center">
+                <paper-button id="send" dialog-confirm raised tabindex="-1" on-tap="_processRequest">
+                    <div class="container layout horizontal center-center">
+                        <iron-icon icon="save"></iron-icon>
+                        <div class="label" style="margin-left: 6px; padding-right: 4px;">Save</div>
+                    </div>
+                </paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-user-profile-settings",
+                properties: {
+                    data: Object,
+                    nonce: String,
+                    screen: Object,
+                    dataRestore: String,
+                    filename: {
+                        type: String,
+                        value: ""
+                    },
+                    useCamera: {
+                        type: Boolean,
+                        value: false
+                    }
+                },
+                _open: function() {
+                    this.screen = this.data.icon;
+                    this.dataRestore = JSON.stringify(this.data);
+                    this.$.dialog.toggle();
+                    this.$.dialog.notifyResize();
+                },
+                _hasUserMedia: function() {
+                    return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                              navigator.mozGetUserMedia || navigator.msGetUserMedia);
+                },
+                _dataURLtoBlob: function(dataurl) {
+                    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                    while(n--){
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    return new Blob([u8arr], {type:mime});
+                },
+                _blobToDataURL: function(blob, callback) {
+                    var a = new FileReader();
+                    self = this;
+                    a.onload = function(e) {callback(e.target.result, self);}
+                    a.readAsDataURL(blob);
+                },
+                _processRequest: function() {
+                    var formData = new FormData();
+                    var editDialog = this.$.dialog;
+                    var fieldIds = ['display_name', 'company', 'position', 'telephone',
+                                    'expertise', 'interests', 'mission'];
+                    for (var i=0; i<fieldIds.length;i++) {
+                        var name = fieldIds[i];
+                        var id = "#" + name;
+                        formData.append(name, editDialog.querySelector(id).value);
+                    }
+                    formData.append("_session_id", this.nonce);
+                    if (this.screen.indexOf("data:") == 0) {
+                        var filename = (this.filename) ? this.filename : "camera_image.png";
+                        var blob = this._dataURLtoBlob(this.screen);
+                        formData.append("avatar", blob, filename);
+                    } else {
+                        formData.append("avatar", false);
+                    }
+                    var xhr = new XMLHttpRequest();
+                    xhr.onload = function(e) {
+                        var toast = document.querySelector("paper-toast#toast-notification");
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            toast.show({text: "Profile updated", duration: 3000});
+                            location.reload(true);
+                        } else {
+                            toast.show({text: "Profile update failed.", duration: 3000});
+                        }
+                    };
+                    var url = this.data.url + "profile/update_profile";
+                    xhr.open("POST", url, true);
+                    xhr.send(formData);
+                },
+                _enableCamera: function() {
+                    this.useCamera = !this.useCamera;
+                },
+                _loadPreviewImage: function(dataURL, self) {
+                    self.screen = dataURL;
+                },
+                _uploadedImage: function(e) {
+                    var the_file = e.target.files[0];
+                    this.filename = the_file.name;
+                    this._blobToDataURL(the_file, this._loadPreviewImage);
+                    var uploader = this.querySelector("#upload");
+                    uploader.cancel(the_file);
+                    uploader.clear();
+                },
+                _cancelEdit: function() {
+                    var self = {modified: this, orig: JSON.parse(this.dataRestore)};
+                    var restore = ["name", "company", "position", "telephone", "expertise", "interests", "mission"];
+                    restore.forEach(function(e) {
+                        this.modified.set("data." + e, this.orig[e]);
+                    }, self);
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-user-security-settings">
+    <style is="custom-style" include="vf-styles"></style>
+    <style include="dialog_style">
+        paper-dialog {
+            margin: 0;
+            padding: 0;
+            width: 400px;
+            height: auto;
+            max-height: 75%;
+        }
+        paper-dialog #sections {
+            margin: 0;
+            padding: 0 8px;
+            margin-bottom: 8px;
+            height: auto;
+            overflow: auto;
+        }
+        paper-dialog #send {
+            height: 40px;
+            min-width: 0px;
+        }
+        paper-dialog #send-control {
+            margin-top: 16px;
+            margin-bottom: 0;
+            padding: 1em;
+            background-color: #eee;
+        }
+        paper-dialog #header-label {
+            font-size: 20px;
+            color: var(--pristine);
+            padding-left: 8px;
+            font-weight: bold;
+        }
+        paper-dialog .heading{
+            min-height: 40px;
+        }
+        paper-dialog .button-label{
+            margin-left: 6px;
+            padding-right: 4px;
+        }
+        paper-dialog .subheading {
+            background-color: var(--subheadingbar);
+            font-size: 16px;
+            font-style: normal;
+            font-weight: bold;
+            padding: 4px 2px;
+            margin-top: 8px;
+        }
+        paper-dialog .subheading-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+        }
+        paper-dialog .subheading .flex {
+            margin-top: 4px;
+        }
+        paper-dialog paper-toggle-button{
+            margin-bottom: 12px;
+        }
+        #sort-by-left{
+            color: var(--pitch);
+            margin-right: 8px;
+            padding-bottom: 10px;
+        }
+        #sort-by-right{
+            color: var(--pitch);
+            padding-bottom: 10px;
+            margin-left: -10px;
+        }
+        #iteminfo{
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        #passwordEnter {
+            margin-bottom: 15px;
+            width: 0px;
+            display: none;
+        }
+        .NewPassword{
+            width: 100%;
+            margin-top: -15px;
+            margin-bottom: 10px;
+        }
+        #failtext{
+            color: var(--danger);
+        }
+        #DeletionWarning {
+            color: var(--danger);
+            font-style: italic;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .image-contain {
+            width: 300px;
+            height: 150px;
+            background: var(--pristine);
+        }
+        .qr {
+            width: 300px;
+            height: 300px;
+        }
+        .svg.radial-progress {
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+        svg {
+            transform: rotate(270deg);
+        }
+        circle {
+            stroke-width: 2em;
+            fill: transparent;
+            transform: rotate(0.1deg); // to fix Firefox
+        }
+        #rpback {
+            stroke: var(--interactive);
+        }
+        #rpcover {
+            stroke: #DEDEDE;
+            stroke-width: 2.01em;
+            border: 12px solid red;
+        }
+        #rpcenter {
+            fill: var(--pristine);
+        }
+        .radial-fill {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #TwoFactorKey{
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%)
+        }
+        #TwoFactorCode{
+            font-size: 20px;
+            color: var(--pitch);
+            padding-top: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        @media (max-width: 480px) {
+            paper-dialog {
+                width: 360px;
+            }
+        }
+        @media (max-width: 320px) {
+            paper-dialog {
+                width: 300px;
+            }
+            .image-contain {
+                width: 270px;
+                height: 135px;
+                background: var(--pristine);
+            }
+            .qr {
+                width: 270px;
+                height: 270px;
+            }
+        }
+    </style>
+    <template>
+        <paper-dialog id="dialog" class="layout vertical flex" modal>
+            <div class="heading layout horizontal center-center">
+                    <iron-icon id="heading-icon" icon="vaadin-icons:shield"></iron-icon>
+                    <div id="header-label" class="flex" >Security Settings</div>
+                    <paper-button id="close" dialog-dismiss><iron-icon icon="close" on-tap="_close"></iron-icon></paper-button>
+                    <paper-tooltip for="close" position="left">Cancel</paper-tooltip>
+                </div>
+            <div id="sections" class="flex">
+                <div id="failtext">Errors:</div>
+                <div class="subheading layout horizontal center-center item-info">
+                    <iron-icon class="subheading-icon" icon="vaadin-icons:safe-lock"></iron-icon>
+                    <div class="flex">Password</div>
+                </div>
+                <div id="iteminfo">Password: **********</div>
+                <div id="passwordchange">
+                    <password-helper min-length="{{minPasswordLength}}" style="display:none; margin-top: 32px;" id="passCheck"></password-helper>
+                    <paper-input class="NewPassword" id="NewPassInpt" label="New Password" type="password" error-message="Invalid Password" on-input="passChange"></paper-input>
+                    <paper-input class="NewPassword" id="NewPassDupl" label="Confirm Password" type="password" error-message="Passwords do not match" on-input="checkMatch"></paper-input>
+                </div>
+                <div class="subheading layout horizontal center-center" id="tfHeader">
+                    <iron-icon class="subheading-icon" icon="communication:phonelink-lock"></iron-icon>
+                    <div class="flex">Two Factor Authentication</div>
+                </div>
+                <div id="TwoFactor">
+                    <div id="TwoFactorInfo">Two factor authentication protects your account by requiring mobile-device validation for login.</div>
+                     <div class="layout vertical center-center flex">
+                        <div class="image-contain" id="TwoFactorImageOne">
+                            <iron-image class="image-contain" sizing="contain" src="{{staticUrl}}/images/twofactor1.png"></iron-image>
+                        </div>
+                        <div class="sorter layout horizontal center-center" id="TFToggle">
+                            <div id="sort-by-left">Disabled</div><paper-toggle-button on-iron-change="changeTwoFactor" id="TwoFactorToggle"></paper-toggle-button><div id="sort-by-right">Enabled</div>
+                        </div>
+                     </div>
+                    <div id="TwoFactorDetail">
+                        <div>Setup Two-Factor authentication on your mobile device using the Key or QR code below.</div>
+                        <div class="layout vertical center-center flex">
+                            <div id="TwoFactorCode">TF Code</div>
+                            <div class="qr">
+                                <iron-image class="qr" sizing="contain" src="/auth/qrcode"></iron-image>
+                            </div>
+                            <div class="image-contain">
+                                <iron-image class="image-contain" sizing="contain" src="{{staticUrl}}/images/twofactor2.png"></iron-image>
+                            </div>
+                        </div>
+                        <div>Ensure you are linked by checking that the code below shows up on your device.</div>
+                        <div class="svg radial-progress">
+                            <svg height="10em" width="10em">
+                                <circle id="rpback" r="" cx="5em" cy="5em" fill="transparent" stroke-dasharray="0em" stroke-dashoffset="0em"></circle>
+                                <circle id="rpcover" r="" cx="5em" cy="5em" fill="transparent" stroke-dasharray="0em" stroke-dashoffset="0"></circle>
+                                <circle id="rpcenter" r="" cx="5em" cy="5em" fill="transparent" stroke-dasharray="0em" stroke-dashoffset="0em"></circle>
+                            </svg>
+                            <div id="TwoFactorKey">TF Key</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="subheading layout horizontal center-center">
+                    <iron-icon class="subheading-icon" icon="vaadin-icons:trash"></iron-icon>
+                    <div class="flex">Account Deactivation</div>
+                </div>
+                <div id="DeletionWarning">
+                    <iron-icon icon="vaadin-icons:exclamation-circle"></iron-icon> Saving will immediately log you out and disable your account.
+                </div>
+                <div class = "sorter layout horizontal center-center">
+                    <div id="sort-by-left">Active</div><paper-toggle-button on-iron-change="changeDeletion" id="DeleteToggle"></paper-toggle-button><div id="sort-by-right">Disabled</div>
+                </div>
+            </div>
+            <div id="send-control" class="layout horizontal center-center">
+                <paper-button id="send" raised tabindex="-1" on-click="_submit">
+                    <div class="container layout horizontal center-center">
+                        <iron-icon id="submitIcon" icon="lock"></iron-icon>
+                        <div class="button-label" id="publishButton">Edit</div>
+                    </div>
+                </paper-button>
+                <paper-input id = "passwordEnter" label="Enter Password" type="password" on-keydown="submitEnter" error-message="Incorrect Password"></paper-input>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-user-security-settings",
+                properties: {
+                    profileUrl: String,
+                    nonce: String,
+                    startVals: Object,
+                    editing: Boolean,
+                    checking: Boolean,
+                    fetching: Boolean,
+                    setupTwoFactor: Boolean,
+                    canChangePass: Boolean,
+                    currentPass: String,
+                    staticUrl: String,
+                    minPasswordLength: Number,
+                    valueUpdate: Number,
+                    timerUpdate: Number,
+                    passwordMinimumHours: Number
+                },
+                _open: function () {
+                    this.$.dialog.toggle();
+                    this.$.dialog.notifyResize();
+                    this.$.submitIcon.set('icon', "icons:lock");
+                    this.$.publishButton.style.display = "block";
+                    this.$.publishButton.innerHTML = "Edit";
+                    this.$.failtext.style.display = "none";
+                    this.$.NewPassInpt.style.display = "none";
+                    this.$.NewPassDupl.style.display = "none";
+                    this.$.DeletionWarning.style.display = "none";
+                    this.$.TwoFactorDetail.style.display = "none";
+                    this.$.DeleteToggle.set('disabled', true);
+                    this.$.TwoFactorToggle.set('disabled', true);
+                    this.setCircle();
+                    this.$.dialog.notifyResize();
+                    this.getcurrent();
+                },
+                _close: function () {
+                    this.$.dialog.toggle();
+                    this.$.dialog.style.height = "auto";
+                    this.$.dialog.notifyResize();
+                    clearInterval(this.valueUpdate);
+                    clearInterval(this.timerUpdate);
+                    this.ClearEditing();
+                },
+                getcurrent: function () {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", this.profileUrl + 'getsecurity', true);
+                    var t = this;
+                    xhr.onload = function (e) {
+                        var res = JSON.parse(e.target.response);
+                        t.$.TwoFactorToggle.checked = res.usertf;
+                        t.$.TwoFactorCode.innerHTML = res.tfkey;
+                        if (!res.platformtf) {
+                            t.$.TwoFactor.style.display = "none";
+                            t.$.tfHeader.style.display = "none";
+                        }
+                        t.canChangePass = res.canchange;
+                        t.passwordMinimumHours = res.minhours;
+                    };
+                    xhr.send();
+                },
+                ClearEditing: function () {
+                    this.$.publishButton.style.display = "block";
+                    var inpt = this.$.passwordEnter;
+                    inpt.set('value', "");
+                    inpt.style.display = "none";
+                    this.$.NewPassInpt.value = "";
+                    this.$.NewPassInpt.style.display = "none";
+                    this.$.NewPassDupl.value = "";
+                    this.$.NewPassDupl.style.display = "none";
+                    this.$.passCheck.style.display = "none";
+                    inpt.style.width = "0px";
+                    this.$.passwordEnter.set('invalid', false);
+                    this.editing = false;
+                    this.checking = false;
+                    this.fetching = false;
+                    this.changeTwoFactor();
+                    this.$.dialog.notifyResize();
+                },
+                _submit: function () {
+                    if (this.editing) {
+                        this._trySubmit();
+                    }
+                    else if (this.checking && !this.fetching) {
+                        this.submitPassword(this.$.passwordEnter.value);
+                    }
+                    else if (!this.fetching) {
+                        this.checking = true;
+                        this.$.publishButton.style.display = "none";
+                        var inpt = this.$.passwordEnter;
+                        inpt.style.display = "block";
+                        inpt.focus();
+                        var ivl = setInterval(function () {
+                            var width = Number(inpt.style.width.replace(/[^\d\.\-]/g, ''));
+                            if (width < 180) {
+                                inpt.style.width = (width + 8) + "px";
+                            }
+                            else {
+                                clearInterval(ivl);
+                            }
+                        }, 10);
+                    }
+                },
+                setCircle: function () {
+                    var radius = 3, // set the radius of the circle
+                            circumference = 2 * radius * Math.PI;
+                    var els = document.querySelectorAll('circle');
+                    Array.prototype.forEach.call(els, function (el) {
+                        el.setAttribute('stroke-dasharray', circumference + 'em');
+                        el.setAttribute('r', radius + 'em');
+                    });
+                    this.$.rpcenter.setAttribute('r', ((radius - 0.01) + 'em'));
+
+                    var currentCount = 1,
+                            maxCount = 300;
+                    var t = this;
+                    var tfcode = "";
+                    this.valueUpdate = setInterval(function () {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", t.profileUrl + 'getTFValue', true);
+                        xhr.onload = function (e) {
+                            var res = JSON.parse(e.target.response);
+                            if (res.status == "failed")
+                                clearInterval(this.valueUpdate);
+                            else if (res.now != tfcode) {
+                                tfcode = res.now;
+                                currentCount = 0;
+                                t.$.TwoFactorKey.innerHTML = tfcode;
+                            }
+                        };
+                        xhr.send();
+                    }, 2000);
+                    this.timerUpdate = setInterval(function () {
+                        if (currentCount > maxCount) {
+                            currentCount = 0;
+                            return;
+                        }
+                        var r = 256 * ((currentCount / maxCount) - 0.60) * 2;
+                        var v = 'rgb(0, 200, 0)';
+                        if (currentCount / maxCount > 0.60) {
+                            v = 'rgb(' + Math.round(r) + ',' + Math.round(200 - r) + ',0)';
+                        }
+                        t.$.rpback.style.stroke = v;
+                        var offset = -(circumference / maxCount) * currentCount + 'em';
+                        t.$.rpcover.setAttribute('stroke-dashoffset', offset);
+                        currentCount++;
+                    }, 100);
+                },
+                passChange: function (e) {
+                    if (e.target.value.length > 0) {
+                        this.$.passCheck.style.display = "block";
+                        this.$.passCheck.giveFeedback(e.target.value);
+                    }
+                    else {
+                        this.$.passCheck.style.display = "none";
+                    }
+                },
+                _trySubmit: function () {
+                    var toast = document.querySelector("paper-toast#toast-notification");
+                    var newPass = this.$.NewPassInpt.value;
+                    var duplPass = this.$.NewPassDupl.value;
+                    var doPass = (newPass == duplPass) && newPass.length > 0 && this.$.passCheck.isValid(newPass) && this.canChangePass;
+                    if (newPass.length > 0) {
+                        if (newPass != duplPass) {
+                            toast.show("Passwords do not match.");
+                            return;
+                        }
+                        else if (!this.$.passCheck.isValid(newPass)) {
+                            toast.show("New Password invalid");
+                            return;
+                        }
+                    }
+                    var twoFactor = this.$.TwoFactorToggle.checked;
+                    var del = this.$.DeleteToggle.checked;
+                    console.log("Valid Password submission: " + this.$.passCheck.isValid(newPass));
+                    console.log("Delete: " + del + " - TwoFactor: " + twoFactor);
+                    var data = new FormData();
+
+                    data.append("_session_id", this.nonce);
+                    data.append('changepass', doPass);
+                    data.append('newpass', newPass);
+                    if (newPass) {
+                        data.append('curpass', this.currentPass);
+                    }
+                    data.append('twofactor', twoFactor);
+                    data.append('delacc', del);
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", this.profileUrl + 'changeSecurity', true);
+                    var t = this;
+                    xhr.onload = function (e) {
+                        if (e.target.response.length < 100) {
+                            var res = JSON.parse(e.target.response);
+                            if (res.error != undefined) {
+                                console.log(res.error);
+                                toast.show(res.error);
+                            }
+                            else if (res.success != undefined) {
+                                toast.show(res.success);
+                                t._close();
+                                window.location.reload();
+                            }
+                        }
+                        else
+                            window.location = "/auth/logout";
+                    };
+                    xhr.send(data);
+                },
+                checkMatch: function (e) {
+                    if (e.target.value.length > 0) {
+                        if (e.target.value == this.$.NewPassInpt.value)
+                            this.$.NewPassDupl.set('invalid', false);
+                        else
+                            this.$.NewPassDupl.set('invalid', true);
+                    }
+                    else {
+                        this.$.NewPassDupl.set('invalid', false);
+                    }
+                },
+                changeTwoFactor: function () {
+                    this.set("setupTwoFactor", (this.editing && this.$.TwoFactorToggle.checked));
+                    if (!this.setupTwoFactor) {
+                        this.$.TwoFactorDetail.style.display = "none";
+                    }
+                    else {
+                        this.$.TwoFactorDetail.style.display = "block";
+                    }
+                    //this.$.dialog.notifyResize();
+                },
+                changeDeletion: function () {
+                    var del = this.$.DeleteToggle.checked;
+                    if (del) {
+                        this.$.DeletionWarning.style.display = "block";
+                    }
+                    else {
+                        this.$.DeletionWarning.style.display = "none";
+                    }
+                    this.$.sections.scrollTop = this.$.sections.scrollHeight;
+                },
+                submitEnter: function (e) {
+                    if (e.keyCode === 13 && !this.fetching) {
+                        this.submitPassword(this.$.passwordEnter.value);
+                    }
+                },
+                enableEdit: function () {
+                    this.set("editing", true);
+                    if (!this.canChangePass) {
+                        var minHours = this.passwordMinimumHours;
+                        var ending = minHours.toString() + " hour" + ((minHours > 1) ? "s." : ".");
+                        this.$.iteminfo.innerHTML = "Can only change password once in " + ending;
+                        this.$.passwordchange.style.display = "none";
+                    } else {
+                        this.$.iteminfo.innerHTML = "Change Password";
+                        this.$.passwordchange.style.display = "block";
+                        this.$.NewPassInpt.style.display = "block";
+                        this.$.NewPassDupl.style.display = "block";
+                    }
+                    this.$.DeleteToggle.set('disabled', false);
+                    this.$.TwoFactorToggle.set('disabled', false);
+                    this.changeTwoFactor();
+                    this.$.dialog.notifyResize();
+                },
+                submitPassword: function (pwd) {
+                    this.fetching = true;
+                    var data = new FormData();
+                    data.append('value', pwd);
+                    data.append("_session_id", this.nonce);
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", this.profileUrl + "checkpassword", true);
+                    var t = this;
+                    xhr.domHost = this;
+                    xhr.onload = function (e) {
+                        var res = JSON.parse(e.target.response);
+                        t.fetching = false;
+                        if (res.match) {
+                            t.checking = false;
+                            t.currentPass = pwd;
+
+                            var inpt = t.$.passwordEnter;
+                            t.$.submitIcon.set('icon', "icons:lock-open");
+                            var ivl = setInterval(function () {
+                                var width = Number(inpt.style.width.replace(/[^\d\.\-]/g, ''));
+                                if (width > 0) {
+                                    inpt.style.width = (width - 8) + "px";
+                                }
+                                else {
+                                    inpt.style.display = "none";
+                                    t.$.submitIcon.set('icon', "icons:save");
+                                    t.$.publishButton.style.display = "block";
+                                    t.$.publishButton.innerHTML = "Save";
+                                    t.enableEdit();
+                                    clearInterval(ivl);
+                                }
+                            }, 10);
+                            t.$.dialog.notifyResize();
+                        }
+                        else {
+                            t.$.passwordEnter.set('invalid', true);
+                        }
+                    };
+                    xhr.send(data);
+                }
+            });
+        })();
+    </script>
+</dom-module>

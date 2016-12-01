@@ -7,6 +7,7 @@ from bson import son
 
 import pymongo
 from pylons import tmpl_context as c, app_globals as g
+from paste.deploy.converters import asint
 
 import ming
 from ming.utils import LazyProperty
@@ -163,7 +164,7 @@ class MonQTask(MappedClass):
         return obj
 
     @classmethod
-    def get(cls, process='worker', state='ready', only=None):
+    def get(cls, process='worker', state='ready', only=None, min_priority=None):
         """Get the highest-priority, oldest, ready task and lock it to the
         current process.  If no task is available and waitfunc is supplied,
         call the waitfunc before trying to get the task again.  If waitfunc is
@@ -179,6 +180,11 @@ class MonQTask(MappedClass):
             query = {'state': state}
             if only:
                 query['task_name'] = {'$in': only}
+            if min_priority:
+                try:
+                    query['priority'] = {'$gte': asint(min_priority)}
+                except:
+                    pass
             obj = cls.query.find_and_modify(
                 query=query,
                 update={
@@ -189,7 +195,7 @@ class MonQTask(MappedClass):
                 },
                 new=True,
                 sort=sort)
-        except pymongo.errors.OperationFailure, exc:
+        except pymongo.errors.OperationFailure as exc:
             if 'No matching object found' not in exc.args[0]:
                 raise
 
@@ -303,7 +309,7 @@ class MonQTask(MappedClass):
             self.result = result
             self.state = 'complete'
             return self.result
-        except Exception, exc:
+        except Exception as exc:
             LOG.exception('%r', self)
             self.state = 'error'
             if hasattr(exc, 'format_error'):

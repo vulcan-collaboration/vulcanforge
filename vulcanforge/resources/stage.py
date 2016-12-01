@@ -21,9 +21,9 @@ class StaticResourceStager(object):
             source_dir += '/'
         for root, dirs, files in os.walk(source_dir):
             for res_file in files:
-                file_path, ext = os.path.splitext(res_file)
-                if ext in ['.js', '.css', '.scss', ]:
-                    continue
+                #file_path, ext = os.path.splitext(res_file)
+                #if ext in ['.js', '.css', '.scss', ]:
+                #    continue
                 source_tail = root.split(source_dir)[1]
                 res_file_path = os.path.join(root, res_file)
                 destination_dir2 = os.path.join(destination_dir, source_tail)
@@ -38,7 +38,7 @@ class StaticResourceStager(object):
                 destination_dir = os.path.join(self.destination_dir, namespace)
                 self.copy_images(directory, destination_dir)
 
-    def iter_css_js(self):
+    def iter_recipes(self):
         for recipe in g.resource_manager.recipe_mapping.values():
             resource_list = recipe.strip().split(
                 g.resource_manager.separator)
@@ -50,12 +50,15 @@ class StaticResourceStager(object):
                 elif resource.endswith('.css'):
                     file_type = 'css'
                     break
+                elif resource.endswith('.html'):
+                    file_type = 'html'
+                    break
             if file_type is None:
                 continue
             yield file_type, resource_list
 
-    def stage_css_js(self):
-        for file_type, resource_list in self.iter_css_js():
+    def stage_css_js_html(self):
+        for file_type, resource_list in self.iter_recipes():
             try:
                 g.resource_manager.write_slim_file(
                     file_type,

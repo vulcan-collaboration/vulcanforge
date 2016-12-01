@@ -1,6 +1,7 @@
 from copy import deepcopy
 from collections import OrderedDict
 
+from paste.deploy.converters import asbool
 from pylons import app_globals as g
 
 from vulcanforge.common.util.filesystem import import_object
@@ -26,7 +27,7 @@ class ToolManager(object):
             "installable": True
         },
         "wiki": {
-            "app_path": TOOLS_DIR + "wiki.wiki_main:ForgeWikiApp",
+            "app_path": TOOLS_DIR + "wiki.app:ForgeWikiApp",
             "installable": True
         },
         "visualize": {
@@ -65,24 +66,24 @@ class ToolManager(object):
     })
 
     def __init__(self, config=None):
+        self.tools = deepcopy(self.default_tools)
         if config:
             self.parse_config(config)
-            self.import_apps()
+        self.import_apps()
 
     def parse_config(self, config):
-        self.tools = deepcopy(self.default_tools)
-        tool_cls = self.tools.__class__
-        if 'available_tools' in config:
-            keys = filter(None, [k.strip() for k in config['available_tools']])
-            for name, spec in self.tools.items():
-                if spec.get("required") and name not in keys:
-                    keys.append(name)
-            self.tools = tool_cls({k: self.tools[k] for k in keys})
-        if 'installable_tools' in config:
-            installable = filter(
-                None, [k.strip() for k in config['installable_tools']])
-            for k, v in self.tools.items():
-                v['installable'] = k in installable
+        index = 0
+        for name, spec in config.items():
+            spec["installable"] = asbool(spec.get("installable", True))
+            spec["required"] = asbool(spec.get("required", False))
+            spec["tool_label"] = spec.get("tool_label", "")
+            spec["default_mount_label"] = spec.get("default_mount_label", "")
+            spec["default_mount_point"] = spec.get("default_mount_point", "")
+            if name in self.tools:
+                self.tools[name].update(spec)
+            else:
+                self.tools.insert(index, spec)
+                index += 1
 
     def import_apps(self):
         for name, spec in self.tools.items():
@@ -100,6 +101,9 @@ class ToolManager(object):
 
                 tools.append({
                     "name": name,
+                    "tool_label": spec.get("tool_label", app.tool_label),
+                    "default_mount_label": spec.get("default_mount_label", app.default_mount_label),
+                    "default_mount_point": spec.get("default_mount_point", app.default_mount_point),
                     "app": spec["app"],
                     "icon_url": icon_resource,
                     "option_fields": app.get_install_option_fields(

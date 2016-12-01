@@ -11,6 +11,7 @@ from pylons import app_globals as g
 from tg import expose
 from tg.decorators import with_trailing_slash
 from vulcanforge.common.controllers import BaseController
+from vulcanforge.taskd import MonQTask
 
 
 class DebugUtilRootController(BaseController):
@@ -18,10 +19,18 @@ class DebugUtilRootController(BaseController):
     def _check_security(self):
         g.security.require_access(g.get_site_admin_project(), 'admin')
 
-
     @expose('_debug_util_/index.html')
     def index(self):
         return {}
+
+    @expose('_debug_util_/taskd.html')
+    def taskd(self):
+        return {
+            'counts': {
+                state: MonQTask.query.find({'state': state}).count()
+                for state in MonQTask.states
+            }
+        }
 
     @expose('_debug_util_/solr.html')
     def solr(self, q=None, json_params=None):

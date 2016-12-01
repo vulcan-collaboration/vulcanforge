@@ -49,12 +49,7 @@
     </span>
 {% endblock %}
 
-{% block actions %}
-    {% if c.user and not c.user.is_anonymous %}
-        {{ g.icon_button_widget.display('Edit', None, 'edit_ticket', 'ico-edit', href=ticket.url()+'edit') }}
-        {{ g.subscription_popup_menu.display(artifact=ticket, feed_url=ticket.url()+'feed.rss') }}
-    {% endif %}
-{% endblock %}
+{% block actions %}{{ menu_bar }}{% endblock %}
 
 {% block relatedArtifacts %}
     {{ c.related_artifacts_widget.display(value=ticket) }}
@@ -136,5 +131,5 @@
 {% block after_content %}
     {{ c.attachment_list.display(value=ticket, extraCSS='ticket-attachments') }}
         {% set thread=ticket.discussion_thread %}
-        {{ c.thread.display(value=thread,new_post_text="New Comment", title="Discussion", page=page,limit=limit,count=count) }}
+        {{ c.thread_widget.display(value=thread,new_post_text="New Comment", title="Discussion", page=page,limit=limit,count=count) }}
 {% endblock %}

@@ -23,6 +23,7 @@ from collections import defaultdict
 
 from bson import ObjectId
 import pymongo
+import pymongo.errors
 from ming import schema as S
 from ming.odm import (
     FieldProperty,
@@ -48,6 +49,7 @@ from vulcanforge.auth.model import User
 
 from .util import gen_message_id
 from .tasks import notify, sendmail
+from vulcanforge.notification.exceptions import ContextError
 
 
 LOG = logging.getLogger(__name__)
@@ -70,16 +72,18 @@ class Notification(SOLRIndexed):
     # Classify notifications
     neighborhood_id = ForeignIdProperty(
         'Neighborhood',
-        if_missing=lambda: c.project.neighborhood._id
-    )
-    project_id = ForeignIdProperty('Project', if_missing=lambda: c.project._id)
+        if_missing=lambda: g.context_manager.get_neighborhood_id())
+    project_id = ForeignIdProperty(
+        'Project', if_missing=lambda: g.context_manager.get_project_id())
     project = RelationProperty('Project', via='project_id')
     app_config_id = ForeignIdProperty(
         'AppConfig',
-        if_missing=lambda: c.app.config._id
+        if_missing=lambda: g.context_manager.get_app_config_id()
     )
     app_config = RelationProperty('AppConfig', via='app_config_id')
-    tool_name = FieldProperty(str, if_missing=lambda: c.app.config.tool_name)
+    exchange_uri = FieldProperty(str, if_missing=None)
+    tool_name = FieldProperty(
+        str, if_missing=lambda: c.app and c.app.config.tool_name)
     ref_id = ForeignIdProperty('ArtifactReference')
     topic = FieldProperty(str)
     unique_id = FieldProperty(str, if_missing=lambda: nonce(40))
@@ -89,6 +93,7 @@ class Notification(SOLRIndexed):
     from_address = FieldProperty(str)
     reply_to_address = FieldProperty(str)
     subject = FieldProperty(str)
+    title = FieldProperty(str, if_missing=None)
     text = FieldProperty(str)
     link = FieldProperty(str)
     author_id = ForeignIdProperty('User')
@@ -105,6 +110,7 @@ class Notification(SOLRIndexed):
             'neighborhood_id': str(self.neighborhood_id),
             'project_id': str(self.project_id),
             'app_config_id': str(self.app_config_id),
+            'exchange_uri': self.exchange_uri,
             'tool_name': self.tool_name,
             'ref_id': str(self.ref_id),
             'topic': self.topic,
@@ -117,30 +123,36 @@ class Notification(SOLRIndexed):
             'link': self.link,
             'author_id': str(self.author_id),
             'pubdate': self.pubdate.isoformat(),
-        }
-        project = self.project
-        app_config = self.app_config
-        data.update({
             '_rendered': g.markdown.convert(self.text),
-            'author': self.author(),
-            'project': {
+            'author': self.author()
+        }
+        if self.exchange_uri:
+            exchange = self.exchange
+            data['exchange'] = {
+                "url": exchange.url(),
+                "name": exchange.config["name"],
+                "icon_url": exchange.config["icon"]
+            }
+        project = self.project
+        if project is not None:
+            data['project'] = {
                 '_id': str(project._id),
                 'name': project.name,
                 'url': project.url(),
                 'icon_url': project.icon_url,
-            },
-        })
-        if app_config is not None:
-            try:
-                ac_icon_url = app_config.icon_url(24)
-            except TypeError:
-                ac_icon_url = None
-            data['app_config'] = {
-                '_id': str(app_config._id),
-                'name': app_config.options.mount_label,
-                'url': app_config.url(),
-                'icon_url': ac_icon_url,
             }
+            app_config = self.app_config
+            if app_config is not None:
+                try:
+                    ac_icon_url = app_config.icon_url(24)
+                except TypeError:
+                    ac_icon_url = None
+                data['app_config'] = {
+                    '_id': str(app_config._id),
+                    'name': app_config.options.mount_label,
+                    'url': app_config.url(),
+                    'icon_url': ac_icon_url,
+                }
         return data
 
     @LazyProperty
@@ -148,12 +160,11 @@ class Notification(SOLRIndexed):
         if self.ref_id:
             return ArtifactReference.query.get(_id=self.ref_id)
 
+    @property
+    def exchange(self):
+        return g.exchange_manager.get_exchange_by_uri(self.exchange_uri)
+
     def index(self, **kwargs):
-        # skip if the referred to artifact does not exist
-        if self.ref_id is not None \
-            and self.ref is None \
-            or self.ref.artifact is None:
-            return None
         json_dict = self.__json__()
         return {
             'id': self.index_id(),
@@ -165,6 +176,7 @@ class Notification(SOLRIndexed):
             'author_id_s': str(self.author_id),
             'project_id_s': str(self.project_id),
             'app_config_id_s': str(self.app_config_id),
+            'exchange_uri_s': self.exchange_uri,
             'ref_id_s': str(self.ref_id),
             'json_s': jsonify.encode(json_dict),
             'read_roles': self.get_read_roles(),
@@ -172,7 +184,7 @@ class Notification(SOLRIndexed):
         }
 
     def get_read_roles(self):
-        target = self.get_artifact()
+        target = self.artifact
         if target is None:
             target = self.app_config
         if target is None:
@@ -184,18 +196,17 @@ class Notification(SOLRIndexed):
         return self.get_read_roles()
 
     def author(self):
-        return User.query.get(_id=self.author_id) \
-            if self.author_id is not None \
-            else None
+        if self.author_id:
+            return User.query.get(_id=self.author_id)
 
-    def get_artifact(self):
+    @LazyProperty
+    def artifact(self):
         if self.ref_id and self.ref:
             return self.ref.artifact
 
     def has_access(self, access_type):
-        artifact = self.get_artifact()
-        if artifact is not None:
-            return g.security.has_access(artifact, access_type)
+        if self.artifact is not None:
+            return g.security.has_access(self.artifact, access_type)
         app_config = self.app_config()
         return app_config.has_access(access_type)
 
@@ -231,22 +242,43 @@ class Notification(SOLRIndexed):
     def _make_notification(cls, artifact, topic, **kwargs):
         safe_notifications = asbool(config.get('safe_notifications', 'false'))
         safe_text = kwargs.pop('safe_text', None)
+        attrs = {
+            "ref_id": artifact.index_id(),
+            "topic": topic,
+            "link": kwargs.pop('link', artifact.url())
+        }
+
         if getattr(c, 'project', None) is None:
             c.project = artifact.project
-        if getattr(c, 'app', None) is None:
-            c.app = artifact.app
-        idx = artifact.index() or {}
-        shortname = c.project.shortname
-        if shortname == '--init--':
-            shortname = c.project.neighborhood.name
-        subject_prefix = u'[%s:%s] ' % (
-            shortname, c.app.config.options.mount_point)
+        if c.project:
+            if c.project.notifications_disabled:
+                LOG.info(
+                    'Notifications disabled for project %s, not sending %s(%r)',
+                    c.project.shortname, topic, artifact
+                )
+                return None
+            if getattr(c, 'app', None) is None:
+                c.app = artifact.app
+            shortname = c.project.shortname
+            if shortname == '--init--':
+                shortname = c.project.neighborhood.name
+            subject_prefix = u'[%s:%s] ' % (
+                shortname, c.app.config.options.mount_point)
+        elif getattr(c, 'exchange', None):
+            subject_prefix = u'[{}] '.format(c.exchange.config['name'])
+            attrs["exchange_uri"] = c.exchange.config['uri']
+        else:
+            raise ContextError()
+
+        if topic == "exchange":
+            attrs.setdefault("exchange_uri", artifact.exchange_uri)
+            subject_prefix = u'[{}] '.format(artifact.exchange.config['name'])
         if topic == 'message':
             post = kwargs.pop('post')
             safe_text = getattr(post, 'safe_text', None)
             subject = cgi.escape(post.subject or '')
             if post.parent_id and not subject.lower().startswith('re:'):
-                subject = u'Re: '+subject
+                subject = u'Re: ' + subject
             author = post.author()
             if safe_notifications:
                 post_text = safe_text or "commented or modified"
@@ -256,49 +288,50 @@ class Notification(SOLRIndexed):
                 text = u"{}: {}".format(author.display_name, post_text)
             else:
                 text = post_text
-            d = {'_id': post._id,
-                 'from_address': str(author._id),
-                 'reply_to_address': u'"%s" <%s>' % (
-                     subject_prefix,
-                     getattr(artifact, 'email_address',
-                             'noreply@in.vulcanforge.org')),
-                 'subject': subject_prefix + subject,
-                 'text': text,
-                 'in_reply_to': post.parent_id,
-                 'author_id': author._id,
-                 'pubdate': datetime.utcnow()}
+            attrs.update({
+                '_id': post._id,
+                'from_address': str(author._id),
+                'reply_to_address': u'"%s" <%s>' % (
+                    subject_prefix,
+                    getattr(artifact, 'email_address',
+                            'noreply@in.vulcanforge.org')),
+                'subject': subject_prefix + subject,
+                'title': subject,
+                'text': text,
+                'in_reply_to': post.parent_id,
+                'author_id': author._id,
+                'pubdate': datetime.utcnow()})
         else:
+            # allow anonymous context user to be overridden
+            author = kwargs.pop('author', None)
+            if c.user.is_anonymous and author:
+                c.user = author
+
             subject = kwargs.pop('subject', u'%s modified by %s' % (
-                idx.get('title_s'), c.user.get_pref('display_name')))
-            reply_to = u'"%s" <%s>' % (idx.get('title_s', subject),
+                artifact.title_s, c.user.get_pref('display_name')))
+            reply_to = u'"%s" <%s>' % (artifact.title_s,
                                        artifact.email_address)
             text = kwargs.pop('text', subject)
             if safe_notifications:
                 text = safe_text or ""
-            d = dict(
-                from_address=reply_to,
-                reply_to_address=reply_to,
-                subject=subject_prefix + cgi.escape(subject),
-                text=text,
-                author_id=c.user._id,
-                pubdate=datetime.utcnow())
+            attrs.update({
+                'from_address': reply_to,
+                'reply_to_address': reply_to,
+                'subject': subject_prefix + cgi.escape(subject),
+                'title': subject,
+                'text': text,
+                'author_id': c.user._id,
+                'pubdate': datetime.utcnow()})
             email_address = c.user.get_email_address()
             if email_address:
-                d['from_address'] = u'"%s" <%s>' % (
+                attrs['from_address'] = u'"%s" <%s>' % (
                     c.user.get_pref('display_name'),
                     email_address)
-        if not d.get('text'):
-            d['text'] = u''
 
-        assert d['reply_to_address'] is not None
-        if c.project.notifications_disabled:
-            LOG.info(
-                'Notifications disabled for project %s, not sending %s(%r)',
-                c.project.shortname, topic, artifact
-            )
-            return None
-        link_url = kwargs.pop('link', artifact.url())
-        n = cls(ref_id=artifact.index_id(), topic=topic, link=link_url, **d)
+        if not attrs.get('text'):
+            attrs['text'] = u''
+
+        n = cls(**attrs)
         return n
 
     @classmethod
@@ -342,52 +375,85 @@ class Notification(SOLRIndexed):
             'notification': self,
             'prefix': config.get('forgemail.url', 'https://vulcanforge.org'),
             'safe_notifications': safe_notifications,
-            'forge_name': config.get('forge_name', 'Forge')
+            'forge_name': g.forge_name
         }
         context.update(kwargs)
         return context
 
-    def footer(self):
-        text = ''
-        artifact = self.get_artifact()
-        if artifact is not None:
+    @LazyProperty
+    def artifact_html(self):
+        return_html = ''
+        if self.artifact is not None and self.artifact.email_template():
             try:
-                template = self.view.get_template(
-                    'mail/{}.txt'.format(artifact.type_s))
-                text += template.render(self.get_context(artifact=artifact))
-            except Exception, e:
+                template = self.artifact.email_template()
+                return_html += template.render(
+                    self.get_context(artifact=self.artifact))
+            except Exception as e:
                 LOG.debug('Error rendering notification template '
-                          '%s: %s' % (artifact.type_s, e))
-        template = self.view.get_template('mail/footer.txt')
-        text += template.render(self.get_context())
-        return text
+                          '%s: %s' % (self.artifact.type_s, e))
+        return return_html
+
+    @LazyProperty
+    def footer_html(self):
+        return_html = ''
+        template = self.view.get_template('mail/footer.html')
+        return_html += template.render(
+            self.get_context(artifact=self.artifact))
+        return return_html
+
+    @LazyProperty
+    def title_html(self):
+        return_html = ''
+        template = self.view.get_template('mail/title.html')
+        return_html += template.render(
+            self.get_context(artifact=self.artifact))
+        return return_html
+
+    @LazyProperty
+    def mime_images(self):
+        image_dict = {}
+        if self.artifact and self.artifact.app.mime_image_dict:
+            image_dict.update(self.artifact.app.mime_image_dict)
+        return image_dict
 
     def send_direct(self, user_id):
-        text = '\n'.join([
-            '# '+self.subject,
-            self.text,
-            self.footer(),
-        ])
         from_address = '"{} Notification" <{}>'.format(
-            config.get('forge_name', 'Forge'),
+            g.forge_name,
             g.forgemail_return_path)
         sendmail.post(
             destinations=[str(user_id)],
             fromaddr=from_address,
             reply_to=self.reply_to_address,
             subject=self.subject,
+            title_html=self.title_html,
             message_id=self._id,
             in_reply_to=self.in_reply_to,
-            text=text)
+            text=self.text,
+            artifact_html=self.artifact_html,
+            footer_html=self.footer_html,
+            mime_images=self.mime_images
+        )
+
+    @classmethod
+    def default_footer_html(cls):
+        return_html = ''
+        template = cls.view.get_template('mail/footer.html')
+        context = {
+            'prefix': config.get('forgemail.url', 'https://vulcanforge.org'),
+            'forge_name': g.forge_name
+        }
+        return_html += template.render(context)
+        return return_html
 
     @classmethod
     def send_digest(cls, user_id, from_address, notifications,
                     reply_to_address=None):
         if not notifications:
             return
-        subject = '{} activity digest'.format(
-            config.get('forge_name', 'Forge'))
-        text = ['# '+subject]
+        subject = '{} activity digest'.format(g.forge_name)
+        title_html = '<h1>{}</h1>'.format(subject)
+
+        text = []
         if reply_to_address is None:
             reply_to_address = from_address
         for n in notifications:
@@ -401,30 +467,51 @@ class Notification(SOLRIndexed):
             except Exception:
                 LOG.debug("could not render user's email and name for"
                           " id %r", n.from_address)
-            text.append('\n'.join([
-                '## %s' % (n.subject or '(no subject)'),
-                '',
-                '- From: %s' % t_from_address,
-                '- Message-ID: %s' % n._id,
-                '',
-                n.text or '-no text-',
-                n.footer(),
-            ]))
-        text = '\n\n---\n\n---\n\n'.join(text)
+            if n.topic == 'message':
+                text.append('\n'.join([
+                    '## %s' % (n.title or '(no title)'),
+                    '',
+                    '- From: %s' % t_from_address,
+                    '',
+                    n.text or '-no text-',
+                ]))
+            else:
+                title = n.title
+                if n.artifact:
+                    prefix = config.get('forgemail.url',
+                                        'https://vulcanforge.org')
+                    title = '<a href="{}{}" style="text-decoration: none">{}</a> > <a href="{}{}" style="text-decoration: none">{}</a>'.format(
+                        prefix,
+                        n.artifact.app_config.url(),
+                        n.artifact.app_config.options.mount_label,
+                        prefix,
+                        n.artifact.url(),
+                        n.title
+                    )
+
+                text.append('\n'.join([
+                    '** %s **' % (title or '(no title)'),
+                    '',
+                    n.text or '-no text-',
+                ]))
+
+        text = '\n<hr style="border-style: dashed;"/>\n'.join(text)
         sendmail.post(
             destinations=[str(user_id)],
             fromaddr=from_address,
             reply_to=reply_to_address,
             subject=subject,
             message_id=gen_message_id(),
-            text=text)
+            text=text,
+            title_html=title_html,
+            footer_html=cls.default_footer_html(),
+        )
 
     @classmethod
     def send_summary(cls, user_id, from_address, notifications):
         if not notifications:
             return
-        subject = '{} activity summary'.format(
-            config.get('forge_name', 'Forge'))
+        subject = '{} activity summary'.format(g.forge_name)
         text = [subject]
         for n in notifications:
             text.append('From: %s' % n.from_address)
@@ -432,7 +519,6 @@ class Notification(SOLRIndexed):
             text.append('Message-ID: %s' % n._id)
             text.append('')
             text.append(truncate(n.text or '-no text-', 128))
-            text.append(n.footer())
         text = '\n'.join(text)
         sendmail.post(
             destinations=[str(user_id)],
@@ -440,7 +526,9 @@ class Notification(SOLRIndexed):
             reply_to=from_address,
             subject=subject,
             message_id=gen_message_id(),
-            text=text)
+            text=text,
+            footer_html=cls.default_footer_html(),
+        )
 
 
 class Mailbox(MappedClass):
@@ -448,7 +536,7 @@ class Mailbox(MappedClass):
         session = main_orm_session
         name = 'mailbox'
         unique_indexes = [
-            ('user_id', 'project_id', 'app_config_id',
+            ('user_id', 'project_id', 'app_config_id', 'exchange_uri',
              'artifact_index_id', 'topic', 'is_flash'),
         ]
         indexes = [('project_id', 'artifact_index_id')]
@@ -456,15 +544,15 @@ class Mailbox(MappedClass):
     _id = FieldProperty(S.ObjectId)
     user_id = ForeignIdProperty(User, if_missing=lambda: c.user._id)
     user = RelationProperty(User, via="user_id")
-    project_id = ForeignIdProperty('Project', if_missing=lambda: c.project._id)
+    project_id = ForeignIdProperty(
+        'Project', if_missing=lambda: g.context_manager.get_project_id())
     app_config_id = ForeignIdProperty(
-        'AppConfig',
-        if_missing=lambda: c.app.config._id
-    )
+        'AppConfig', if_missing=lambda: g.context_manager.get_app_config_id())
+    exchange_uri = FieldProperty(str, if_missing=None)
 
     # Subscription filters
-    artifact_title = FieldProperty(str)
-    artifact_url = FieldProperty(str)
+    artifact_title = FieldProperty(str, if_missing=None)
+    artifact_url = FieldProperty(str, if_missing=None)
     artifact_index_id = FieldProperty(str)
     topic = FieldProperty(str)
 
@@ -493,6 +581,7 @@ class Mailbox(MappedClass):
             '_id': str(self._id),
             'project_id': str(self.project_id),
             'app_config_id': str(self.app_config_id),
+            'exchange_uri': self.exchange_uri,
             'artifact_title': self.artifact_title,
             'artifact_url': self.artifact_url,
             'artifact_index_id': self.artifact_index_id,
@@ -525,74 +614,67 @@ class Mailbox(MappedClass):
 
     @classmethod
     def subscribe(cls, user_id=None, project_id=None, app_config_id=None,
-                  artifact=None, topic=None, type='direct', n=1, unit='day'):
+                  artifact=None, exchange_uri=None, topic=None, type='direct',
+                  n=1, unit='day'):
+        # get default vals from context
         if user_id is None:
             user_id = c.user._id
-        if project_id is None:
+        if project_id is None and not exchange_uri:
             project_id = c.project._id
-        if app_config_id is None:
+        if app_config_id is None and not exchange_uri:
             app_config_id = c.app.config._id
-        tool_already_subscribed = cls.query.get(
-            user_id=user_id,
-            project_id=project_id,
-            app_config_id=app_config_id,
-            artifact_index_id=None)
-        if tool_already_subscribed:
-            LOG.debug('Tried to subscribe to artifact %s, '
-                      'while there is a tool subscription',
-                      artifact and artifact.index_id())
-            return
-        if artifact is None:
-            artifact_title = 'All artifacts'
-            artifact_url = None
-            artifact_index_id = None
-        else:
-            i = artifact.index()
-            artifact_title = i['title_s']
-            artifact_url = artifact.url()
-            artifact_index_id = i['id']
-            artifact_already_subscribed = cls.query.get(
-                user_id=user_id,
-                project_id=project_id,
-                app_config_id=app_config_id,
-                artifact_index_id=artifact_index_id
-            )
-            if artifact_already_subscribed:
+
+        # compile mailbox attributes
+        unique_data = {
+            'user_id': user_id,
+            'project_id': project_id,
+            'app_config_id': app_config_id,
+            'exchange_uri': exchange_uri,
+            'topic': topic,
+            'is_flash': False
+        }
+        data = {
+            'type': type,
+            'frequency': {"n": n, "unit": unit}
+        }
+        if artifact:
+            tool_already_subscribed = cls.query.get(
+                artifact_index_id=None, **unique_data)
+            if tool_already_subscribed:
+                LOG.info('Tried to subscribe to artifact %s, '
+                         'while there is a tool subscription',
+                         artifact and artifact.index_id())
                 return
-        d = dict(
-            user_id=user_id,
-            project_id=project_id,
-            app_config_id=app_config_id,
-            artifact_index_id=artifact_index_id,
-            topic=topic
-        )
+            data.update({
+                "artifact_title": artifact.title_s,
+                "artifact_url": artifact.url()
+            })
+            unique_data['artifact_index_id'] = artifact.index_id()
+        else:
+            data['artifact_title'] = 'All Artifacts'
+
+        # create the new mailbox
+        all_data = dict(data, **unique_data)
+        mbox = cls(**all_data)
+
+        # flush. If there is a conflict, update instead.
         sess = session(cls)
         try:
-            mbox = cls(
-                type=type, frequency=dict(n=n, unit=unit),
-                artifact_title=artifact_title,
-                artifact_url=artifact_url,
-                **d)
             sess.flush(mbox)
         except pymongo.errors.DuplicateKeyError:
             sess.expunge(mbox)
-            mbox = cls.query.get(**d)
-            mbox.artifact_title = artifact_title
-            mbox.artifact_url = artifact_url
-            mbox.type = type
-            mbox.frequency.n = n
-            mbox.frequency.unit = unit
+            mbox = cls.query.get(**unique_data)
+            for key, val in data.items():
+                setattr(mbox, key, val)
             sess.flush(mbox)
-        if not artifact_index_id:
-            # Unsubscribe from individual artifacts when subscribing to tool
-            others = cls.query.find(dict(
-                user_id=user_id,
-                project_id=project_id,
-                app_config_id=app_config_id
-            ))
+
+        # Unsubscribe from individual artifacts when subscribing to tool
+        if not artifact:
+            query = unique_data.copy()
+            query.update({"artifact_index_id": {"$ne": None}})
+            others = cls.query.find(query)
             for other_mbox in others:
-                if other_mbox is not mbox:
-                    other_mbox.delete()
+                other_mbox.delete()
 
     @classmethod
     def unsubscribe(cls, user_id=None, project_id=None, app_config_id=None,
@@ -603,17 +685,17 @@ class Mailbox(MappedClass):
             project_id = c.project._id
         if app_config_id is None:
             app_config_id = c.app.config._id
-        cls.query.remove(dict(
-            user_id=user_id,
-            project_id=project_id,
-            app_config_id=app_config_id,
-            artifact_index_id=artifact_index_id,
-            topic=topic))
+        cls.query.remove({
+            'user_id': user_id,
+            'project_id': project_id,
+            'app_config_id': app_config_id,
+            'artifact_index_id': artifact_index_id,
+            'topic': topic
+        })
 
     @classmethod
-    def subscribed(
-            cls, user_id=None, project_id=None, app_config_id=None,
-            artifact=None, topic=None):
+    def subscribed(cls, user_id=None, project_id=None, app_config_id=None,
+                   artifact=None, topic=None):
         if user_id is None:
             user_id = c.user._id
         if project_id is None:
@@ -672,13 +754,18 @@ class Mailbox(MappedClass):
         to the appropriate mailboxes.
 
         """
-        d = {
-            'project_id': c.project._id,
-            'app_config_id': c.app.config._id,
+        query = {
             'artifact_index_id': {'$in': [None, artifact_index_id]},
             'topic': {'$in': [None, topic]}
         }
-        for mbox in cls.query.find(d):
+        if getattr(c, 'project', None):
+            query.update({
+                'project_id': c.project._id,
+                'app_config_id': c.app.config._id
+            })
+        elif getattr(c, 'exchange', None):
+            query['exchange_uri'] = c.exchange.config['uri']
+        for mbox in cls.query.find(query):
             if mbox.user and mbox.user.active():
                 mbox.query.update(
                     {'$push': dict(queue=nid),
@@ -728,7 +815,7 @@ class Mailbox(MappedClass):
 
     def fire(self, now):
         # break out early if notifications are disabled for this project
-        if self.project.disable_notification_emails:
+        if self.project and self.project.disable_notification_emails:
             return
         notifications = Notification.query.find(dict(_id={'$in': self.queue}))
         notifications = notifications.all()
@@ -751,7 +838,7 @@ class Mailbox(MappedClass):
                     ngroups[key].append(n)
                 # Accumulate messages from same address with same subject
             for (subject, from_address, reply_to_address, author_id), ns \
-                in ngroups.iteritems():
+                    in ngroups.iteritems():
                 if len(ns) == 1:
                     n.send_direct(self.user_id)
                 else:
@@ -763,7 +850,7 @@ class Mailbox(MappedClass):
                     )
         else:
             from_address = '"{} Notification" <{}>'.format(
-                config.get('forge_name', 'Forge'),
+                g.forge_name,
                 g.forgemail_return_path)
             if self.type == 'digest':
                 Notification.send_digest(

@@ -15,7 +15,8 @@ from tg.decorators import expose
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.neighborhood.controllers import \
     NeighborhoodProjectBrowseController
-from vulcanforge.neighborhood.marketplace.controllers import NeighborhoodMarketplaceController
+from vulcanforge.neighborhood.marketplace.controllers import \
+    NeighborhoodMarketplaceController
 from vulcanforge.tools.neighborhood_home.controllers.monitor import \
     NeighborhoodMonitorController
 
@@ -38,9 +39,7 @@ class NeighborhoodHomeRootController(BaseController):
         )
         self.monitor = self.monitor_controller_cls(self.neighborhood)
         if self.neighborhood.enable_marketplace:
-            self.market = NeighborhoodMarketplaceController(
-                self.neighborhood
-            )
+            self.market = NeighborhoodMarketplaceController(self.neighborhood)
 
     @expose(TEMPLATE_DIR + 'master.html')
     def index(self, **kwargs):

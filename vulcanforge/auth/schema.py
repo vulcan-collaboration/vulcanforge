@@ -9,16 +9,20 @@ class ACE(S.Object):
     ALLOW, DENY = 'ALLOW', 'DENY'
 
     def __init__(self, permissions, **kwargs):
+        super(ACE, self).__init__(
+            fields=self._make_fields(permissions),
+            **kwargs)
+
+    def _make_fields(self, permissions):
         if permissions is None:
             permission = S.String()
         else:
             permission = S.OneOf('*', *permissions)
-        super(ACE, self).__init__(
-            fields=dict(
-                access=S.OneOf(self.ALLOW, self.DENY),
-                role_id=S.ObjectId(),
-                permission=permission),
-            **kwargs)
+        return {
+            'access': S.OneOf(self.ALLOW, self.DENY),
+            'role_id': S.ObjectId(),
+            'permission': permission
+        }
 
     @classmethod
     def allow(cls, role_id, permission):
@@ -42,10 +46,11 @@ class ACE(S.Object):
 
 
 class ACL(S.Array):
+    entry_cls = ACE
 
     def __init__(self, permissions=None, **kwargs):
         super(ACL, self).__init__(
-            field_type=ACE(permissions), **kwargs)
+            field_type=self.entry_cls(permissions), **kwargs)
 
     @classmethod
     def upsert(cls, acl, ace):

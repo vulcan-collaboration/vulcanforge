@@ -12,6 +12,7 @@ from webob import exc
 from tg import config, response, request
 from pylons import app_globals as g, tmpl_context as c
 from ming.utils import LazyProperty
+from vulcanforge.common.util import get_client_ip, cryptographic_nonce
 from vulcanforge.project.model import ProjectRole
 
 try:
@@ -68,6 +69,11 @@ class BaseAuthenticationProvider(object):
             return self.user_cls.anonymous()
         if user is None:
             return self.user_cls.anonymous()
+        # immediate effect of disabling user
+        if getattr(user, 'disabled', False):
+            del request.environ['HTTP_COOKIE']
+            self.logout()
+            return self.user_cls.anonymous()
         return user
 
     def register_user(self, user_doc, neighborhood=None):
@@ -104,8 +110,15 @@ class BaseAuthenticationProvider(object):
             if user.disabled:
                 raise exc.HTTPUnauthorized('User is disabled')
             user.last_login = datetime.utcnow()
-            if not g.s3_serve_local:
-                self.swift_login(user)
+            client_ip = get_client_ip()
+            if client_ip:
+                ip_key = client_ip.replace(".", "_")
+                if ip_key in user.login_clients:
+                    last, count = user.login_clients.pop(ip_key)
+                    new_value = [user.last_login, count + 1]
+                    user.login_clients.update({ip_key: new_value})
+                else:
+                    user.login_clients.update({ip_key: [user.last_login, 1]})
             self.session['userid'] = user._id
             self.session.save()
             g.store_event('login', user=user)
@@ -114,27 +127,7 @@ class BaseAuthenticationProvider(object):
             self.logout()
             raise
 
-    def swift_login(self, user):
-        params = user.get_swift_params(force_new=True)
-        if g.s3_is_local:
-            for k, v in params.iteritems():
-                response.set_cookie(
-                    k, urllib.quote(v),
-                    domain='.' + g.base_domain,
-                    secure=self.session.secure,
-                    overwrite=True
-                )
-        else:
-            user.get_swift_cookies = True
-            for k, v in params.iteritems():
-                response.set_cookie(k, v, overwrite=True)
-
     def logout(self):
-        if not g.s3_serve_local:
-            domain = '.' + g.base_domain if g.s3_is_local else None
-            user = c.user if hasattr(c, 'user') else self.user_cls.anonymous()
-            for k in user.swift_params:
-                response.delete_cookie(k, domain=domain)
         self.session['userid'] = None
         self.session.delete()
 
@@ -230,6 +223,7 @@ class LocalAuthenticationProvider(BaseAuthenticationProvider):
     def set_password(self, user, old_password, new_password, as_admin=False):
         self.assert_password_unused(new_password, user)
         user.password = self._encode_password(new_password)
+        user.store_old_password_hash(user.password)
 
 
 class LdapAuthenticationProvider(BaseAuthenticationProvider):

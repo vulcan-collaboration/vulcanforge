@@ -2,12 +2,38 @@ import logging
 
 import bson
 from ming import schema
-from ming.odm import mapper,  Mapper, ThreadLocalODMSession
+from ming.odm import (
+    state,
+    mapper,
+    Mapper,
+    ThreadLocalODMSession,
+    RelationProperty
+)
 from ming.odm.declarative import MappedClass
 from ming.odm.icollection import InstrumentedList
 from ming.utils import LazyProperty
 
 LOG = logging.getLogger(__name__)
+
+
+class VFRelationProperty(RelationProperty):
+    """Relation property that sets itself on set, to the issue where relation
+    properties that are set will set the associated foreign key property but
+    not itself, e.g.:
+
+    # nbhd is not yet flushed to the db in this case
+    >>> project.neighborhood = nbhd
+    >>> print project.neighborhood
+    None
+
+    Also prevents a query to the database when the related property is flushed.
+
+    """
+    def __set__(self, instance, value):
+        super(VFRelationProperty, self).__set__(instance, value)
+        if self.fetch:
+            st = state(instance)
+            st.extra_state[self] = value
 
 
 def chunked_find(cls, query=None, pagesize=1024):

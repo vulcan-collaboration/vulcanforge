@@ -3,6 +3,8 @@ import os
 import re
 import gzip
 import glob
+import tempfile
+import subprocess
 from itertools import groupby
 from collections import defaultdict
 
@@ -16,18 +18,18 @@ import ew
 from ew.core import widget_context
 from vulcanforge.common.util.filesystem import mkdir_p
 
-from .widgets import Resource, CSSLink, JSLink, JSScript
+from .widgets import Resource, CSSLink, JSLink, JSScript, HTMLLink
 
 LOG = logging.getLogger(__name__)
 
 RESOURCE_URL = re.compile(r"url\([\'\"]?([^\"\'\)]+)[\'\"]?\)")
 ROOTRELATIVE_URL = re.compile(r"url\([\'\"]?/([^\"\'\)]+)[\'\"]?\)")
 SPRITE_MAP_PREFIX = 'SPRITE-MAP/'
-
 RESOURCE_RECIPE_MAPPING = 'resource_recipe_mapping'
 
+
 class ResourceManager(ew.ResourceManager):
-    file_types = ['css', 'js']
+    file_types = ['css', 'js', 'html']
     scopes = ['forge', 'tool', 'page']
     cache_max_age = 60 * 60 * 24 * 365
     paths = []
@@ -71,7 +73,8 @@ class ResourceManager(ew.ResourceManager):
     def init_resource_context(self):
         widget_context.resources = {
             'js': defaultdict(list),
-            'css': defaultdict(list)
+            'css': defaultdict(list),
+            'html': defaultdict(list)
         }
 
     @property
@@ -163,6 +166,11 @@ class ResourceManager(ew.ResourceManager):
             kw['scope'] = 'page'
         self.register(CSSLink(href, **kw))
 
+    def register_html(self, href, **kw):
+        # Coerce the scope to always be forge for now
+        kw['scope'] = 'forge'
+        self.register(HTMLLink(href, **kw))
+
     def register_js(self, href, **kw):
         if 'scope' not in kw:
             kw['scope'] = 'page'
@@ -174,10 +182,11 @@ class ResourceManager(ew.ResourceManager):
     def get_filename(self, res_path):
         """
         Translate a resource path to a filename
+
         """
         if res_path.startswith(SPRITE_MAP_PREFIX):
             # cleanup
-            mod_res_path = res_path.split(SPRITE_MAP_PREFIX,1)[1]
+            mod_res_path = res_path.split(SPRITE_MAP_PREFIX, 1)[1]
             fs_path = os.path.join(self.build_dir, mod_res_path)
             if not os.path.isfile(fs_path):
                 return None
@@ -277,13 +286,21 @@ class ResourceManager(ew.ResourceManager):
             destination_dir = self.build_dir
         hashed_file_name = self.hashed_file(file_type, rel_resource_paths)
         build_file_path = os.path.join(destination_dir, hashed_file_name)
+        content = None
         if not os.path.exists(build_file_path):
-            if file_type == 'js' and self.use_jsmin:
-                content = '\n'.join(
-                    jsmin.jsmin(open(self.get_filename(h)).read())
-                    for h in rel_resource_paths
-                    if h is not None and self.get_filename(h) is not None)
-            elif file_type == 'css' and self.use_cssmin:
+            if file_type == 'js':
+                valid_paths = [h for h in rel_resource_paths
+                        if h is not None and self.get_filename(h) is not None]
+                if self.use_jsmin:
+                    # Only minify if the file has not been minified yet
+                    content = '\n'.join(
+                        open(self.get_filename(h)).read() if ".min.js" in h
+                        else jsmin.jsmin(open(self.get_filename(h)).read())
+                        for h in valid_paths)
+                else:
+                    content = '\n'.join(
+                        open(self.get_filename(h)).read() for h in valid_paths)
+            elif file_type == 'css':
                 content_list = []
                 for h in rel_resource_paths:
                     css_path = self.get_filename(h)
@@ -323,11 +340,37 @@ class ResourceManager(ew.ResourceManager):
                         content = content.replace(SPRITE_MAP_PREFIX, '')
                         content_list.append(content)
 
-                content = cssmin.cssmin('\n'.join(content_list))
+                if self.use_cssmin:
+                    content = cssmin.cssmin('\n'.join(content_list))
+                else:
+                    content = '\n'.join(content_list)
+            elif file_type == 'html':
+                # This is where vulcanization happens
+                # Create a temporary file with the links to vulcanize in the
+                # static resources folder
+                with tempfile.NamedTemporaryFile(suffix='.html',
+                                             dir=destination_dir) as input_file:
+                    for h in rel_resource_paths:
+                        input_file.write('<link rel="import" href="{}"/>'.format(h))
+                    input_file.flush()
 
-            zip_file = gzip.GzipFile(build_file_path, 'wb')
-            zip_file.write(content)
-            zip_file.close()
+                    # Now vulcanize it into the file we want
+                    with tempfile.NamedTemporaryFile(suffix=".html",
+                                          dir=destination_dir) as output_file:
+                        call_args = [
+                            'vulcanize', '-p', destination_dir,
+                            '-o', output_file.name,
+                            '--inline-scripts',
+                            '--inline-css',
+                            '--strip-comments',
+                            os.path.basename(input_file.name)]
+                        subprocess.check_call(call_args)
+                        content = output_file.read()
+
+            if content is not None:
+                zip_file = gzip.GzipFile(build_file_path, 'wb')
+                zip_file.write(content)
+                zip_file.close()
 
     def serve_slim(self, file_type, href):
         content_path = os.path.join(self.static_resources_dir,
@@ -338,14 +381,19 @@ class ResourceManager(ew.ResourceManager):
             raise IOError()
 
         if not os.path.exists(content_path):
-            if file_type not in ('js','css'):
+            if file_type not in self.file_types:
                 raise IOError()
             if self.globals.cache.redis.hexists(RESOURCE_RECIPE_MAPPING, href):
                 recipe = self.globals.cache.redis.hget(RESOURCE_RECIPE_MAPPING, href)
                 resource_list = recipe.strip().split(self.separator)
-                self.write_slim_file(file_type, resource_list)
+                try:
+                    self.write_slim_file(file_type, resource_list)
+                except Exception, e:
+                    msg = "Unable to serve '{}' with resources {}"
+                    LOG.error(msg.format(href, resource_list))
+                    raise
             else:
-                raise IOError
+                raise IOError()
 
         stat = os.stat(content_path)
         content = open(content_path).read()

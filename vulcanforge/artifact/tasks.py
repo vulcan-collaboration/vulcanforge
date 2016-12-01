@@ -116,6 +116,9 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
             submitted_doc = _convert_value_to_doc(submitted_doc)
             diffs = []
             for k in set(submitted_doc.keys()).union(actual_doc.keys()):
+                # Do not compare date values
+                if k.endswith('_dt') or k.endswith('_dt_mv'):
+                    continue
                 s_val = submitted_doc.get(k, '<MISSING>')
                 a_val = actual_doc.get(k, '<MISSING>')
                 if s_val != a_val:

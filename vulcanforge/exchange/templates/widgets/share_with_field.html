@@ -1,0 +1,10 @@
+<div class="share-with-container">
+    {% if share_label %}<label>{{ share_label }}</label>{% endif %}
+    {% for field in widget.fields %}
+        {% set ctx = widget.context_for(field) -%}
+        {% if ctx.errors and field.show_errors -%}
+        <span {{widget.j2_attrs({'class':error_class})}}>{{ctx.errors}}</span><br>
+        {%- endif %}
+        {{field.display(**ctx)}}
+    {% endfor %}
+</div>

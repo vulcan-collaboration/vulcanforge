@@ -1,0 +1,9 @@
+{% extends 'exchange/master.html' %}
+
+{% block title %}Import {{ node.display_name }} from {{ xcng_name }}{% endblock %}
+
+{% block header %}Import {{ node.display_name }} from {{ xcng_name }}{% endblock %}
+
+{% block content %}
+    {{ c.import_form.display(value=value, action=import_action) }}
+{% endblock %}s

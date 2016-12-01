@@ -46,54 +46,39 @@ class EditProfileForm(ForgeForm):
                         label="Display Name",
                         name="display_name"
                     ),
+                    jinja2_ew.TextField(
+                        label="Organization",
+                        name="company"
+                    ),
+                    jinja2_ew.TextField(
+                        label="Position",
+                        name="position"
+                    ),
+                    jinja2_ew.TextField(
+                        label="Telephone",
+                        name="telephone"
+                    )
+                ],
+                wide=True,
+                attrs={'class': 'vf-fieldset'}
+            ),
+            jinja2_ew.FieldSet(
+                label='Additional Info',
+                fields=[
                     jinja2_ew.TextArea(
                         label="Your Mission",
                         name="mission",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
+                        attrs={'maxlength': 512, 'cols': 80, 'rows': 3, 'style': "width:500px"}
                     ),
                     jinja2_ew.TextArea(
                         label="Your Interests",
                         name="interests",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
+                        attrs={'maxlength': 512, 'cols': 80, 'rows': 3, 'style': "width:500px"}
                     ),
                     jinja2_ew.TextArea(
                         label="Your Expertise",
                         name="expertise",
-                        attrs={'maxlength': 37, 'cols': 30, 'rows': 3}
-                    )
-                ],
-                wide=True,
-                attrs={'class': 'vf-fieldset'}
-            ),
-            jinja2_ew.FieldSet(
-                label='Marketplace Advertisement',
-                fields=[
-                    jinja2_ew.TextArea(
-                        label="Marketplace Advertisement",
-                        name='user_ad',
-                        note="Add yourself to the marketplace listings. Plain "
-                             "text only.",
-                        attrs={
-                            'maxlength': 255,
-                            'cols': 30,
-                            'rows': 10
-                        }
-                    ),
-                    jinja2_ew.Checkbox(
-                        label="Remove Advertisement",
-                        name="remove_ad"
-                    )
-                ],
-                wide=True,
-                attrs={'class': 'vf-fieldset'}
-            ),
-            jinja2_ew.FieldSet(
-                label='For Internal Use Only',
-                fields=[
-                    jinja2_ew.TextField(
-                        label="Skype Name (for VCDE tool only)",
-                        name="skype_name",
-                        note="For use in VCDE tool"
+                        attrs={'maxlength': 512, 'cols': 80, 'rows': 3, 'style': "width:500px"}
                     )
                 ],
                 wide=True,

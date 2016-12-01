@@ -40,13 +40,9 @@ input[type="button"],
     vertical-align: middle;
 
     font-family: Verdana, sans-serif;
-
     width: auto;
-
     @extend .bbs;
-
     @include create_transition(opacity, .2s);
-
     @include button-skin;
 }
 
@@ -101,4 +97,10 @@ select:focus,
 
 button img {
     vertical-align: middle;
+}
+
+button[disabled],
+button[disabled]:hover,
+button[disabled]:focus {
+  @include button-inactive-skin;
 }

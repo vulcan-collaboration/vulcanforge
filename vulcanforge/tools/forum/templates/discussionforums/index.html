@@ -10,16 +10,15 @@
     {% endif %}
 {% endblock %}
 
-{% if g.security.has_access(c.app, 'write') and (not hide_forum) %}
-  {% block edit_box %}
+{% block content %}
+  <div id="tutorialHolder"></div>
+  <div class="padded top-spaced">
+
+  {% if g.security.has_access(c.app, 'admin') and (not hide_forum) %}
     <div id="add_forum_form"{% if hide_forum %} style="display:none"{% endif %} class="editbox">
       {{c.add_forum.display(method='POST', action=c.project.url() + c.app.config.options.mount_point + '/add_forum_short', app=c.app, value=add_forum)}}
     </div>
-  {% endblock %}
-{% endif %}
-
-{% block content %}
-    <div class="padded top-spaced">
+  {% endif %}
   {% if announcements %}
     <h3>Announcements</h3>
     {{c.announcements_table.display(value=announcements)}}
@@ -43,7 +42,7 @@
             </thead>
             <tbody>
             {% for forum in forums %}
-            {% if not forum.deleted or g.security.has_access(c.app, 'write') %}
+            {% if not forum.deleted or g.security.has_access(c.app, 'admin') %}
             <tr class="discussion_forum">
                 <td>
                     <a href="{{forum.url()}}">
@@ -53,12 +52,12 @@
                 <td>
 
                     <a href="{{forum.url()}}">
-                        <strong class="forum_name">{{forum.name}}:</strong>
+                        <strong class="forum_name"><span class="obvious">{{"(DELETED) " if forum.deleted else ""}}</span>{{forum.name}}:</strong>
                     </a>
                     <br>{{forum.description}}<br>&nbsp;<br>
                     {% if forum.deleted %}
-                    <div class="notice">This forum has been deleted and is not
-                        visible to non-admin users
+                    <div class="notice obvious">This forum has been deleted and is not
+                        visible to non-admin users.
                     </div>
                     {% endif %}
                 </td>
@@ -72,11 +71,11 @@
             {% endfor %}
             </tbody>
         </table>
-    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
-  {% if g.security.has_access(c.app, 'write') %}
+  {% if g.security.has_access(c.app, 'admin') %}
     <script type="text/javascript">
       $(function() {
         $("#add_forum").click(function(){
@@ -96,6 +95,13 @@
 <style type="text/css">
   .forum_name{
     font-size: 1.2em;
+  }
+  .deleted {
+    text-decoration: line-through;
+  }
+  .obvious {
+    font-weight: bold;
+    color: red;
   }
 </style>
 {% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'exchange/master.html' %}
+
+{% do g.resource_manager.register_css('assets/datatable/css/vf_datasort_table.css') %}
+{% do g.resource_manager.register_js('assets/datatable/js/jquery.dataTables.js') %}
+{% do g.resource_manager.register_js('assets/datatable/js/tableWidget.js') %}
+{% do g.resource_manager.register_js('exchange/js/node_menu_bar.js') %}
+
+{% block title %}Browse {{ xcng_name }}{% endblock %}
+
+{% block header %}Browse {{ xcng_name }}{% endblock %}
+
+{% block content %}
+    <div class="padded">
+        <div id="browseDatatable"></div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    (function($) {
+        var browseTable;
+
+        browseTable = new TableWidget($("#browseDatatable"), {
+            sTitle: "{{ xcng_name }}",
+            bServerSide: true,
+            sAjaxSource: "{{ data_url }}",
+            bProcessing: true,
+            aaSorting: {{ sorting | jsonify }},
+            aoColumns: {{ table_columns | jsonify }},
+            aLengthMenu: [50, 75, 100, 150],
+            iDisplayLength: 50
+        });
+
+    }(jQuery));
+
+</script>
+{% endblock %}

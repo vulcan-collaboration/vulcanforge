@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<dom-module id="vf-styles">
+    <style include="themecolors">
+        /* contains some basic styling for MAIhub simple pages that do not follow the standard vulcan styles. */
+        body {
+            margin: 0;
+            font-family: Roboto, sans-serif;
+            font-size: 16px;
+            background: var(--headingbar);
+            color: var(--pristine);
+            fill: var(--pristine);
+        }
+        h1 {
+            margin: 1rem 0;
+            font-size: 5rem;
+            color: var(--logotext);
+            font-family: Ubuntu, Roboto, sans-serif;
+            font-weight: normal;
+        }
+        h2 {
+            margin: 1rem 0;
+            font-size: 2rem;
+            color: var(--toptext);
+            font-family: Ubuntu, Roboto, sans-serif;
+        }
+        h3 {
+            margin: 1rem 0;
+            font-size: 2rem;
+            color: #921700;
+            font-family: Ubuntu, Roboto, sans-serif;
+        }
+        h4 {
+            margin: 1rem 0;
+            font-size: 1.5rem;
+            color: #707080;
+            font-family: Ubuntu, Roboto, sans-serif;
+        }
+        h5 {
+            margin: 1rem 0;
+            font-size: 1rem;
+            color: #808088;
+            font-family: Ubuntu, Roboto, sans-serif;
+        }
+        p {
+            margin: 1rem 0;
+        }
+        paper-input, paper-input-container {
+            --paper-input-container-underline-focus: {
+                background-color: var(--interactive);
+            }
+        }
+        paper-button button {
+            height: auto;
+            margin: 0;
+            padding: 0;
+            font: inherit;
+            line-height: inherit;
+            text-align: inherit;
+            border: none;
+            background: transparent;
+            color: inherit;
+            fill: inherit;
+        }
+        .display-font {
+            font-family: Ubuntu, Roboto, sans-serif;
+        }
+        .big-margin {
+            margin: 2rem;
+        }
+        .big-padding {
+            padding: 3rem 2rem;
+        }
+        .paper-sheet {
+            /* min-width: 288px; */
+            background: var(--pristine);
+            color: var(--dark);
+            fill: var(--dark);
+        }
+        .paper-skinny {
+            max-width: 320px;
+        }
+        .section-icon {
+            width: 2em;
+            height: 2em;
+            fill: var(--interactive);
+        }
+        paper-button[raised],
+        paper-button-link[raised] {
+            background: var(--headingbar);
+            color: var(--interactive);
+            fill: var(--pristine);
+            font-weight: 500;
+        }
+        #logo-heading,
+        #logo-subheading {
+            margin: 8px 0;
+            line-height: 1em;
+        }
+        #logo-subheading:empty {
+            display: none;
+        }
+        .form-error {
+            padding: 1rem 2rem;
+            background: #c44;
+            color: var(--pristine);
+            fill: var(--pristine);
+        }
+        user-profile,
+        section {
+            min-width: 400px;
+        }
+        a {
+            text-decoration: none;
+            color: var(--pitch);
+        }
+        #beautiful_sunset {
+            border-radius: 1ex 1ex 0 0;
+            bottom: 0;
+            box-shadow: 0 2px 6px black;
+            color: #ddd;
+            background-color: #444;
+            left: 50%;
+            margin: 0 auto 0 -7em;
+            padding: 1.2ex 1em 1ex 0.9em;
+            position: fixed;
+            text-shadow: 0 1px 3px black;
+            text-transform: uppercase;
+            z-index: 201;
+        }
+        #beautiful_sunset:hover {
+            /*background-color: #0668C9;*/
+            padding-bottom: 1.5ex;
+        }
+        #beautiful_sunset a {
+            color: #ddd;
+            padding: 0 0.9em;
+            text-decoration: none;
+        }
+        #beautiful_sunset a:hover {
+            color: var(--pristine);
+        }
+        #report_an_issue {
+        }
+        #ticket_icon {
+            margin-right: 8px;
+        }
+        @media (max-width: 960px) {
+            .big-margin {
+                margin: 1rem;
+            }
+            .big-padding {
+                padding: 2rem 1rem;
+            }
+        }
+       @media (max-width: 480px), (max-width: 320px) {
+            .big-margin {
+                margin: 0.5rem;
+            }
+            .big-padding {
+                padding: 1rem 0.5rem;
+            }
+            user-profile,
+            section {
+                min-width: 250px;
+            }
+        }
+    </style>
+</dom-module>
+</html>

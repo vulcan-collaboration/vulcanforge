@@ -16,9 +16,8 @@
 {% do g.resource_manager.register_css('css/progress-polyfill.css', scope='forge') %}
 {% do g.resource_manager.register_css('theme/css/theme.scss', scope='forge') %}
 {% do g.resource_manager.register_css('websocket/vf_websocket_chat.css', scope='forge') %}
-{% do g.resource_manager.register_css('css/jquery.dataTables.css', scope='forge') %}
-{% do g.resource_manager.register_css('assets/jquery.datatable/css/jquery.dataTables.css', scope='forge') %}
-{% do g.resource_manager.register_css('assets/jquery.datatable/css/vf_datasort_table.css', scope='forge') %}
+{% do g.resource_manager.register_css('assets/datatable/css/jquery.dataTables.css', scope='forge') %}
+{% do g.resource_manager.register_css('assets/datatable/css/vf_datasort_table.css', scope='forge') %}
 
 {# *********************** These are original Allura scripts ********************************* #}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.1.7.2.min.js', scope='forge') %}
@@ -31,7 +30,8 @@
 {# *********************** These are VF scripts ********************************************** #}
 {% do g.resource_manager.register_js('js/lib/utils.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/raphael/raphael.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/lib/jquery/jquery.ui.idle-logout.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/store.min.js', scope='forge') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery-idleTimeout.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.scrollTo.min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.updateFromJSON.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/jquery/jquery.relativeDate.js', scope='forge') %}
@@ -44,9 +44,10 @@
 {% do g.resource_manager.register_js('js/lib/json/json2.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/progress-polyfill.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/lib/underscore-min.js', scope='forge') %}
-{% do g.resource_manager.register_js('assets/jquery.datatable/js/jquery.dataTables.min.js', scope='forge') %}
 {% do g.resource_manager.register_js('js/vf.js', scope='forge') %}
-{% do g.resource_manager.register_js('js/masternav.js', scope='forge') %}
+{% if not c.user.is_anonymous %}
+    {% do g.resource_manager.register_js('js/masternav.js', scope='forge') %}
+{% endif %}
 {% if g.websocket_enabled %}
     {% do g.resource_manager.register_js('websocket/vf_websocket.js', scope='forge') %}
     {% do g.resource_manager.register_js('websocket/vf_websocket_chat.js', scope='forge') %}
@@ -75,6 +76,14 @@
     {% for blob in g.resource_manager.emit('css') %}
     {{ blob }}
     {% endfor %}
+
+    {% if g.idle_logout_enabled %}
+    <style type="text/css">
+        .ui-dialog-titlebar-close {
+          visibility: hidden;
+        }
+    </style>
+    {% endif %}
 
     {% block head_extra %}{% endblock %}
 </head>
@@ -130,7 +139,7 @@
                     <div class="popup-menu-item-seperator"></div>
 
                     <div class="popup-menu-item popup-menu-item-link">
-                        <a href="/auth/logout" class="inline-icon ico-logout">Log Out</a>
+                        <a href="{{ g.idle_logout_enabled and 'javascript:$vf.logout();' or '/auth/logout' }}" class="inline-icon ico-logout">Log Out</a>
                     </div>
                 </div>
             </div>
@@ -191,12 +200,9 @@
 
         </div>
         {% endif %}
-    </div>
+        </div>
     {% endblock %}
-</div>
-{% if session['userid'] and c.user.get_swift_cookies %}
-<div style="position: absolute; left: -10000px;"><iframe name="invisiframe" src="{{ c.user.swift_cookie_url() | safe}}"></iframe></div>
-{% endif %}
+    </div>
 </div>
 {% block footer %}
 <div id="footer">
@@ -259,13 +265,20 @@
 {% block extra_js %}{% endblock %}
 <script language="javascript" type="text/javascript">
     $(document).ready(function () {
-        var referenceBinReferences=[], workspaceTabs=[], userURL = null, referenceBinConfig;
+        var workspaceTabs = [], userURL = null, referenceBinConfig;
         $vf.resourceURL = '{{ g.resource_manager.absurl('') }}';
+        $vf.session_timeout = {{ tg.config.get('beaker.session.timeout', 0) }};
         $vf.idle_logout_enabled = {% if g.idle_logout_enabled %}true{% else %}false{% endif %};
         $vf.idle_logout_minutes = {{ g.idle_logout_minutes }};
         $vf.idle_logout_countdown_seconds = {{ g.idle_logout_countdown_seconds }};
         $vf.vf_guidebook_location = {% if g.vf_guidebook_location %} '{{ g.vf_guidebook_location }}' {% else %} null {% endif %};
         $vf.trustforge_enabled = {% if g.trustforge_enabled %}true{% else %}false{% endif %};
+        $vf.logout = function () {
+           if (store.enabled) {
+               store.set('idleTimerLoggedOut', true);
+           }
+           return false;
+        };
 
         {% if session['userid'] %}
             $vf.logged_in_as = "{{c.user.username}}";

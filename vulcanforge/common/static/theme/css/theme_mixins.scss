@@ -44,6 +44,7 @@ $tag-hover-color: #fff;
 $button-active-color: #333;
 $button-active-background-color: #fff;
 $button-active-border-color: #aaa;
+$button-inactive-color: #aaa;
 
 $icon-button-color: #bbb;
 $icon-button-hover-color: $link-hover-color;
@@ -264,6 +265,20 @@ $user-list-margin-top: $pu;
     color: $button-active-color;
 }
 
+@mixin button-inactive-skin {
+  text-decoration: none;
+
+  @include vertical-gradient-simple(lighten($button-active-background-color, $button-background-gradient-lighten-factor), $button-active-background-color);
+  border-color: $button-active-border-color;
+
+  text-shadow: none;
+  box-shadow: none;
+
+  background-color: $button-active-background-color;
+  color: $button-inactive-color;
+
+  cursor: default;
+}
 
 /* Global searchfield skins */
 @mixin global-search-field-skin {

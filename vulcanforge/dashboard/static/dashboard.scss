@@ -89,10 +89,42 @@ label {
     background-position: center center;
 }
 
+#filters-header {
+    background-color: #ddd;
+    font-size:14px;
+    font-weight: normal;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #ccc;
+}
+
+.filters-control {
+    float: right;
+    cursor: pointer;
+}
+
+#select-new {
+    font-size: 10px;
+    font-weight: normal;
+    padding-right: 4px;
+}
+
+.filters-control-icon {
+    margin-left: 8px;
+    padding-bottom: 4px;
+    height: 14px;
+    width: 14px;
+}
+
 #filter-list,
 #notification-list {
     position: relative;
     z-index: 1;
+}
+
+#filter-list {
+    height: 95%;
+    overflow-y: auto;
 }
 
 .project-filter-list {
@@ -109,16 +141,16 @@ label {
     padding: 0.5ex 0 0 0;
 }
 
-.project-filter-item {
+.dashboard-filter-item {
     margin: 0;
     background: #f8f8f8;
     border-top: 1px solid #fff;
     border-bottom: 1px solid #f0f0f0;
 }
 .project-label,
-.app_config-label {
+.app_config-label,
+.exchange-label {
     display: block;
-    color: inherit;
     font-weight: normal;
     margin: 0;
     overflow: hidden;
@@ -127,7 +159,8 @@ label {
     color: #404040;
     cursor: pointer;
 }
-.project-label {
+.project-label,
+.exchange-label {
     padding: 4px;
     font-size: 1.2em;
 }
@@ -136,13 +169,15 @@ label {
     padding: 2px 4px;
 }
 .project-label:hover,
-.app_config-label:hover
+.app_config-label:hover,
+.exchange-label:hover
 {
     color: #f50;
     background: #e8f0f8;
 }
 .project-label a:hover img,
-.app_config-label a:hover img
+.app_config-label a:hover img,
+.exchange-label a:hover img
 {
     background: #fff;
     outline: 1px solid #f50;
@@ -184,7 +219,8 @@ label {
     height: 48px;
 }
 .project-icon,
-.app-icon {
+.app-icon,
+.exchange-icon {
     display: inline-block;
     width: 24px;
     height: 24px;
@@ -223,4 +259,55 @@ label {
 
 .unread .mark-read {
     display: inline;
+}
+
+#teamup-container {
+    margin-top: 20px;
+}
+
+#teamup-controls .member-button {
+    float: left;
+}
+
+#teamup-search {
+    float: right;
+    display: inline-block;
+}
+
+#teamup-teamlist {
+    border-top: 1px solid #eee;
+}
+
+#teamup-teamlist .teamup-listitem {
+    border-bottom: 1px solid #eee;
+    display: block;
+}
+
+.teamup-listitem {
+    position: relative;
+}
+
+#teamup-teamlist .teamup-listitem:hover {
+    background: #f3f6fc;
+}
+
+.teamup-team-controls {
+    text-align: center;
+    width: 100%;
+    visibility: hidden;
+    margin-bottom: 8px;
+}
+
+.teamup-team-controls a.btn.expanded {
+    @include button-hover-skin;
+}
+
+#lightbox_reg_request textarea {
+    width: 315px;
+}
+
+#notification-stats {
+    background-color: white;
+    padding: 24px;
+    margin: 8px 8px 2px 8px;
 }

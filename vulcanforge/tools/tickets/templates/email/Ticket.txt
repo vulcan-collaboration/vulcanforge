@@ -1,0 +1,11 @@
+
+** <a href="{{prefix}}{{artifact.app_config.url()}}" style="text-decoration: none">{{artifact.app_config.options.mount_label}}</a> > <a href="{{prefix}}{{artifact.url()}}" style="text-decoration: none">#{{artifact.ticket_num}} {{artifact.summary}}</a>**
+
+- **Status:** {{artifact.status}}{% if artifact.labels.__len__() %}
+- **Labels:** {% for label in artifact.labels %}{{label}} {% else %}None{% endfor %}{% endif %}
+- **Created:** {{artifact.created_date.strftime('%a %b %d, %Y %I:%M %p UTC')}} by {{artifact.reported_by.display_name}}{% if (artifact.mod_date - artifact.created_date).days >= 0 %}
+- **Last Updated:** {{artifact.mod_date.strftime('%a %b %d, %Y %I:%M %p UTC')}}{% endif %}
+- **Owner:** {{artifact.assigned_to_names|join(', ')}}
+{% if not safe_notifications %}
+{{artifact.description}}
+{% endif %}

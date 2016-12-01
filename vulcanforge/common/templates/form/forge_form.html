@@ -57,7 +57,7 @@
                     {{ b.display() }}
                 {% endfor %}
                 {% for link in links %}
-                    <a href="{{ link.href }}">{{ link.label }}</a>
+                    <a href="{{ link.href }}"{% if link.css_class %} class="{{ link.css_class }}"{% endif %}>{{ link.label }}</a>
                 {% endfor %}
             </div>
         {% endif %}

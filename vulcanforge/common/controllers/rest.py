@@ -14,43 +14,44 @@ https://B{<domain>}/rest/
 import json
 import logging
 import urllib
-import os
-
 import oauth2 as oauth
+
+from datetime import datetime
+
 from paste.util.converters import asbool
-import pymongo
 from webob import exc
 from tg import expose, flash, redirect, config, TGController
-from pylons import tmpl_context as c, app_globals as g, request, response
+from pylons import tmpl_context as c, app_globals as g, request
+import pymongo
 from ming.odm import session
 from ming.utils import LazyProperty
+
 from vulcanforge.artifact.model import ArtifactReference
 from vulcanforge.artifact.widgets import short_artifact_link_data
 from vulcanforge.auth.model import (
     ServiceToken,
     ApiTicket,
-    ApiToken,
-    User,
-    StaticResourceToken
+    ApiToken
 )
+from vulcanforge.common.exceptions import AJAXNotFound
 from vulcanforge.auth.oauth.model import (
     OAuthConsumerToken,
     OAuthAccessToken,
     OAuthRequestToken
 )
-from vulcanforge.cache.decorators import cache_rendered
-from vulcanforge.common.controllers.decorators import require_authenticated
 from vulcanforge.common.util import (
     nonce,
     get_client_ip,
     re_path_portion
 )
-
 from vulcanforge.artifact.controllers import ArtifactRestController
+from vulcanforge.exchange.controllers.rest import GlobalExchangeRestController
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.exceptions import NoSuchProjectError
 from vulcanforge.project.model import AppConfig, Project
 from vulcanforge.websocket.controllers import WebSocketAPIController
+from vulcanforge.common.util.counts import (
+    get_artifact_counts, get_exchange_counts
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class RestController(TGController):
         self.user = UserRestController()
         self.artifact = ArtifactRestController(index_only=True)
         self.webapi = WebAPIController()
+        self.exchange = GlobalExchangeRestController()
 
     def _check_security(self):
         api_token = self._authenticate_request()
@@ -177,7 +179,7 @@ class OAuthNegotiator(object):
 
     @expose('jinja:vulcanforge:auth/oauth/templates/oauth_authorize.html')
     def authorize(self, oauth_token=None):
-        require_authenticated()
+        g.security.require_authenticated()
         rtok = OAuthRequestToken.query.get(api_key=oauth_token)
         rtok.user_id = c.user._id
         if rtok is None:
@@ -189,7 +191,7 @@ class OAuthNegotiator(object):
 
     @expose('jinja:vulcanforge:auth/oauth/templates/oauth_authorize_ok.html')
     def do_authorize(self, yes=None, no=None, oauth_token=None):
-        require_authenticated()
+        g.security.require_authenticated()
         rtok = OAuthRequestToken.query.get(api_key=oauth_token)
         if no:
             rtok.delete()
@@ -248,7 +250,7 @@ class OAuthNegotiator(object):
 class UserLinkBinRestController(object):
 
     def _check_security(self):
-        require_authenticated()
+        g.security.require_authenticated()
 
     @expose('json')
     def index(self, **kwargs):
@@ -296,7 +298,7 @@ class UserRestController(object):
     """
     B{Description}: Controller that exposes user related endpoints, such as:
 
-        - GET L{rest/u/user/get_user_profile
+        - GET L{rest/user/get_user_profile
         <vulcanforge.common.controllers.rest.UserRestController.get_user_profile>}
 
     @undocumented: get_user_trust_history
@@ -319,7 +321,7 @@ class UserRestController(object):
 
         B{Example request}
 
-        GET I{rest/user/u/get_user_profile}
+        GET I{rest/user/get_user_profile}
 
         @return:
             { "fullName": str,
@@ -364,6 +366,24 @@ class UserRestController(object):
 
         return {'tools': tools}
 
+    @expose('json')
+    def get_artifact_count(self, project_shortname=None, permission="read", **kw):
+        if c.user.is_anonymous:
+            return
+
+        return get_artifact_counts(self.user, project_shortname, permission)
+
+    @expose('json')
+    def get_exchange_counts(self, xchng_name):
+        if c.user.is_anonymous:
+            return
+
+        c.exchange = g.exchange_manager.get_exchange_by_uri(xchng_name)
+        if c.exchange is None:
+            raise AJAXNotFound()
+
+        return get_exchange_counts(self.user, xchng_name)
+
 
 class ProjectRestController(object):
 
@@ -384,41 +404,12 @@ class ProjectRestController(object):
 class WebServiceAuthController(object):
 
     def _before(self, *args, **kw):
-        token = request.headers.get('WS_TOKEN')
+        msg = "Token-based web service request headers: {}"
+        LOG.debug(msg.format(request.headers))
+        token = request.headers.get('WS-TOKEN')
         if not token or token != config.get('auth.ws.token'):
-            LOG.info('invalid web service token %s', str(token))
+            LOG.warn('Invalid web service token %s', str(token))
             raise exc.HTTPNotFound()
-
-
-class SwiftAuthRestController(object):
-
-    def _before(self, *args, **kw):
-        LOG.info('request to swift auth %s', request.url)
-        # ensure requester is our swift server
-        header_name = config.get('swift.auth.header', 'VFSW_TOKEN')
-        token = request.headers.get(header_name)
-        if not token or token != config.get('swift.auth.token'):
-            LOG.warn(
-                'invalid swift token %s from %s', str(token), get_client_ip())
-            raise exc.HTTPNotFound()
-
-        # authenticate user
-        api_key = request.headers.get('SWIFT_USER_TOKEN')
-        if api_key:
-            st = StaticResourceToken.query.get(api_key=api_key)
-
-            if st and st.authenticate_request(request.environ):
-                c.user = st.user
-                LOG.info('setting user to %s', c.user.username)
-
-    @expose('json')
-    def has_permission(self, path=None, method="GET", **kw):
-        path = urllib.unquote(path)
-        has_permission = g.has_s3_key_access(path, method=method)
-        LOG.info(
-            'has_permission is %s to resource %s for %s',
-            str(has_permission), path, c.user.username)
-        return {"has_permission": has_permission}
 
 
 class WebServiceRestController(object):
@@ -434,11 +425,11 @@ class WebAPIController(TGController):
             return self._make_navdata()
         cache_hash_name = 'navdata'
         hash_key = c.user.username
-        timeout = (10 * 60) if g.production_mode else 10
         cached = g.cache.hget_json(cache_hash_name, hash_key)
         if cached:
             return cached
         new_navdata = self._make_navdata()
+        timeout = (10 * 60) if g.production_mode else 10
         g.cache.hset_json(cache_hash_name, hash_key, new_navdata, timeout)
         return new_navdata
 
@@ -499,21 +490,31 @@ class WebAPIController(TGController):
             hood_id_map[hood._id] = hood_data
             hood_items.append(hood_data)
 
-        project_query_params = {
-            'neighborhood_id': {
-                '$in': hood_id_map.keys()
+        # if authenticated, get projects using named roles
+        has_user = c.user is not None
+        if has_user:
+            project_cursor = [x for x in c.user.my_projects()
+                              if x.neighborhood_id in hood_id_map]
+            project_cursor.sort(key=lambda x: x.sortable_name)
+        else:
+            project_query_params = {
+                'neighborhood_id': {
+                    '$in': hood_id_map.keys()
+                }
             }
-        }
-        project_cursor = Project.query.find(project_query_params)
-        project_cursor.sort('sortable_name', pymongo.ASCENDING)
+            project_cursor = Project.query.find(project_query_params)
+            project_cursor.sort('sortable_name', pymongo.ASCENDING)
         for project in project_cursor:
-            if (
-                project.deleted and
-                not g.security.has_access(project, 'write') or
-                not g.security.has_access(project, 'read') or
-                not project.first_mount('read')
-            ):
-                continue
+            # if authenticated, avoid superfluous access checking
+            if has_user:
+                if project.deleted:
+                    continue
+            elif ( project.deleted and
+                    not g.security.has_access(project, 'write') or
+                    not g.security.has_access(project, 'read') or
+                    not project.first_mount('read')
+                ):
+                    continue
             project_data = {
                 'label': project.name,
                 'url': project.url(),
@@ -540,7 +541,7 @@ class WebAPIController(TGController):
         }
 
     def _get_global_nav_children(self):
-        items = []
+        items = self._get_global_nav_exchanges()
         item_keys = config.get('masternav.root_items', '').split()
         for key in item_keys:
             key_prefix = 'masternav.items.' + key + '.'
@@ -618,10 +619,10 @@ class WebAPIController(TGController):
                 'actions': [],
                 'children': []
             }
-            app_instance = app_config.instantiate()
             try:
+                app_instance = app_config.instantiate()
                 app_nav_data = app_instance.get_global_navigation_data()
-            except NotImplementedError:
+            except:
                 pass
             else:
                 app_config_data.update(app_nav_data)
@@ -634,3 +635,13 @@ class WebAPIController(TGController):
 
     def _get_global_nav_actions_for_project(self, project):
         return []
+
+    def _get_global_nav_exchanges(self):
+        exchange_items = []
+        for exchange in g.exchange_manager.exchanges:
+            exchange_items.append({
+                "label": exchange.config["name"],
+                "url": exchange.url(),
+                "icon": g.resource_manager.absurl(exchange.config['icon'])
+            })
+        return exchange_items

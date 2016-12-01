@@ -40,8 +40,8 @@
     </div>
 {% endif %}
 
-{% if g.security.has_access(value, 'post') %}
+{% if show_tag_post and g.security.has_access(value, 'post') %}
     <div id="tag_thread_holder" style="display:none" class="grid-18">
-        widgets.tag_post.display(value=value,submit_text='Save', action=value.url() + 'tag')
+        {{ widgets.tag_post.display(value=value,submit_text='Save', action=value.url() + 'tag') }}
     </div>
 {% endif %}

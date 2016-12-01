@@ -2,6 +2,7 @@ import json
 import logging
 import string
 import random
+import urlparse
 
 from formencode import validators as fev
 from pylons import tmpl_context as c, app_globals as g
@@ -13,6 +14,8 @@ from ew.render import File
 from vulcanforge.common.widgets.util import onready
 from vulcanforge.resources.widgets import JSLink, CSSLink, Widget
 from vulcanforge.visualize.util import get_visualizer_options
+from vulcanforge.virusscan.model import S3VirusScannableMixin
+from vulcanforge.auth.validators import get_complexity
 
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/form/'
@@ -72,10 +75,12 @@ class SetPasswordField(ew.PasswordField):
     )
 
     def prepare_context(self, context):
-        return dict(
+        retval = dict(
             super(SetPasswordField, self).prepare_context(context),
             min_length=int(config.get('auth.pw.min_length', 10))
         )
+        retval.update(get_complexity())
+        return retval
 
 
 class Attachment(Widget):
@@ -108,10 +113,17 @@ class Attachment(Widget):
             value, dl_too=True, size=value.length)
         thumb_url = value.get_thumb_url()
         absolute_url = value.url(absolute=True)
+        kw['title'] = None
+        kw['class'] = 'attachment'
         try:
             link_url = visualizer_link_items[0]['url']
         except IndexError:
             link_url = absolute_url
+        if isinstance(value, S3VirusScannableMixin) and not value.is_scanned:
+            link_url = absolute_url = ""
+            kw['title'] = 'Status: Scanning for virus'
+            kw['class'] = 'attachment being-virus-scanned'
+
         content = super(Attachment, self).display(
             value=value,
             visualizer_links=json.dumps(visualizer_link_items),
@@ -150,7 +162,13 @@ class AttachmentList(ew_core.Widget):
         return g.security.has_access(value, 'write')
 
     def get_delete_url(self, att):
-        return att.local_url()
+        local_url = att.local_url()
+        if urlparse.urlparse(local_url).query:
+            delete_url = local_url + '&delete=True'
+        else:
+            delete_url = local_url + '?delete=True'
+
+        return delete_url
 
     def display(self, value=None, extraCSS=None, **kw):
         attachments = kw.pop('attachments', None)
@@ -185,8 +203,7 @@ class AttachmentAdd(ew.FileField):
 
 
 class RepeatedAttachmentField(ew.RepeatedField):
-    template = (TEMPLATE_DIR + ''
-                'repeated_attachment_field.html')
+    template = TEMPLATE_DIR + 'repeated_attachment_field.html'
     defaults = dict(
         ew.RepeatedField.defaults,
         css_class="vf-repeated-attachment-field",

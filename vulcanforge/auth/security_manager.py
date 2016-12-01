@@ -4,6 +4,7 @@ This module provides the security predicates used in decorating various models.
 import logging
 from collections import defaultdict
 from itertools import chain
+from ming.odm.declarative import MappedClass
 
 from webob import exc
 from pylons import tmpl_context as c, request, app_globals as g
@@ -101,7 +102,18 @@ class SecurityManager(object):
         """
         result = None
         for ace in obj.acl:
-            if ACE.match(ace, role_id, permission):
+
+            # determine access control entry class
+            try:
+                if isinstance(obj, MappedClass):
+                    entry_cls = obj.__class__.acl.field.type.entry_cls
+                else:
+                    entry_cls = ace.__class__
+                matcher = entry_cls.match
+            except AttributeError:
+                matcher = ACE.match
+
+            if matcher(ace, role_id, permission):
                 result = ace.access == ACE.ALLOW
                 break
         if result is None and use_parent and \
@@ -386,6 +398,16 @@ class Credentials(object):
         roles = self.project_roles(project_id)
         return g.security.RoleCache(
             self, roles.find(name=name)).userids_that_reach
+
+    def userids_with_role_id(self, role_id):
+        roles = ProjectRole.query.find({'_id':role_id})
+        return g.security.RoleCache(
+            self, roles).userids_that_reach
+
+    def users_with_role_id(self, role_id):
+        roles = ProjectRole.query.find({'_id':role_id})
+        return g.security.RoleCache(
+            self, roles).users_that_reach
 
 
 class RoleCache(object):

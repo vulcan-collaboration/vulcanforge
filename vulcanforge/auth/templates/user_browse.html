@@ -1,66 +1,271 @@
-{% extends g.templates['master'] %}
+{% extends g.templates['polymer-user'] %}
 
-{% block title %}Browse {{ user_title }}{% endblock %}
+{% block title %}Community{% endblock %}
+{% block subheading_prefix %}User Community{% endblock %}
+{% block head %}
 
-{% block header %}{{ config.get('forge_name', 'Forge') }} {{ user_title }}{% endblock %}
-
-{% block actions %}
-<div id="user-search">
-    <form method="GET" action="{{ cur_url }}" id="tool-search-form">
-        <input name="q" type="text"
-               title="Search {{ user_title }}"
-               placeholder="Search {{ user_title }}"
-               id="tool-search-form-input">
-    </form>
-</div>
 {% endblock %}
 
 {% block content %}
-<div class="padded">
-    <p>Showing {{ visible }} of {{ count }} {{ user_title }}</p>
-</div>
-<div class="pagerContainer"></div>
-<div class="padded user-list-container">
-    {% if users %}
-        {% for user in users %}
-        <div class="user-list-item">
-            {{ c.avatar.display(user) }}
+{% raw %}
+
+<dom-module id="user-item">
+    <style include="grid_style dialog_style">
+    </style>
+    <template>
+        <div class="grid_container" on-mouseover="_fadeAddIn" on-mouseleave="_fadeAddOut">
+            <div class="layout horizontal center-center flex">
+                <template is="dom-if" if="{{user.disabled}}">
+                    <iron-icon id="infoIcon" class="picon" icon="icons:lock"></iron-icon>
+                </template>
+                <a target="_blank" href$="{{user.url}}" class="layout horizontal center-center flex">
+                    <iron-icon id="bigIcon" class="picon" src="[[user.icon]]"></iron-icon>
+                    <div id="nameFull" class="flex">{{user.name}}</div>
+                </a>
+                <paper-icon-button id="reqIcon" class = "detailIcon" icon="icons:info-outline" on-click="_showDetails"></paper-icon-button>
+            </div>
+            <div>
+                <span id="detailLeftClipped">{{_replaceText(user.affil)}}</span>
+                <span id="detailRightClipped">Joined: {{user.jdate}}</span>
+            </div>
         </div>
-        {% endfor %}
-    {% else %}
-        No Such {{ user_title }} Found
-    {% endif %}
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script type="text/javascript">
-window.$vf = window.$vf || {};
-
-(function($, $vf){
-    "use strict";
-    var limit = {{ limit }};
-
-    function onGotoPage(n) {
-        var start = limit * n,
-            new_location = "{{ cur_url }}?limit=" + limit + "&start=" + start;
-        window.location.href = new_location;
-    }
-
-    $vf.afterInit(function(){
-        var pager = new $vf.Pager();
-        pager.containerE = $('.pagerContainer');
-        pager.onGotoPage = onGotoPage;
-        pager.onGotoPage_ctx = window;
-        pager.configure({
-            currentPage: {{ cur_page }},
-            itemCount: {{ count }},
-            itemPerPage: limit,
-            onGotoPage: onGotoPage
+        <paper-dialog id="dialog" modal>
+            <div class="heading layout horizontal center-center">
+                <iron-icon id="bigicon" src="[[user.icon]]"></iron-icon>
+                <div id="dialogHeader" class="flex">{{user.name}}</div>
+                <paper-button id="close" dialog-dismiss><iron-icon icon="close"></iron-icon></paper-button>
+            </div>
+            <div class="infoText" style="color: var(--pitch);">
+                <iron-icon class="infoIcon" icon="social:person-outline"></iron-icon>
+                <b>Username:</b> {{user.username}}
+                <a target="_blank" href="/dashboard/messages/start_conversation?recipients={{user.username}}"><iron-icon icon="communication:forum" class = "rightInteractiveIcon"></iron-icon></a>
+            </div>
+            <template is="dom-if" if="{{user.email}}">
+                <div class="infoText" style="color: var(--pitch);">
+                    <iron-icon class="infoIcon" icon="communication:email"></iron-icon>
+                    <b>Email:</b> {{user.email}}
+                </div>
+            </template>
+            <template is="dom-if" if="{{user.telephone}}">
+                <div class="infoText" style="color: var(--pitch);">
+                    <iron-icon class="infoIcon" icon="communication:phone"></iron-icon>
+                    <b>Phone:</b> {{user.telephone}}
+                </div>
+            </template>
+            <template is="dom-if" if="{{user.company}}">
+                <div class="infoText" style="color: var(--pitch);">
+                    <iron-icon class="infoIcon" icon="icons:home"></iron-icon>
+                    <b>Organization:</b> {{user.company}}
+                    <template is="dom-if" if="{{user.position}}">
+                        - {{user.position}}
+                    </template>
+                </div>
+            </template>
+            <div style="margin-bottom: 6px"></div>
+        </paper-dialog>
+    </template>
+    <script>
+        HTMLImports.whenReady(function () {
+            Polymer({
+                is: "user-item",
+                properties: {
+                    user: {
+                        type: Object,
+                        notify: true,
+                        reflectToAttribute: true
+                    },
+                    nonce: String,
+                    opened: Boolean,
+                    _toggleIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(opened)'
+                    },
+                    inside: Boolean
+                },
+                observers: [
+                    '_attributesReady(user)'
+                ],
+                _attributesReady: function(user) {
+                    if(user.disabled) {
+                        this.$.nameFull.style.color = "var(--subheadingtext)";
+                        this.$.dialogHeader.style.color = "var(--subheadingtext)";
+                    } else if(user.moderator) {
+                        this.$.nameFull.style.color = "var(--interactive)";
+                        this.$.dialogHeader.style.color = "var(--interactive)";
+                    } else {
+                        this.$.nameFull.style.color = "var(--pitch)";
+                        this.$.dialogHeader.style.color = "var(--pristine)";
+                    }
+                },
+                _replaceText: function(text) {
+                    if(text != undefined)
+                        return text.replace("&amp;", "&");
+                },
+                _fadeAddIn: function() {
+                    if(!this.inside) {
+                        this.inside = true;
+                        //console.log("Fading button in");
+                        var op = 0;  // initial opacity
+                        var element = this.$.reqIcon;
+                        element.style.display = 'block';
+                        var timer = setInterval(function () {
+                            if (op >= 1){
+                                clearInterval(timer);
+                            }
+                            element.style.opacity = op;
+                            element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+                            op += 0.1;
+                        }, 10);
+                    }
+                },
+                _fadeAddOut: function () {
+                    if(this.inside) {
+                        this.inside = false;
+                        //console.log("Fading button out");
+                        var op = 1;  // initial opacity
+                        var element = this.$.reqIcon;
+                        element.style.display = 'block';
+                        var timer = setInterval(function () {
+                            if (op <= 0) {
+                                clearInterval(timer);
+                            }
+                            element.style.opacity = op;
+                            element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+                            op -= 0.1;
+                        }, 10);
+                    }
+                },
+                _showDetails: function(e) {
+                    this.$.dialog.toggle();
+                    this.$.dialog.notifyResize();
+                    var event = e || window.event;
+                    event.stopPropagation();
+                    event.cancelBubble = true;
+                },
+                _startChat: function() {
+                }
+            });
         });
-        pager.render();
-    });
+    </script>
+</dom-module>
 
-}(jQuery, window.$vf))
-</script>
+<dom-module id="user-list">
+    <style include="grid_style">
+       @media (max-width: 480px), (max-width: 320px) {
+            .sorter {
+                display: none;
+            }
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="mainHeadbar layout horizontal center-center">
+            <iron-icon icon="social:people"></iron-icon>
+            <div class="label flex">Users ({{_userCount(data)}})
+            </div>
+            <div id="wrap">
+                <input id="search" name="search" type="text" placeholder="Search" value="{{filterText::input}}" is="iron-input">
+                <iron-icon icon="icons:search" class = "interactButton layout" ></iron-icon>
+            </div>
+        </div>
+        <template is="dom-if" if="[[_isSortName(sortName)]]">
+            <div id="plist" class="full-container layout horizontal start-center wrap">
+                <template id="resultList" is="dom-repeat" items="{{data.users}}" as="user" filter="_filterUsers" sort="_sort">
+                    <user-item user="{{user}}"></user-item>
+                </template>
+            </div>
+        </template>
+        <template is="dom-if" if="[[!_hasUsers(data)]]">
+            <div class="layout vertical center">
+                <div class="empty-message">
+                    <p><iron-icon icon="warning"></iron-icon> No Users</p>
+                </div>
+            </div>
+        </template>
+    </template>
+    <script>
+        HTMLImports.whenReady(function () {
+            Polymer({
+                is: "user-list",
+                properties: {
+                    data: {
+                        type: Object,
+                        notify: true,
+                        reflectToAttribute: true
+                    },
+                    url: String,
+                    count: Number,
+                    filteredUsers: {
+                        type: Object,
+                        value: null
+                    },
+                    sortName: {
+                        type: Boolean,
+                        value: false
+                    },
+                    filterText: {
+                        value: '',
+                        observer: 'refreshFilter'
+                    }
+                },
+                observers: [
+                    '_attributesReady(data)'
+                ],
+                _attributesReady: function(data){
+                    var v = this.$.search;
+                    setTimeout(function() {
+                        v.focus();
+                    }, 1000);
+                },
+                _isSortName: function(v) {
+                    return true;
+                },
+                _sort: function(a,b) {
+                    if (a.name == b.name) {
+                        if (a.name === b.name) return 0;
+                        return a.name < b.name ? -1 : 1;
+                    }
+                    return a.name < b.name ? -1 : 1;
+                },
+                sort_order: function(e) {
+                    this.set("sortName", e.target.checked);
+                },
+                _filterUsers: function(item) {
+                    return item.name.match(new RegExp(this.filterText, 'i'));
+                },
+                refreshFilter: function() {
+                    if(this.$$("#resultList"))
+                        this.$$("#resultList").render();
+                    if(this.$$("#resultAffilList")) {
+                        var nu = filter(this.data.users, this.filterText);
+                        this.set('filteredUsers', nu);
+                        this.$$("#resultAffilList").render();
+                    }
+
+                    function filter(usrs, ftext) {
+                        var newUsers = [];
+                        for(var i=0; i<usrs.length; i++) {
+                            if(usrs[i].name.match(new RegExp(ftext, 'i'))) {
+                                newUsers.push(usrs[i]);
+                            }
+                        }
+                        return newUsers;
+                    }
+                },
+                _hasUsers: function(o) {
+                    return (o.users && o.users.length > 0);
+                },
+                _userCount: function(o) {
+                    if(o.users)
+                        return o.users.length;
+                    return 0;
+                }
+            });
+        });
+    </script>
+</dom-module>
+{% endraw %}
+<section id="users" class="paper-sheet small-margin small-padding layout vertical flex">
+    <user-list url="/users/allusers"></user-list>
+</section>
 {% endblock %}

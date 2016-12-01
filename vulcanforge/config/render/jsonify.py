@@ -111,17 +111,18 @@ class SanitizeEncode(GenericJSON):
                 self.indent, self.key_separator, self.item_separator,
                 self.sort_keys, self.skipkeys, self.allow_nan, key_memo,
                 self.use_decimal, self.namedtuple_as_object,
-                self.tuple_as_array, self.bigint_as_string, self.item_sort_key,
+                self.tuple_as_array, self.int_as_string_bitcount, self.item_sort_key,
                 self.encoding, self.for_json, self.ignore_nan,
-                Decimal)
+                Decimal, self.iterable_as_array)
         else:
             _iterencode = _make_iterencode(
                 markers, self.default, _encoder,
                 self.indent, floatstr, self.key_separator, self.item_separator,
                 self.sort_keys, self.skipkeys, _one_shot, self.use_decimal,
                 self.namedtuple_as_object, self.tuple_as_array,
-                self.bigint_as_string, self.item_sort_key,
+                self.int_as_string_bitcount, self.item_sort_key,
                 self.encoding, self.for_json,
+                self.iterable_as_array,
                 Decimal=Decimal)
         try:
             return _iterencode(o, 0)

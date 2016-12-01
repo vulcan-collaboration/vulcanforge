@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<dom-module id="style_base">
+    <style include="vf-styles">
+        .mainHeadbar{
+            background-color: var(--headingbar);
+            padding: .15em;
+            padding-left: .5em;
+        }
+        .mainHeadbar iron-icon {
+            padding-right: 6px;
+            height: 40px;
+            color: var(--interactive);
+        }
+        .mainHeadbar .label {
+            font-style: italic;
+            color: var(--pristine);
+        }
+        .subHeadbar{
+            background-color: var(--subheadingbar);
+            color: var(--subheadingtext);
+            margin-top: 0;
+            padding: 8px;
+            font-style: italic;
+        }
+        .subHeadbar .label{
+            font-style: italic;
+            color: var(--subheadingtext);
+        }
+        .subHeadbar iron-icon {
+            padding-right: 6px;
+            height: 40px;
+            color: var(--interactive);
+        }
+        .full-container {
+            overflow: auto;
+            height: calc(100vh - 360px);
+        }
+        .interactiveButton {
+            color: var(--interactive);
+            height: 28px;
+            margin: 6px;
+        }
+        .interactiveButtonBlank {
+            color: var(--interactive);
+        }
+        .gridWrapper {
+            color: #eeeeee;
+            position: relative;
+            float: right;
+            padding: 0;
+            position: relative;
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        #sort-by-left {
+            color: var(--pristine);
+            margin-right: 8px;
+        }
+        #sort-by-right {
+            color: var(--pristine);
+            margin-right: 8px;
+        }
+        paper-toggle-button {
+            margin-right: 10px;
+            --paper-toggle-button-checked-bar-color: var(--diffuse);
+            --paper-toggle-button-checked-button-color: var(--pristine);
+            --paper-toggle-button-checked-ink-color: var(--pristine);
+            --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+            --paper-toggle-button-unchecked-button-color: var(--pristine);
+            --paper-toggle-button-unchecked-ink-color: var(--pristine);
+        }
+        paper-toogle-button toggle-label {
+            font-weight: bold;
+        }
+    </style>
+</dom-module>
+</html>

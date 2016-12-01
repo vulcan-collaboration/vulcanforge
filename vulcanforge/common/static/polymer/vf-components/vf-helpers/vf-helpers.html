@@ -1,0 +1,232 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+
+<dom-module id="requirements-helper">
+    <template>
+        <style>
+            .unknown {
+                display: none;
+            }
+            .valid {
+                color: darkgreen;
+                fill: darkgreen;
+            }
+            .invalid {
+                color: darkred;
+                fill: darkred;
+            }
+            .ctn {
+                margin-bottom: 15px;
+                margin-top: -20px;
+                @apply(--layout-vertical);
+            }
+            .icon {
+                margin-left: 4px;
+            }
+            .req-holder {
+                margin-bottom: 4px;
+                @apply(--layout-horizontal);
+                @apply(--layout-center-top);
+            }
+            .req-text {
+                padding-top: 2px;
+                @apply(--layout-flex)
+            }
+            .circle-text {
+                width:24px;
+            }
+            .circle-text:after {
+                content: "";
+                display: block;
+                width: 100%;
+                height:0;
+                padding-bottom: 100%;
+                background: var(--interactive);
+                -moz-border-radius: 50%;
+                -webkit-border-radius: 50%;
+                border-radius: 50%;
+            }
+            .circle-text div {
+                float:left;
+                font-size:11px;
+                width:100%;
+                padding-top:50%;
+                line-height:1em;
+                margin-top:-0.5em;
+                text-align:center;
+                color:var(--pristine);
+            }
+            .badge {
+                margin-right: 8px;
+            }
+        </style>
+        <div id="requirements" class="ctn">
+            <template is="dom-repeat" items="{{rules}}" as="rule">
+                <div class="req-holder">
+                    <div class="req-number"><div class="circle-text badge"><div>{{rule.index}}</div></div></div>
+                    <div class="req-text">{{rule.text}}</div>
+                    <iron-icon id="icon-[[rule.index]]" class="unknown icon" icon="icons:help"></iron-icon>
+                </div>
+            </template>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "requirements-helper",
+                properties: {
+                    rules: Array,
+                    indicators: {
+                        type: Object,
+                        value: function() {
+                            return {
+                                unknown: "icons:help",
+                                valid: "icons:check-circle",
+                                invalid: "icons:error-outline"
+                            };
+                        }
+                    }
+                },
+                _getStatus: function(r, value) {
+                    var status;
+                    if (r.count) {
+                        status = (value.length == 0) ? "unknown" : (value.match(r.check) && value.match(r.check).length >= r.count) ? "valid" : "invalid";
+                    } else {
+                        status = (value.length == 0) ? "unknown" : (r.check.exec(value)) ? "valid" : "invalid";
+                    }
+                    return status;
+                },
+                setStatus: function (value) {
+                    console.log("setStatus called")
+                    var ra = this.rules;
+                    for (var i=0; i<ra.length; i++) {
+                        var r = ra[i];
+                        var status = this._getStatus(r, value);
+                        var icon = this.querySelector("#icon-" + r.index);
+                        icon.icon = this.indicators[status];
+                        for (var s in this.indicators) {
+                            if (icon.classList.contains(s)) {
+                                icon.classList.remove(s);
+                            }
+                        }
+                        icon.classList.add(status);
+                    }
+                },
+                isValid: function(value) {
+                    var ra = this.rules;
+                    for (var i=0; i<ra.length; i++) {
+                        var r = ra[i];
+                        var status = this._getStatus(r, value);
+                        if(status == "invalid")
+                            return false;
+                    }
+                    return true;
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="username-helper">
+    <template>
+        <requirements-helper id="helper" rules="{{rules}}"</requirements-helper>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "username-helper",
+                properties: {
+                    rules: {
+                        type: Array,
+                        value: function () {
+                            return [
+                                { index: 1,
+                                  text: "8 to 32 characters long",
+                                  check: /^.{8,32}$/ },
+                                { index: 2,
+                                  text: "starts with a lowercase letter",
+                                  check: /^[a-z].*$/ },
+                                { index: 3,
+                                  text: "lowercase letters, numbers, and dashes",
+                                  check: /^[a-z0-9\-]*$/ }
+                            ];
+                        }
+                    }
+                },
+                giveFeedback: function(value) {
+                    this.$.helper.setStatus(value);
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+
+<dom-module id="password-helper">
+    <template>
+        <iron-ajax id="reqsajax" url="/auth/password_requirements" on-response="_setupHelper"></iron-ajax>
+        <requirements-helper id="helper" hidden></requirements-helper>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "password-helper",
+                properties: {
+                },
+                _getRules: function(reqs) {
+                    var rules = [];
+                    var count = reqs.min_length.toString();
+                    rules.push({
+                        index: 1,
+                        text: count + " or more characters",
+                        count: reqs.min_length,
+                        check: /./g
+                    });
+                    count = reqs.lowercase.toString();
+                    rules.push({
+                        index: 2,
+                        text: count + " or more lowercase letters",
+                        count: reqs.lowercase,
+                        check: /[a-z]/g
+                    });
+                    count = reqs.uppercase.toString();
+                    rules.push({
+                        index: 3,
+                        text: count + " or more uppercase letters",
+                        count: reqs.uppercase,
+                        check: /[A-Z]/g
+                    });
+                    count = reqs.number.toString();
+                    rules.push({
+                        index: 4,
+                        text: count + " or more number characters",
+                        count: reqs.number,
+                        check: /[\d]/g
+                    });
+                    count = reqs.special.toString();
+                    rules.push({
+                        index: 5,
+                        text: count + " or more special characters",
+                        count: reqs.special,
+                        check: /[\W_]/g
+                    });
+                    return rules;
+                },
+                _setupHelper: function(e) {
+                    this.$.helper.rules = this._getRules(e.detail.response);
+                    this.$.helper.hidden = false;
+                },
+                giveFeedback: function (value) {
+                    this.$.helper.setStatus(value);
+                },
+                isValid: function (value) {
+                    return this.$.helper.isValid(value);
+                },
+                ready: function() {
+                    this.$.reqsajax.generateRequest();
+                }
+            });
+        })();
+    </script>
+</dom-module>

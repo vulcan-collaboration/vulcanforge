@@ -1,6 +1,5 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
 {% set has_related_artifacts = True %}
-{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 {% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
 
 {% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
@@ -13,7 +12,7 @@
 {% block header %}
     {% for item in hierarchy_items %}
         <div class="wiki-titlebar-item{% if not hide_sidebar and item.child_count > 0 %} wiki-titlebar-item-with-popup{% endif %}{% if loop.last %} wiki-titlebar-item-main{% else %} wiki-titlebar-item-small{% endif %}">
-            <span class="wiki-titlebar-item-label"><a href="{{ item.href }}">{{ item.label }}</a></span>
+            <span class="wiki-titlebar-item-label"><a class="{{'has-icon ico-home ' if item.is_home else ''}}" href="{{ item.href }}">{{ item.label }}</a></span>
             {% if not hide_sidebar and item.child_count > 0 %}
             <div class="wiki-titlebar-item-popup">
                 <ul class="wiki-titlebar-item-list">
@@ -49,22 +48,14 @@
 {% endblock %}
 {% block body_attrs %} class="wiki-{{(page.title).replace(' ','_')}}"{% endblock %}
 
-{% block actions %}
-    {{wiki_macros.page_actions(page, subscribed=subscribed)}}
-{% endblock %}
+{% block actions %}{{ c.menu_bar.display(page) }}{% endblock %}
 
 {% block wiki_content %}
-    {{ page_html }}
-    {% if not page.hide_attachments and page.attachments %}
-        {{c.attachment_list.display(value=page)}}
-    {% endif %}
-    {% if page.labels %}
-        {{ c.label_list.display(artifact=page) }}
-    {% endif %}
+    {{ c.renderer.display(page) }}
 {% endblock %}
 
 {% block relatedArtifacts %}
-    {{c.related_artifacts_widget.display(value= version and page.original() or page)}}
+    {{c.related_artifacts_widget.display(value=version and page.original() or page)}}
 {% endblock %}
 
 {% block edit_box %}
@@ -76,7 +67,7 @@
 {% block after_content %}
   {% if page.discussion_thread and c.app.show_discussion %}
     {% set thread = page.discussion_thread %}
-    <div>{{c.thread.display(value=thread)}}</div>
+    <div>{{c.thread_widget.display(value=thread)}}</div>
   {% endif %}
 {% endblock %}
 

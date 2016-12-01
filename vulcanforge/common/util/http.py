@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from BeautifulSoup import UnicodeDammit
 from webob import exc
-from paste.httpheaders import CACHE_CONTROL, EXPIRES
 import pylons
 from tg import response
 from vulcanforge.common.helpers import urlquote
@@ -61,17 +60,3 @@ def set_download_headers(filename, content_type=None, set_ctype=True,
         if content_type == 'application/xml' and file_pointer:
             encoding = UnicodeDammit(file_pointer.read()).originalEncoding
             response.headers['Content-Encoding'] = encoding
-
-
-def cache_forever():
-    headers = [
-        (k, v) for k, v in response.headers.items()
-        if k.lower() not in ('pragma', 'cache-control')]
-    delta = CACHE_CONTROL.apply(
-        headers,
-        public=True,
-        max_age=60 * 60 * 24 * 365)
-    EXPIRES.update(headers, delta=delta)
-    response.headers.pop('cache-control', None)
-    response.headers.pop('pragma', None)
-    response.headers.update(headers)

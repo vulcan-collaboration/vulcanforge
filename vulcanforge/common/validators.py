@@ -68,10 +68,15 @@ class DateTimeConverter(fev.FancyValidator):
 
 
 class CommaSeparatedEach(ForEach):
+    separator = ','
+    filter_empty = False
 
     def _convert_to_list(self, value):
         if isinstance(value, basestring):
-            return value.split(',')
+            value = value.split(self.separator)
+            if self.filter_empty:
+                value = filter(None, value)
+            return value
         return super(CommaSeparatedEach, self)._convert_to_list(value)
 
 
@@ -208,7 +213,7 @@ class MingValidator(fev.FancyValidator):
 
 class MountPointValidator(fev.Regex):
     not_empty = True
-    regex = r'^[a-z][-a-z0-9]{2,}$'
+    regex = r'^[a-z][-_a-z0-9]{2,}$'
     messages = dict(
         fev.Regex._messages,
         invalid='Please use at least 3 lowercase letters and numbers '

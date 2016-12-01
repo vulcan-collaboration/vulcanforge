@@ -4,7 +4,7 @@ import logging
 
 from pylons import tmpl_context as c, app_globals as g
 import tg
-from tg import expose, request
+from tg import expose, request, override_template
 from tg.decorators import with_trailing_slash
 from tg.flash import TGFlash
 from vulcanforge.auth.model import User
@@ -16,16 +16,16 @@ from vulcanforge.common.controllers.debugutil import DebugUtilRootController
 from vulcanforge.common.controllers.error import ErrorController
 from vulcanforge.common.controllers.rest import (
     RestController,
-    SwiftAuthRestController,
     WebServiceRestController)
 from vulcanforge.common.controllers.static import (
     NewForgeController,
     ForgeStaticController
 )
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.util import alpha_cmp_factory
 from vulcanforge.common.util.debug import profile_setup_request
-from vulcanforge.dashboard.controllers import DashboardRootController
+from vulcanforge.dashboard.controllers import DashboardController
+from vulcanforge.exchange.controllers.root import GlobalExchangeController
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.project.controllers import ProjectBrowseController
 from vulcanforge.project.model import ProjectCategory, Project
@@ -65,14 +65,14 @@ class ForgeRootController(WsgiDispatchController):
     artifact_ref = ArtifactReferenceController()
     auth = AuthController()
     autocomplete = AutocompleteController()
-    dashboard = DashboardRootController()
-    designers = UserDiscoverController()
+    dashboard = DashboardController()
+    users = UserDiscoverController()
     error = ErrorController()
+    exchange = GlobalExchangeController()
     nf = NewForgeController()
     forge_global = ForgeStaticController()
     rest = RestController()
     search = SearchController()
-    static_auth = SwiftAuthRestController()
     s3_proxy = S3ProxyController()
     visualize = VisualizerRootController()
     webs = WebServiceRestController()
@@ -93,27 +93,38 @@ class ForgeRootController(WsgiDispatchController):
     }
 
     def __init__(self):
-        for n in Neighborhood.query.find():
-            if n.url_prefix.startswith('//'):
-                continue
-            n.bind_controller(self)
-        self.browse = ProjectBrowseController()
-        if not g.production_mode:
-            self._debug_util_ = DebugUtilRootController()
+        if g.cache is not None and g.cache.exists('fail_whale'):
+            pass
+        else:
+            for n in Neighborhood.query.find():
+                if n.url_prefix.startswith('//'):
+                    continue
+                n.bind_controller(self)
+            self.browse = ProjectBrowseController()
+
+            if not g.production_mode:
+                self._debug_util_ = DebugUtilRootController()
+
         super(ForgeRootController, self).__init__()
 
     def _set_user_context(self):
-        c.user = g.auth_provider.authenticate_request()
-        assert c.user is not None, \
-            'c.user should always be at least User.anonymous()'
+        if g.cache is not None and g.cache.exists('fail_whale'):
+            pass
+        else:
+            c.user = g.auth_provider.authenticate_request()
+            assert c.user is not None, \
+                'c.user should always be at least User.anonymous()'
 
     def _setup_request(self):
         c.neighborhood = c.project = c.app = None
         c.memoize_cache = {}
         self._set_user_context()
 
-        if g.visibility_mode_handler.is_enabled:
-            g.visibility_mode_handler.check_visibility(c.user, request)
+        if g.cache is not None and g.cache.exists('fail_whale'):
+            pass
+        else:
+            if g.visibility_mode_handler.is_enabled:
+                g.visibility_mode_handler.check_visibility(c.user, request)
 
         if g.profile_middleware:
             profile_setup_request()
@@ -121,9 +132,14 @@ class ForgeRootController(WsgiDispatchController):
     def _cleanup_request(self):
         pass
 
-    @expose('jinja:front.html')
+    @expose('front.html')
     @with_trailing_slash
     def index(self, **kwargs):
+        if g.cache is not None and g.cache.exists('fail_whale'):
+            if tg.config.get('templates.fail_whale'):
+                override_template(self.index, tg.config.get('templates.fail_whale'))
+                return {}
+
         root_redirect = tg.config.get('root_redirect', None)
         if root_redirect is not None:
             return tg.redirect(root_redirect)

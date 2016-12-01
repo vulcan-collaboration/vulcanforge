@@ -185,6 +185,10 @@ class PostController(BaseController):
         elif kw.pop('spam', None):
             self.post.status = 'spam'
             self.thread.update_stats()
+        # lph: temp fix to address missing post parameters
+        else:
+            self.post.delete()
+            self.thread.update_stats()
         redirect(request.referer or self.thread.url())
 
     @vardec
@@ -238,7 +242,7 @@ class ThreadController(BaseController):
         g.security.require_access(self.thread, 'read')
 
     def __init__(self, thread_id):
-        self.thread = self.Model.Thread.query.get(_id=thread_id)
+        c.thread = self.thread = self.Model.Thread.query.get(_id=thread_id)
         if not self.thread:
             raise exc.HTTPNotFound
 
@@ -249,7 +253,7 @@ class ThreadController(BaseController):
 
     @expose(TEMPLATE_DIR + 'thread.html')
     def index(self, limit=25, page=0, count=0, **kw):
-        c.thread = self.Widgets.thread
+        c.thread_widget = self.Widgets.thread
         c.thread_header = self.Widgets.thread_header
         c.related_artifacts_widget = self.Widgets.related_artifacts
         limit, page, start = g.handle_paging(limit, page)
@@ -305,14 +309,6 @@ class ThreadController(BaseController):
     def tag(self, labels, **kw):
         g.security.require_access(self.thread, 'post')
         self.thread.labels = labels.split(',')
-        redirect(request.referer or 'index')
-
-    @expose()
-    @require_post()
-    def flag_as_spam(self, **kw):
-        g.security.require_access(self.thread, 'moderate')
-        self.thread.first_post.status = 'spam'
-        flash('Thread flagged as spam.')
         redirect(request.referer or 'index')
 
     @without_trailing_slash
@@ -441,7 +437,7 @@ class BaseDiscussionController(BaseTGController):
 
     @expose(TEMPLATE_DIR + 'index.html')
     def index(self, threads=None, limit=None, page=0, count=0, **kw):
-        c.discussion = self.Widgets.discussion
+        c.discussion_widget = self.Widgets.discussion
         if threads is None:
             threads = self.discussion.threads
         return dict(discussion=self.discussion, limit=limit, page=page,

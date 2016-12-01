@@ -18,21 +18,7 @@
     {% endif %}
 {% endblock %}
 
-{% block actions %}
-    {% if allow_edit and count != 0 %}
-        {{ g.icon_button_widget.display(label='Bulk Edit', icon='ico-edit',
-                href=tg.url(
-                        c.app.url+'edit/',
-                        dict(q=q, limit=limit, sort=sort)
-                )) }}
-    {% endif %}
-
-    {{ g.icon_button_widget.display('RSS feed', None, None, 'ico-rss_alt',
-            href=tg.url(
-                    c.app.url+'search_feed/',
-                    dict(q=q, limit=limit, sort=sort)
-            )) }}
-{% endblock %}
+{% block actions %}{{ menu_bar }}{% endblock %}
 
 {% block edit_box %}
     {% if q and g.security.has_access(c.app, 'save_searches') %}

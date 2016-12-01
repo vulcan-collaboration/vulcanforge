@@ -106,7 +106,6 @@ def add_global_objs(ref_ids):
     Add records to SOLR
     """
     from vulcanforge.common.model.index import GlobalObjectReference
-    LOG.info('add_global_objs')
     exceptions = []
 
     allura_docs = []
@@ -114,9 +113,11 @@ def add_global_objs(ref_ids):
         try:
             ref = GlobalObjectReference.query.get(_id=ref_id)
             if ref is None:
+                LOG.info('skipping ref_id %s: no reference found', ref_id)
                 continue
             global_obj = ref.object
             if global_obj is None:
+                LOG.info('skipping ref_id %s: no object found', ref_id)
                 continue
             else:
                 s_allura = global_obj.index()

@@ -1,0 +1,37 @@
+{% extends 'exchange/master.html' %}
+
+{% block title %}History of {{ node.title }} in {{ xcng_name }}{% endblock %}
+
+{% block header %}History of {{ node.title }} in {{ xcng_name }}{% endblock %}
+
+{% block actions %}{{ c.menu_bar.display(node) }}{% endblock %}
+
+{% block content %}
+    <div class="padded">
+        <table class="history-list hover-rows">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th class="version-number">Revision</th>
+                <th class="version-date">Date</th>
+                <th class="version-log">Log</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for node in versions %}
+            <tr>
+                <td>{{ node.version }}</td>
+                <td class="version-number">{{ node.revision }}</td>
+                <td>
+                    {{ h.ago(node.mod_date) }}
+                    <div class="avatar-list">
+                        by {{ g.avatar.display(user=node.author_user, size=16, compact=True) }}
+                    </div>
+                </td>
+                <td class="version-log">{{ node.change_log or '--' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -142,7 +142,9 @@ class _RestrictedGroupSelect(ew.SingleSelectField):
     def options(self):
         options = [
             ew.Option(py_value=role._id, label=role.display_name)
-            for role in c.project.get_expanded_read_roles()]
+            for role in c.project.get_expanded_read_roles()
+            if role.project_id == c.project._id
+        ]
         return options
 
 
@@ -218,15 +220,6 @@ class ProjectOverviewForm(ForgeForm):
                 label="Name",
                 wide=True,
                 validator=ProjectNameValidator()
-            ),
-            ew.TextField(
-                name="shortname",
-                label="Shortname (read only)",
-                attrs={
-                    'readonly': 'readonly',
-                    'title': 'The shortname of a project cannot be changed',
-                },
-                wide=True
             ),
             ew.TextArea(
                 name="short_description",

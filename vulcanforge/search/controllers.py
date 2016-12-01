@@ -30,7 +30,7 @@ class AutocompleteController(BaseController):
     def _check_security(self):
         g.security.require_authenticated()
 
-    def _solr_query(self, type_s, query, fq=None, limit=DEFAULT_LIMIT,
+    def _solr_query(self, type_s, query, limit=DEFAULT_LIMIT,
                     id_field='id', value_field=None, label_field=None):
         """
         Query SOLR.
@@ -46,26 +46,21 @@ class AutocompleteController(BaseController):
         """
         if not query:
             return []
-        queries = ['({0}* OR {0}~)'.format(query.strip())]
-        if value_field is not None:
-            queries.append('{0}:{1}'.format(value_field, queries[0]))
-        if label_field is not None:
-            try:
-                label = label_field['solr_field']
-            except TypeError:
-                label = label_field
-            queries.append('{0}:{1}'.format(label, queries[0]))
-        if fq is not None:
-            fq = [fq]
-        else:
-            fq = []
-        fq.append('type_s:"{}"'.format(type_s))
-        fq.append('read_roles:({})'.format(
+
+        query_items = []
+        # This was using fuzzy matching, removed for now
+        # wild_carded_query = 'autocomplete_t:({0}* OR {0}~)'.format(
+        #    query.strip())
+        wild_carded_query = 'autocomplete_t:{0}*'.format(query.strip())
+        query_items.append(wild_carded_query)
+
+        query_items.append('type_s:"{}"'.format(type_s))
+        query_items.append('read_roles:({})'.format(
             ' OR '.join(g.security.get_user_read_roles())
         ))
+
         params = {
-            'q': ' OR '.join(queries),
-            'fq': fq,
+            'q': ' AND '.join(query_items),
             'rows': limit,
             }
         solr_result = self.solr.search(**params)
@@ -85,7 +80,7 @@ class AutocompleteController(BaseController):
                 'id': extract_field(entry, id_field),
                 'value': extract_field(entry, value_field),
                 'label': extract_field(entry, label_field),
-                }
+            }
 
         output = [extract_fields(entry) for entry in solr_result.docs]
         return output
@@ -145,7 +140,8 @@ class SearchController(BaseController):
             "Post",
             "Post Snapshot",
             "WikiPage Snapshot",
-            )
+            ""
+        )
 
     def _x_searchable_types(self, q):
         params = {
@@ -182,7 +178,7 @@ class SearchController(BaseController):
                     self._get_excluded_types()),
                 'read_roles:("%s")' % '" OR "'.join(
                     g.security.get_user_read_roles()),
-                'NOT withdrawn_b:true',
+                'NOT deleted_b:true',
                 'is_history_b:%s' % history
                 ))
             )

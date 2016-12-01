@@ -3,11 +3,13 @@ from cStringIO import StringIO
 import os
 
 from ming.odm import session
+from ming.utils import LazyProperty
 import pkg_resources
 from pylons import app_globals as g, tmpl_context as c
+from email.mime.image import MIMEImage
 
 from vulcanforge.auth.schema import ACE
-from vulcanforge.common.types import ConfigOption, SitemapEntry
+from vulcanforge.common.tool import ConfigOption, SitemapEntry
 from vulcanforge.discussion.model import (
     Discussion,
     DiscussionAttachment,
@@ -27,9 +29,10 @@ class Application(object):
     :var status: the status level of this app.  'production' apps are available
         to all projects
     :var bool searchable: toggle if the search box appears in the left menu
-    :var permissions: a dictionary of named permissions used by the app, the values describe what the permissions enable
-    :var sitemap: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
-        to create an app navigation.
+    :var permissions: a dictionary of named permissions used by the app, the
+        values describe what the permissions enable
+    :var sitemap: a list of :class:`SitemapEntries
+        <vulcanforge.common.types.SitemapEntry>` to create an app navigation.
     :var bool installable: toggle if the app can be installed in a project
     :var Controller self.root: the root Controller used for the app
     :var Controller self.api_root: a Controller used for API access at
@@ -49,13 +52,9 @@ class Application(object):
     api_root = None  # root rest controller
     static_dir = 'static'
     template_dir = 'templates'
-    permissions = dict(
-        admin='Configure this tool and its permissions',
-        write='Create new artifacts or modify old ones',
-        read='View tool artifacts'
-    )
     sitemap = []
     searchable = False
+    has_chat = True
     DiscussionClass = Discussion
     PostClass = Post
     AttachmentClass = DiscussionAttachment
@@ -80,11 +79,6 @@ class Application(object):
         can_create=False,
         create_perm='write'
     )
-    permission_descriptions = {
-        "admin": "edit access control to this tool",
-        "read": "view this tool"
-    }
-    default_acl = {}
     is_customizable = True
     visible_to_role = 'read'
 
@@ -93,6 +87,40 @@ class Application(object):
         self.config = app_config_object
         self.admin = DefaultAdminController(self)
         self.url = self.config.url()
+
+    @classmethod
+    def permissions(cls):
+        perms = {
+            'admin': 'Configure this tool and its permissions',
+            'write': 'Create new artifacts or modify old ones',
+            'read': 'View tool artifacts'
+        }
+        if cls.has_chat:
+            perms.update({
+                'moderate': 'Moderate comments',
+                'unmoderated_post': 'Add comments without moderation',
+                'post': 'Create new topics and add comments'
+            })
+        if g.exchange_manager.exchange_enabled_for_tool(cls):
+            perms.update({
+                "publish": "Publish artifacts to the Exchange",
+                "import": "Import artifacts from the Exchange"
+            })
+        return perms
+
+    @classmethod
+    def default_acl(cls):
+        acl = {
+            "Admin": cls.permissions().keys(),
+            "Developer": ["write"],
+            "Member": ["read", "write"],
+            "*authenticated": ['read'],
+            "*anonymous": ['read']
+        }
+        if cls.has_chat:
+            acl["Member"].append("moderate")
+            acl["*authenticated"].extend(["post", "unmoderated_post"])
+        return acl
 
     @classmethod
     def _iter_path_spec(cls, attr):
@@ -125,6 +153,15 @@ class Application(object):
         if icon_resource:
             return g.resource_manager.absurl(
                 icon_resource.format(ep_name=ep_name))
+
+    @LazyProperty
+    def mime_image_dict(self):
+        icon_resource = self.__class__.icons.get(32)
+        if icon_resource:
+            app_logo_path = g.resource_manager.get_filename(icon_resource.format(ep_name=self.tool_label.lower()))
+            if app_logo_path and os.path.exists(app_logo_path):
+                cid = '<{}_logo>'.format(self.tool_label)
+                return {cid:app_logo_path}
 
     @property
     def acl(self):
@@ -161,13 +198,19 @@ class Application(object):
         """:return: the default config options"""
         return {co.name: co.default for co in cls.config_options}
 
+    @classmethod
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+        my_app_configs = {k: v for k, v in app_configs.items()
+                          if v.tool_name == tool_name}
+        return {x: dict(all=0, new=0) for x in my_app_configs}
+
     def set_acl(self, acl_spec=None):
         """Install default acl. Note that we cannot modify the config acl
         directly, because ming does not note the change.
 
         """
         if acl_spec is None:
-            acl_spec = self.default_acl
+            acl_spec = self.default_acl()
         acl = []
         for role, permissions in acl_spec.iteritems():
             pr = ProjectRole.by_name(role)
@@ -185,14 +228,15 @@ class Application(object):
         """Whatever logic is required to initially set up a tool"""
 
         # Create the discussion object
-        discussion = self.DiscussionClass(
-            shortname=self.config.options.mount_point,
-            name='{} Discussion'.format(self.config.options.mount_point),
-            description='Forum for {} comments'.format(
-                self.config.options.mount_point)
-        )
-        session(discussion).flush()
-        self.config.discussion_id = discussion._id
+        if self.has_chat:
+            discussion = self.DiscussionClass(
+                shortname=self.config.options.mount_point,
+                name='{} Discussion'.format(self.config.options.mount_point),
+                description='Forum for {} comments'.format(
+                    self.config.options.mount_point)
+            )
+            session(discussion).flush()
+            self.config.discussion_id = discussion._id
         self.config.visible_to_role = self.visible_to_role
         self.config.reference_opts = self.reference_opts.copy()
         self.subscribe_admins()
@@ -226,7 +270,8 @@ class Application(object):
     def main_menu(self):
         """
         Apps should provide their entries to be added to the main nav
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of
+            :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
 
         """
         return self.sitemap
@@ -234,20 +279,23 @@ class Application(object):
     def sidebar_menu(self):
         """
         Apps should override this to provide their menu
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of
+            :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
         """
         return []
 
     def admin_menu(self):
         """
         Apps may override this to provide additional admin menu items
-        :return: a list of :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
+        :return: a list of
+            :class:`SitemapEntries <vulcanforge.common.types.SitemapEntry>`
         """
-        admin_url = c.project.url() + 'admin/' +\
-                    self.config.options.mount_point + '/'
+        admin_url = '{}admin/{}/'.format(
+            c.project.url(), self.config.options.mount_point)
         links = []
 
-        if self.permissions and g.security.has_access(c.project, 'admin'):
+        permissions = self.permissions()
+        if permissions and g.security.has_access(c.project, 'admin'):
             links.append(
                 SitemapEntry(
                     'Permissions',
@@ -344,8 +392,15 @@ class Application(object):
             yield self.PostClass
         if self.AttachmentClass:
             yield self.AttachmentClass
-        for cls in self.artifacts.values():
-            yield cls
+        for spec in self.artifacts.values():
+            if spec.get("model"):
+                yield spec["model"]
 
     def get_global_navigation_data(self):
         raise NotImplementedError
+
+    def artifact_counts(self, since=None):
+        return dict(
+            new=0,
+            all=0
+        )

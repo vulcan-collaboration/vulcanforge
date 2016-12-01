@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pformat
 import urllib
 import bson
@@ -16,36 +16,45 @@ from tg import expose, redirect, validate, response, config
 from tg.flash import flash
 from tg.controllers import RestController
 
+from vulcanforge.auth.exceptions import (
+    PasswordAlreadyUsedError,
+    PasswordCannotBeChangedError
+)
 from vulcanforge.common import exceptions, helpers as h
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.controllers.decorators import vardec
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.util import push_config, nonce
 from vulcanforge.common.util.exception import exceptionless
+from vulcanforge.common.util.notifications import get_user_notifications
 from vulcanforge.common.app import Application
 from vulcanforge.common.validators import DateTimeConverter
+from vulcanforge.auth.controllers import PreferencesController, AuthController
 from vulcanforge.auth.schema import ACE
 from vulcanforge.auth.model import WorkspaceTab
+from vulcanforge.auth.validators import validate_password
 from vulcanforge.artifact.widgets import short_artifact_link_data
 from vulcanforge.messaging.model import ConversationStatus
 from vulcanforge.neighborhood.marketplace.model import UserAdvertisement
 from vulcanforge.notification.model import Notification
 from vulcanforge.project.widgets import ProjectListWidget
-from vulcanforge.project.model import Project, ProjectFile
+from vulcanforge.project.model import Project, ProjectFile, MembershipRequest, \
+    MembershipInvitation, ProjectRole
 from vulcanforge.notification.widgets import ActivityFeed
 from vulcanforge.resources import Icon
-from vulcanforge.tools.admin import model as AM
 from vulcanforge.tools.home import model as PHM
 from vulcanforge.tools.home.project_main import ProjectHomeController
 from .widgets import EditProfileForm
 from vulcanforge.common.controllers.decorators import (
     require_post, validate_form)
 
+
 LOG = logging.getLogger(__name__)
 TEMPLATE_DIR = 'jinja:vulcanforge.tools.profile:templates/'
 
 
 class UserProfileApp(Application):
+    has_chat = False
 
     def __init__(self, user_project, config):
         Application.__init__(self, user_project, config)
@@ -112,7 +121,7 @@ class UserProfileApp(Application):
         pr = c.project.project_role(self.user)
         if pr:
             self.config.acl = [
-                ACE.allow(pr._id, perm) for perm in self.permissions]
+                ACE.allow(pr._id, perm) for perm in self.permissions()]
 
     def uninstall(self, project):  # pragma no cover
         raise NotImplementedError("uninstall")
@@ -269,105 +278,8 @@ class UserProfileController(BaseController):
 
     @expose(TEMPLATE_DIR + 'user_index.html')
     def index(self, **kw):
-        c.project_list = self.Widgets.project_list
-        c.activity_feed = self.Widgets.activity_feed
-        is_self = self.user._id == c.user._id
-
-        # projects in which user has named role
-        projects = []
-        for p in self.user.my_projects():
-            if p.is_real() and not p.private_project_of() and \
-                    g.security.has_access(p, 'read'):
-                p_dict = p.index()
-                p_dict['status'] = ', '.join(
-                    pr.name for pr in p.named_roles_in(self.user))
-                if is_self and p.home_ac:
-                    if p.user_requested_leave(self.user):
-                        p_dict['status'] += ' - renouncement under evaluation'
-                    elif not g.security.has_access(c.project, 'admin'):
-                        p_dict.update({
-                            'cancel_url': (
-                                p.home_ac.url() + 'renounce_membership'),
-                            'cancel_text': 'Renounce Membership'
-                        })
-                projects.append(p_dict)
-
-        # projects to which user has requested membership
-        mem_reqs = AM.MembershipRequest.query.find({'user_id': self.user._id})
-        for mem_req in mem_reqs:
-            if g.security.has_access(mem_req.project, 'read'):
-                p_dict = mem_req.project.index()
-                p_dict['status'] = 'Membership Request Under Evaluation'
-                if is_self:
-                    p_dict.update({
-                        'cancel_url': (
-                            mem_req.project.home_ac.url() + 'cancel_request'),
-                        'cancel_text': 'Cancel Membership Request'
-                    })
-                projects.append(p_dict)
-
-        # projects to which user has been invited
-        vites = AM.MembershipInvitation.query.find({'user_id': self.user._id})
-        for vite in vites:
-            if is_self or g.security.has_access(vite.project, 'read'):
-                p_dict = vite.project.index()
-                p_dict['status'] = 'Invited'
-                if is_self:
-                    if vite.project.neighborhood.user_can_register(self.user):
-                        p_dict.update({
-                            'cancel_url': '{}accept_membership/{}'.format(
-                                c.app.url,
-                                vite.project.shortname
-                            ),
-                            'cancel_text': 'Accept Invitation'
-                        })
-                    else:
-                        reject_msg = 'must leave current team to accept'
-                        p_dict['status'] += ' - ' + reject_msg
-                projects.append(p_dict)
-
-        # For inviting the user to a project
-        admin_opts = []
-        if not is_self:
-            for p in c.user.my_projects():
-                if g.security.has_access(p, 'admin') and \
-                p.is_real() and \
-                not p.user_in_project(self.user.username) and \
-                not p.user_invited(self.user):
-                    admin_opts.append(
-                        '{{project_id:"{}",project_name:"{}"}}'.format(
-                            str(p._id), p.name.replace('"', '\\"')
-                        ))
-
-        # get activity feed notifications
-        read_roles = ' OR '.join(g.security.get_user_read_roles())
-        solr_params = {
-            'q': 'author_id_s:{}'.format(self.user._id),
-            'fq': [
-                'type_s:Notification',
-                'read_roles:({})'.format(read_roles),
-            ],
-            'sort': 'pubdate_dt desc',
-            'rows': 10,
-        }
-        solr_results = g.solr.search(**solr_params)
-        # convert to list of actual notification instances to use existing
-        # activity feed widgets
-        notification_ids = [d['notification_id_s'] for d in solr_results.docs]
-        notification_cursor = Notification.query.find({
-            '_id': {'$in': notification_ids},
-        })
-        notification_cursor.sort('pubdate', pymongo.DESCENDING)
-        notifications = notification_cursor.all()
-
-        return {
-            'user': self.user,
-            'is_self': is_self,
-            'project_opts': '[' + ','.join(admin_opts) + ']'
-                            if admin_opts else None,
-            'notifications': notifications,
-            'projects': projects
-        }
+        return {'user': self.user,
+                'lastLog': self.user.last_login}
 
     @expose(TEMPLATE_DIR + 'user_dashboard_configuration.html')
     def configuration(self):
@@ -439,31 +351,31 @@ class UserProfileController(BaseController):
         g.security.require_access(c.project, 'admin')
         c.edit_profile_form = self.Forms.edit_profile_form
         profile_info = self.user.get_profile_info()
-        ad_text = None
-        user_ad = UserAdvertisement.query.get(user_id=c.user._id)
-        if user_ad:
-            ad_text = user_ad.text_content
+        defaults = {
+            'display_name': profile_info['fullName'],
+            'mission': profile_info['mission'],
+            'interests': profile_info['interests'],
+            'expertise': profile_info['expertise'],
+            'public': self.user.public
+        }
+        user_fields_info = {x: self.user.user_fields.get(x, "")
+                            for x in ('company', 'position', 'telephone')}
+        defaults.update(user_fields_info)
         return dict(
             action=c.app.url + 'update_profile',
-            defaults={
-                'user_ad': ad_text,
-                'display_name': profile_info['fullName'],
-                'skype_name': profile_info['skypeName'],
-                'mission': profile_info['mission'],
-                'interests': profile_info['interests'],
-                'expertise': profile_info['expertise'],
-                'public': self.user.public
-            },
+            defaults=defaults,
             user=self.user
         )
 
     @expose()
     @require_post()
     @validate_form("edit_profile_form", error_handler=edit_profile)
-    def update_profile(self, display_name=None, skype_name=None, mission="",
-                       interests="", expertise="", public="", avatar=False,
-                       user_ad=None, remove_ad=False, remove_avatar=False):
+    def update_profile(self, display_name=None, mission="", interests="",
+                       expertise="", public="", avatar=False,
+                       remove_avatar=False, **kw):
+
         g.security.require_access(c.project, 'admin')
+        LOG.info("Update profile: {}".format(kw))
 
         # avatar
         def invalidate_avatar_cache():
@@ -501,34 +413,24 @@ class UserProfileController(BaseController):
         # profile info
         if display_name:
             self.user.display_name = display_name
-        if skype_name:
-            self.user.skype_name = skype_name
         self.user.mission = mission
         self.user.interests = interests
         self.user.expertise = expertise
 
-        # user ad
-        ad = UserAdvertisement.query.get(user_id=self.user._id)
-        if remove_ad:
-            if ad:
-                ad.delete()
-        elif user_ad:
-            if ad is None:
-                UserAdvertisement(
-                    user_id=self.user._id,
-                    text_content=user_ad
-                )
-            elif ad.text_content != user_ad:
-                ad.text_content = user_ad
-                ad.pub_date = datetime.utcnow()
+        # user_fields
+        user_fields = ('company', 'position', 'telephone')
+        for f in user_fields:
+            if f in kw:
+                self.user.user_fields[f] = kw[f]
 
         # public/private
         if not asbool(config.get('all_users_public', 'false')):
-            public = bool(public)
             if public:
-                self.user.make_public()
-            else:
-                self.user.make_private()
+                public = bool(public)
+                if public:
+                    self.user.make_public()
+                else:
+                    self.user.make_private()
 
         redirect('index')
 
@@ -580,7 +482,7 @@ class UserProfileController(BaseController):
     def get_user_profile(self, **kw):
         profile_info = self.user.get_profile_info()
         profile_info['profileImage'] = Markup(profile_info['profileImage'])
-
+        profile_info['email'] = self.user.get_email_address()
         return profile_info
 
     @expose('json')
@@ -594,7 +496,7 @@ class UserProfileController(BaseController):
         if not project:
             raise exc.HTTPNotFound
         g.security.require_access(project, 'admin')
-        invite = AM.MembershipInvitation.from_user(
+        invite = MembershipInvitation.from_user(
             self.user,
             project=project,
             text=text
@@ -639,3 +541,137 @@ class UserProfileController(BaseController):
         }
 
         return response
+
+    @expose('json')
+    def userinfo(self, **kw):
+        uinfo = self.user.get_profile_info()
+        uf = self.user.user_fields
+        my_user = c.user.username == self.user.username
+        info = {
+            'name': uinfo['fullName'],
+            'interests': uinfo['interests'],
+            'username': self.user.username,
+            'mission': uinfo['mission'],
+            'expertise': self.user.expertise,
+            'icon': self.user.icon_url(),
+            'email': self.user.get_email_address(),
+            'joined': self.user._id.generation_time,
+            'telephone': uf.get('telephone', None),
+            'position': uf.get('position', None),
+            'company': uf.get('company', None),
+            'disabled': self.user.disabled,
+            'forge_name': config.get("forge_name"),
+            'canEdit': my_user,
+            'twofactor_notice': (my_user and g.auth_two_factor and
+                                 not c.user.get_pref('two_factor_auth')),
+            'url': self.user.url()
+        }
+        return info
+
+    @expose('json')
+    def activity(self, from_dt=None, to_dt=None, **kw):
+        """returns the project's recent activity via notifications"""
+        limit = 25
+        results = get_user_notifications(
+            self.user, c.user, from_dt, to_dt, limit=limit, **kw)
+        has_more = 'true' if results.hits > limit else 'false'
+        json = '{{"notifications":[{notifications}],' \
+               '"more":{more},"project_id":"{project_id}"}}'.format(
+            notifications=','.join(d['json_s'] for d in results.docs),
+            more=has_more, project_id=str(c.project._id)
+        )
+        return Markup(json)
+
+    @expose('json')
+    def checkpassword(self, value, **kwargs):
+        validate = g.auth_provider.validate_password
+        match = validate(c.user, value)
+        return {
+            'match': match
+        }
+
+    def setpassword(self, new, current):
+        check = validate_password(new, current)
+        if check != 'success':
+            return {
+                'error': check
+            }
+        try:
+            c.user.set_password(new, current)
+            return {
+                'success': True
+            }
+        except PasswordAlreadyUsedError, e:
+            return {
+                'error': 'Password has already been used.'
+            }
+        except PasswordCannotBeChangedError, e:
+            return {
+                'error': 'Password minimum lifetime not yet exceeded'
+            }
+        except Exception, e:
+            return {
+                'error': 'Bad password change attempt'
+            }
+
+    @require_post()
+    @expose('json')
+    def changeSecurity(self, changepass=False, newpass=None, curpass=None,
+                       twofactor=False, delacc=False):
+        if delacc == 'true':
+            c.user.disabled = True
+            g.auth_provider.logout()
+            redirect(g.post_logout_url)
+        if changepass == 'true' and newpass and curpass:
+            resp = self.setpassword(newpass, curpass)
+            if resp.get('error', None):
+                return resp
+        c.user.set_pref('two_factor_auth', twofactor == 'true')
+        return {"success": 'Security settings updated'}
+
+    @expose('json')
+    def getsecurity(self, **kwargs):
+        p = PreferencesController()
+        p.config_test()
+        min_hours = int(config.get('auth.pw.min_lifetime.hours', 24))
+        can_change = True
+        if c.user.password_set_at:
+            age = datetime.utcnow() - c.user.password_set_at
+            if age < timedelta(hours=min_hours):
+                can_change = False
+        return {
+            'platformtf': g.auth_two_factor,
+            'usertf': c.user.get_pref('two_factor_auth'),
+            'tfkey': c.user.user_fields['totp'],
+            'canchange': can_change,
+            'minhours': min_hours
+        }
+
+    @expose('json')
+    def getTFValue(self, **kwargs):
+        pfc = PreferencesController()
+        return pfc.config_test()
+
+    @expose('json')
+    def getprojects(self, **kw):
+        projects = [x for x in self.user.my_projects()
+                    if x.is_real() and not x.deleted
+                    and g.security.has_access(x, "read", c.user)]
+        project_info = []
+        for project in projects:
+            named_roles = project.named_roles_in(self.user)
+            user_roles = ", ".join(sorted([x.name for x in named_roles]))
+            q = dict(project_id=project._id, user_id=self.user._id)
+            project_role = ProjectRole.query.get(**q)
+            member_since = None
+            if project_role:
+                member_since = project_role._id.generation_time
+            p = {
+                "name": project.name,
+                "icon_url": project.icon_url,
+                "url": project.url(),
+                "roles": user_roles,
+                "joined": datetime.isoformat(member_since)
+            }
+            project_info.append(p)
+        return {'projects': project_info}

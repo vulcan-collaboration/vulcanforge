@@ -1,6 +1,17 @@
 {% extends g.templates['master'] %}
 
+{% do g.resource_manager.register_js('discussion/ForumsTutorial.js') %}
+
 {% block head %}
 {% endblock %}
 
+{% block head_extra %}
+    {% block extra_css %}
+    {% endblock %}
+{% endblock %}
+
 {% block pageType %}FORUMS{% endblock %}
+
+{% block content %}
+<div id="tutorialHolder"></div>
+{% endblock %}

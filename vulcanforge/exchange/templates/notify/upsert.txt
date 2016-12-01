@@ -1,0 +1,6 @@
+{{ subject }} in the {{ exchange_name }}:
+
+See {{ title }} in action: {{ url }}
+
+Browse the {{ exchange_name }}: {{ exchange_url }}
+

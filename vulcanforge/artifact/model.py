@@ -2,8 +2,6 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 from pprint import pformat
-import re
-import bson
 
 from pylons import tmpl_context as c, app_globals as g, request
 from webhelpers import feedgenerator as FG
@@ -28,11 +26,10 @@ from vulcanforge.common.model.session import (
     visualizable_orm_session,
     visualizable_artifact_session)
 from vulcanforge.common.helpers import absurl, urlquote
-from vulcanforge.common.util import nonce
+from vulcanforge.common.util import nonce, get_client_ip
 from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.auth.model import User
 from vulcanforge.auth.schema import ACL
-from vulcanforge.project.model import Project
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.notification.util import gen_message_id
 from vulcanforge.taskd import model_task
@@ -85,6 +82,10 @@ class ArtifactApiMixin(object):
 
         """
         raise NotImplementedError('shorthand_id')
+
+    @property
+    def title_s(self):
+        raise NotImplementedError('title_s')
 
     def s3_key_prefix(self):
         return self.shorthand_id()
@@ -217,18 +218,20 @@ class ArtifactApiMixin(object):
         thread_class = app.DiscussionClass.thread_class()
         thread = thread_class.query.get(ref_id=self.index_id())
         if thread is None and generate_if_missing:
-            idx = self.index() or {}
             thread = thread_class(
                 app_config_id=self.app_config_id,
                 discussion_id=self.app_config.discussion_id,
-                ref_id=idx.get('id', self.index_id()),
-                subject='%s discussion' % idx.get('title_s', self.link_text()))
+                ref_id=self.index_id(),
+                subject='%s discussion' % self.title_s)
             thread.flush_self()
         return thread
 
     @LazyProperty
     def discussion_thread(self):
         return self.get_discussion_thread()
+
+    def email_template(self):
+        return None
 
 
 class Artifact(BaseMappedClass, ArtifactApiMixin):
@@ -361,12 +364,28 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         return tg.config.get(
             'forgemail.return_path', 'noreply@vulcanforge.org')
 
+    @property
+    def title_s(self):
+        return 'Artifact {}'.format(self._id)
+
     @LazyProperty
     def app(self):
         if getattr(c, 'app', None) and c.app.config._id == self.app_config._id:
             return c.app
         else:
             return self.app_config.instantiate()
+
+    def solr_index(self):
+        """
+        You can call this method to make the indexing of artifacts synchronous
+
+        :return:
+        """
+        from vulcanforge.artifact.tasks import add_artifacts
+
+        ref = self.ref
+        ref.flush_self()
+        add_artifacts([ref._id])
 
     def index(self, text_objects=None, use_posts=True, **kwargs):
         """
@@ -388,10 +407,10 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
         index = dict(
             id=self.index_id(),
             mod_date_dt=self.mod_date,
-            title_s='Artifact %s' % self._id,
+            title_s=self.title_s,
             project_id_s=str(self.project._id),
-            project_name_t=self.project.name,
-            project_shortname_t=self.project.shortname,
+            project_name_s=self.project.name,
+            project_shortname_s=self.project.shortname,
             tool_name_s=self.app_config.tool_name,
             mount_point_s=self.app_config.options.mount_point,
             app_config_id_s=self.app_config_id,
@@ -399,7 +418,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
             url_s=self.url(),
             read_roles=self.get_read_roles(),
             type_s=self.type_s,
-            labels_t=' '.join(l for l in self.labels),
+            labels_t=' '.join(self.labels),
             snippet_s='',
             can_reference_b=True,
             post_text_s=''
@@ -488,7 +507,10 @@ class Snapshot(Artifact):
         session = artifact_orm_session
         name = 'artifact_snapshot'
         unique_indexes = [('artifact_class', 'artifact_id', 'version')]
-        indexes = [('artifact_id', 'version')]
+        indexes = [
+            ('artifact_id', 'version'),
+            ('artifact_id', '_id')
+        ]
 
     _id = FieldProperty(S.ObjectId)
     artifact_id = FieldProperty(S.ObjectId)
@@ -503,24 +525,29 @@ class Snapshot(Artifact):
     timestamp = FieldProperty(datetime)
     data = FieldProperty(None)
 
+    @property
+    def title_s(self):
+        original = self.original()
+        if original:
+            return 'Version {} of {}'.format(self.version, original.title_s)
+
     def index(self, text_objects=None, **kwargs):
         if text_objects is None:
             text_objects = []
-        index = dict()
+        index = {}
         original = self.original()
         original_text = []
         if original:
             index = original.index()
             original_text = index.pop('text')
-            index['title_s'] = 'Version %d of %s' % (
-                    self.version, index['title_s'])
-        index.update(
-            id=self.index_id(),
-            version_i=self.version,
-            author_username_t=self.author.username,
-            author_display_name_t=self.author.display_name,
-            timestamp_dt=self.timestamp,
-            is_history_b=True)
+        index.update({
+            'id': self.index_id(),
+            'version_i': self.version,
+            'author_username_t': self.author.username,
+            'author_display_name_t': self.author.display_name,
+            'timestamp_dt': self.timestamp,
+            'is_history_b': True
+        })
         index.update(kwargs)
         index['text_objects'] = text_objects + [original_text] + [
             self.author.username,
@@ -568,6 +595,9 @@ class VersionedArtifact(Artifact):
     version = FieldProperty(S.Int, if_missing=0)
     last_updated = FieldProperty(S.DateTime, if_missing=datetime.utcnow)
 
+    def snapshot_data(self):
+        return state(self).clone()
+
     def commit(self):
         """Save off a snapshot of the artifact and increment the version #"""
         session(self.__class__).flush(self)
@@ -580,19 +610,7 @@ class VersionedArtifact(Artifact):
         self.version = obj.version
         self.last_updated = now
 
-        try:
-            ip_address = request.headers.get(
-                'X_FORWARDED_FOR',
-                request.remote_addr
-            )
-            ip_address = ip_address.split(',')[0].strip()
-        except:
-            ip_address = '0.0.0.0'
-
-        try:
-            artifact_state = self.state()
-        except:
-            artifact_state = state(self).clone()
+        ip_address = get_client_ip() or '0.0.0.0'
 
         data = dict(
             artifact_id=self._id,
@@ -606,7 +624,7 @@ class VersionedArtifact(Artifact):
                 display_name=c.user.get_pref('display_name'),
                 logged_ip=ip_address),
             timestamp=now,
-            data=artifact_state)
+            data=self.snapshot_data())
         ss = self.__mongometa__.history_class(**data)
         session(ss).insert_now(ss, state(ss))
         LOG.info('Snapshot version %s of %s',
@@ -782,10 +800,9 @@ class Feed(MappedClass):
             return
         if not g.security.has_access(c.project, 'read', user=anon):
             return
-        idx = artifact.index()
         if title is None:
             title = '%s modified by %s' % (
-                idx['title_s'], c.user.get_pref('display_name'))
+                artifact.title_s, c.user.get_pref('display_name'))
         if description is None:
             description = title
         if author is None:
@@ -996,7 +1013,7 @@ class ArtifactReference(BaseMappedClass):
             with g.context_manager.push(app_config_id=aref.app_config_id):
                 artifact = cls.query.get(_id=aref.artifact_id)
                 return artifact
-        except Exception, e:
+        except Exception as e:
             LOG.exception('Error loading artifact for %s: %r: %s',
                           self._id, aref, e)
 
@@ -1141,3 +1158,73 @@ class VisualizableArtifact(Artifact, VisualizableMixIn):
 
     def artifact_ref_id(self):
         return self.index_id()
+
+
+class LogEntry(BaseMappedClass):
+
+    class __mongometa__:
+        session = project_orm_session
+        name = 'log_entry'
+        indexes = ['artifact_id',
+                   'app_config_id']
+
+    project_id = FieldProperty(S.ObjectId)
+    app_config_id = FieldProperty(S.ObjectId, if_missing=None)
+    artifact_id = FieldProperty(S.ObjectId, if_missing=None)
+    user_id = FieldProperty(S.ObjectId)
+    username = FieldProperty(str)
+    display_name = FieldProperty(str)
+    logged_ip = FieldProperty(str)
+    timestamp = FieldProperty(datetime)
+    access_type = FieldProperty(str)
+    extra_information = FieldProperty(S.Anything)
+    access_denied = FieldProperty(bool, if_missing=False)
+    url = FieldProperty(str, if_missing='')
+
+    @classmethod
+    def insert(cls,
+               access_type='',
+               permission_needed="read",
+               extra_information=None,
+               artifact=None,
+               access_denied_only=False):
+
+        if extra_information is None:
+            extra_information = {}
+
+        accessed_obj = c.project
+        artifact_id = app_config_id = None
+
+        if getattr(c.app, 'config', None) is not None:
+            accessed_obj = c.app.config
+            app_config_id = c.app.config._id
+
+        if artifact is not None:
+            accessed_obj = artifact
+            artifact_id = artifact._id
+
+        access_denied = not g.security.has_access(accessed_obj, permission_needed)
+        if access_denied_only and not access_denied:
+            return
+
+        ip_address = get_client_ip() or '0.0.0.0'
+
+        data = dict(
+            project_id=c.project._id,
+            app_config_id=app_config_id,
+            artifact_id=artifact_id,
+            user_id=c.user._id,
+            username=c.user.username,
+            display_name=c.user.get_pref('display_name'),
+            logged_ip=ip_address,
+            timestamp=datetime.utcnow(),
+            access_type=access_type,
+            extra_information=extra_information,
+            access_denied=access_denied,
+            url=request.url
+        )
+
+        log_entry = LogEntry(**data)
+        log_entry.flush_self()
+
+        return log_entry

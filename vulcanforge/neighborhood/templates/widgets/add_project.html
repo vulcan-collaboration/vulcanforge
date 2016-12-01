@@ -39,8 +39,16 @@
     <div class="inner-row">
         <div class="tool">
             <div class="big_icon">
-                <img src="{{g.tool_icon_url('Tickets', 48)}}"
-                     alt="Manage">
+                <img src="{{g.tool_icon_url('Downloads', 48)}}" alt="Downloads">
+            </div>
+            <h1>{{widget.display_field(widget.fields_dict.Downloads)}}</h1>
+            <p>
+                Organize and share file resources with a nifty drag and drop interface.
+            </p>
+        </div>
+        <div class="tool">
+            <div class="big_icon">
+                <img src="{{g.tool_icon_url('Tickets', 48)}}" alt="Manage">
             </div>
             <h1>{{widget.display_field(widget.fields_dict.Tickets)}}</h1>
             <p>
@@ -67,26 +75,8 @@
                 Collaborate with your project members, and with broader communities, using discussion forums.
             </p>
         </div>
-    </div>
-    <div class="inner-row">
-        <div class="tool">
-            <div class="big_icon">
-                <img src="{{g.tool_icon_url('Git', 48)}}"
-                     alt="Repositories">
-            </div>
-            <h1>{{widget.display_field(widget.fields_dict.Repository)}}</h1>
-
-            <p>
-                Keep track of changes to your project artifacts with version
-                control systems.
-            </p>
-
-            <p>
-                {{widget.display_field(widget.fields_dict.RepositoryKind)}}
-            </p>
-        </div>
         <div id="start" class="tool">
-              <input type="submit" value="Start">
+            <input type="submit" value="Start">
         </div>
     </div>
     {% else %}

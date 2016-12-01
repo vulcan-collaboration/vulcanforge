@@ -10,6 +10,7 @@ import urllib
 import time
 import hmac
 import hashlib
+import posixpath
 
 import markdown
 import pygments
@@ -27,7 +28,6 @@ from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.common.widgets.analytics import GoogleAnalytics
 from vulcanforge.common.widgets.buttons import ButtonWidget, IconButtonWidget
 from vulcanforge.artifact.widgets.subscription import SubscriptionPopupMenu
-from vulcanforge.auth.model import User
 from vulcanforge.auth.widgets import Avatar
 from vulcanforge.config.render.markdown_ext.mdx_datasort_table import \
     DataSortTableExtension
@@ -69,6 +69,8 @@ class ForgeAppGlobals(object):
         if self.__shared_state:
             return
 
+        self.forge_name = config.get('forge_name', 'Forge')
+
         # Load login/logout urls
         self.login_url = config.get('auth.login_url', '/auth/')
         self.logout_url = config.get('auth.logout_url', '/auth/logout')
@@ -105,7 +107,16 @@ class ForgeAppGlobals(object):
                 'templates.project_toolbar',
                 MASTER_DIR + 'project_toolbar.html'),
             'sidebar_menu': config.get(
-                'templates.sidebar_menu', MASTER_DIR + 'sidebar_menu.html')
+                'templates.sidebar_menu', MASTER_DIR + 'sidebar_menu.html'),
+            'polymer-master': config.get(
+                'templates.polymer_master',
+                MASTER_DIR + 'polymer-master.html'),
+            'polymer-user': config.get(
+                'templates.polymer_user_master',
+                MASTER_DIR + 'polymer-user-master.html'),
+            'polymer-project': config.get(
+                'templates.polymer_project_master',
+                MASTER_DIR + 'polymer-project-master.html')
         }
 
         self.favicon_path = config.get('favicon_path', 'favicon.ico')
@@ -167,19 +178,20 @@ class ForgeAppGlobals(object):
             nbhd_rest_controller_path)
 
         # Registration blocker
-        self.registration_allowed = config.get(
-            'registration.allow', 'true').lower().startswith('t')
+        setting = 'registration.allow'
+        self.registration_allowed = asbool(config.get(setting, True))
 
         # get site admin project name
-        self.site_admin_project = config.get(
-            'site_admin_project', 'forgeadmin')
+        setting = 'site_admin_project'
+        self.site_admin_project = config.get(setting, 'forgeadmin')
 
         # idle logout
-        self.idle_logout_enabled = asbool(
-            config.get('idle_logout.enabled', True))
-        self.idle_logout_minutes = asint(config.get('idle_logout.minutes', 30))
-        self.idle_logout_countdown_seconds = asint(
-            config.get('idle_logout.countdown_seconds', 30))
+        setting = 'idle_logout.enabled'
+        self.idle_logout_enabled = asbool(config.get(setting, False))
+        setting = 'idle_logout.minutes'
+        self.idle_logout_minutes = asint(config.get(setting, 30))
+        setting = 'idle_logout.countdown_seconds'
+        self.idle_logout_countdown_seconds = asint(config.get(setting, 30))
 
         # is openid enabled
         self.openid_enabled = asbool(config.get('openid.enabled', False))
@@ -214,7 +226,16 @@ class ForgeAppGlobals(object):
                 'templates.project_toolbar',
                 tmpl_master + 'project_toolbar.html'),
             'sidebar_menu': config.get(
-                'templates.sidebar_menu', tmpl_master + 'sidebar_menu.html')
+                'templates.sidebar_menu', tmpl_master + 'sidebar_menu.html'),
+            'polymer-master': config.get(
+                'templates.polymer_master',
+                tmpl_master + 'polymer-master.html'),
+            'polymer-user': config.get(
+                'templates.polymer_user_master',
+                tmpl_master + 'polymer-user-master.html'),
+            'polymer-project': config.get(
+                'templates.polymer_project_master',
+                tmpl_master + 'polymer-project-master.html')
         }
 
         # websocket
@@ -227,6 +248,43 @@ class ForgeAppGlobals(object):
         self.site_issues_label = config.get("site_issues_label", "Help Desk")
         self.site_faq_url = config.get("site_faq_url")
         self.site_faq_label = config.get("site_faq_label", "FAQ")
+
+        # resumable multipart files
+        setting = 'multipart_chunk_size'
+        self.multipart_chunk_size = asint(config.get(setting, 4*5242880))
+        # The minimum allowed size is 5242880
+        if self.multipart_chunk_size < 5242880:
+            self.multipart_chunk_size = 5242880
+
+        # S3
+        self.s3_serve_local = asbool(config.get('s3.serve_local', True))
+        # Specify in seconds
+        self.s3_url_expires_in = asint(config.get('s3.url_expires_in', 30*60))
+        self.s3_encryption = asbool(config.get('s3.encryption', False))
+
+        # Clam AV
+        self.clamav_enabled = asbool(config.get('antivirus.enabled', False))
+        self.clamav_host = config.get('antivirus.host', '')
+        self.clamav_port = asint(config.get('antivirus.port', 3310))
+        setting = 'clamav.stream_max_length'
+        self.clamav_stream_max = asint(config.get(setting, 25*1000*1000))
+        setting = 'clamav.task_priority'
+        self.clamav_task_priority = asint(config.get(setting, 5))
+
+        # two-factor authentication
+        self.auth_two_factor = asbool(config.get('auth.two_factor', False))
+
+        # verify login clients
+        setting = 'auth.verify_login_clients'
+        self.verify_login_clients = asbool(config.get(setting, False))
+
+        # email change primary
+        setting = "user.pref.change_primary_email"
+        self.user_change_primary_email =  asbool(config.get(setting, True))
+
+        # ssh public keys
+        setting = "user.pref.ssh_public_key"
+        self.user_ssh_public_key = asbool(config.get(setting, True))
 
     def gravatar(self, *args, **kwargs):
         options = {
@@ -359,15 +417,6 @@ class ForgeAppGlobals(object):
             })
         )
         return url
-
-    def swift_auth_url(self, keyname, bucket_name=None, artifact=None,
-                       base_url=None):
-        return '{base_url}{prefix}/{bucket}/{key}'.format(
-            base_url=base_url or self.base_s3_url,
-            prefix=config.get('swift.auth.url_prefix', 'swiftvf'),
-            bucket=bucket_name or self.s3_bucket.name,
-            key=self.make_s3_keyname(keyname, artifact),
-        )
 
     def post_event(self, topic, *args, **kwargs):
         LOG.debug(
@@ -517,10 +566,19 @@ class ForgeAppGlobals(object):
         url = base_url.rstrip('/') + '/' + uri.lstrip('/')
         return url
 
-    def postload_contents(self):
-        text = '''
-'''
-        return json.dumps(dict(text=text))
+    def make_url(self, rel_uri, is_index=False):
+        """
+        Make a url from a uri relative to the current request.
+
+        Set is_index to True if current method is index to remove ambiguity.
+
+        """
+        path = request.path_info
+        if path.endswith('/') and (not is_index or path.endswith('index/')):
+            path = path.rstrip('/')
+        elif is_index and not path.endswith('/index'):
+            path += '/'
+        return posixpath.join(posixpath.dirname(path), rel_uri)
 
     def year(self):
         return datetime.datetime.utcnow().year
@@ -528,48 +586,17 @@ class ForgeAppGlobals(object):
     # commented excluded fields for reference
     index_default_text_fields = [
         'cat',
-        #'percentile',
-        #'weight',
-        #'review_count',
         'subject',
-        #'includes',
-        #'project_type',
-        #'unix_group_name',
-        #'id',
         'author',
-        #'last_modified',
         'title',
-        #'screenshot_url',
-        #'trove',
         'description',
         'name',
-        #'manu_exact',
         'features',
-        #'registration_date',
         'license',
-        #'group_ranking',
-        #'content_type',
-        #'popularity',
         'text',
-        #'num_downloads',
         'keywords',
-        #'project_doc_id',
-        #'help_wanted',
-        #'group_id',
         'links',
-        #'has_file',
-        #'alphaNameSort',
-        #'sku',
-        #'num_developers',
-        #'admin_subscribed',
         'category',
-        #'price',
-        #'license_other',
         'manu',
-        #'source',
-        #'num_services',
-        #'rating',
-        #'inStock',
-        #'num_downloads_week',
         'comments',
     ]

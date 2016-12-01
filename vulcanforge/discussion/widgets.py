@@ -72,7 +72,8 @@ class ModeratePosts(ew.SimpleForm):
         submit_text=None)
 
     def resources(self):
-        for r in super(ModeratePosts, self).resources(): yield r
+        for r in super(ModeratePosts, self).resources():
+            yield r
         yield JSScript('''
       (function($){
           var tbl = $('form table');
@@ -127,7 +128,8 @@ class TagPost(ff.ForgeForm):
     fields = [ffw.LabelEdit(label='Labels', name='labels', className='title')]
 
     def resources(self):
-        for r in ffw.LabelEdit(name='labels').resources(): yield r
+        for r in ffw.LabelEdit(name='labels').resources():
+            yield r
 
 
 class EditPost(ff.ForgeForm):
@@ -218,7 +220,8 @@ class SubscriptionForm(ew.SimpleForm):
         threads = _ThreadsTable()
 
     def resources(self):
-        for r in super(SubscriptionForm, self).resources(): yield r
+        for r in super(SubscriptionForm, self).resources():
+            yield r
         yield JSScript('''
         $(window).load(function () {
             $('tbody').children(':even').addClass('even');
@@ -262,12 +265,14 @@ class ThreadHeader(HierWidget):
         page=None,
         limit=None,
         count=None,
-        show_moderate=False)
+        show_moderate=False,
+        show_tag_post=False
+    )
     widgets = dict(
         page_list=PageList(),
         page_size=PageSize(),
-        moderate_thread=ModerateThread())
-    #tag_post=TagPost())
+        moderate_thread=ModerateThread(),
+        tag_post=TagPost())
 
 
 class PostWidget(HierWidget):
@@ -417,10 +422,6 @@ class DiscussionWidget(HierWidget):
         discussion_header=DiscussionHeader(),
         edit_post=EditPost(submit_text='New Topic'),
         subscription_form=SubscriptionForm())
-
-    def resources(self):
-        for r in super(DiscussionWidget, self).resources():
-            yield r
 
     def prepare_context(self, context):
         c.url = url.current()

@@ -7,6 +7,8 @@
 
 (function ($) {
     'use strict';
+    var DEBUG = false;
+
     if (!$vf) {
         console.warn("vf_websocket.js depends on vf.js and must be loaded after it");
         return;

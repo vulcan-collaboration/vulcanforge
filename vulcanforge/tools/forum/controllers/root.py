@@ -82,17 +82,17 @@ class RootController(BaseController):
 
     @expose(TEMPLATE_DIR + 'index.html')
     def new_forum(self, **kw):
-        g.security.require_access(c.app, 'write')
+        g.security.require_access(c.app, 'admin')
         c.url = url.current()
         return self.index(new_forum=True, **kw)
 
     @expose(TEMPLATE_DIR + 'admin_forums.html')
     def forums(self, add_forum=None, **kw):
-        g.security.require_access(c.app, 'write')
+        g.security.require_access(c.app, 'admin')
         c.add_forum = self.Forms.add_forum
         return dict(
             app=c.app,
-            allow_config=g.security.has_access(c.app, 'write'),
+            allow_config=g.security.has_access(c.app, 'admin'),
             add_forum=add_forum
         )
 
@@ -100,7 +100,7 @@ class RootController(BaseController):
     @expose()
     @require_post()
     def update_forums(self, forum=None, **kw):
-        g.security.require_access(c.app, 'write')
+        g.security.require_access(c.app, 'admin')
         if forum is None:
             forum = []
         for f in forum:
@@ -127,7 +127,7 @@ class RootController(BaseController):
     @require_post()
     @validate_form("add_forum", error_handler=forums)
     def add_forum(self, add_forum=None, **kw):
-        g.security.require_access(c.app, 'write')
+        g.security.require_access(c.app, 'admin')
         f = util.create_forum(c.app, add_forum)
         redirect(f.url())
 
@@ -136,18 +136,20 @@ class RootController(BaseController):
     @require_post()
     @validate_form("add_forum", error_handler=index)
     def add_forum_short(self, add_forum=None, **kw):
-        g.security.require_access(c.app, 'write')
+        g.security.require_access(c.app, 'admin')
         f = util.create_forum(c.app, add_forum)
         redirect(f.url())
 
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'create_topic.html')
-    def create_topic(self, new_forum=False, text='', **kw):
+    def create_topic(self, text='', **kw):
         c.new_topic = self.Forms.new_topic
         forums = model.Forum.query.find(dict(
                         app_config_id=c.app.config._id,
+                        deleted=False,
                         parent_id=None)).all()
-        return dict(forums=forums, defaults=dict(text=text))
+        action_url = c.app.url + 'save_new_topic'
+        return dict(action=action_url, forums=forums, defaults=dict(text=text))
 
     @expose(TEMPLATE_DIR + 'create_topic.html')
     def new_with_reference(self, artifact_ref=None, **kw):
@@ -168,7 +170,7 @@ class RootController(BaseController):
         discussion = model.Forum.query.get(
             app_config_id=c.app.config._id,
             shortname=forum)
-        if discussion.deleted and not g.security.has_access(c.app, 'write'):
+        if discussion.deleted and not g.security.has_access(c.app, 'admin'):
             flash('This forum has been removed.')
             redirect(request.referrer)
         g.security.require_access(discussion, 'post')
@@ -265,7 +267,7 @@ class RootRestController(BaseController):
             doc = json.loads(doc)
             warnings, doc = import_support.validate_import(doc, username_mapping)
             return dict(warnings=warnings, errors=[])
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             raise
             #return dict(status=False, errors=[repr(e)])
@@ -284,7 +286,7 @@ class RootRestController(BaseController):
             warnings = import_support.perform_import(
                 doc, username_mapping, default_username, create_users)
             return dict(warnings=warnings, errors=[])
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             raise
             # return dict(status=False, errors=[str(e)])

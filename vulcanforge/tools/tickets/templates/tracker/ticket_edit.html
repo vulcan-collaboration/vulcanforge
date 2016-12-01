@@ -15,8 +15,7 @@
 
 {% block header %}Edit Ticket #{{ ticket.ticket_num }}{% endblock %}
 
-{% block actions %}
-{% endblock %}
+{% block actions %}{% endblock %}
 
 {% block before_content %}
     {{ c.related_artifacts_widget.display(value=ticket) }}

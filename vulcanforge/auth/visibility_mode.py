@@ -24,7 +24,6 @@ class VisibilityModeHandler(object):
         re.compile(r'^/_test_vars'),
         re.compile(r'^/webs/'),
         re.compile(r'^/rest/'),
-        re.compile(r'^/static_auth/'),
         re.compile(r'^/auth$'),
         re.compile(r'^/auth/'),
     ]

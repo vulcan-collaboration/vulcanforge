@@ -1,0 +1,10 @@
+.share-with-container fieldset {
+    display: inline;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+}
+.share-with-container fieldset select {
+    vertical-align: top;
+    margin-top: -2px;
+}

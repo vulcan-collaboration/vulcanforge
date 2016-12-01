@@ -83,11 +83,14 @@ class Discussion(Artifact):
     def shorthand_id(self):
         return self.shortname
 
+    @property
+    def title_s(self):
+        return 'Discussion: %s' % self.name
+
     def index(self, **kw):
         return Artifact.index(
             self,
             type_s=self.type_s,
-            title_s='Discussion: %s' % self.name,
             name_s=self.name,
             text_objects=[
                 self.name,
@@ -355,6 +358,7 @@ class PostHistory(Snapshot):
         name = 'post_history'
 
     artifact_id = ForeignIdProperty('Post')
+    type_s = 'Post Snapshot'
 
     @classmethod
     def post_class(cls):
@@ -378,10 +382,7 @@ class PostHistory(Snapshot):
 
     def index(self, **kw):
         return super(PostHistory, self).index(
-            type_s='Post Snapshot',
-            text_objects=[
-                self.data.text,
-            ],
+            text_objects=[self.data.text],
             **kw
         )
 
@@ -424,11 +425,13 @@ class AbstractPost(Message, VersionedArtifact):
             author_id=str(author._id),
             author=author.username)
 
+    @property
+    def title_s(self):
+        return 'Post by %s on %s' % (self.author().username, self.subject)
+
     def index(self, **kw):
         return super(AbstractPost, self).index(
             type_s=self.type_s,
-            title_s='Post by %s on %s' % (
-                self.author().username, self.subject),
             name_s=self.subject,
             text_objects=[
                 self.text,
@@ -476,7 +479,7 @@ class AbstractPost(Message, VersionedArtifact):
     @property
     def attachments(self):
         return self.attachment_class().query.find(dict(
-            post_id=self._id, type='attachment'))
+            post_id=self._id, type='attachment')).all()
 
     def last_edit_by(self):
         return User.query.get(_id=self.last_edit_by_id) or User.anonymous()

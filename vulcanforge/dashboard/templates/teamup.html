@@ -1,0 +1,281 @@
+{% extends g.templates['polymer-user'] %}
+
+{% block title %}Teams{% endblock %}
+{% block subheading_prefix %}Teams and Subteams{% endblock %}
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+{% raw %}
+<dom-module id="project-item">
+
+    <style include="grid_style dialog_style">
+    </style>
+    <template>
+        <div class="grid_container" on-mouseover="_fadeAddIn" on-mouseleave="_fadeAddOut">
+            <a href="[[project.url]]">
+            <div class = "layout horizontal center">
+                <paper-icon-button id="icon" src="[[project.icon_url]]"></paper-icon-button>
+                <p id="elementName">{{project.name}}</p>
+            </div>
+            <template is="dom-if" if="{{project.deleted}}">
+                <iron-icon id="infoIcon" class="picon" icon="icons:delete"></iron-icon>
+            </template>
+            </a>
+            <paper-icon-button id="reqIcon" class = "detailIcon" icon="icons:info-outline" on-click="_requestMembership"></paper-icon-button>
+            <div>
+                <span id="detailLeft">Members: {{project.user_num}}</span>
+                <span id="detailRight">Created: {{_formatDate(project.cdate)}}</span>
+            </div>
+        </div>
+        <paper-dialog id="dialog" modal>
+            <div id="dialogHeader" class="heading layout horizontal center-center">
+                <iron-icon id="bigicon" src="[[project.icon_url]]"></iron-icon>
+                <div id="header-label" class="flex">{{project.name}}</div>
+                <paper-button id="close" dialog-dismiss><iron-icon icon="close"></iron-icon></paper-button>
+            </div>
+            <div class = "dinfo">Description: {{_GetInfo(project)}}</div>
+            <div class = "dinfo">Members: {{project.user_num}}</div>
+            <div class = "dinfo">Created: {{_formatDate(project.cdate)}}</div>
+            <template is="dom-if" if="{{project.deleted}}">
+                <div style="font-style: italic;">Project Deleted</div>
+            </template>
+            <div></div>
+            <template is="dom-if" if="{{_canRequest(project)}}">
+                <div class = "subheadding">Request Membership</div>
+                <div class="small-padding">
+                    <paper-textarea class = "inpt" id="message" label="message" value="Please add me to your project!"></paper-textarea>
+                    <div id="send-control" class="layout horizontal center-center">
+                        <paper-button id="send" dialog-confirm raised tabindex="-1" on-tap="_processRequest">
+                            <div class="layout horizontal center-center">
+                                <iron-icon icon="send"></iron-icon>
+                                <div class="label">Send</div>
+                            </div>
+                        </paper-button>
+                    </div>
+                </div>
+                <div></div>
+            </template>
+            <template is="dom-if" if="{{project.hasInvite}}">
+                <div class = "subheadding">Membership Request Pending</div>
+                <div></div>
+            </template>
+        </paper-dialog>
+        <iron-ajax id="mrequest" method="POST" on-response="_requestResponse"></iron-ajax>
+    </template>
+    <script>
+        HTMLImports.whenReady(function () {
+            Polymer({
+                is: "project-item",
+                properties: {
+                    project: {
+                        type: Object,
+                        notify: true,
+                        reflectToAttribute: true
+                    },
+                    nonce: String,
+                    opened: Boolean,
+                    _toggleIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(opened)'
+                    },
+                    inside: Boolean
+                },
+                observers: [
+                    '_attributesReady(project)'
+                ],
+                _attributesReady: function(project) {
+                    if(project.deleted) {
+                        this.$.elementName.style.color = "var(--subheadingtext)";
+                        this.$.dialogHeader.style.color = "var(--subheadingtext)";
+                    } else if(project.canAdmin) {
+                        this.$.elementName.style.color = "var(--interactive)";
+                        this.$.dialogHeader.style.color = "var(--interactive)";
+                    }
+                    else {
+                        this.$.elementName.style.color = "var(--pitch)";
+                        this.$.dialogHeader.style.color = "var(--pristine)";
+                    }
+                },
+                _GetInfo: function(project) {
+                  if(project.info.length > 0)
+                          return project.info;
+                    return "- None -";
+                },
+                _canRequest: function(project) {
+                    return !project.isMember && !project.hasInvite && !project.deleted;
+                },
+                _fadeAddIn: function () {
+                    if(!this.inside) {
+                        this.inside = true;
+                        //console.log("Fading button in");
+                        var op = 0;  // initial opacity
+                        var element = this.$.reqIcon;
+                        element.style.display = 'block';
+                        var timer = setInterval(function () {
+                            if (op >= 1){
+                                clearInterval(timer);
+                            }
+                            element.style.opacity = op;
+                            element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+                            op += 0.1;
+                        }, 10);
+                    }
+                },
+                _fadeAddOut: function() {
+                    if(this.inside) {
+                        this.inside = false;
+                        //console.log("Fading button out");
+                        var op = 1;  // initial opacity
+                        var element = this.$.reqIcon;
+                        element.style.display = 'block';
+                        var timer = setInterval(function () {
+                            if (op <= 0) {
+                                clearInterval(timer);
+                            }
+                            element.style.opacity = op;
+                            element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+                            op -= 0.1;
+                        }, 10);
+                    }
+                },
+                _formatDate: function(date) {
+                    return vffuncs.formatDate(date);
+                },
+                _requestMembership: function(e) {
+                    this.$.dialog.toggle();
+                    this.$.dialog.notifyResize();
+                    var event = e || window.event;
+                    event.stopPropagation();
+                    event.cancelBubble = true;
+                },
+                _processRequest: function() {
+                    console.log(this.nonce);
+                    var msg = this.$.dialog.querySelector("#message").value;
+                    var requester = this.$.mrequest;
+                    requester.url = this.project.url + "home/request_membership";
+                    requester.params = {text: msg, _session_id: this.nonce};
+                    requester.generateRequest();
+                },
+                _requestResponse: function() {
+                    window.location.href = "/dashboard";
+                }
+            });
+        });
+    </script>
+</dom-module>
+
+<dom-module id="project-list">
+    <style include="grid_style">
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="mainHeadbar layout horizontal center-center">
+            <iron-icon icon="social:people"></iron-icon>
+            <div class="label flex">Teams ({{_projectCount(data)}})
+            </div>
+            <div id="wrap" class="gridWrapper">
+                <input id="search" name="search" type="text" placeholder="Search" value="{{filterText::input}}" is="iron-input">
+                <iron-icon icon="icons:search" class="searchButton layout" ></iron-icon>
+            </div>
+            <iron-icon id="create-team-button" class="interactiveButton" icon="icons:add-circle-outline" on-tap="_createTeam"></iron-icon>
+            <paper-tooltip for="create-team-button" position="left">Create Team</paper-tooltip>
+        </div>
+        <div id = "plist" class="full-container" >
+            <div class = "subHeadbar">Public Teams ({{data.projects.length}})</div>
+            <div class = "layout horizontal start-center wrap">
+                <template id="resultList" is="dom-repeat" items="{{data.projects}}" as="project" filter="_filterProjects" sort="_sort">
+                    <project-item project="{{project}}" nonce="{{nonce}}"></project-item>
+                </template>
+            </div>
+            <div class = "subHeadbar">My Teams ({{data.myProjects.length}})</div>
+            <div class=" layout horizontal start-center wrap">
+                <template id="myresultList" is="dom-repeat" items="{{data.myProjects}}" as="project" filter="_filterProjects" sort="_sort">
+                    <project-item project="{{project}}" nonce="{{nonce}}"></project-item>
+                </template>
+            </div>
+        </div>
+        <template is="dom-if" if="[[!_hasProjects(data)]]">
+            <div class="layout vertical center">
+                <div class="empty-message">
+                    <p><iron-icon icon="warning"></iron-icon> No projects</p>
+                </div>
+            </div>
+        </template>
+        <vf-project-create id="team-create-dialog" kind="Team" nonce="{{nonce}}"></vf-project-create>
+    </template>
+    <script>
+        HTMLImports.whenReady(function () {
+            Polymer({
+                is: "project-list",
+                properties: {
+                    data: {
+                        type: Object,
+                        notify: true,
+                        reflectToAttribute: true
+                    },
+                    url: String,
+                    count: Number,
+                    nonce: String,
+                    projectFilter: String,
+                    filterText: {
+                        value: '',
+                        observer: 'refreshFilter'
+                    }
+                },
+                observers: [
+                    '_attributesReady(data)'
+                ],
+                _attributesReady: function(data){
+                    var v = this.$.search;
+                    setTimeout(function()
+                    {
+                        v.focus();
+                    }, 1000);
+                },
+                _sort: function(a,b)
+                {
+                    if(a.isMember != b.isMember)
+                    {
+                        if(a.isMember)
+                            return 1;
+                        return -1;
+                    }
+                    if (a.name == b.name) {
+                        if (a.name === b.name) return 0;
+                        return a.name < b.name ? -1 : 1;
+                    }
+                    return a.name < b.name ? -1 : 1;
+                },
+                _filterProjects: function(item) {
+                    return item.name.match(new RegExp(this.filterText, 'i'));
+                },
+                refreshFilter: function() {
+                    this.$.resultList.render();
+                    this.$.myresultList.render();
+                },
+                _hasProjects: function(o) {
+                    return (o.projects && o.projects.length > 0);
+                },
+                _projectCount: function(o) {
+                    if(o.projects)
+                        return o.projects.length + o.myProjects.length;
+                    return 0;
+                },
+                _createTeam: function() {
+                    var dialog = this.querySelector("#team-create-dialog");
+                    dialog.showDialog();
+                }
+            });
+        });
+    </script>
+</dom-module>
+
+{% endraw %}
+<section id="teams" class="paper-sheet small-margin small-padding layout vertical flex">
+    <div class="layout vertical">
+        <project-list url="allprojects" nonce="{{ h.get_csrf_value() }}"></project-list>
+    </div>
+</section>
+{% endblock %}

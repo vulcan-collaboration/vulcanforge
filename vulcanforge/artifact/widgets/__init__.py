@@ -4,7 +4,7 @@ import random
 import string
 from markupsafe import Markup
 
-from pylons import app_globals as g
+from pylons import app_globals as g, tmpl_context as c
 
 from vulcanforge.resources.widgets import Widget
 
@@ -112,9 +112,9 @@ class RelatedArtifactsWidget(Widget):
     )
 
     def prepare_context(self, context):
-        c = super(RelatedArtifactsWidget, self).prepare_context(context)
-        c['reference_link_widget'] = self.widgets['link']
-        return c
+        ctx = super(RelatedArtifactsWidget, self).prepare_context(context)
+        ctx['reference_link_widget'] = self.widgets['link']
+        return ctx
 
     def display(self, value=None, **kw):
         return Widget.display(
@@ -127,9 +127,63 @@ class RelatedArtifactsWidget(Widget):
         )
 
 
-class LabelListWidget (Widget):
+class LabelListWidget(Widget):
     template = TEMPLATE_DIR + 'label_list.html'
     defaults = dict(
         ew.Widget.defaults,
         artifact=None,
     )
+
+
+class ArtifactMenuBar(Widget):
+    template = TEMPLATE_DIR + 'menu_bar.html'
+
+    def display(self, artifact, buttons=None, feed_url=None, app_config=None,
+                disable_publish=False, **kwargs):
+        if buttons is None:
+            buttons = []
+        if feed_url and c.user and not c.user.is_anonymous:
+            feed_btn = g.subscription_popup_menu.display(
+                artifact=artifact, feed_url=feed_url)
+            buttons.append(feed_btn)
+
+        # publish button for exchange artifacts
+        if app_config is None:
+            app_config = c.app.config
+
+        # TODO: add subtext for multiple exchanges
+        if not disable_publish:
+            exchanges = g.exchange_manager.get_exchanges(app_config, artifact)
+            for exchange, artifact_config in exchanges:
+                if artifact_config["publish_url"] and g.security.has_access(
+                        artifact, 'publish'):
+                    url = artifact_config["publish_url"]
+                    if '?' in url:
+                        url += '&artifact_id={}'.format(artifact._id)
+                    else:
+                        url += '?artifact_id={}'.format(artifact._id)
+                    xcng_btn = g.icon_button_widget.display(
+                        label='Share in {}'.format(exchange.config["name"]),
+                        icon=artifact_config.get('publish_icon', 'ico-share'),
+                        href=url
+                    )
+                    buttons.append(xcng_btn)
+
+        return super(ArtifactMenuBar, self).display(buttons=buttons, **kwargs)
+
+
+class BaseArtifactRenderer(Widget):
+    widgets = {}
+    defaults = dict(
+        Widget.defaults,
+        is_exchange=False
+    )
+
+    def prepare_context(self, context):
+        response = super(BaseArtifactRenderer, self).prepare_context(context)
+        response['widgets'] = self.widgets
+        return response
+
+    def display(self, artifact, **kw):
+        return super(BaseArtifactRenderer, self).display(
+            artifact=artifact, **kw)

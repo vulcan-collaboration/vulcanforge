@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+{# *********************** These are Vulcan CSSs ********************************************** #}
+{% do g.resource_manager.register_css('fonts/ubuntu.css', scope='forge') %}
+
+{# *********************** These are Vulcan Polymer HTMLs ********************************************** #}
+{% do g.resource_manager.register_html('polymer/vf-components/theme_colors.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/theme_base_style.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/dialog_style.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/grid_panel_style.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-styles.html', scope='forge') %}
+
+{% do g.resource_manager.register_html('polymer/polymer/polymer.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/font-roboto/roboto.html', scope='forge') %}
+
+{% do g.resource_manager.register_html('polymer/iron-ajax/iron-ajax.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-collapse/iron-collapse.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-flex-layout/iron-flex-layout-classes.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icons/iron-icons.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icons/social-icons.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icons/communication-icons.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icons/hardware-icons.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icons/av-icons.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-icon/iron-icon.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-input/iron-input.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-image/iron-image.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/iron-list/iron-list.html', scope='forge') %}
+
+{% do g.resource_manager.register_html('polymer/paper-autocomplete/paper-autocomplete.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-badge/paper-badge.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-button/paper-button.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-checkbox/paper-checkbox.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-dialog/paper-dialog.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-dropdown-menu/paper-dropdown-menu.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-icon-button/paper-icon-button.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-input/paper-input-container.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-input/paper-textarea.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-item/paper-item.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-listbox/paper-listbox.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-styles/paper-styles.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-toast/paper-toast.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-tooltip/paper-tooltip.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/paper-toggle-button/paper-toggle-button.html', scope='forge') %}
+
+{% do g.resource_manager.register_html('polymer/vaadin-icons/vaadin-icons.html', scope='forge') %}
+
+{% do g.resource_manager.register_html('polymer/vf-components/vf-paper-input-options.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-idle-timeout/vf-idle-timeout.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-user-profile/vf-user-profile.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-project-create/vf-project-create.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-team-edit/vf-team-edit.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-helpers/vf-helpers.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-icons/vf-icons.html', scope='forge') %}
+
+
+{% macro text_field(name, label, id, value='') %}
+  {% if label %}
+  <label for="{{name}}">{{label}}</label>
+  {% endif %}
+  <input is="iron-input" type="text" id="{{name}}" name="{{name}}" class="text" value="{{value}}"/>
+{% endmacro %}
+
+{% macro password_field(name, label, id, value='') %}
+  {% if label %}
+  <label for="{{name}}">{{label}}</label>
+  {% endif %}
+  <input is="iron-input" type="password" id="{{name}}" name="{{name}}" class="text" value="{{value}}"/>
+{% endmacro %}
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>{% block title %}{% endblock %}</title>
+    <!--[if IE]><link rel="shortcut icon" href="{{ g.resource_manager.absurl('icon_16.ico') }}"/><![endif]-->
+    <link rel="icon" href="{{ g.resource_manager.absurl('icon_32.png')}}"/>
+    <link rel="apple-touch-icon-precomposed" href="{{ g.resource_manager.absurl('touch-icon-180.png')}}"/>
+    {# *********************** Emitting styles ********************************************** #}
+    {% for blob in g.resource_manager.emit('css') %}
+        {{ blob }}
+    {% endfor %}
+    <script src="{{ g.resource_manager.absurl('polymer/webcomponentsjs/webcomponents-lite.js')}}"></script>
+    <script src="{{ g.resource_manager.absurl('js/vf_polymer.js')}}"></script>
+    <script src="{{ g.resource_manager.absurl('js/lib/jquery/jquery.1.7.2.min.js')}}"></script>
+    <script src="{{ g.resource_manager.absurl('js/lib/jquery/jquery-ui.1.10.3.js')}}"></script>
+    <script src="{{ g.resource_manager.absurl('js/lib/jquery/store.min.js')}}"></script>
+    <script src="{{ g.resource_manager.absurl('js/lib/jquery/jquery-idleTimeout.js')}}"></script>
+
+    {# *********************** Emitting HTML ********************************************** #}
+    {% for blob in g.resource_manager.emit('html') %}
+        {{ blob }}
+    {% endfor %}
+
+    <style is="custom-style" include="iron-flex iron-flex-alignment"></style>
+    <style is="custom-style" include="themecolors vf-styles"></style>
+    <style is="custom-style">
+        .site-control-icon {
+            margin-right: 4px;
+        }
+        #site-logo-link:focus,
+        #site-logo-link:active,
+        #site-logo-link {
+            outline: none;
+            -moz-outline-style: none;
+        }
+        paper-input, paper-input-container {
+            --paper-input-container-underline-focus: {
+                background-color: var(--danger);
+            }
+            --paper-input-container-label-focus: {
+                color:  var(--interactive);
+            }
+        }
+        /* for safari flex-box woes */
+        .big-margin.flex {
+            -webkit-flex: 1 1 400px;
+        }
+        .small-margin {
+            margin: 0.5rem;
+        }
+        .small-padding {
+            padding: 1.0rem;
+        }
+        /* for safari flex-box woes */
+        .small-margin.flex {
+            -webkit-flex: 1 1 400px;
+        }
+        #logo-heading-container {
+            min-width: 350px;
+        }
+        #logo-subheading {
+            margin-right: 8px;
+        }
+        #logo-heading-text-forge {
+            font-size: 64px;
+            margin-right: 8px;
+        }
+        #logo-subheading-prefix {
+            color: var(--pristine);
+        }
+        #site-logo {
+            width: 80px;
+            height:80px;
+            margin-right: 10px;
+        }
+        .brochure-section-legalese h4 {
+            color: var(--interactive);
+        }
+        .brochure-section-legalese {
+            color: #808088;
+        }
+        paper-toast {
+            --paper-toast-background-color: var(--interactive);
+        }
+        /* these styles are for wrapped jQuery idleTimeout component */
+        .ui-dialog-titlebar {
+            background-color: black;
+        }
+        .ui-dialog-title {
+            color: white;
+        }
+        .ui-widget {
+            font-size: .75em;
+        }
+        /* --- */
+        @media (max-width: 480px), (max-width: 320px) {
+            #logo-heading-container {
+                min-width: 300px;
+            }
+            #logo-heading-container-inner {
+                @apply(--layout-flex);
+                margin-bottom: 12px;
+            }
+            #auth-login-controls {
+                display: none;
+            }
+            #logo-heading-text-mai {
+                padding-top: 0;
+            }
+            .big-margin {
+                margin: 1rem 0.25rem;
+            }
+            .big-padding {
+                padding: 1rem 0.5rem;
+            }
+            .small-margin {
+                margin: 0.5rem;
+            }
+            .small-padding {
+                padding: 1rem 0.3rem;
+            }
+            #site-logo {
+                width:80px;
+                height: 80px;
+                margin-right: 10px;
+                margin-top: 12px;
+            }
+            #logo-heading-text-mai {
+                font-size: 3.0rem;
+            }
+            #logo-subheading {
+                font-size: 1.25rem;
+                margin-top: 12px;
+                margin-left: 10px;
+                @apply(--layout-self-start);
+            }
+            paper-tooltip {
+                --paper-tooltip: {
+                    display: none;
+                }
+            }
+            user-profile,
+            section {
+                min-width: 250px;
+            }
+        }
+    </style>
+
+    {% block head %}
+    {% endblock %}
+</head>
+<body unresolved class="small-padding">
+    {% raw %}
+    <dom-module id="paper-button-link">
+        <style>
+            .link {
+                text-decoration: none;
+                color: inherit;
+                fill: inherit;
+            }
+            paper-button {
+                display: block;
+                margin: 0;
+                color: inherit;
+                fill: inherit;
+            }
+        </style>
+        <template>
+            <a href="[[href]]" tabindex="-1" class="link">
+                <paper-button raised$="[[raised]]" tabindex="-1">
+                    <div class="wrapper">
+                        <content></content>
+                    </div>
+                </paper-button>
+            </a>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "paper-button-link",
+                    properties: {
+                        href: String,
+                        raised: {
+                            type: Boolean,
+                            value: false,
+                            reflectToAttribute: true
+                        }
+                    } 
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="paper-button-submit">
+        <style>
+            :host {
+                display: inline-block;
+                margin: 0 0.29em;
+                padding: 0;
+                font: inherit;
+                color: inherit;
+                fill: inherit;
+                background: transparent;
+                border: none;
+                border-radius: 3px;
+            }
+            paper-button {
+                display: block;
+                margin: 0;
+                background: var(--interactive);
+                color: var(--pristine);
+                fill: var(--pristine);
+                font-weight: 500;
+            }
+        </style>
+        <template>
+            <div class="wrapper layout horizontal center-center">
+                <paper-button raised tabindex="-1">
+                    <content></content>
+                </paper-button>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "paper-button-submit",
+                    extends: "button"
+                });
+            });
+        </script>
+    </dom-module>
+    
+    <dom-module id="vf-button-submit">
+        <style include="style_base">
+            :host {
+                padding: 0;
+                margin: 0;
+                outline: hidden;
+                border: 0;
+            }
+            .label {
+                font-weight: 500;
+                margin-left: 4px;
+                font-size: 16px;
+                color: var(--pristine);
+            }
+            paper-button {
+                width: 100%;
+                margin: 0;
+            }
+            :host.embedded-control paper-button {
+                padding: 0.3em 0.7em;
+            }
+        </style>
+        <template>
+            <paper-button raised tabindex="-1" class="layout horizontal center-center">
+                <iron-icon icon="[[icon]]"></iron-icon>
+                <span class="label">[[label]]</span>
+            </paper-button>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "vf-button-submit",
+                    extends: "button",
+                    properties: {
+                        icon: String,
+                        label: String
+                    }
+                });
+             });            
+        </script>        
+    </dom-module>
+
+    <dom-module id="vf-badge">
+        <style>
+            .circle-text {
+                width:24px;
+            }
+            .circle-text:after {
+                content: "";
+                display: block;
+                width: 100%;
+                height:0;
+                padding-bottom: 100%;
+                background: var(--interactive);
+                -moz-border-radius: 50%;
+                -webkit-border-radius: 50%;
+                border-radius: 50%;
+            }
+            .circle-text div {
+                float:left;
+                font-size:11px;
+                width:100%;
+                padding-top:50%;
+                line-height:1em;
+                margin-top:-0.5em;
+                text-align:center;
+                color:var(--pristine);
+            }
+        </style>
+        <template>
+            <div class="circle-text"><div>{{_effective}}</div></div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "vf-badge",
+                    properties: {
+                        count: Number,
+                        _effective: {
+                            type: String,
+                            computed: '_getEffectiveCount(count)'
+                        }
+                    },
+                    _getEffectiveCount: function(count) {
+                        return (count > 99) ? "99+" : count.toString();
+                    }
+                });
+            });
+        </script>
+    </dom-module>
+
+    <dom-module id="pending-info">
+        <style>
+            .header {
+                background-color: var(--subheadingbar);
+                padding: .5em;
+                margin-top: 16px;
+            }
+            .header-label {
+                font-style: italic;
+                color: var(--subheadingtext);
+            }
+            .header iron-icon {
+                padding-right: 8px;
+                color: var(--interactive);
+            }
+        </style>
+        <template>
+            <div class="header layout horizontal center-center">
+                <iron-icon icon="[[icon]]"></iron-icon>
+                <div class="header-label flex">[[title]]</div>
+                <vf-badge count="[[count]]"></vf-badge>
+            </div>
+            <div id="container">
+                <content></content>
+            </div>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: "pending-info",
+                    properties: {
+                        title: String,
+                        icon: String,
+                        count: Number
+                    }
+                });
+             });
+        </script>
+    </dom-module>
+    {% endraw %}
+
+    {% set flash = tg.flash_obj.pop_payload() %}
+    {% if flash['message'] %}
+        <paper-toast text="{{ flash['message'] }}" opened always-on-top horizontal-align="right"></paper-toast>
+    {% endif %}
+    <paper-toast id="toast-notification" always-on-top horizontal-align="right"></paper-toast>
+    <div class="big-margin layout horizontal start flex wrap">
+        <div id="logo-heading-container" class="layout horizontal center flex">
+            <div id="logo-heading-container-inner" class="layout horizontal center-center">
+                <a id="site-logo-link" href="{{ "/dashboard" if c.user._id else "/" }}" tabindex="-1">
+                    <iron-image id="site-logo" src="{{ g.resource_manager.absurl('logo.svg')}}" sizing="contain"></iron-image>
+                </a>
+                <h1 id="logo-heading"><div id="logo-heading-text-forge">{{ tg.config.get("forge_name") }}</div></h1>
+            </div>
+        </div>
+        <div id="other-headings-container" class="layout vertical end">
+        {% if c.user._id %}
+            <h2 id="logo-subheading">
+                <span id="logo-subheading-prefix">{% block subheading_prefix %}{% endblock %}</span>
+                {% block subheading %}{% endblock %}
+            </h2>
+            <div id="dashboard-controls" class="layout vertical start">
+                {% block toplinks %}{% endblock %}
+            </div>
+        {% else %}
+            <div id="auth-login-controls" class="layout vertical start">
+                <div class="layout horizontal wrap">
+                    <paper-button-link href="/auth/register" tabindex="-1">
+                        <div class="layout horizontal center left-justify flex">
+                            <iron-icon class="site-control-icon" icon="social:person-add"></iron-icon>
+                            Register
+                        </div>
+                    </paper-button-link>
+                    <paper-button-link href="/auth/login" tabindex="-1">
+                        <div class="layout horizontal center left-justify flex">
+                            <iron-icon class="site-control-icon" icon="vf:login"></iron-icon>
+                            Login
+                        </div>
+                    </paper-button-link>
+                </div>
+            </div>
+        {% endif %}
+        </div>
+    </div>
+    {% block content %}{% endblock %}
+    {% if c.user._id %}
+        <div class="big-margin layout horizontal center wrap">
+            {% block footerlinks %}{% endblock %}
+        </div>
+        {% if g.idle_logout_enabled %}
+            <vf-idle-timeout timeout-url="/auth/logout"
+                              renew-url="/auth/renew_session"
+                              time-warn={{ g.idle_logout_countdown_seconds }}
+                              time-idle={{ g.idle_logout_minutes * 60 }}
+                              session-timeout={{ tg.config.get('beaker.session.timeout', 0) }}
+            </vf-idle-timeout>
+        {% endif %}
+    {% endif %}
+    {# *********************** Emitting Javascripts ********************************************** #}
+    {% for blob in g.resource_manager.emit('js') %}
+        {{ blob }}
+    {% endfor %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

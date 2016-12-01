@@ -5,6 +5,7 @@ from itertools import islice, chain
 from webob import exc
 from formencode import Invalid, validators
 from pylons import app_globals as g, tmpl_context as c
+from paste.deploy.converters import asint
 from tg import request, redirect, response
 from tg.decorators import (
     expose,
@@ -14,13 +15,13 @@ from tg.decorators import (
 )
 
 from vulcanforge.common.controllers.base import BaseController
-from vulcanforge.common.types import SitemapEntry
+from vulcanforge.common.tool import SitemapEntry
 from vulcanforge.common.widgets.util import PageList, PageSize
 from vulcanforge.common.validators import DateTimeConverter
-from vulcanforge.auth.model import User
-from vulcanforge.artifact.model import Feed
+from vulcanforge.auth.model import User, AppVisit
+from vulcanforge.artifact.model import Feed, LogEntry
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.validators import ProjectShortnameValidator, MOUNTPOINT_VALIDATOR
+from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from .widgets import ProjectListWidget
 from .model import ProjectCategory
 
@@ -56,14 +57,22 @@ class ProjectController(BaseController):
         if app is None:
             raise exc.HTTPNotFound, name
         c.app = app
+
+        # Update user's last visit time
+        if not c.user.is_anonymous:
+            AppVisit.upsert(c.user._id, app.config._id, app.project._id)
+
         return app.root, remainder
 
     def _check_security(self):
+        LogEntry.insert(access_denied_only=True)
         g.security.require_access(c.project, 'read')
 
     @expose()
     @with_trailing_slash
     def index(self, **kw):
+        if c.project.private_project_of():
+            redirect('profile/')
         mount = c.project.first_mount('read')
         if mount is not None:
             if 'ac' in mount:
@@ -108,15 +117,16 @@ class ProjectController(BaseController):
     def icon(self):
         icon = c.project.icon
         if not icon:
-            raise exc.HTTPNotFound
+            redirect(g.resource_manager.absurl('images/project_default.png'))
         return icon.serve()
 
     @expose(content_type="image/*")
-    def app_icon(self, mount_point):
+    def app_icon(self, mount_point, size=32):
+        size=asint(size)
         ac = c.project.app_config(mount_point)
-        icon = ac.get_icon(32)
+        icon = ac.get_icon(size)
         if not icon:
-            return redirect(ac.icon_url(32, skip_lookup=True))
+            return redirect(ac.icon_url(size, skip_lookup=True))
         return icon.serve()
 
     @expose()
@@ -221,8 +231,8 @@ class ProjectBrowseController(BaseController):
             fq=[
                 'read_roles:("%s")' % '" OR "'.join(
                     g.security.get_user_read_roles()),
-                'neighborhood_id_s:(%s)' % ' OR '.join([str(n._id) for n
-                                                        in neighborhoods])
+                'neighborhood_id_s:(%s)' % ' OR '.join(
+                    [str(n._id) for n in neighborhoods])
             ],
             start=start,
             rows=limit

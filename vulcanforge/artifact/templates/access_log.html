@@ -1,0 +1,55 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_css('assets/datatable/css/vf_datasort_table.css') %}
+{% do g.resource_manager.register_js('assets/datatable/js/jquery.dataTables.js') %}
+{% do g.resource_manager.register_js('assets/datatable/js/tableWidget.js') %}
+
+{% block title %}{{artifact_name}} - Access Log{% endblock %}
+{% block header %}{{artifact_name}} - Access Log{% endblock %}
+
+{% block content %}
+<div class="padded">
+    <div id="browseDatatable"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $vf.afterInit(function() {
+            var browseTable;
+
+            browseTable = new TableWidget($("#browseDatatable"), {
+                sTitle: "{{ table_title }}",
+                bServerSide: true,
+                sAjaxSource: "{{ data_url }}",
+                bProcessing: true,
+                bFilter: false,
+                aaSorting: [[0, "desc"]],
+                aoColumns: [{
+                    "sTitle": "Access Time",
+                    "bSortable": true,
+                    "mRender": function ( data, type, full ) {
+                        return new Date(data).toLocaleString('en-US', {timeZoneName:'short'});
+                    }
+                },
+                    {
+                        "sTitle": "User",
+                        "bSortable": true
+                    },
+                    {
+                        "sTitle": "Access Type",
+                        "bSortable": true
+                    },
+                    {
+                        "sTitle": "Additional information",
+                        "bSortable": false
+                    }
+                ],
+                aLengthMenu: [50, 75, 100, 150],
+                iDisplayLength: 50
+            });
+        }, []);
+    });
+</script>
+{% endblock %}

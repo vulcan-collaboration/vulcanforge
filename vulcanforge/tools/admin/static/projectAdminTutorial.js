@@ -1,12 +1,13 @@
 $(document).ready(function () {
 
     var tutorialConfig = {
+        statePersistenceApiUrl: '/auth/prefs/state/',
+        pageId: 'projectAdmin',
         containerElement: $('#tutorialHolder'),
-
         title: 'Manage your project',
+        toolTipped: true,
         description: 'The project admin interface allows administrators ' +
             'to customize their project\'s users, metadata, & tools.',
-
         elements: {
 
             // sidebar menu items
@@ -86,13 +87,6 @@ $(document).ready(function () {
                     'integrated discussion forums.',
                 position: 'top'
             },
-
-            '#admin-section-components': {
-                title: 'VehicleForge Component Exchange',
-                content: 'The VehicleForge Component Exchange allows ' +
-                    'you to publish and discover new components.',
-                position: 'top'
-            }
 
         }
     };

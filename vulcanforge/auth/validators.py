@@ -6,9 +6,13 @@ import tg
 
 from vulcanforge.common.helpers import really_unicode
 from vulcanforge.common.util import re_path_portion
+from vulcanforge.common.util.diff import levenshtein
 from vulcanforge.common.validators import EmailValidator
 from vulcanforge.auth.model import User
 
+DEFAULT_COMPLEXITY_SPEC = "U1_L1_N1_S1"
+COMPLEXITY_ELEMENTS = ('uppercase', 'lowercase', 'number', 'special')
+DEFAULT_COMPLEXITY = {x: 1 for x in COMPLEXITY_ELEMENTS}
 
 class UsernameFormatValidator(fev.UnicodeString):
     min = 3
@@ -52,13 +56,14 @@ class UserIdentifierValidator(fev.UnicodeString):
     strip = True
 
     def to_python(self, value, state=None):
+        value = super(UserIdentifierValidator, self).to_python(value, state)
         try:
             value = self.email_validator.to_python(value, state)
         except Invalid:
             value = self.username_validator.to_python(value, state)
             user = User.by_username(value)
             if not user:
-                raise Invalid("User not found", value, state)
+                raise Invalid("User {} not found".format(value), value, state)
             id_type = 'username'
         else:
             id_type = 'email'
@@ -87,35 +92,101 @@ class UsernameListValidator(fev.UnicodeString):
         return users
 
 
+def complexity_helper(spec):
+    """Parses a password complexity specification"""
+    retval = {}
+    retval.update(DEFAULT_COMPLEXITY)
+    for elem in COMPLEXITY_ELEMENTS:
+        regex = re.compile(elem.capitalize()[0] + "([0-9]*)")
+        mo = regex.search(spec)
+        if mo:
+            count = int(mo.group(1))
+            if count:
+                retval[elem] = count
+    return retval
+
+
+def get_complexity():
+    """returns the configured or default password complexity"""
+    spec = tg.config.get('auth.pw.complexity', DEFAULT_COMPLEXITY_SPEC)
+    return complexity_helper(spec)
+
+
+def complexity_messages(counts):
+    """Returns a dictionary of diagnostic messages for password complexity"""
+    msg_names = dict(uppercase="missingUpper", lowercase="missingLower",
+                     number="missingNumber", special="missingSpecial")
+    retval = {}
+    for elem in counts:
+        kind = "letter" if elem in ("uppercase", "lowercase") else "character"
+        kind += "s" if counts[elem] > 1 else ""
+        template = "Password must contain at least {} {} {}"
+        retval[msg_names[elem]] = template.format(counts[elem], elem, kind)
+    return retval
+
+
 class PasswordValidator(fev.UnicodeString):
-    min = int(tg.config.get('auth.pw.min_length', 10))
-    max = int(tg.config.get('auth.pw.max_length', 512))
-    messages = {
-        'tooShort': "Password should be at least {} characters "
-                    "long!".format(min),
-        'tooLong': "Password should be no longer than {} characters".format(
-            max),
-        'missingLower': "Password must contain at least one lowercase "
-                        "letter",
-        'missingUpper': "Password must contain at least one uppercase "
-                        "letter",
-        'missingNumber': "Password must contain at least one number",
-        'missingSpecial': "Password must contain at least one special "
-                          "character",
-        }
 
     def to_python(self, value, state=None):
         def invalid(msg):
             return Invalid(self.message(msg, state), value, state)
+
+        self.min = int(tg.config.get('auth.pw.min_length', 10))
+        self.max = int(tg.config.get('auth.pw.max_length', 512))
+        self.counts = get_complexity()
+
+        self._messages = {
+            'tooShort': "Password must be at least {} characters long!".format(
+                self.min),
+            'tooLong': "Password must be no longer than {} characters".format(
+                self.max)
+        }
+        self._messages.update(complexity_messages(self.counts))
+
         value = really_unicode(value or '').encode('utf-8')
         value = super(PasswordValidator, self).to_python(value, state)
-        if not re.match(r'(?=.*[a-z])', value):
+        if len(re.findall('[a-z]', value)) < self.counts['lowercase']:
             raise invalid('missingLower')
-        if not re.match(r'(?=.*[A-Z])', value):
+        if len(re.findall('[A-Z]', value)) < self.counts['uppercase']:
             raise invalid('missingUpper')
-        if not re.match(r'(?=.*[\d])', value):
+        if len(re.findall('[\d]', value)) < self.counts['number']:
             raise invalid('missingNumber')
-        if not re.match(r'(?=.*[\W])', value):
+        if len(re.findall('[\W_]', value)) < self.counts['special']:
             raise invalid('missingSpecial')
         return value
+
+
+def validate_password(value, current=None):
+    min = int(tg.config.get('auth.pw.min_length', 10))
+    max = int(tg.config.get('auth.pw.max_length', 512))
+    counts = get_complexity()
+    messages = {
+        'tooSimilar': "Password must not be too similar to current password",
+        'tooShort': "Password must be at least {} characters long".format(
+            min),
+        'tooLong': "Password must be no longer than {} characters".format(
+            max)
+    }
+    messages.update(complexity_messages(counts))
+
+    if len(value) < min:
+        return messages['tooShort']
+    if len(value) > max:
+        return messages['tooLong']
+    if len(re.findall('[a-z]', value)) < counts['lowercase']:
+        return messages['missingLower']
+    if len(re.findall('[A-Z]', value)) < counts['uppercase']:
+        return messages['missingUpper']
+    if len(re.findall('[\d]', value)) < counts['number']:
+        return messages['missingNumber']
+    if len(re.findall('[\W_]', value)) < counts['special']:
+        return messages['missingSpecial']
+
+    if current:
+        min_levenshtein = int(tg.config.get('auth.pw.min_levenshtein', 0))
+        if min_levenshtein > 0:
+            lev = levenshtein(value, current)
+            if lev < min_levenshtein:
+                return messages['tooSimilar']
+    return 'success'
 

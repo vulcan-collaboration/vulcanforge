@@ -9,6 +9,7 @@ from vulcanforge.common.model.session import (
 from vulcanforge.common.tasks.index import LOG, add_global_objs
 from vulcanforge.common.util.model import chunked_find
 from vulcanforge.artifact.tasks import add_artifacts
+from vulcanforge.artifact.util import iter_artifact_classes
 from vulcanforge.taskd import task
 
 
@@ -145,3 +146,28 @@ def update_project_indexes(project_id=None):
         except Exception:
             LOG.exception('Error indexing artifacts:')
         main_orm_session.clear()
+
+@task
+def unpublish_artifacts(project_id=None):
+    from vulcanforge.project.model import Project
+    from vulcanforge.exchange.model import ExchangeNode
+
+    if project_id is None:
+        LOG.error('unpublish_artifacts() requires a project id')
+        return
+
+    project = Project.query.get(_id=project_id)
+    for ac in project.app_configs:
+        for a_cls in iter_artifact_classes():
+            artifacts = None
+            try:
+                artifacts = a_cls.query.find(dict(
+                    app_config_id=ac._id
+                )).all()
+            except:
+                pass
+            if artifacts is not None:
+                for artifact in artifacts:
+                    exchange_nodes = ExchangeNode.find_from_artifact(artifact).all()
+                    for exchange_node in exchange_nodes:
+                        exchange_node.unpublish()

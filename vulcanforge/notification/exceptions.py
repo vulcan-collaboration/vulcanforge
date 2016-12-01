@@ -8,3 +8,8 @@ class MailError(ForgeError):
 
 class AddressException(MailError):
     pass
+
+
+class ContextError(ForgeError):
+    """Not enough context to create/send notifications"""
+    pass

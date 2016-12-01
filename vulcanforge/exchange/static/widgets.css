@@ -1,0 +1,264 @@
+.labelContainer {
+    width: 240px;
+    text-align: right;
+    font-weight: bold;
+    color: #555;
+    padding-left: 0;
+}
+
+td.labelContainer {
+    padding: 17px 0 0 0;
+    vertical-align: top;
+}
+
+.valueContainer {
+    vertical-align: top;
+}
+
+.controlContainer {
+    padding-right: 20px;
+}
+
+.statusContainer {
+    width: 20px;
+    text-align: center;
+    display: inline-block;
+    line-height: 28px;
+    vertical-align: middle;
+}
+
+.valid .controlContainer {
+    background-image: url(images/ok_mark_small.png);
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
+.invalid .controlContainer {
+    background-image: url(images/not_ok_mark_small.png);
+    background-repeat: no-repeat;
+    background-position: right 2px;
+}
+
+.controlContainer {
+    width: 240px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 16px;
+}
+
+.DISPLAY .controlContainer {
+    width: 120px;
+}
+
+.INPUT  .controlContainer {
+    margin-top: 10px;
+}
+
+.propertyValue {
+    width: 205px;
+    vertical-align: middle;
+}
+
+input.propertyValue.TextField{
+    width: 205px;
+}
+
+.propertyValue.TextArea{
+    max-width: 205px;
+}
+
+.hintContainer{
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 16px;
+    padding-top: 2px;
+    padding-left: 3px;
+}
+
+.actionContainer{
+    display: none;
+    vertical-align: middle;
+    line-height: 16px;
+    padding-top: 2px;
+    padding-left: 3px;
+}
+
+:hover > .actionContainer{
+    display: inline-block;
+}
+
+.invalid .hintContainer {
+    font-size: 11px;
+    color: #e60000;
+}
+
+.propertyValue.Taxon.INPUT {
+    font-size: 11px;
+    text-transform: capitalize;
+    background-color: #333;
+    display: inline-block;
+    width: auto;
+    padding: 2px 8px 0 8px;
+    color: #fff;
+    border: 1px solid #000;
+    cursor: crosshair;
+    line-height: 16px;
+}
+
+.Taxon.disabled {
+    cursor: default;
+    color: #555;
+    border: 1px dotted #555;
+    background-color: #fff;
+}
+
+.propertyValue.Taxon.enabled:hover {
+    background-color: #fff;
+    color: #ff0066;
+    border-color: #ff0066;
+}
+
+.widgetSkin.DISPLAY .statusContainer {
+    display: none;
+}
+
+input.numeric {
+    width: 60px !important;
+    text-align: right;
+}
+
+.unit {
+    margin-left: 5px;
+    vertical-align: middle;
+    width: 68px !important;
+}
+
+input[type="checkbox"] {
+    width: 15px;
+}
+
+.invalid .propertyValue {
+    color: red;
+}
+
+.TextField.DISPLAY {
+    white-space: nowrap;
+}
+
+:hover > .TextField.DISPLAY {
+    white-space: pre-wrap;
+}
+
+.CheckBox.DISPLAY {
+}
+
+.CheckBox.DISPLAY.false {
+    width: 15px;
+    height: 12px;
+    /*background-image: url(icon_not_checked.png);*/
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.CheckBox.DISPLAY.true {
+    width: 15px;
+    height: 12px;
+    /*background-image: url(icon_checked.png);*/
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.Matrix.DISPLAY::before {
+    width: 18px;
+    height: 14px;
+    background-image: url(images/matrix.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.25em;
+}
+
+.Vector.DISPLAY::before {
+    width: 18px;
+    height: 14px;
+    background-image: url(images/vector.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.25em;
+}
+
+.widgetsListLabel {
+    margin-left: 0;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.widgetsHolder {
+    margin-bottom: 10px;
+}
+
+.subWidgetsHolder {
+    padding-left: 0;
+    border: 1px solid #ccc;
+    border-radius: 1ex;
+    margin-bottom: 1em;
+    margin-top: 1em;
+    margin-right: 1em;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+
+.subWidgetsHolder > .widgetsList {
+    padding-left: 1.5em;
+}
+
+
+.valueTypeSelector {
+    list-style-type: none;
+    padding: 0 0 2px;
+    margin: -16px 0 0 0;
+    font-size: 8px;
+    text-transform: uppercase;
+    display: none;
+    position: absolute;
+ }
+
+.controlContainer:hover .valueTypeSelector {
+    display: block;
+}
+
+.valueTypeSelector li {
+    display: inline-block;
+    padding: 0 3px;
+    cursor: pointer;
+    background-color: #999;
+    color: #fff;
+    border: 1px solid #999;
+    line-height: 10px;
+    vertical-align: middle;
+    margin-left: 1px;
+}
+
+.valueTypeSelector li:hover {
+    cursor: pointer;
+    background-color: #000;
+    border: 1px solid #000;
+}
+
+.valueTypeSelector li.selected,
+.valueTypeSelector li.selected:hover {
+    cursor: default;
+    color: #555;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.widgetSkin {
+    position: relative;
+}

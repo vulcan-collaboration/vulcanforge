@@ -20,8 +20,8 @@ class StageStaticResources(Command):
         self.log.info('Copying images')
         stager.stage_images()
 
-        self.log.info('Combining JS and CSS based on recipes')
-        stager.stage_css_js()
+        self.log.info('Combining JS, CSS and HTML based on recipes')
+        stager.stage_css_js_html()
 
         self.log.info('Staging resources duration: %s',
                       datetime.datetime.now() - start)

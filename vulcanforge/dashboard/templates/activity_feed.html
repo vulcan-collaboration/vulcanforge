@@ -40,13 +40,19 @@
                         {{/if}}
                     </div>
                     <span class="notification-subject">
-                        <a href="{{= project.url}}" title="{{= project.name}}">
-                            <img class="project-icon" src="{{= project.icon_url}}" alt="{{= project.name}}">
-                        </a>
-                        {{if app_config}}
-                        <a href="{{= app_config.url}}" title="{{= app_config.mount_label}}">
-                            <img class="app-icon" src="{{= app_config.icon_url}}" alt="{{= app_config.name}}">
-                        </a>
+                        {{if exchange}}
+                            <a href="{{= exchange.url }}" title="{{= exchange.name }}">
+                                <img class="exchange-icon" src="{{= exchange.icon_url}}" alt="{{= exchange.name }}">
+                            </a>
+                        {{else}}
+                            <a href="{{= project.url}}" title="{{= project.name}}">
+                                <img class="project-icon" src="{{= project.icon_url}}" alt="{{= project.name}}">
+                            </a>
+                            {{if app_config}}
+                            <a href="{{= app_config.url}}" title="{{= app_config.mount_label}}">
+                                <img class="app-icon" src="{{= app_config.icon_url}}" alt="{{= app_config.name}}">
+                            </a>
+                            {{/if}}
                         {{/if}}
                         <a href="{{= link}}">{{= subject}}</a>
                     </span>

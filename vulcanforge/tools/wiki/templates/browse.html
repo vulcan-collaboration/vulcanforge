@@ -1,6 +1,5 @@
 {% extends 'vulcanforge:tools/wiki/templates/master.html' %}
 {% from 'vulcanforge.common:templates/jinja_master/lib.html' import abbr_date with context %}
-{% import 'vulcanforge:tools/wiki/templates/macros.html' as wiki_macros with context %}
 
 {% do g.resource_manager.register_js('wiki/browse.js') %}
 
@@ -34,7 +33,7 @@
       <tbody>
         {% for page in pages %}
           <tr class="{{'deleted ' if page.deleted else ''}}{{loop.cycle('', 'even')}}">
-            <td class="title-column"><a href="{{page.url|safe}}">{{page['title']}}</a>
+            <td class="title-column"><a class="{{'has-icon ico-home ' if page.is_home else ''}}" href="{{page.url|safe}}">{{page['title']}}</a>
                 <div class="avatar-list">
                     {% for author in page.artifact.authors() %}
                         {{g.avatar.display(user=author, size=16, compact=True)}}
@@ -53,7 +52,7 @@
               <td></td>
             {% endif %}
               <td class="item-actions">
-                  {{wiki_macros.page_actions(page=page.artifact, subscribed=page.subscribed)}}
+                  {{c.menu_bar.display(page.artifact)}}
               </td>
           </tr>
         {% endfor %}

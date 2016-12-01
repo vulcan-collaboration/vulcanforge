@@ -8,6 +8,9 @@ from vulcanforge.common.util.filesystem import import_object
 from vulcanforge.visualize.model import VisualizerConfig
 from vulcanforge.visualize.s3hosted import S3HostedVisualizer
 
+from vulcanforge.visualize.model import ProcessingStatus
+from vulcanforge.artifact.model import ArtifactReference
+
 
 class SyncVisualizersCommand(base.Command):
     summary = 'Initialize Default (Server-side) Visualizers in the Database'
@@ -41,4 +44,23 @@ class SyncVisualizersCommand(base.Command):
             else:
                 VisualizerConfig.from_visualizer(visualizer_obj, shortname)
         g.visualizer_mapper.invalidate_cache()
+        ThreadLocalODMSession.flush_all()
+
+
+class ReRunVisualizersCommand(base.Command):
+    summary = 'Re-run visualizers that erred or got stuck in loading'
+    parser = base.Command.standard_parser(verbose=True)
+
+    def command(self):
+        self.basic_setup()
+
+        stats =  ProcessingStatus.query.find({'status': {'$in': ['error', 'loading']}}).all()
+        for stat in stats:
+            aref = ArtifactReference.query.get(_id=stat.unique_id)
+            if aref is not None:
+                if hasattr(aref.artifact, 'deleted') and aref.artifact.deleted:
+                    stat.delete()
+                else:
+                    aref.artifact.process_for_visualizer.post(stat.visualizer_config_id)
+
         ThreadLocalODMSession.flush_all()

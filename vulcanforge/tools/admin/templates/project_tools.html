@@ -14,7 +14,7 @@
         {% for tool in installable_tools %}
           <span class="text-centered installable_tool">
             <a class="install_trig" data-tool="{{ tool['name'] }}">
-              <div class="tool-title">{{ tool['app'].tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
+              <div class="tool-title">{{ tool.tool_label }}{{' (%s)' % tool.app.status if tool.app.status != 'production' else ''}}</div>
               <img src="{{ tool.icon_url }}" alt="">
             </a>
           </span>
@@ -100,8 +100,8 @@
     var defaults = {
         {% for tool in installable_tools %}
         '{{tool.name}}':{
-            'default_label':'{{tool.app.default_mount_label}}',
-            'default_mount':'{{tool.app.default_mount_point}}',
+            'default_label':'{{tool.default_mount_label}}',
+            'default_mount':'{{tool.default_mount_point}}',
             'option_fields': [{% for option_field in tool.option_fields %}{
                 {% if option_field.label %}'label': {{ option_field.label | jsonify }},{% endif %}
                 'html': {{ option_field.display() | jsonify }}

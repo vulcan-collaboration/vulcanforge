@@ -2,7 +2,7 @@
 
 {% block title %}{{c.project.name}} / {{c.app.config.options.mount_label}} / Discussion{% endblock %}
 
-{% block header %}{{h.really_unicode(value.name)}}{% endblock %}
+{% block header %}{{h.really_unicode(value.name)}}{{value.deleted and " (DELETED)" or ""}}{% endblock %}
 
 {% block actions %}
     {{ g.subscription_popup_menu.display(feed_url=c.url+'feed.rss') }}

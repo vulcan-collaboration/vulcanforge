@@ -83,3 +83,35 @@ class ContextManager(object):
                 del c.app
             else:
                 c.app = app
+
+    def get_neighborhood_id(self):
+        """Get current context's neighborhood id, if any. Useful for Ming
+        Foreign Id Properties
+
+        e.g:
+
+        neighborhood_id = ForeignIdProperty(
+            "Neighborhood",
+            default=lambda: g.context_manager.get_neighborhood_id())
+
+        """
+        if getattr(c, 'neighborhood', None):
+            return c.neighborhood._id
+        elif getattr(c, 'project', None):
+            return c.project.neighborhood_id
+
+    def get_project_id(self):
+        """Get current context's project id, if any. Useful for Ming
+        Foreign Id Properties
+
+        """
+        if getattr(c, 'project', None):
+            return c.project._id
+
+    def get_app_config_id(self):
+        """Get current context's AppConfig id, if any. Useful for Ming
+        Foreign Id Properties
+
+        """
+        if getattr(c, 'app', None):
+            return c.app.config._id
