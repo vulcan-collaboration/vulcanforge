@@ -72,10 +72,12 @@ class ForgeDownloadsApp(Application):
         self.admin = ForgeDownloadsAdminController(self)
 
     @classmethod
-    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name,
+                                trefs=[]):
         db, coll = FDM.ForgeDownloadsFile.get_pymongo_db_and_collection()
         size_item = "filesize"
-        return get_info(coll, app_configs, app_visits, tool_name, size_item)
+        return get_info(coll, app_configs, app_visits, tool_name, size_item,
+                        trefs=trefs)
 
     def install(self, *args, **kwargs):
         super(ForgeDownloadsApp, self).install(*args, **kwargs)

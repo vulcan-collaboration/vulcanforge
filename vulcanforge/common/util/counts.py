@@ -2,9 +2,10 @@ from bson import ObjectId
 from bson.code import Code
 from datetime import datetime
 
+from ming.odm.odmsession import ThreadLocalODMSession
 from pylons import app_globals as g, tmpl_context as c
 
-from vulcanforge.auth.model import AppVisit
+from vulcanforge.auth.model import AppVisit, ToolsInfo
 from vulcanforge.exchange.model import ExchangeVisit
 from vulcanforge.exchange.solr import exchange_access_filter
 from vulcanforge.project.model import Project, AppConfig
@@ -172,7 +173,22 @@ def get_artifact_counts(user, project_shortname=None, permission="read",
     return {'tools': tools}
 
 
-def get_home_info(role_coll, app_configs, app_visits, tool_name):
+def get_time_references(time_range):
+    try:
+        t1, t2 = time_range
+        if t1 and not t2:
+            return {"_id": {"$gt": ObjectId.from_datetime(t1)}}
+        if t2 and not t1:
+            return {"_id": {"$lte": ObjectId.from_datetime(t2)}}
+        if t1 and t2:
+            return {"$and": [{"_id": {"$gt": ObjectId.from_datetime(t1)}},
+                             {"_id": {"$lte": ObjectId.from_datetime(t2)}}]}
+    except:
+        pass
+    return {}
+
+
+def get_home_info(role_coll, app_configs, app_visits, tool_name, trefs=[]):
     my_app_configs = {k: v for k, v in app_configs.items()
                       if v.tool_name == tool_name}
     my_app_visits = {str(x.project_id): app_visits[str(x._id)]
@@ -182,6 +198,9 @@ def get_home_info(role_coll, app_configs, app_visits, tool_name):
     base_query = {"project_id": {"$in": project_ids.keys()},
                   "user_id": {"$ne": None},
                   "roles": {"$ne": []}}
+    # time reference interval
+    if trefs:
+        base_query.update(get_time_references(trefs))
     reducer = Code("""
                     function(obj, gcounts) {
                         var visits = %s;
@@ -206,7 +225,7 @@ def get_home_info(role_coll, app_configs, app_visits, tool_name):
 
 
 def get_info(artifact_coll, app_configs, app_visits, tool_name,
-             size_item, has_deleted=True):
+             size_item, has_deleted=True, trefs=[]):
     """returns tool info for user's projects for tools by kind"""
     my_app_configs = {k: v for k, v in app_configs.items()
                       if v.tool_name == tool_name }
@@ -215,6 +234,9 @@ def get_info(artifact_coll, app_configs, app_visits, tool_name,
     base_query = {"app_config_id": {"$in": my_app_configs.keys()}}
     if has_deleted:
         base_query["deleted"] = False
+    # time reference interval
+    if trefs:
+        base_query.update(get_time_references(trefs))
     reducer = Code("""
                     function(obj, gcounts) {
                         var visits = %s;
@@ -240,13 +262,18 @@ def get_info(artifact_coll, app_configs, app_visits, tool_name,
         retval[item['app_config_id']] = {x: int(item[x]) for x in counts}
     return retval
 
-def get_history_info(artifact_coll, app_configs, app_visits, tool_name):
+
+def get_history_info(artifact_coll, app_configs, app_visits, tool_name,
+                     trefs=[]):
     """returns tool info for user's projects for tools by kind"""
     my_app_configs = {k: v for k, v in app_configs.items()
                       if v.tool_name == tool_name }
     my_app_visits = {k: v for k, v in app_visits.items()
                      if ObjectId(k) in my_app_configs}
     base_query = {"app_config_id": {"$in": my_app_configs.keys()}}
+    # time reference interval
+    if trefs:
+        base_query.update(get_time_references(trefs))
     reducer = Code("""
                     function(obj, gcounts) {
                         var visits = %s;
@@ -272,8 +299,12 @@ def get_history_info(artifact_coll, app_configs, app_visits, tool_name):
     return retval
 
 def get_tools_info(user, project_ids, permission="read", auth_user=None):
-    app_configs = AppConfig.query.find({"project_id": {"$in": project_ids}})
+    timestamp = datetime.utcnow()
     auth_user = auth_user or user
+    app_configs = AppConfig.query.find({"project_id": {"$in": project_ids}})
+    cached_info = (ToolsInfo.query.get(user_id=user._id)
+                   if user == auth_user else None)
+    trefs = [cached_info.timestamp if cached_info else None, timestamp]
     authorized_apps = {x._id: x for x in app_configs
                        if x.has_access(permission, auth_user)}
     q = {"user_id": user._id,
@@ -285,12 +316,52 @@ def get_tools_info(user, project_ids, permission="read", auth_user=None):
         for x in authorized_apps.keys()
     }
     # collect tool information by tool kind
-    tool_names = set([x.tool_name for x in authorized_apps.values()])
     results = {}
+    tool_names = set([x.tool_name for x in authorized_apps.values()])
     for tool_name in list(tool_names):
         app = g.tool_manager.tools[tool_name.lower()]['app']
         cls_method = app.artifact_counts_by_kind
-        results[tool_name] = cls_method(authorized_apps, visits, tool_name)
+        results[tool_name] = cls_method(authorized_apps, visits, tool_name,
+                                        trefs)
+    info = {}
+    for tool_name in results:
+        for id in results[tool_name]:
+            sid = str(id)
+            if cached_info and sid in cached_info.info:
+                item = cached_info.info[sid]
+                app_visit = app_visits.get(id, None)
+                if app_visit and app_visit > cached_info.timestamp:
+                    item['new'] = results[tool_name][id]['new']
+                else:
+                    item['new'] += results[tool_name][id]['new']
+                item['all'] += results[tool_name][id]['all']
+            else:
+                item = results[tool_name][id]
+            info[sid] = dict(item)
+
+    if cached_info:
+        new_apps = {x: authorized_apps[x] for x in authorized_apps
+                    if str(x) not in cached_info.info}
+        new_tool_names = set([x.tool_name for x in new_apps.values()])
+        trefs = [None, timestamp]
+        new_results = {}
+        for tool_name in list(new_tool_names):
+            app = g.tool_manager.tools[tool_name.lower()]['app']
+            cls_method = app.artifact_counts_by_kind
+            new_results[tool_name] = cls_method(new_apps, visits, tool_name,
+                                                trefs)
+        for tool_name in new_results:
+            for id in new_results[tool_name]:
+                info[str(id)] = dict(new_results[tool_name][id])
+
+    # cache result
+    if user == auth_user:
+        if not cached_info:
+            cached_info = ToolsInfo()
+            cached_info.user_id = user._id
+        cached_info.timestamp = timestamp
+        cached_info.info = info
+
     # prepare results
     tools = []
     for id, ac in authorized_apps.items():
@@ -301,7 +372,7 @@ def get_tools_info(user, project_ids, permission="read", auth_user=None):
             "mount_label": ac.options.mount_label,
             "project_shortname": ac.project.shortname,
             "project_name": ac.project.name,
-            "artifact_counts": results[ac.tool_name][id],
+            "artifact_counts": dict(info[str(id)]),
             "last_visited": visits[str(id)].generation_time
         })
     return {'tools': tools}

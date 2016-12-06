@@ -1002,6 +1002,22 @@ class User(SOLRIndexed):
             "user_fields": self.user_fields
         }
 
+    def get_profile_info_authed(self, auth_user):
+        projects = [p.shortname for p in self.my_projects()
+                    if p.is_real() and not p.deleted and
+                    g.security.has_access(p, "read", auth_user)]
+        return {
+            "fullName": self.display_name,
+            "profileImage": self.icon_url(),
+            "username": self.username,
+            "mission": self.mission,
+            "interests": self.interests,
+            "expertise": self.expertise,
+            "userSince": h.ago_ts(self.registration_time),
+            "projects": projects,
+            "user_fields": {}
+        }
+
     def delete_account(self):
         """
         Disables user and resigns from all projects
@@ -1348,3 +1364,18 @@ class FailedLogin(BaseMappedClass):
         )
 
 
+class ToolsInfo(BaseMappedClass):
+
+    class __mongometa__:
+        session = main_orm_session
+        name = 'tools_info'
+        indexes = ['timestamp', 'user_id']
+
+    _id = FieldProperty(S.ObjectId)
+    timestamp = FieldProperty(datetime, if_missing=datetime.utcnow)
+    user_id = ForeignIdProperty('User')
+    info = FieldProperty({str: None})
+
+    @property
+    def user(self):
+        return User.query.get(_id=self.user_id)

@@ -443,36 +443,38 @@ class ActivityFeedController(BaseDashboardController):
 
         # get state
         activity_feed_state = c.user.state_preferences.get('activity_feed', {})
-        project_state = {}
         app_config_state = activity_feed_state.get('app_config_state', {})
         exchange_state = activity_feed_state.get('exchange_state', {})
 
-        # get projects and app config ids
-        projects = []
-        project_query = self._get_projects()
-        project_ids = set([x._id for x in projects])
-        app_config_ids = set()
-        for project in project_query:
-            p_id = str(project._id)
-            info = project.__json__()
-            # get app configs
-            info['app_configs'] = []
-            app_config_params = {
-                'project_id': project._id,
-            }
-            app_config_query = AppConfig.query.find(app_config_params)
-            app_config_query.sort('options.ordinal', pymongo.ASCENDING)
-            project_state[p_id] = True
-            for app_config in app_config_query:
-                if not app_config.has_access('read'):
-                    continue
-                app_config_ids.add(app_config._id)
-                info['app_configs'].append(app_config.__json__())
-                ac_id_s = str(app_config._id)
-                app_config_state.setdefault(ac_id_s, True)
-                if project_state[p_id] and not app_config_state[ac_id_s]:
-                    project_state[p_id] = False
-            projects.append(info)
+        up = {x.shortname: x for x in c.user.my_projects()
+              if x.is_real() and not x.deleted and
+              g.security.has_access(x, "read")}
+        ujp = {x: up[x].__json__() for x in up}
+
+        project_ids = [x._id for x in up.values()]
+        project_state = {str(x): True for x in project_ids}
+        project_activity = {x: 0 for x in up}
+        tools_info = get_tools_info(c.user, project_ids)['tools']
+        app_config_ids = []
+        app_config_activity = {}
+        for tool in tools_info:
+            shortname = tool['project_shortname']
+            pid = str(up[shortname]._id)
+            acid_s = tool['id']
+            acid = ObjectId(acid_s)
+            app_config_ids.append(acid)
+            app_config_state.setdefault(acid_s, True)
+            ac = AppConfig.query.get(acid)
+            if 'app_configs' not in ujp[shortname]:
+                ujp[shortname]['app_configs'] = []
+            ujp[shortname]['app_configs'].append(ac.__json__())
+            new_count = tool['artifact_counts'].get("new", 0)
+            if new_count:
+                app_config_activity[acid_s] = new_count
+                project_activity[shortname] += app_config_activity[acid_s]
+            if project_state[pid] and not app_config_state[acid_s]:
+                project_state[pid] = False
+        projects = ujp.values()
 
         # get exchanges
         exchanges = []
@@ -484,20 +486,6 @@ class ActivityFeedController(BaseDashboardController):
                 "icon_url": g.resource_manager.absurl(exchange.config['icon'])
             })
             exchange_state.setdefault(exchange.config["uri"], True)
-
-        # tool activity
-        urc = UserRestController()
-        urc.user = c.user
-        tool_info = urc.get_artifact_count()
-        app_config_activity = {}
-        project_shortnames = [x['shortname'] for x in projects]
-        project_activity = {x: 0 for x in project_shortnames}
-        for tool in tool_info['tools']:
-            if tool['artifact_counts'].get('new', 0):
-                new_count = tool['artifact_counts']['new'] 
-                app_config_activity[tool["id"]] = new_count
-                pname = tool['project_shortname']
-                project_activity[pname] += new_count
 
         # global state override requested
         if global_state:
@@ -514,7 +502,7 @@ class ActivityFeedController(BaseDashboardController):
             else:
                 state_holders = (app_config_state, exchange_state,
                                  project_state)
-                value = global_state == "set" 
+                value = global_state == "set"
                 for states in state_holders:
                     for state in states:
                         states[state] = value
@@ -523,7 +511,7 @@ class ActivityFeedController(BaseDashboardController):
         activity_feed_state['app_config_state'] = app_config_state
         activity_feed_state['exchange_state'] = exchange_state
         c.user.state_preferences['activity_feed'] = activity_feed_state
-        
+
         # reorder projects by activity
         projects.sort(key=lambda x: project_activity[x['shortname']],
                       reverse=True)
@@ -813,6 +801,7 @@ class DashboardController(DashboardRootController):
         start_time = datetime.now()
         profile = {}
         user = User.by_username(username)
+        my_user = c.user.username == username
         prefs = user.user_fields.get("DashboardPrefs", {})
         projects = {x.shortname: x for x in user.my_projects()
                     if x.is_real() and not x.deleted and
@@ -821,7 +810,6 @@ class DashboardController(DashboardRootController):
 
         # tool content and activity information
         project_ids = [x._id for x in projects.values()]
-        #tool_info = get_artifact_counts(user, project_ids=project_ids)
         tool_info = get_tools_info(user, project_ids, auth_user=c.user)
         tinfo = {x: {} for x in projects}
         for tool in tool_info['tools']:
@@ -841,7 +829,6 @@ class DashboardController(DashboardRootController):
         elapsed = datetime.now() - start_time
         profile['tool_info'] = elapsed - sum(profile.values(), timedelta())
 
-        my_user = c.user.username == username
         info = {x: {} for x in projects}
         for project in projects:
             p = projects[project]

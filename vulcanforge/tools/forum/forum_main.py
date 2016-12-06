@@ -73,9 +73,11 @@ class ForgeDiscussionApp(Application):
             subscriptions={})
 
     @classmethod
-    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name,
+                                trefs=[]):
         db, coll = DM.ForumPostHistory.get_pymongo_db_and_collection()
-        return get_history_info(coll, app_configs, app_visits, tool_name)
+        return get_history_info(coll, app_configs, app_visits, tool_name,
+                                trefs)
 
     @classmethod
     def permissions(cls):

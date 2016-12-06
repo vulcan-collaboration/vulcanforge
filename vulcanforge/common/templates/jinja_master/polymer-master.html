@@ -2,6 +2,7 @@
 <html>
 {# *********************** These are Vulcan CSSs ********************************************** #}
 {% do g.resource_manager.register_css('fonts/ubuntu.css', scope='forge') %}
+{% do g.resource_manager.register_css('css/jquery-ui-1.10.3.css', scope='forge') %}
 
 {# *********************** These are Vulcan Polymer HTMLs ********************************************** #}
 {% do g.resource_manager.register_html('polymer/vf-components/theme_colors.html', scope='forge') %}
@@ -72,7 +73,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <title>{% block title %}{% endblock %}</title>
     <!--[if IE]><link rel="shortcut icon" href="{{ g.resource_manager.absurl('icon_16.ico') }}"/><![endif]-->
-    <link rel="icon" href="{{ g.resource_manager.absurl('icon_32.png')}}"/>
+    <link rel="icon" href="{{ g.resource_manager.absurl(g.favicon_path) }}"/>
     <link rel="apple-touch-icon-precomposed" href="{{ g.resource_manager.absurl('touch-icon-180.png')}}"/>
     {# *********************** Emitting styles ********************************************** #}
     {% for blob in g.resource_manager.emit('css') %}
@@ -152,8 +153,9 @@
             --paper-toast-background-color: var(--interactive);
         }
         /* these styles are for wrapped jQuery idleTimeout component */
-        .ui-dialog-titlebar {
+        .ui-dialog-titlebar, .ui-widget-header {
             background-color: black;
+            background-image: none;
         }
         .ui-dialog-title {
             color: white;

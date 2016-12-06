@@ -12,6 +12,7 @@ from pylons import app_globals as g, tmpl_context as c, request
 from tg import expose
 from webob.exc import HTTPNotFound
 from vulcanforge.auth.model import User
+from vulcanforge.cache.decorators import cache_json
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.websocket.authorizer import WebSocketAuthorizer
 from vulcanforge.websocket.exceptions import NotAuthorized
@@ -127,6 +128,7 @@ class WebSocketAPIController(BaseController):
 class ChatAPIController(BaseController):
 
     @expose('json')
+    @cache_json(name='user-chat-state-{c.user.username}', timeout=30 * 60)
     def state(self):
         redis = g.cache.redis
         users = {}
@@ -143,7 +145,9 @@ class ChatAPIController(BaseController):
             project_data['users'] = []
             for user in project.users():
                 project_data['users'].append(user.username)
-                users[user.username] = self._get_profile_dict_for_user(user)
+                if user.username not in users:
+                    up = self._get_profile_dict_for_user(user)
+                    users[user.username] = up
             # connected users
             key = '{}.connected_users'.format(project_prefix)
             project_data['online_users'] = list(redis.smembers(key))
@@ -166,7 +170,7 @@ class ChatAPIController(BaseController):
 
     def _get_profile_dict_for_user(self, user):
         redis = g.cache.redis
-        profile = user.get_profile_info()
+        profile = user.get_profile_info_authed(c.user)
         online = redis.exists('user.{username}.connection_count'.format(
             **profile))
         profile.update(

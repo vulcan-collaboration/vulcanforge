@@ -250,7 +250,7 @@ class Artifact(BaseMappedClass, ArtifactApiMixin):
     class __mongometa__:
         session = artifact_orm_session
         name = 'artifact'
-        indexes = ['app_config_id']
+        indexes = [('_id', 'app_config_id'), 'app_config_id']
 
         def before_save(data):
             sesh = artifact_orm_session._get()

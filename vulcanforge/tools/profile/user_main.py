@@ -555,7 +555,7 @@ class UserProfileController(BaseController):
             'expertise': self.user.expertise,
             'icon': self.user.icon_url(),
             'email': self.user.get_email_address(),
-            'joined': self.user._id.generation_time,
+            'joined': self.user._id.generation_time.isoformat(),
             'telephone': uf.get('telephone', None),
             'position': uf.get('position', None),
             'company': uf.get('company', None),

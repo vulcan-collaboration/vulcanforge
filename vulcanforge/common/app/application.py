@@ -199,7 +199,8 @@ class Application(object):
         return {co.name: co.default for co in cls.config_options}
 
     @classmethod
-    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name):
+    def artifact_counts_by_kind(cls, app_configs, app_visits, tool_name,
+                                trefs=[]):
         my_app_configs = {k: v for k, v in app_configs.items()
                           if v.tool_name == tool_name}
         return {x: dict(all=0, new=0) for x in my_app_configs}
