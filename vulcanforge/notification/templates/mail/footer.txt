@@ -1,9 +1,0 @@
-
-
----
-
-Sent from {{ forge_name }} because you indicated interest in {{ notification.artifact_title }}:
-    {{ prefix }}{{ notification.link }}
-
-To unsubscribe from further messages, please visit your subscriptions preferences:
-    {{ prefix }}/auth/prefs/subscriptions
