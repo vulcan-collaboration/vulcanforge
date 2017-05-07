@@ -100,7 +100,7 @@ class WebSocketAuthorizer(object):
         self.fail()
 
     def _get_project_by_shortname(self, shortname):
-        cursor = Project.query.find({'shortname': shortname})
+        cursor = Project.query_find(dict(shortname=shortname))
         if cursor.count() == 0:
             LOG.debug("project not found %r", shortname)
             self.fail()

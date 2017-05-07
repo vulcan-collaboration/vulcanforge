@@ -474,10 +474,12 @@ class Ticket(VersionedArtifact):
 
     def _set_private(self, bool_flag):
         if bool_flag:
-            role_developer = ProjectRole.by_name('Developer')._id
+            prole = ProjectRole.by_name('Developer')
+            if not prole:
+                prole = ProjectRole.by_name('Member')
             role_creator = c.project.project_role(self.reported_by)._id
             self.acl = [
-                ACE.allow(role_developer, ALL_PERMISSIONS),
+                ACE.allow(prole._id, ALL_PERMISSIONS),
                 ACE.allow(role_creator, ALL_PERMISSIONS),
                 DENY_ALL]
         else:

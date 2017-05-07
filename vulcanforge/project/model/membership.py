@@ -11,7 +11,7 @@ from pylons import tmpl_context as c, app_globals as g
 import tg
 
 from vulcanforge.common.model.session import main_orm_session
-from vulcanforge.auth.model import UserRegistrationToken, UsersDenied
+from vulcanforge.auth.model import UserRegistrationToken, UsersDenied, EmailAddress
 from vulcanforge.artifact.model import Artifact
 from vulcanforge.common.util.model import VFRelationProperty
 from vulcanforge.notification.model import Notification
@@ -103,6 +103,22 @@ class RegistrationRequest(Artifact):
 
     summary = "New User Registration Request"
 
+    @classmethod
+    def upsert(cls, email, name, user_fields, project_id):
+        email = EmailAddress.canonical(email)
+        instance = cls.query.get(email=email)
+        if not instance:
+            instance = cls(email=email)
+
+        instance.status = "tbd"
+        instance.resolution_actor = None
+        instance.resolution_ts = None
+        instance.name = name
+        instance.user_fields = user_fields
+        instance.project_id = project_id
+
+        return instance
+
     def index(self, **kw):
         return None
 
@@ -152,6 +168,7 @@ class RegistrationRequest(Artifact):
         self.resolution_ts = datetime.utcnow()
         UsersDenied(email=self.email)
 
+
 class AbstractRequestArtifact(Artifact):
 
     _id = FieldProperty(S.ObjectId)
@@ -163,9 +180,9 @@ class AbstractRequestArtifact(Artifact):
     user = VFRelationProperty('User', via="user_id")
 
     def index(self, **kw):
-        return dict(
-            title_s=self.notification_subject
-        )
+        index_doc = super(AbstractRequestArtifact, self).index(**kw)
+        index_doc.update({'title_s': self.notification_subject})
+        return index_doc
 
     @property
     def notification_subject(self):
@@ -434,7 +451,9 @@ class MembershipInvitation(Artifact):
             self.creator.display_name)
 
     def index(self, **kw):
-        return {'title_s': self.invitation_subject}
+        index_doc = super(MembershipInvitation, self).index(**kw)
+        index_doc.update({'title_s': self.invitation_subject})
+        return index_doc
 
     def url(self):
         return self.app_config.url()

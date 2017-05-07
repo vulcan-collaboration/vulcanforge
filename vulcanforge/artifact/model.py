@@ -888,7 +888,7 @@ class BaseAttachment(File, VisualizableMixIn):
 
     def is_embedded(self):
         return self.filename in request.environ.get(
-            'vehicleforge.macro.att_embedded', [])
+            'vulcan.macro.att_embedded', [])
 
     @classmethod
     def metadata_for(cls, artifact):

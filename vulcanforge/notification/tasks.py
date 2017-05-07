@@ -195,8 +195,10 @@ def sendmail(fromaddr, destinations, text, reply_to, subject, message_id,
         html_text = g.forge_markdown(email=True).convert(text)
 
     try:
+        template_dir = config.get('notification.templates',
+                                  'vulcanforge.notification')
         templates = jinja2.Environment(
-            loader=jinja2.PackageLoader('vulcanforge.notification', 'templates'))
+            loader=jinja2.PackageLoader(template_dir, 'templates'))
         email_template = templates.get_template('mail/email.html')
         context = {
             'branding_logo': branding_logo(),

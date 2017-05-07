@@ -29,7 +29,7 @@ class ArtifactReferenceController(BaseController):
     def _make_app_reference(self, app_config, project=None, label=None,
                             artifact=None):
         if project is None:
-            project = Project.query.get(_id=app_config.project_id)
+            project = Project.query_get(_id=app_config.project_id)
 
         referenceable = app_config.reference_opts['can_reference'] and \
                         app_config.is_visible_to(c.user)

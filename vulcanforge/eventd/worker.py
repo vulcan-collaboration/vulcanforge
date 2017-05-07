@@ -148,7 +148,7 @@ class EventdWorker(AbstractEventdWorker):
         for target in targets:
             match = re.match(r'^project\.([^\.]+).chat$', target)
             shortname = match.group(1)
-            project = Project.query.get(shortname=shortname)
+            project = Project.by_shortname(shortname)
             if project is None:
                 self.log.warn("No project found with shortname: %s", shortname)
                 continue
@@ -169,7 +169,7 @@ class EventdWorker(AbstractEventdWorker):
         for target in targets:
             match = re.match(r'^project\.([^\.]+).chat$', target)
             shortname = match.group(1)
-            project = Project.query.get(shortname=shortname)
+            project = Project.by_shortname(shortname)
             if project is None:
                 self.log.warn("No project found with shortname: %s", shortname)
                 continue

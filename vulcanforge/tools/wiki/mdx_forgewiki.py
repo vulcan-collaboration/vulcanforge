@@ -7,7 +7,7 @@ import markdown
 import markdown.blockprocessors
 import markdown.preprocessors
 import markdown.postprocessors
-from markdown.extensions.headerid import slugify, unique, itertext
+from markdown.extensions.toc import slugify, unique
 import markdown.extensions.toc
 from markdown.util import etree
 from pylons import tmpl_context as c
@@ -259,13 +259,15 @@ class WikiPageTreeBlockProcessor(markdown.blockprocessors.BlockProcessor):
 
 
 class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
-    config = {}
 
-    # Iterator wrapper to get parent and child all at once
-    def iterparent(self, root):
-        for parent in root.iter():
-            for child in parent:
-                yield parent, child
+    def itertext(self, elem):
+        if elem.text:
+            yield elem.text
+        for e in elem:
+            for s in self.itertext(e):
+                yield s
+            if e.tail:
+                yield e.tail
 
     def run(self, doc):
         """
@@ -274,9 +276,6 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
         toc_div = etree.Element("div")
         toc_div.attrib["class"] = "toc"
         header_rgx = re.compile("[Hh][123456]")
-
-        self.use_anchors = self.config["anchorlink"] in [1, '1', True, 'True',
-                                                         'true']
 
         # Get a list of id attributes
         used_ids = set()
@@ -288,7 +287,7 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
         marker_found = False
         header_count = 0
         for (p, element) in self.iterparent(doc):
-            text = ''.join(itertext(element))
+            text = ''.join(self.itertext(element))
             text = self.markdown.forge_processor.placeholder_re.sub('', text)
             text = text.strip()
             if not text:
@@ -301,7 +300,7 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
             # would causes an enless loop of placing a new TOC
             # inside previously generated TOC.
             is_marker = (element.text and
-                         element.text.strip() == self.config["marker"] and
+                         element.text.strip() == self.marker and
                          not header_rgx.match(element.tag) and
                          element.tag not in ['pre', 'code'])
             if is_marker:
@@ -315,7 +314,7 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
 
                 # Do not override pre-existing ids
                 if not "id" in element.attrib:
-                    slug = self.config["slugify"](unicode(text), '-')
+                    slug = self.slugify(unicode(text), '-')
                     intended_id = "markdown-header-" + slug
                     elem_id = unique(intended_id, used_ids)
                     element.attrib["id"] = elem_id
@@ -331,11 +330,8 @@ class TableOfContentsTreeProcessor(markdown.extensions.toc.TocTreeprocessor):
                 self.add_anchor(element, elem_id)
                 header_count += 1
 
-        toc_list_nested = markdown.extensions.toc.order_toc_list(toc_list)
-        self.build_toc_etree(toc_div, toc_list_nested)
-        prettify = self.markdown.treeprocessors.get('prettify')
-        if prettify:
-            prettify.run(toc_div)
+        toc_list_nested = markdown.extensions.toc.nest_toc_tokens(toc_list)
+        toc_div = self.build_toc_div(toc_list_nested)
         if not marker_found and header_count > 0:
             app = getattr(c, 'app', None)
             show_table_of_contents = getattr(
@@ -368,12 +364,15 @@ class ForgeWikiExtension(markdown.Extension):
         # {Table of Contents}
         table_of_contents_config = {
             'marker': '{Table of Contents}',
-            'slugify': markdown.extensions.headerid.slugify,
+            'slugify': markdown.extensions.toc.slugify,
             'title': 'Table of Contents',
-            'anchorlink': False
+            'anchorlink': False,
+            "permalink": 0,
+            "baselevel": 1,
+            'separator': '-'
         }
-        table_of_contents_tree_processor = TableOfContentsTreeProcessor(md)
-        table_of_contents_tree_processor.config = table_of_contents_config
+        table_of_contents_tree_processor = TableOfContentsTreeProcessor(
+            md, table_of_contents_config)
         md.treeprocessors.add('toc', table_of_contents_tree_processor,
                               '<prettify')
         # {PageTree}

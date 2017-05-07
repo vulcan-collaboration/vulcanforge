@@ -1,0 +1,42 @@
+{% extends 'vulcanforge.tools.catalogue:templates/master.html' %}
+{% set has_related_artifacts = True %}
+
+{% do g.resource_manager.register_js('catalogue/ItemBase.js') %}
+{% do g.resource_manager.register_js('catalogue/ItemViewer.js') %}
+
+{% do g.resource_manager.register_css('catalogue/widgets.css') %}
+
+{% block title %}Versioned Item View{% endblock %}
+
+{% block extra_js %}
+<script language="javascript" type="text/javascript">
+    $(document).ready(function () {
+        $vf.afterInit(function() {
+            $vf.currentPage.pageTitle = "Versioned Item View";
+            $catalogue.versionedItemSL = new $vf.ServiceLocation("{{rest_url}}", "");
+            $catalogue.versionedItemId = "{{c.versioned_item._id}}";
+            $catalogue.presenter = new $catalogue.Presenter({});
+
+            $catalogue.presenter.loadVersionedItemInfo("{{c.versioned_item._id}}");
+        }, []);
+    });
+</script>
+{{ super() }}
+{% endblock extra_js %}
+
+{% block header %}
+{{c.versioned_item.name}}
+{% endblock %}
+
+
+
+{% block versioned_item_body %}
+
+<div id="itemContainer" class="padded top-spaced">
+    <div id="itemProperties">
+        <div id="baseProperties" class="featureHeader">
+            <h3 class="content-section-header">Properties</h3>
+        </div>
+    </div>
+</div>
+{% endblock %}

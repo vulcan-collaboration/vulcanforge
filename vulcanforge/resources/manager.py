@@ -359,7 +359,7 @@ class ResourceManager(ew.ResourceManager):
                                           dir=destination_dir) as output_file:
                         call_args = [
                             'vulcanize', '-p', destination_dir,
-                            '-o', output_file.name,
+                            '--out-html', output_file.name,
                             '--inline-scripts',
                             '--inline-css',
                             '--strip-comments',

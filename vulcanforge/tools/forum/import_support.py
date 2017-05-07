@@ -130,19 +130,19 @@ class TimeStamp(S.FancySchemaItem):
 
 
 def create_user(json_username):
-    allura_username = c.project.shortname + '-' + json_username
+    vulcan_username = c.project.shortname + '-' + json_username
     while True:
         try:
             User.register(
                 dict(
-                    username=allura_username,
-                    display_name=allura_username),
+                    username=vulcan_username,
+                    display_name=vulcan_username),
                 False)
             session(User).flush()
             break
         except:
             raise
-    return allura_username
+    return vulcan_username
 
 
 def create_post(discussion_id, thread_id, json_post):

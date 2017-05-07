@@ -19,7 +19,7 @@ class ForgeAdminToolsCommand(base.Command):
     def command(self):
         self.basic_setup()
         log.info('Ensuring that ForgeAdmin specific tools are installed...')
-        c.project = Project.query.get(shortname=g.site_admin_project)
+        c.project = Project.by_shortname(g.site_admin_project)
 
         self._ensure_installed('Visualize', 'visualize', 'Visualizers')
         already_there = self._ensure_installed('Wiki', 'static', 'VF Pages')

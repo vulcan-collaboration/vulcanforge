@@ -238,7 +238,7 @@ class EnsureIndexCommand(base.Command):
         for name, indexes in main_indexes.iteritems():
             self._update_indexes(db[name], indexes)
         self.log.info('Updating indexes for project DBs')
-        projects = Project.query.find().all()
+        projects = Project.query_find().all()
         configured_dbs = set()
         for p in projects:
             db = p.database_uri
@@ -260,14 +260,15 @@ class EnsureIndexCommand(base.Command):
                 uindexes[tuple(i.index_spec)] = i
             else:
                 rindexes[tuple(i.index_spec)] = i
-        for iname, fields in collection.index_information().iteritems():
-            if iname == '_id_':
-                continue
-            if fields.get('unique'):
-                prev_uindexes[iname] = tuple(fields['key'])
-            else:
-                prev_indexes[iname] = tuple(fields['key'])
-                # Drop obsolete indexes
+        if collection.name in collection.database.collection_names():
+            for iname, fields in collection.index_information().iteritems():
+                if iname == '_id_':
+                    continue
+                if fields.get('unique'):
+                    prev_uindexes[iname] = tuple(fields['key'])
+                else:
+                    prev_indexes[iname] = tuple(fields['key'])
+        # Drop obsolete indexes
         for iname, key in prev_indexes.iteritems():
             if key not in rindexes:
                 self.log.info('...... drop index %s:%s', collection.name,
@@ -278,7 +279,7 @@ class EnsureIndexCommand(base.Command):
                 self.log.info('...... drop index %s:%s', collection.name,
                               iname)
                 collection.drop_index(iname)
-                # Ensure all indexes
+        # Ensure all indexes
         for name, idx in uindexes.iteritems():
             self.log.info('...... ensure %s:%s', collection.name, idx)
             while True:
@@ -290,7 +291,10 @@ class EnsureIndexCommand(base.Command):
                     self._remove_dupes(collection, idx.index_spec)
         for name, idx in rindexes.iteritems():
             self.log.info('...... ensure %s:%s', collection.name, idx)
-            collection.ensure_index(idx.index_spec, background=True)
+            try:
+                collection.ensure_index(idx.index_spec, background=True)
+            except:
+                collection.ensure_index(idx.index_spec)
 
     def _remove_dupes(self, collection, spec):
         iname = collection.create_index(spec)

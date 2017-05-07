@@ -32,22 +32,17 @@ class ContextManager(object):
 
         p = None
         if project_shortname is not None:
-            query = dict(shortname=project_shortname)
-            if neighborhood is not None:
-                query['neighborhood_id'] = neighborhood._id
-            p = Project.query.get(**query)
+            q = {'neighborhood_id': neighborhood._id} if neighborhood else {}
+            cls = neighborhood.project_cls if neighborhood else Project
+            p = cls.query_get(shortname=project_shortname, **q)
             if p is None:
                 try:
-                    del query['shortname']
-                    query['_id'] = ObjectId(str(project_shortname))
-                    p = Project.query.get(**query)
+                    p = cls.query_get(_id=ObjectId(str(project_shortname)), **q)
                 except InvalidId:
                     pass
-
             if p is None:
                 raise NoSuchProjectError("Couldn't find project %s" %
                                          repr(project_shortname))
-
         if app_config_id is None:
             if p is None:
                 raise ForgeError("Must specify app_config_id if not project")
@@ -107,6 +102,16 @@ class ContextManager(object):
         """
         if getattr(c, 'project', None):
             return c.project._id
+
+    def get_project_cls(self):
+        """Get current context's project class, if any.
+
+        """
+        if getattr(c, 'neighborhood', None):
+            return c.neighborhood.project_cls
+        elif getattr(c, 'project', None):
+            return c.project.neighborhood.project_cls
+        return Project
 
     def get_app_config_id(self):
         """Get current context's AppConfig id, if any. Useful for Ming

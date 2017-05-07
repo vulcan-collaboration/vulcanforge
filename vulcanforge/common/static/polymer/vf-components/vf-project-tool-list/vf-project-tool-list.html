@@ -1,0 +1,198 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-image/iron-image.html">
+
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../../vaadin-icons/vaadin-icons.html">
+
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-project-tool">
+    <style is="custom-style" include="vf-styles">
+        .content {
+            background-color: var(--diffuse);
+            padding: .75em;
+            padding-top: 1em;
+            margin-right: 12px;
+            margin-left: 40px;
+        }
+        .tool-icon {
+            --iron-image-height: 50px;
+            --iron-image-width: 50px;
+            margin-right: 8px;
+        }
+        .tool-listing {
+            text-decoration: none;
+            font: inherit;
+            color: inherit;
+            fill: inherit;
+            padding: 0.2em;
+            text-transform: uppercase;
+        }
+        a paper-icon-button,
+        a:active paper-icon-button,
+        a:visited paper-icon-button {
+            color: var(--subheadingtext);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        .tool-icon {
+            margin-right: 8px;
+        }
+        .undersize-icon {
+            height: 35px;
+            width: 35px;
+        }
+        .oversize-icon {
+            height: 45px;
+            width: 45px;
+            margin-top: 2px;
+        }
+        span#pname.greyed {
+            color: var(--diffuse);
+        }
+        #badge {
+            margin-right: 12px;
+        }
+        .info {
+            color: var(--diffuse);
+            margin-top: 6px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .tool-name {
+            text-decoration: none;
+            text-transform: uppercase;
+            color: var(--subheadingtext);
+        }
+        #tool-public {
+            margin-right: 8px;
+        }
+    </style>
+    <template>
+        <div class="layout horizontal center">
+            <a href="[[tool.tool_url]]"><iron-image class="tool-icon" src="[[tool.icon_url]]"></iron-image></a>
+            <div class="layout vertical flex">
+                <a class="tool-name" href="[[tool.tool_url]]"><div>[[tool.name]]</div></a>
+                <template is="dom-if" if="[[tool.total]]">
+                    <div class="info layout horizontal flex">
+                        [[tool.total]] [[_getArtifact(tool.artifact, tool.total)]][[_getSize(tool.total_size)]]
+                    </div>
+                </template>
+            </div>
+            <template is="dom-if" if="[[tool.new]]">
+                <vf-badge id="badge" count="[[tool.new]]"></vf-badge>
+                <paper-tooltip for="badge" position="left">Tool has [[tool.new]] new [[_pluralize('item', tool.new)]]</paper-tooltip>
+            </template>
+            <template is="dom-if" if="[[!tool.private]]">
+                <iron-icon id="tool-public" icon="vaadin-icons:eye"></iron-icon>
+                <paper-tooltip for="tool-public" position="left">Tool readable by non-members</paper-tooltip>
+            </template>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-tool",
+                properties: {
+                    tool: Object
+                },
+                _newCount: function(count) {
+                    return (count < 100) ? count : "99+";
+                },
+                _pluralize: function(s, count) {
+                    return (count == 1) ? s : s + 's';
+                },
+                _getArtifact: function(name, count) {
+                    var retval = (name) ? name : 'artifact'
+                    return this._pluralize(retval, count);
+                },
+                _getSize: function(size) {
+                    return (size) ? ", " + vffuncs.humanSize(size) : "";
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-project-tool-list">
+    <style is="custom-style" include="vf-styles">
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        #sort-by-activity {
+            margin-right: 8px;
+        }
+        paper-icon-button#prefs {
+            margin-right: 4px;
+        }
+        paper-icon-button#prefs.selected {
+            color: var(--interactive);
+        }
+        project-item.hidden {
+            display: none;
+        }
+        .admin-icon {
+            color: var(--interactive);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        #size-info {
+            padding-right: .5em;
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <iron-ajax id="prefsajax" url="" on-response="_prefsResponse"></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon icon="vaadin-icons:tools"></iron-icon>
+            <div class="heading-label flex">Tools ([[data.num]])</div>
+            <template is="dom-if" if="[[data.canAdmin]]">
+                <a class="admin-control" href="[[data.projectURL]]admin/tools" tabindex="-1">
+                    <paper-icon-button icon="icons:settings" class="admin-icon"></paper-icon-button>
+                    <paper-tooltip position="left">Manage</paper-tooltip>
+                </a>
+            </template>
+        </div>
+        <div id="plist" class="list-container">
+            <template id="repeater" is="dom-repeat" items="{{data.tools}}" as="tool">
+                <vf-project-tool tool="{{tool}}"></vf-project-tool>
+            </template>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-tool-list",
+                properties: {
+                    data: Object,
+                    url: String,
+                    count: Number
+                },
+                _getItems: function() {
+                    return this.$.plist.querySelectorAll("project-tool");
+                }
+            });
+        })();
+    </script>
+</dom-module>

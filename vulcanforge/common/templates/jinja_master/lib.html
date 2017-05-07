@@ -19,7 +19,7 @@
 {% macro email_gravatar(email, title=None, size=None) -%}
   {% set title=h.really_unicode(title) %}
   {% if email %}
-    <img src="{{g.gravatar(email, size=size)}}"
+    <img src="{{g.user_or_gravatar(email, size=size)}}"
          alt="{{title or email}}"
          title="{{title or email}}"
          class="emboss {% if size %} x{{size}}{% endif %}">

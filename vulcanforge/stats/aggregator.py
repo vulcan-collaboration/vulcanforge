@@ -199,7 +199,8 @@ class BaseStatsAggregator(object):
         query = self.make_query()
         grouping = self.make_group_spec()
         pipeline = self.create_pipeline(query, grouping)
-        self.results = self.collection.aggregate(pipeline)
+        # emulate pymongo pre-3.0 aggregate result
+        self.results = {'result': list(self.collection.aggregate(pipeline))}
         return self.results
 
     def make_label(self, key):

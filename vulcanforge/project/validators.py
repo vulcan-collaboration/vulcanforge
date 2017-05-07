@@ -2,12 +2,11 @@ import cgi
 
 from formencode import Invalid
 from formencode import validators as fev
-from pylons import tmpl_context as c
+from pylons import tmpl_context as c, app_globals as g
 
 from vulcanforge.common.validators import MountPointValidator
 from vulcanforge.neighborhood.model import Neighborhood
 from vulcanforge.common.helpers import really_unicode, strip_str
-from vulcanforge.project.model import Project
 
 
 class ProjectNameValidator(fev.UnicodeString):
@@ -44,7 +43,8 @@ class ProjectNameValidator(fev.UnicodeString):
         }
         if hasattr(c, 'project') and c.project:
             query['_id'] = {'$ne': c.project._id}  # can be same as current
-        cur = Project.query.find(query)
+        project_cls = g.context_manager.get_project_cls()
+        cur = project_cls.query_find(query)
         if cur.count():
             raise Invalid(self.message('name_taken', state), value, state)
 
@@ -103,7 +103,8 @@ class AvailableShortnameValidator(ShortnameValidator):
         value = super(
             AvailableShortnameValidator, self).to_python(value, state)
         # make sure the name isn't taken
-        if Project.query.get(shortname=value):
+        project_cls = g.context_manager.get_project_cls()
+        if project_cls.by_shortname(value):
             raise fev.Invalid(self.message('taken', state), value, state)
         return value
 
@@ -121,7 +122,8 @@ class ExistingShortnameValidator(ShortnameValidator):
     def to_python(self, value, state=None):
         value = super(ExistingShortnameValidator, self).to_python(value, state)
         if value:
-            project = Project.query.get(shortname=value)
+            project_cls = g.context_manager.get_project_cls()
+            project = project_cls.by_shortname(value)
             if not project:
                 raise fev.Invalid(self.message('notfound', state), value, state)
             return project

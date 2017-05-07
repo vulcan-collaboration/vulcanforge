@@ -5,9 +5,7 @@
       <h3>{{name}}</h3>
       {% if settings_href %}
       <a href="{{settings_href}}" class="admin_modal" title="{{name}} Settings">
-        <small
-           data-icon="{{g.icons.perm_tool.char}}"
-           class="ico-r admin_modal {{g.icons.perm_tool.css}}"></small>
+          <span class="inline-icon ico-pen">Edit</span>
       </a>
       {% endif %}
       {% if description %}

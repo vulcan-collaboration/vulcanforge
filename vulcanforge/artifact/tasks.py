@@ -17,33 +17,8 @@ from vulcanforge.taskd import task
 LOG = logging.getLogger(__name__)
 
 
-def _convert_value_to_doc(value):
-    """
-    Takes a dictionary representing a SOLR document, modifies and returns it in
-    a format that matches what SOLR gives back when searching that document.
-    This is used when querying after adding items to confirm that SOLR indeed
-    added the item as expected.
-    """
-    if isinstance(value, dict):  # walk dictionaries
-        for key in value.keys():
-            if key == 'text' or not value[key] and not (value[key] is False or value[key] == 0):
-                del value[key]
-                continue
-            value[key] = _convert_value_to_doc(value[key])
-    elif hasattr(value, '__iter__'):  # convert iterables
-        value = [_convert_value_to_doc(item) for item in value]
-    elif isinstance(value, bson.ObjectId):
-        value = '{}'.format(value)
-    elif isinstance(value, datetime):
-        value = value.isoformat()[:23].rstrip('0') + 'Z'
-    elif isinstance(value, basestring):
-        value = value.replace('\r\n', '\n').replace('\r', '\n')
-    return value
-
-
 @task
-def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
-                  repost_attempt_count=0):
+def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None):
     """
     Add the referenced artifacts to SOLR and compute artifact's outgoing
     shortlinks
@@ -54,11 +29,7 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
     """
     from vulcanforge.artifact.model import ArtifactReference
     exceptions = []
-    if repost_attempt_count > 0:
-        LOG.info('add_artifacts repost attempt {} for {}'.format(
-            repost_attempt_count, ref_ids))
-    else:
-        LOG.info('add artifacts {}'.format(ref_ids))
+    LOG.info('add artifacts {}'.format(ref_ids))
     with _indexing_disabled(artifact_orm_session._get()):
         solr_docs = []
         ids_to_repost = set()
@@ -99,47 +70,9 @@ def add_artifacts(ref_ids, update_solr=True, update_refs=True, mod_dates=None,
             except Exception:
                 LOG.error('Error indexing artifact %s', ref_id)
                 exceptions.append(sys.exc_info())
+
         if solr_docs:
-            solr_result = g.solr.add(
-                solr_docs, waitFlush=True, waitSearcher=True)
-
-        # confirm indexes were received
-        for submitted_doc in solr_docs:
-            ref_id = submitted_doc['id']
-            result = g.solr.search(q='id:{}'.format(ref_id))
-            try:
-                actual_doc = result.docs[0]
-            except IndexError:
-                LOG.warn('index not found after submission: {}'.format(ref_id))
-                ids_to_repost.add(ref_id)
-                continue
-            submitted_doc = _convert_value_to_doc(submitted_doc)
-            diffs = []
-            for k in set(submitted_doc.keys()).union(actual_doc.keys()):
-                # Do not compare date values
-                if k.endswith('_dt') or k.endswith('_dt_mv'):
-                    continue
-                s_val = submitted_doc.get(k, '<MISSING>')
-                a_val = actual_doc.get(k, '<MISSING>')
-                if s_val != a_val:
-                    diffs.append('`{}` differs:  {} != {}'.format(k, a_val,
-                                                                  s_val))
-            if len(diffs) > 0:
-                LOG.warn('index mismatch after submission: {};  '
-                         'DIFF:\n\t{};  '.format(ref_id, '\n\t'.join(diffs)) +
-                         '\nResult: {}'.format(solr_result))
-                ids_to_repost.add(ref_id)
-
-        # resubmit any artifacts for indexing that failed
-        # limit number of retries to prevent endless loops
-        if ids_to_repost:
-            if repost_attempt_count < 2:
-                sleep(1)
-                add_artifacts.post(
-                    list(ids_to_repost),
-                    repost_attempt_count=repost_attempt_count + 1)
-            else:
-                LOG.warn('giving up on repost for {}'.format(ids_to_repost))
+            g.solr.add(solr_docs, waitFlush=True, waitSearcher=True)
 
     if len(exceptions) == 1:
         raise exceptions[0][0], exceptions[0][1], exceptions[0][2]

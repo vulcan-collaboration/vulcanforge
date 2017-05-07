@@ -13,8 +13,9 @@ from ming.odm import (
 )
 from ming.utils import LazyProperty
 from pylons import request, tmpl_context as c, app_globals as g
-from vulcanforge.common.model.base import BaseMappedClass
 
+from vulcanforge.auth.schema import ACL, ACE
+from vulcanforge.common.model.base import BaseMappedClass
 from vulcanforge.common.model.session import main_orm_session
 from vulcanforge.s3.model import File
 from vulcanforge.common.util import push_config
@@ -90,7 +91,6 @@ class Neighborhood(BaseMappedClass):
     moderate_component_limit_seconds = FieldProperty(int, if_missing=0)
     moderate_deletion = FieldProperty(bool, if_missing=False)
     delete_moderator_id = ForeignIdProperty('User')
-    can_grant_anonymous = FieldProperty(bool, if_missing=True)
 
     # for neighborhood project
     _default_neighborhood_apps = [
@@ -115,16 +115,16 @@ class Neighborhood(BaseMappedClass):
 
     @LazyProperty
     def neighborhood_project(self):
-        return self.project_cls.query.get(
+        cls = self.neighborhood_project_cls
+        return cls.query_get(
             neighborhood_id=self._id,
             shortname='--init--'
         )
 
     @LazyProperty
     def projects(self):
-        return self.project_cls.query.find(
-            {'neighborhood_id': self._id}
-        ).all()
+        q = {'neighborhood_id': self._id}
+        return self.project_cls.query_find(q).all()
 
     @property
     def delete_moderator(self):
@@ -153,7 +153,8 @@ class Neighborhood(BaseMappedClass):
 
     @property
     def neighborhood_project_cls(self):
-        return self.project_cls
+        from vulcanforge.project.model import Project
+        return Project
 
     @property
     def user_cls(self):
@@ -205,7 +206,7 @@ class Neighborhood(BaseMappedClass):
         else:
             project_template = {'home_text': default_home_text}
 
-        project = self.project_cls.query.get(shortname=shortname)
+        project = self.project_cls.by_shortname(shortname)
         if project:
             raise ProjectConflict()
 
@@ -235,6 +236,16 @@ class Neighborhood(BaseMappedClass):
 
             offset = int(project.ordered_mounts()[-1]['ordinal']) + 1
 
+            if 'extra_roles' in project_template:
+                from vulcanforge.project.model import ProjectRole
+                for role in project_template['extra_roles']:
+                    if not ProjectRole.by_name(role):
+                        new = ProjectRole(project_id=project._id, name=role)
+                        project.acl.append(ACE.allow(new._id, 'read'))
+                        # assign role to user
+                        project_role = project.project_role(user)
+                        if new._id not in project_role.roles:
+                            project_role.roles.append(new._id)
             if not apps and 'tools' in project_template:
                 for i, tool in enumerate(project_template['tools'].keys()):
                     tool_config = project_template['tools'][tool]
@@ -251,6 +262,20 @@ class Neighborhood(BaseMappedClass):
                         )
                         if 'options' in tool_config:
                             app.config.options.update(tool_config['options'])
+                        # app config acls will not reflect new project roles
+                        # so grant the perms in project template's tool_acl
+                        if 'extra_roles' in project_template:
+                            acl = project_template.get('tool_acl', {}).get(
+                                tool_config['mount_point'])
+                            for role in acl:
+                                if role in project_template['extra_roles']:
+                                    pr = ProjectRole.query.get(
+                                        project_id=project._id, name=role)
+                                    if pr:
+                                        for permission in acl[role]:
+                                            ACL.upsert(
+                                                app.config.acl,
+                                                ACE.allow(pr._id, permission))
             if 'tool_order' in project_template:
                 for i, tool in enumerate(project_template['tool_order']):
                     project.app_config(tool).options.ordinal = i
@@ -301,9 +326,9 @@ class Neighborhood(BaseMappedClass):
         if project:
             raise ProjectConflict()
         name = 'Home Project for %s' % self.name
-        database_uri = self.neighborhood_project_cls.default_database_uri(
-            shortname)
-        project = self.neighborhood_project_cls(
+        cls = self.neighborhood_project_cls
+        database_uri = cls.default_database_uri(shortname)
+        project = cls(
             neighborhood_id=self._id,
             neighborhood=self,
             shortname=shortname,
@@ -362,5 +387,32 @@ class Neighborhood(BaseMappedClass):
                 return ac
         return None
 
+    @LazyProperty
+    def can_grant_anonymous(self):
+        return not g.closed_platform
 
 
+class VulcanNeighborhood(Neighborhood):
+
+    class __mongometa__:
+        polymorphic_identity = 'vfneighborhood'
+
+    kind = FieldProperty(str, if_missing='vfneighborhood')
+
+    @property
+    def project_cls(self):
+        from vulcanforge.project.model import VulcanProject
+        return VulcanProject
+
+
+class UserNeighborhood(Neighborhood):
+
+    class __mongometa__:
+        polymorphic_identity = 'userneighborhood'
+
+    kind = FieldProperty(str, if_missing='userneighborhood')
+
+    @property
+    def project_cls(self):
+        from vulcanforge.project.model import UserProject
+        return UserProject

@@ -9,7 +9,6 @@ import ew.jinja2_ew as ew
 from vulcanforge.common import helpers as h
 from vulcanforge.common.validators import CommaSeparatedEach
 from vulcanforge.common.widgets.util import onready
-from vulcanforge.project.model import Project
 from vulcanforge.project.validators import ExistingShortnameValidator
 from vulcanforge.resources.widgets import JSLink, CSSLink
 
@@ -100,15 +99,22 @@ class SingleProjectSelect(ew.InputField):
         return value
 
     def _format_project(self, p):
+        defaulted = 'You can edit this description in the admin section'
+        desc = p.description
+        if desc == defaulted:
+            desc = p.short_description
+            if desc == defaulted:
+                desc = ""
         return {
             'label': p.name,
-            'desc': h.truncate(p.description, 42),
+            'desc': h.truncate(desc, 42),
             'value': p.shortname
         }
 
     def options(self):
-        return [self._format_project(p) for p in Project.query.find(self.query)
-                if p.is_real()]
+        project_cls = c.user.registration_neighborhood().project_cls
+        return [self._format_project(p)
+                for p in project_cls.query_find(self.query) if p.is_real()]
 
     def resources(self):
         for r in ew.InputField.resources(self):
@@ -120,7 +126,7 @@ class SingleProjectSelect(ew.InputField):
                 autocomplete({
                     source: data,
                     autoFocus: true,
-                    minLength: 0,
+                    minLength: 2,
                     delay: 10
                 }).
                 focus(function(){ $(this).autocomplete('search', ''); }).

@@ -11,7 +11,7 @@
         $vf.afterInit(function() {
             var search = new $vf.Search({
                 searchSL: new $vf.ServiceLocation("{{search_uri}}", "GET"),
-                q: "{{q|replace('"', '\\"')|safe}}",
+                q: "{{q|replace('"', '\\"')|e}}",
                 query_param: "tool_q",
                 page: {{page}},
                 pageSize: {{limit}},

@@ -1,0 +1,22 @@
+{% extends g.templates['master'] %}
+
+{% do g.resource_manager.register_js('js/lib/utils.js', scope='tool') %}
+{% do g.resource_manager.register_js('js/lib/jquery/jquery.numeric.js', scope='tool') %}
+{% do g.resource_manager.register_js('catalogue/Widgets.js', scope='tool') %}
+{% do g.resource_manager.register_js('catalogue/Base.js', scope='tool') %}
+
+{% do g.resource_manager.register_css('catalogue/catalogue.css', scope='tool') %}
+
+{% block extra_js %}
+<script language="javascript" type="text/javascript">
+    var $archive = $archive || {};
+</script>
+{{ super() }}
+{% endblock extra_js %}
+
+{% block pageType %}ARCHIVE{% endblock %}
+
+{% block content %}
+    {% block versioned_item_body %}{% endblock %}
+{% endblock %}
+

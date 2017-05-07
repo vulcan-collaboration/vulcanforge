@@ -93,7 +93,7 @@ class BaseDashboardController(BaseController):
                 ui_icon=Icon('', 'ico-plus')
             ))
             # announce to all users option
-        p_admin = Project.query.get(shortname=g.site_admin_project)
+        p_admin = reg_nbhd.project_cls.by_shortname(g.site_admin_project)
         if g.security.has_access(p_admin, 'admin'):
             c.custom_sidebar_menu.append(SitemapEntry(
                 "Announce to All Users",
@@ -434,7 +434,8 @@ class ActivityFeedController(BaseDashboardController):
                 '$in': list(project_ids),
             }
         }
-        project_query = Project.query.find(project_params)
+        project_cls = c.user.registration_neighborhood().project_cls
+        project_query = project_cls.query_find(project_params)
         project_query.sort('sortable_name', pymongo.ASCENDING)
         return [x for x in project_query if x.is_real()]
 
@@ -536,7 +537,7 @@ class ActivityFeedController(BaseDashboardController):
         # build json response
         has_more = 'true' if results.hits > limit else 'false'
         json = '{{"notifications":[{notifications}],"more":{more}}}'.format(
-            notifications=','.join(d['json_s'] for d in results.docs),
+            notifications=','.join(d['json_ni'] for d in results.docs),
             more=has_more
         )
         return Markup(json)
@@ -584,7 +585,7 @@ class ActivityFeedController(BaseDashboardController):
 
     def _set_project(self, _id_s, value):
         try:
-            project = Project.query.get(_id=bson.ObjectId(_id_s))
+            project = Project.query_get(_id=bson.ObjectId(_id_s))
         except TypeError:
             raise HTTPBadRequest('Invalid Project id')
         if project is None:
@@ -702,6 +703,7 @@ class DashboardController(DashboardRootController):
         super(DashboardController, self).__init__()
         self.public_users = asbool(config.get('all_users_public', False))
 
+    @without_trailing_slash
     @expose(TEMPLATE_DIR + 'teamup.html')
     def teams(self, q='', page=0, limit=25, **kwargs):
         return {}
@@ -716,8 +718,11 @@ class DashboardController(DashboardRootController):
                       if x.is_real()}
         retProj = []
         myProj = []
+        # subprojects support discontinued
+        pquery = {'parent_id': None}
+        project_cls = c.user.registration_neighborhood().project_cls
         projects = [
-            x for x in Project.query.find() if x.is_real() and
+            x for x in project_cls.query_find(pquery) if x.is_real() and
             (not x.deleted or g.security.has_access(x, 'admin', c.user)) and
             g.security.has_access(x, 'read', c.user)
         ]

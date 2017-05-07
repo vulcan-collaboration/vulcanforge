@@ -23,7 +23,7 @@ class ConfigProxy(object):
         self._kw = kw
 
     def __getattr__(self, k):
-        return tg.config[self._kw[k]]
+        return tg.config.get(self._kw[k], None)
 
 
 @contextmanager

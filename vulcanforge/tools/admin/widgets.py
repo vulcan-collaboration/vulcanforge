@@ -162,7 +162,7 @@ class ToolPermissionCard(PermissionCard):
     new_item = _RestrictedGroupSelect()
 
 
-class GroupSettings(ew.SimpleForm):
+class GroupSettings(AdminForm):
     submit_text = None
 
     class hidden_fields(ew_core.NameList):

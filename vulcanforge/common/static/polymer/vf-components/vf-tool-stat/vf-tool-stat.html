@@ -1,0 +1,142 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-badge/paper-badge.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<dom-module id="vf-tool-stat">
+    <style>
+        .container {
+            position: relative;
+            margin-left: 1.5em;
+            margin-top: 4px;
+        }
+        :host.first .container,
+        :host.singleton .container {
+            margin-left: 0;
+        }
+        paper-badge {
+            --paper-badge-opacity: 1.0;
+            --paper-badge-text-color: var(--pitch);
+            --paper-badge-background: var(--pristine);
+        }
+        :host.changed paper-badge {
+            --paper-badge-text-color: var(--pristine);
+            --paper-badge-background: var(--interactive);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        a paper-icon-button,
+        a:active paper-icon-button,
+        a:visited paper-icon-button {
+          background-color: var(--headingbar);
+          color: var(--largefill);
+        }
+        :host paper-icon-button {
+            width: 75px;
+            height: 75px;
+        }
+        :host.large paper-icon-button {
+            width: 100px;
+            height: 100px;
+        }
+        :host.xlarge paper-icon-button {
+            width: 150px;
+            height: 150px;
+        }
+        :host paper-badge {
+            --paper-badge-width: 30px;
+            --paper-badge-height: 30px;
+            --paper-badge-margin-bottom: 0px;
+
+            --paper-badge: {
+                font-size: 14px;
+            }
+        }
+        :host.xlarge paper-badge {
+            --paper-badge-width: 35px;
+            --paper-badge-height: 35px;
+
+            --paper-badge: {
+                font-size: 14px;
+            }
+        }
+    </style>
+    <template>
+        <div class="container">
+            <a href$="{{href}}" tabindex="-1">
+                <paper-icon-button id="icon" icon="{{icon}}" alt="{{label}}" raised></paper-icon-button>
+                <paper-badge id="badge" for="icon" label="{{badgecount}}"></paper-badge>
+                <paper-tooltip position="top" for="icon">{{tooltip}}</paper-tooltip>
+            </a>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-tool-stat",
+                properties: {
+                    href: String,
+                    label: String,
+                    icon: String,
+                    count: Number,
+                    unseen: {
+                        type: Number,
+                        value: 0,
+                        observer: '_unseenChanged'
+                    },
+                    extraValue: {
+                        type: Number,
+                        value: 0
+                    },
+                    maxCount: {
+                        type: Number,
+                        value: 100
+                    },
+                    tiptemplate: String,
+                    badgecount: {
+                        computed: 'getBadgecount(count, unseen)'
+                    },
+                    tooltip: {
+                        computed: 'getTooltip(tiptemplate, count, unseen, extraValue)'
+                    }
+                },
+                getBadgecount: function(count, unseen) {
+                    var val = (unseen) ? unseen : count;
+                    return (val < this.maxCount) ? val : (this.maxCount - 1).toString() + "+";
+                },
+                getTooltip: function(template, count, unseen, extraValue) {
+                    var s = this.formatString(template);
+                    if (count == 1) {
+                        var re = new RegExp(this.label);
+                        s = s.replace(re, this.label.slice(0, -1));
+                    }
+                    if (unseen) {
+                        s += " (" + unseen.toString() + " new)";
+                    }
+                    return s;
+                },
+                formatString: function(template) {
+                    var subst = this.substitute;
+                    return template.replace(/%\w+%/g, subst.bind(this));
+                },
+                substitute: function(s) {
+                    var prop = s.slice(1, s.length-1);
+                    return (prop in this) ? this[prop] : "";
+                },
+                _unseenChanged: function(newValue, oldValue) {
+                    this.toggleClass('changed', newValue > 0);
+                    this.updateStyles();
+                },
+                ready: function() {
+                    this.toggleClass('changed', this.unseen > 0);
+                    this.updateStyles();
+                }
+            });
+        })();
+    </script>
+</dom-module>

@@ -12,6 +12,7 @@
     "gold-elements": "PolymerElements/gold-elements#^1.0.1",
     "paper-autocomplete": "^1.0.5",
     "file-upload": "^1.7.5",
-    "vaadin-icons": "^1.0.2"
+    "vaadin-icons": "^2.0.0",
+    "basic-seamless-iframe": "^0.6.4"
   }
 }

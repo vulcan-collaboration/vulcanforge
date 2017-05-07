@@ -286,7 +286,7 @@ class ExchangeNode(VersionedArtifact):
         nbhd_ids = []
         for ace in self.acl:
             if ace.project_id:
-                proj = Project.query.get(_id=ace.project_id)
+                proj = Project.query_get(_id=ace.project_id)
                 if proj:
                     nbhd_ids.append(proj.neighborhood_id)
         return nbhd_ids

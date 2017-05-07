@@ -62,6 +62,11 @@ def ming_replicant_configure(**kwargs):
     for name, ds_config in config['ming'].iteritems():
         block = asbool(ds_config.pop('block', 'false'))
         ds_kwargs = ReplicantDatastoreSchema.to_python(ds_config, None)
+        # pymongo-30: remove incompatible connection args
+        remove_args = ('use_greenlets', 'slave_okay', 'max_pool_size')
+        for arg in remove_args:
+            if arg in ds_kwargs:
+                del ds_kwargs[arg]
         replica_set = ds_kwargs.pop('replica_set', None)
         if replica_set:
             ds_kwargs['replicaSet'] = replica_set

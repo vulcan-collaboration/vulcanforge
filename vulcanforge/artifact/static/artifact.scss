@@ -70,11 +70,15 @@ $artifact-icons: sprite-map("artifact/images/*.png");
 }
 
 .artifact-icon.FILE_DESIGN_SPACE {
-    background-image: url(../design_submission/images/design_icon.png);
+    background: sprite($artifact-icons, design_icon) no-repeat;
+}
+
+.artifact-icon.FILE_TESTBENCH_RESULT {
+    background: sprite($artifact-icons, analysis) no-repeat;
 }
 
 .artifact-icon.FILE_ZIP {
-  background: sprite($artifact-icons, zip_icon) no-repeat;
+    background: sprite($artifact-icons, zip_icon) no-repeat;
 }
 
 .artifact-icon.FILE_IMAGE,

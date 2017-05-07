@@ -13,7 +13,11 @@ from vulcanforge.common.model import ForgeGlobals
 from vulcanforge.common.model.session import main_doc_session
 from vulcanforge.migration.runner import MigrationRunner
 from vulcanforge.migration.model import MigrationLog
-from vulcanforge.neighborhood.model import Neighborhood
+from vulcanforge.neighborhood.model import (
+    Neighborhood,
+    VulcanNeighborhood,
+    UserNeighborhood
+)
 from vulcanforge.project.model import Project
 from vulcanforge.command import EnsureIndexCommand
 
@@ -44,8 +48,8 @@ def bootstrap(command, conf, vars, index=True):
     User(_id=None, username='*anonymous', display_name='Anonymous Coward')
 
     # create project and user neighborhoods
-    n_projects = Neighborhood(name='Projects', url_prefix='/projects/')
-    n_users = Neighborhood(
+    n_projects = VulcanNeighborhood(name='Projects', url_prefix='/projects/')
+    n_users = UserNeighborhood(
         name='Users', url_prefix='/u/', shortname_prefix='u/')
     p_projects = n_projects.register_neighborhood_project(
         [root], allow_register=True)
@@ -66,7 +70,7 @@ def bootstrap_testenv():
     # since this runs a lot for tests, separate test and default users and
     # do the minimal needed
     n_projects = Neighborhood.by_prefix('p')
-    p_admin = Project.query.get(shortname=g.site_admin_project)
+    p_admin = Project.by_shortname(g.site_admin_project)
 
     u_admin = User.register(dict(
         username='test-admin',

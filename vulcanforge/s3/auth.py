@@ -8,7 +8,6 @@ from tg import config
 
 from vulcanforge.artifact.model import Shortlink
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.model import Project
 from vulcanforge.s3.model import FileReference
 
 LOG = logging.getLogger(__name__)
@@ -72,7 +71,8 @@ class SwiftAuthorizer(object):
     def project_access(self, match, user, keyname, method):
         shortname = match.group('project')
         LOG.info('checking permission on project %s', shortname)
-        project = Project.query.get(shortname=shortname)
+        project_cls = user.registration_neighborhood().project_cls
+        project = project_cls.by_shortname(shortname)
         if project:
             return g.security.has_access(project, 'read', user=user)
         return False

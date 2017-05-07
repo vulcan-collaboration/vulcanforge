@@ -20,7 +20,7 @@ def unindex_project(project_id=None):
     if project_id is None:
         LOG.error("unindex_project() requires a project id")
         return
-    project = Project.query.get(_id=project_id)
+    project = Project.query_get(_id=project_id)
     LOG.info("Unindexing project: %s", project.shortname)
     g.solr.delete(q='shortname_s:"{}" AND neighborhood_id_s:{}'.format(
         project.shortname,
@@ -42,7 +42,7 @@ def reindex_project(project_id):
     from vulcanforge.artifact.util import iter_artifact_classes
     from vulcanforge.neighborhood.marketplace.model import ProjectAdvertisement
     from vulcanforge.project.model import Project, AppConfig
-    project = Project.query.get(_id=project_id)
+    project = Project.query_get(_id=project_id)
     unindex_project(project_id)
     LOG.info("Reindexing project: %s", project)
     app_config_ids = []
@@ -109,7 +109,7 @@ def update_project_indexes(project_id=None):
     if project_id is None:
         LOG.error('update_project_indexes() requires a project id')
         return
-    project = Project.query.get(_id=project_id)
+    project = Project.query_get(_id=project_id)
     LOG.info("Updating project indexes: %s", project)
 
     # update marketplace posts
@@ -156,7 +156,7 @@ def unpublish_artifacts(project_id=None):
         LOG.error('unpublish_artifacts() requires a project id')
         return
 
-    project = Project.query.get(_id=project_id)
+    project = Project.query_get(_id=project_id)
     for ac in project.app_configs:
         for a_cls in iter_artifact_classes():
             artifacts = None

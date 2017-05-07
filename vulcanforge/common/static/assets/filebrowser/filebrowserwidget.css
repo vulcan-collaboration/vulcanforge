@@ -439,3 +439,13 @@
     font-family: "ForgeIconicFill";
     content:"\e042";
 }
+
+/* JQuery dialog styling */
+
+.no-close .ui-dialog-titlebar-close {
+    display: none;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    background-color: black;
+}

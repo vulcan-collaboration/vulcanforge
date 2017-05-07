@@ -1,0 +1,109 @@
+{% extends 'vulcanforge.tools.catalogue:templates/master.html' %}
+{% set has_related_artifacts = True %}
+
+{% do g.resource_manager.register_js('js/lib/crypto.js') %}
+{% do g.resource_manager.register_js('js/lib/md5.js') %}
+{% do g.resource_manager.register_js('js/lib/resumable.js') %}
+
+{% do g.resource_manager.register_js('catalogue/ItemBase.js') %}
+{% do g.resource_manager.register_js('catalogue/Property.js') %}
+
+{% do g.resource_manager.register_js('catalogue/ItemEditor.js') %}
+
+{% do g.resource_manager.register_css('catalogue/widgets.css') %}
+
+{% block title %}Edit {{item_type}}{% endblock %}
+
+{% block extra_js %}
+<script language="javascript" type="text/javascript">
+    window.pageTitle = "Publish new";
+
+    $vf.afterInit(function() {
+        $vf.currentPage.pageTitle = "Item Editor";
+
+        $catalogue.versionedItemSL = new $vf.ServiceLocation("{{rest_url}}", "");
+        {% if c.versioned_item %}
+        $catalogue.versionedItemId = "{{c.versioned_item._id}}";
+        $catalogue.versionedItemUrl = "{{c.versioned_item.url()}}";
+        {% endif %}
+        $catalogue.versionedItemType = "{{item_type}}";
+        $catalogue.metaFileType = "{{desc_file_type}}";
+        $catalogue.metaFileExts = {{desc_file_extensions|safe}};
+        $catalogue.publisher = new $catalogue.Publisher({});
+
+        {% if c.versioned_item %}
+        $catalogue.publisher.initPropertySheet();
+        {% endif %}
+
+        }, []);
+</script>
+{{ super() }}
+{% endblock extra_js %}
+
+{% block header %} Edit {{item_type}} {% endblock %}
+
+{% block relatedArtifacts %}
+{% if c.related_artifacts_widget and c.versioned_item %}
+{{c.related_artifacts_widget.display(value=c.versioned_item)}}
+{% endif %}
+{% endblock %}
+
+{% block actions %}
+{% if c.menu_bar and c.versioned_item %}
+{{ c.menu_bar.display(c.versioned_item, is_editing=True) }}
+{% endif %}
+{% endblock %}
+
+{% block versioned_item_body %}
+<div id="tutorialHolder"></div>
+<div id="itemContainer" class="padded top-spaced">
+
+    <div id="step1" class="publish-step" style="display: none;">
+        <div class="stepHeader">
+            <span class="line1">Step 1:</span>
+            Add {{item_type}}
+        </div>
+        <div class="stepContent" id="step1Content">
+            <div id="uploadContainer">
+                <h3 class="content-section-header step1-header" id="addItemHeader">{{item_type}} Descriptor</h3>
+                <div id="uploadHolder">
+                    <div class="drop-area upload">
+                        <span id="addFileButton" title="Add a file from your desktop" class="drop-message">Add descriptor file from your desktop</span>
+                    </div>
+                </div>
+            </div>
+            <div id="metaDescriptorContainer">
+                <h3 class="content-section-header">Excel Sheet</h3>
+                <div id="metaDescriptor"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="step2" class="publish-step" style="display: none;">
+        <div class="stepHeader">
+            <span class="line1">Step 3:</span>
+            Describe
+        </div>
+        <div class="stepContent">
+            <div class="NA" id="NA2">Data not available yet</div>
+            <div id="baseProperties" class="featureHeader">
+                <h3 class="content-section-header">Properties</h3>
+            </div>
+            <div id="itemProperties">
+            </div>
+        </div>
+    </div>
+
+    <div id="step3" class="publish-step" style="display: none;">
+        <div class="stepHeader">
+            <span class="line1">Step 4:</span>
+            Finalize
+        </div>
+        <div class="stepContent">
+            <button id="saveButton" title="Save" class="has-icon ico-check_alt">Save</button>
+            <button id="releaseButton" title="Release" class="has-icon ico-upload" disabled>Release</button>
+            <button id="deleteButton" title="Delete" class="has-icon ico-cancel">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

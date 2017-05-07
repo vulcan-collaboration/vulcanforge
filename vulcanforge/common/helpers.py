@@ -131,7 +131,7 @@ def get_neighborhoods_by_ids(ids):
 
 def get_projects_by_ids(ids):
     from vulcanforge.project.model import Project
-    return Project.query.find({
+    return Project.query_find({
         '_id': {'$in': list(ids)}
     })
 

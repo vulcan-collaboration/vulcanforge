@@ -265,7 +265,7 @@ class DefaultLogController(BaseController):
 
         # format the data
         data = []
-        for log_entry in aggregate['result']:
+        for log_entry in aggregate:
             url = log_entry.get('url','')
             short_url = self._short_url(url)
             row = [

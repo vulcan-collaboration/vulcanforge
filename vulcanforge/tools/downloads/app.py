@@ -131,7 +131,7 @@ class ForgeDownloadsApp(Application):
                             "total": {"$sum": "$filesize"},
                             "new": {"$sum": {"$cond": [let, 1, 0]}}}}
         db, file_coll = FDM.ForgeDownloadsFile.get_pymongo_db_and_collection()
-        agr = file_coll.aggregate([match, group])['result']
+        agr = list(file_coll.aggregate([match, group]))
         result = agr.pop() if agr else dict(all=0, new=0, total=0)
         resp = dict(all=result['all'], new=result['new'],
                     total_size=result['total'])

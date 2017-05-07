@@ -225,7 +225,7 @@
                     });
                 });
             $(window).
-                bind('mousewheel wheel ', function (e) {
+                bind('mousewheel wheel ', _.throttle(function (e) {
                     //var delta = e.originalEvent.deltaY/400.0;
                     var delta, f, o = e.originalEvent,
                     d = o.deltaY, w = o.wheelDelta,
@@ -238,7 +238,7 @@
                     // Delta *should* not be greater than 2...
                     delta = Math.min(Math.max(d / 2, -1), 1);
                     that.setScale(that._scale * (1 + delta));
-                });
+                }, 100));
 
         },
 

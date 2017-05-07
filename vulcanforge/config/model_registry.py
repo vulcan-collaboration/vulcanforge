@@ -58,7 +58,12 @@ from vulcanforge.messaging.model import (
     ConversationMessage,
     ConversationStatus
 )
-from vulcanforge.neighborhood.model import Neighborhood, NeighborhoodFile
+from vulcanforge.neighborhood.model import (
+    Neighborhood,
+    VulcanNeighborhood,
+    UserNeighborhood,
+    NeighborhoodFile
+)
 from vulcanforge.neighborhood.marketplace.model import (
     UserAdvertisement,
     ProjectAdvertisement
@@ -66,6 +71,8 @@ from vulcanforge.neighborhood.marketplace.model import (
 from vulcanforge.notification.model import Notification, Mailbox
 from vulcanforge.project.model import (
     Project,
+    VulcanProject,
+    UserProject,
     ProjectCategory,
     ProjectFile,
     AppConfig,

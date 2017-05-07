@@ -1,0 +1,16 @@
+{% extends 'vulcanforge.tools.catalogue:templates/master.html' %}
+
+{% do g.resource_manager.register_css('visualize/vf_visualizer_embedder.scss') %}
+
+{% block content %}
+    {% if visualize.find_visualizers()|length > 0 %}
+        <div class="fullHeightVisualizer">
+            {{ visualize.full_render() }}
+        </div>
+    {% else %}
+        <div class="padded-block">
+            <p>This file cannot be visualized from inside a dataset.</p>
+            <p>You may instead <a href="{{ download_url }}">download <em>{{ visualize.filename }}</em> here.</a></p>
+        </div>
+    {% endif %}
+{% endblock %}

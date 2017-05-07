@@ -611,7 +611,7 @@ class ProjectAdminController(BaseController):
     def update_mount_order(self, subs=None, tools=None, **kw):
         if subs:
             for sp in subs:
-                p = Project.query.get(shortname=sp['shortname'])
+                p = Project.by_shortname(sp['shortname'])
                 p.ordinal = int(sp['ordinal'])
         if tools:
             for p in tools:
@@ -629,11 +629,11 @@ class ProjectAdminController(BaseController):
             tool = []
         for sp in subproject:
             if sp.get('delete'):
-                p = Project.query.get(shortname=sp['shortname'])
+                p = Project.by_shortname(sp['shortname'])
                 p.delete_project()
                 flash("Project %s deleted" % p.shortname)
             elif not new:
-                p = Project.query.get(shortname=sp['shortname'])
+                p = Project.by_shortname(sp['shortname'])
                 p.name = sp['name']
                 p.ordinal = int(sp['ordinal'])
         for p in tool:
@@ -1047,7 +1047,8 @@ class GroupsController(BaseController):
         if ProjectRole.by_name(name):
             flash('%s already exists' % name, 'error')
         else:
-            ProjectRole(project_id=c.project._id, name=name)
+            new = ProjectRole(project_id=c.project._id, name=name)
+        c.project.acl.append(ACE.allow(new._id, 'read'))
         g.post_event('project_updated')
         redirect('.')
 
@@ -1067,7 +1068,7 @@ class GroupController(BaseController):
     @with_trailing_slash
     @expose(TEMPLATE_DIR + 'project_group.html')
     def index(self):
-        if self._group.name in ('Admin', 'Developer', 'Member'):
+        if self._group.name in self._group.project._default_project_roles:
             show_settings = False
             action = None
         else:
@@ -1083,16 +1084,16 @@ class GroupController(BaseController):
     @vardec
     @require_post()
     @validate_form("group_settings")
-    def update(self, _id=None, delete=None, name=None, **kw):
+    def update(self, delete=None, name=None, **kw):
         pr = ProjectRole.by_name(name)
-        if pr and pr._id != _id._id:
+        if pr and pr._id != self._group._id:
             flash('%s already exists' % name, 'error')
             redirect('..')
         if delete:
-            _id.delete()
+            self._group.delete_role()
             flash('%s deleted' % name)
             redirect('..')
-        _id.name = name
+        self._group.name = name
         flash('%s updated' % name)
         redirect('..')
 

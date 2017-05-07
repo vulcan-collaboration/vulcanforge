@@ -24,7 +24,7 @@ def delete_content_from_s3(file_id):
                 g.delete_s3_key(downloads_file.get_key())
             else:
                 downloads_file.multipart.cancel_upload()
-        except S3ResponseError, s3e:
+        except S3ResponseError as s3e:
             downloads_file.extra_info['s3_delete_error'] = {
                 'status': s3e.status,
                 'reason': s3e.reason

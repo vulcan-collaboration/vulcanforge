@@ -336,6 +336,27 @@ $.extend($vf, {
                         'json' );
                 } );
 
+            // Taking care of put-links
+            $( '.put-link' )
+                .click( function ( evt ) {
+                    evt.preventDefault();
+                    $.ajax({
+                        type: "PUT",
+                        url: this.href,
+                        data: {
+                            _session_id: $.cookie( '_session_id' )
+                        },
+                        success: function ( val ) {
+                            if (val.error) {
+                                alert(val.error);
+                            } else {
+                                $vf.webflash();
+                            }
+                        }
+                    });
+                    return false;
+                } );
+
 
             // going through afterInit hooks
 

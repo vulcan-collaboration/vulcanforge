@@ -7,4 +7,5 @@ from smtp_server import SMTPServerCommand
 from create_neighborhood import CreateNeighborhoodCommand
 from .forgeadmin_tools import ForgeAdminToolsCommand
 from .project import EnsureProjectCreationCommand
+from .neighborhood import RegisterProjectTemplate
 from vulcanforge.exchange.command import ReindexExchangeCommand

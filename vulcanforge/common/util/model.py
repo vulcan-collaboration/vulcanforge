@@ -83,9 +83,10 @@ def close_all_mongo_connections():
     This is necessary for ReplicaSetConnection objects, because they start
     some freaky background task.
     """
-    for sess in ThreadLocalODMSession._session_registry.values():
-        if sess.impl.bind:
-            sess.impl.bind.conn.close()
+    # for sess in ThreadLocalODMSession._session_registry.values():
+    #     if sess.impl.bind:
+    #         sess.impl.bind.bind.conn.close()
+    pass
 
 
 def dict_mingobject(obj, resolve=[], exclude_properties=[],

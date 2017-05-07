@@ -1,0 +1,180 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-image/iron-image.html">
+<link rel="import" href="../../iron-collapse/iron-collapse.html">
+
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../../vaadin-icons/vaadin-icons.html">
+
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-project-activity-item">
+    <style is="custom-style" include="vf-styles">
+        .item {
+            padding: 0.25em;
+        }
+        .info {
+            margin-left: 4px;
+        }
+        .user-icon {
+            --iron-image-height: 50px;
+            --iron-image-width: 50px;
+            padding: 4px;
+        }
+        .tool-icon {
+            margin-top: 4px;
+            margin-right: 4px;
+        }
+        .timestamp {
+            color: var(--diffuse);
+            margin-top: 6px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .subject a {
+            text-decoration: none;
+            color: var(--subheadingtext);
+        }
+        .subject-line {
+            min-height: 30px;
+        }
+        .content {
+            background-color: #eee;
+            padding: .75em;
+            padding-top: 1em;
+            margin-right: 12px;
+            margin-left: 40px;
+        }
+    </style>
+    <template>
+        <div class="item layout horizontal center">
+            <a href="{{item.author.url}}"><iron-image class="user-icon" src="{{item.author.icon_url}}"></iron-image></a>
+            <div class="info layout vertical flex">
+                <div class="subject-line layout horizontal center-center flex">
+                    <a href="{{item.app_config.url}}"><iron-image class="tool-icon" src="{{item.app_config.icon_url}}"></iron-image></a>
+                    <div class="subject flex"><a href="{{_subjectLink(item)}}">{{_subjectText(item.subject)}}</a></div>
+                </div>
+                <div class="timestamp">{{_timestamp(item.pubdate)}}</div>
+            </div>
+            <paper-icon-button id="expand-toggle" class="toggle" icon="[[_toggleIcon]]" on-tap="_toggleOpened"></paper-icon-button>
+            <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+        </div>
+        <iron-collapse id="collapse" opened="{{opened}}">
+            <safe-html class="content" html="{{_itemText(item)}}"></safe-html>
+        </iron-collapse>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-activity-item",
+                properties: {
+                    item: Object,
+                    opened: Boolean,
+                    _toggleIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(opened)'
+                    }
+                },
+                _toggleOpened: function(e) {
+                    this.opened = !this.opened;
+                },
+                _computeToggleIcon: function(opened) {
+                    return opened ? 'icons:expand-less' : 'icons:expand-more';
+                },
+                _subjectLink: function(item) {
+                    if (item.tool_name == 'git' || item.tool_name == 'svn') {
+                        var regexp = /\.*href="(.*?)"/;
+                        mo = regexp.exec(item.text);
+                        if (mo) {
+                            var parser = document.createElement('a');
+                            parser.href = mo[1];
+                            return parser.pathname;
+                        }
+                    }
+                    return item.link;
+                },
+                _subjectText: function(text) {
+                    var regexp = /\[.*?\] (.*)/;
+                    mo = regexp.exec(text);
+                    if (mo) {
+                        return mo[1];
+                    }
+                    return text;
+                },
+                _timestamp: function(ts) {
+                   return vffuncs.ago(ts);
+                },
+                _itemText: function(item) {
+                    return item._rendered;
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-project-activity-list">
+    <style is="custom-style" include="vf-styles">
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .empty-message {
+            color: var(--toptext);
+            fill: var(--toptext);
+            text-align: center;
+        }
+        .activity-feed-icon {
+            color: var(--interactive);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon icon="vaadin-icons:time-forward"></iron-icon>
+            <div class="heading-label flex">Recent Activity</div>
+            <a class="activity-feed-link" href="/dashboard/activity_feed/select/[[data.project_id]]" tabindex="-1">
+                <paper-icon-button icon="track-changes" class="activity-feed-icon"></paper-icon-button>
+                <paper-tooltip position="left">Activty Feed</paper-tooltip>
+            </a>
+        </div>
+        <template is="dom-if" if="[[_hasNotifications(data)]]">
+            <div id="alist" class="list-container">
+                <template id="repeater" is="dom-repeat" items="{{data.notifications}}" as="notification">
+                    <vf-project-activity-item item="{{notification}}"></vf-project-activity-item>
+                </template>
+            </div>
+        </template>
+        <template is="dom-if" if="[[!_hasNotifications(data)]]">
+            <div class="layout vertical center">
+                <div class="empty-message">
+                    <p><iron-icon icon="warning"></iron-icon>No team activity as yet.</p>
+                </div>
+            </div>
+        </template>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                    is: "vf-project-activity-list",
+                    properties: {
+                        url: String,
+                        data: Object
+                    },
+                    _hasNotifications: function(o) {
+                        return (o.notifications && o.notifications.length > 0);
+                    }
+            });
+        })();
+    </script>
+</dom-module>

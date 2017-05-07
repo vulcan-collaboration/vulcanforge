@@ -8,6 +8,7 @@ import errno
 import mimetypes
 from contextlib import contextmanager
 import zipfile
+import hashlib
 
 LOG = logging.getLogger(__name__)
 SANITIZE_PATH_REGEX = re.compile(r'(?<=:)[\\/]|[\\/]+')
@@ -163,6 +164,23 @@ def levenshtein(s1, s2):
         previous_row = current_row
 
     return previous_row[-1]
+
+
+def md5_signature(file_obj):
+    file_obj.seek(0, 2)
+    filesize = file_obj.tell()
+    file_obj.seek(0, 0)
+
+    if filesize < 64000:
+        md5 = hashlib.md5()
+        md5.update(file_obj.read())
+        return md5.hexdigest()
+    else:
+        md5 = hashlib.md5()
+        md5.update(file_obj.read(32000))
+        file_obj.seek(-32000, 2)
+        md5.update(file_obj.read(32000))
+        return md5.hexdigest()
 
 
 SEEK_SET = getattr(io, 'SEEK_SET', 0)

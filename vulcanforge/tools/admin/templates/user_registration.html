@@ -34,7 +34,6 @@
                             {% if status == "tbd" %}
                             <input class="accept-req" data-req="{{ req.id }}" type="button" value="Accept" title="Accept Registration Request" />
                             <input class="deny-req" data-req="{{ req.id }}" type="button" value="Deny" title="Deny Registration Request" />
-                            <input class="ignore-req" data-req="{{ req.id }}" type="button" value="Ignore" title="Ignore Registration Request" />
                             {% endif %}
                         </td>
                     </tr>
@@ -69,19 +68,6 @@
             $.post("{{ base_url }}deny_new_user", {
                 _session_id:$.cookie('_session_id'),
                 req_id: req_id
-            }, function() {
-                window.location.reload(true);
-            }, 'json');
-        });
-
-        /* ignore request */
-        $('.ignore-req').click(function() {
-            var req_id = $(this).attr('data-req');
-            $(this).parent().html('');
-            $.post("{{ base_url }}deny_new_user", {
-                _session_id: $.cookie('_session_id'),
-                req_id: req_id,
-                send_mail: "no"
             }, function() {
                 window.location.reload(true);
             }, 'json');

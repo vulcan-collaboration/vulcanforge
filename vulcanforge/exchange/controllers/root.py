@@ -276,7 +276,7 @@ class DataTableRootController(ExchangeRootController):
             if shortname in project_cache:
                 project = project_cache[shortname]
             else:
-                project = Project.query.get(shortname=shortname)
+                project = Project.by_shortname(shortname)
                 project_cache[shortname] = project
 
             if project is None:

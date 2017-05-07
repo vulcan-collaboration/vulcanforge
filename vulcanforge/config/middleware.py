@@ -73,7 +73,9 @@ def add_forge_middleware(app, base_config, global_conf, app_conf):
         app = CSRFMiddleware(
             app, '_session_id',
             secure=asbool(app_conf.get('beaker.session.secure', False)),
-            blacklist_regex=csrf_blacklist_regex)
+            blacklist_regex=csrf_blacklist_regex,
+            cookie_domain=app_conf.get('beaker.session.cookie_domain', None),
+        )
 
     # credentials request-global credentials cache
     app = AuthMiddleware(app)

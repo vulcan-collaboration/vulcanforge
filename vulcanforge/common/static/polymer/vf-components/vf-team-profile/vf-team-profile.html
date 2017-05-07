@@ -1,0 +1,194 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-image/iron-image.html">
+
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../../vaadin-icons/vaadin-icons.html">
+
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-team-profile">
+    <style is="custom-style" include="vf-styles">
+        #admin-control .admin-icon {
+            color: var(--interactive);
+            margin-right: 4px;
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        .tag-icon {
+            background-color: var(--subheadingbar);
+            padding: .5em;
+            margin-right: 4px;
+            margin-top: 4px;
+        }
+        .tag-icon.missing {
+            background-color: rgba(255, 255, 0, 0.25);
+        }
+        .tag-icon.deleted {
+            background-color: rgba(255, 0, 0, 0.25);
+        }
+        .tag-icon iron-icon {
+            color: var(--headingbar);
+            --iron-icon-height: 32px;
+            --iron-icon-width: 32px;
+        }
+        .value {
+            margin-top: 4px;
+        }
+        .offset {
+            margin-top: 8px;
+        }
+        .subteam-link {
+            text-decoration: none;
+            color: var(--pitch);
+        }
+        .subteam-icon {
+            height: 30px;
+            width: 30px;
+            margin-right: 8px;
+        }
+        .storage-ok {
+            background-color: rgba(0, 255, 0, 0.25);
+        }
+        .storage-warn {
+            background-color: rgba(255, 255, 0, 0.25);
+        }
+        .storage-exceeded {
+            background-color: rgba(255, 0, 0, 0.25);
+        }
+        .missing {
+            font-style: italic;
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon icon="icons:info"></iron-icon>
+            <div class="heading-label flex">Team Profile</div>
+            <template is="dom-if" if="{{data.admin}}">
+                <div id="admin-control">
+                    <paper-icon-button id="admin" icon="icons:settings" class="admin-icon" on-tap="_editProfile"></paper-icon-button>
+                    <paper-tooltip for="admin" position="left">Edit profile</paper-tooltip>
+                </div>
+            </template>
+        </div>
+        <div class="offset">
+            <div class="item layout horizontal center-center">
+                <div id="team-created" class="tag-icon"><iron-icon icon="icons:alarm"></iron-icon></div>
+                <paper-tooltip for="team-created" position="right">Team created</paper-tooltip>
+                <div class="value layout flex wrap">{{_formatDate(data.created)}}</div>
+            </div>
+            <div class$="item layout horizontal {{_getSummaryClass(data.summary)}}">
+                <div id="team-summary" class$="tag-icon {{_getSummaryIconClass(data.summary, data.admin)}}"><iron-icon icon="vaadin-icons:file-text-o"></iron-icon></div>
+                <paper-tooltip for="team-summary" position="right">Summary</paper-tooltip>
+                <div class="value layout flex wrap">{{_getSummary(data.summary)}}</div>
+            </div>
+            <div class="item layout horizontal center-center">
+                <div id="team-status" class$="tag-icon {{_getStatusClass(data.deleted)}}"><iron-icon icon="vaadin-icons:clipboard-pulse"></iron-icon></div>
+                <paper-tooltip for="team-status" position="right">Status</paper-tooltip>
+                <div class="value layout flex wrap">{{_getStatus(data.deleted)}}</div>
+            </div>
+            <div class="item layout horizontal center-center">
+                <div id="team-privacy" class="tag-icon"><iron-icon icon="{{_getPrivateIcon(data.private)}}"></iron-icon></div>
+                <paper-tooltip for="team-privacy" position="right">Privacy</paper-tooltip>
+                <div class="value layout flex wrap">{{_getPrivate(data.private)}}</div>
+            </div>
+            <template is="dom-if" if="{{data.member}}">
+                <div class="item layout horizontal center-center">
+                    <div id="team-storage" class$="tag-icon {{_getStorageClass(data.storage)}}"><iron-icon icon="vaadin-icons:database"></iron-icon></div>
+                    <paper-tooltip for="team-storage" position="right">Total storage used</paper-tooltip>
+                    <div class="value layout flex wrap">{{_getStorageUsed(data.storage)}}</div>
+                </div>
+            </template>
+            <template is="dom-if" if="{{data.parent}}">
+                <div class="item layout horizontal center-center">
+                    <div id="team-parent" class="tag-icon"><iron-icon icon="vaadin-icons:file-tree-small"></iron-icon></div>
+                    <paper-tooltip for="team-parent" position="right">Parent team</paper-tooltip>
+                    <div class="value layout flex wrap">
+                        <a class="subteam-link layout horizontal center" href="{{data.parent.url}}">
+                            <iron-image class="subteam-icon" src="{{data.parent.icon_url}}" sizing="contain"></iron-image>
+                            <div>{{data.parent.name}}</div>
+                        </a>
+                    </div>
+                </div>
+            </template>
+            <template is="dom-if" if="{{data.subteams}}">
+                <div class$="item layout horizontal {{_getSubteamClass(data.subteams)}}">
+                    <div id="team-subteams" class="tag-icon"><iron-icon icon="vaadin-icons:split"></iron-icon></div>
+                    <paper-tooltip for="team-subteams" position="right">Subteam(s)</paper-tooltip>
+                    <div class="value layout flex wrap">
+                        <template is="dom-repeat" items="{{data.subteams}}">
+                            <a class="subteam-link layout horizontal center" href="{{item.url}}">
+                                <iron-image class="subteam-icon" src="{{item.icon_url}}" sizing="contain"></iron-image>
+                                <div class="flex">{{item.name}}</div>
+                            </a>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <vf-team-edit id="edit-profile" nonce="{{nonce}}" data="{{data}}"></vf-team-edit>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-team-profile",
+                properties: {
+                    data: Object,
+                    url: String,
+                    nonce: String
+                },
+                _formatDate: function(date) {
+                    return vffuncs.formatDate(date);
+                },
+                _getStatus: function(deleted) {
+                    return (deleted) ? "Deleted" : "Active";
+                },
+                _getStatusClass: function(deleted) {
+                    return (deleted) ? "deleted" : "";
+                },
+                _getPrivate: function(private) {
+                    return (private) ? "Private" : "Public";
+                },
+                _getPrivateIcon: function(private) {
+                    return "vaadin-icons:" + ((private) ? "eye-slash" : "eye");
+                },
+                _getStorageUsed: function(storage) {
+                    return (storage) ? vffuncs.humanSize(storage) : "0 bytes";
+                },
+                _getStorageClass: function(storage) {
+                    var gb = 1000 * 1000 * 1000;
+                    return (storage < (150 * gb)) ? "" : (storage < (200 * gb)) ? "storage-warn" : "storage-exceeded";
+                },
+                _editProfile: function() {
+                    this.querySelector("vf-team-edit").showDialog();
+                },
+                _getSubteamClass: function(subteams) {
+                    return (subteams.length == 1) ? "center-center" : "center-start";
+                },
+                _getSummaryClass: function(summary) {
+                    var cls = (summary.length <= 96) ? "center-center" : "center-start";
+                    if (summary.length == 0) {
+                        cls += " missing";
+                    }
+                    return cls
+                },
+                _getSummaryIconClass: function(summary, admin) {
+                    return (summary.length == 0 && admin) ? "missing" : "";
+                },
+                _getSummary: function(summary) {
+                    return (summary) ? summary : "No summary provided.";
+                }
+            });
+        })();
+    </script>
+</dom-module>

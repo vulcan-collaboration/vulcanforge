@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-import bson
-
 from ming import schema
 from ming.odm import FieldProperty, session
 from ming.odm.declarative import MappedClass
-
 
 class BaseMappedClass(MappedClass):
 

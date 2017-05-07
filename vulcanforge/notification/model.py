@@ -101,9 +101,6 @@ class Notification(SOLRIndexed):
     artifact_reference = FieldProperty(S.Deprecated)
     pubdate = FieldProperty(datetime, if_missing=datetime.utcnow)
 
-    view = jinja2.Environment(
-        loader=jinja2.PackageLoader('vulcanforge.notification', 'templates'))
-
     def __json__(self):
         data = {
             '_id': str(self._id),
@@ -155,6 +152,20 @@ class Notification(SOLRIndexed):
                 }
         return data
 
+    @classmethod
+    def _get_templates(cls):
+        try:
+            template_dir = config.get('notification.templates',
+                                      'vulcanforge.notification')
+        except:
+            template_dir = 'vulcanforge.notification'
+        return jinja2.Environment(
+            loader=jinja2.PackageLoader(template_dir, 'templates'))
+
+    @LazyProperty
+    def view(self):
+        return self._get_templates()
+
     @LazyProperty
     def ref(self):
         if self.ref_id:
@@ -178,7 +189,7 @@ class Notification(SOLRIndexed):
             'app_config_id_s': str(self.app_config_id),
             'exchange_uri_s': self.exchange_uri,
             'ref_id_s': str(self.ref_id),
-            'json_s': jsonify.encode(json_dict),
+            'json_ni': jsonify.encode(json_dict),
             'read_roles': self.get_read_roles(),
             'is_real_b': self.project.is_real(),
         }
@@ -406,7 +417,7 @@ class Notification(SOLRIndexed):
         return_html = ''
         template = self.view.get_template('mail/title.html')
         return_html += template.render(
-            self.get_context(artifact=self.artifact))
+            self.get_context(artifact=self.artifact, project=self.project))
         return return_html
 
     @LazyProperty
@@ -437,7 +448,8 @@ class Notification(SOLRIndexed):
     @classmethod
     def default_footer_html(cls):
         return_html = ''
-        template = cls.view.get_template('mail/footer.html')
+        templates = cls._get_templates()
+        template = templates.get_template('mail/footer.html')
         context = {
             'prefix': config.get('forgemail.url', 'https://vulcanforge.org'),
             'forge_name': g.forge_name

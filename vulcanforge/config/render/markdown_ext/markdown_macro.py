@@ -123,7 +123,7 @@ def projects(category=None, display_mode='grid', sort='last_updated',
         category = ProjectCategory.query.get(name=category)
     if category is not None:
         q['category_id'] = category._id
-    pq = Project.query.find(q)
+    pq = c.project.neighborhood.project_cls.query_find(q)
     pq = pq.limit(100)
     if sort == 'alpha':
         pq.sort('name')
@@ -139,7 +139,7 @@ def projects(category=None, display_mode='grid', sort='last_updated',
 def img(src=None, **kw):
     attrs = ('%s="%s"' % t for t in kw.iteritems())
     try:
-        included = request.environ.setdefault('allura.macro.att_embedded', set())
+        included = request.environ.setdefault('vulcan.macro.att_embedded', set())
     except TypeError:
         pass
     else:

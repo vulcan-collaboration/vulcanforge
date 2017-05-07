@@ -254,7 +254,7 @@ masternav.items.dashboard.href = /dashboard/
 masternav.items.dashboard.icon = images/person.png
 masternav.items.dashboard.icon_is_resource = true
 masternav.items.browseprojects.label = Browse All Projects
-masternav.items.browseprojects.href = /browse/
+masternav.items.browseprojects.href = /dashboard/teams/
 masternav.items.browseprojects.icon = images/forge_toolbar_icons/projects_icon_on.png
 masternav.items.browseprojects.icon_is_resource = true
 masternav.items.browseusers.label = Browse All Users
@@ -514,6 +514,12 @@ monq.poll_interval = 2
 # application when paster setup-app is executed
 #
 # load_initial_data =
+
+#
+# notification templates allow an application to override the email templates
+# used for notifications
+#
+# notification.templates = vulcanforge.notification
 
 ### Static Resources
 no_redirect.pattern = ^/nf/\d+/_(ew|static)_/.*|^/rest/.*

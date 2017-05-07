@@ -661,10 +661,10 @@ class User(SOLRIndexed):
         if not landing_url:
             if self.has_project:
                 landing_url = config.get(
-                    'login_landing_url', '/dashboard/activity_feed/')
+                    'login_landing_url', '/dashboard/')
             else:
                 landing_url = config.get(
-                    'getting_started_url', '/dashboard/teamup/')
+                    'getting_started_url', '/dashboard/')
         return landing_url
 
     def registration_neighborhood(self):
@@ -812,8 +812,8 @@ class User(SOLRIndexed):
     def private_project(self):
         from vulcanforge.project.model import Project
         try:
-            return Project.query.get(
-                shortname='u/%s' % self.username, deleted=False)
+            shortname = 'u/%s' % self.username
+            return Project.query_get(shortname=shortname, deleted=False)
         except S.Invalid:
             LOG.exception(
                 'Error retrieving private_project for %s', self.username)
@@ -868,14 +868,21 @@ class User(SOLRIndexed):
         from vulcanforge.project.model import ProjectRole
         return ProjectRole.query.find({'_id': {'$in': self.get_role_ids()}})
 
-    def my_projects(self):
+    def my_projects(self, nbhd=None, nbhd_id=None):
         """
         Find the projects for which this user has a named role.
         """
         reaching_roles = self.get_roles()
         named_roles = [r for r in reaching_roles if r.name]
         seen_project_ids = set()
+        if nbhd_id is None:
+            if nbhd is None:
+                nbhd = self.registration_neighborhood()
+            nbhd_id = nbhd._id
         for r in named_roles:
+            if r.project.neighborhood_id != nbhd_id:
+                seen_project_ids.add(r.project_id)
+                continue
             if r.project_id in seen_project_ids:
                 continue
             yield r.project

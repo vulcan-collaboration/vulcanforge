@@ -22,6 +22,7 @@ from vulcanforge.common.model.session import (
     main_orm_session,
     project_orm_session
 )
+from vulcanforge.common.exceptions import ForgeError
 from vulcanforge.common.util.model import VFRelationProperty
 from vulcanforge.s3.model import File
 from vulcanforge.common.model.index import SOLRIndexed
@@ -43,6 +44,10 @@ from vulcanforge.artifact.util import iter_artifact_classes
 LOG = logging.getLogger(__name__)
 
 BANISH_TEXT = "Your membership has been revoked from {}."
+
+
+class ImproperRoleException(ForgeError):
+    pass
 
 
 class ProjectExtension(MapperExtension):
@@ -92,7 +97,7 @@ class ProjectFile(File):
 
     @property
     def project(self):
-        return Project.query.get(_id=self.project_id)
+        return Project.query_get(_id=self.project_id)
 
     @property
     def default_keyname(self):
@@ -151,9 +156,16 @@ class ProjectCategory(MappedClass):
 
 
 class Project(SOLRIndexed):
+
     _perms_base = ['read', 'write', 'admin']
     _perms_proj = _perms_base[:]
     _perms_init = _perms_base + ['register', 'overseer']
+    _polymorphic_queries = False
+
+    # Admin and Member are required
+    _default_project_roles = ('Admin', 'Developer', 'Member')
+    # read Admin is a Developer, Developer is a Member
+    _default_project_subroles = {'Admin': 'Developer', 'Developer': 'Member'}
 
     class __mongometa__:
         name = 'project'
@@ -260,7 +272,7 @@ class Project(SOLRIndexed):
         length = len(parts)
         while length:
             shortname = '/'.join(parts[:length])
-            p = Project.query.get(shortname=shortname, deleted=False)
+            p = n.project_cls.query_get(shortname=shortname, deleted=False)
             if p:
                 return p, parts[length:]
             length -= 1
@@ -364,7 +376,33 @@ class Project(SOLRIndexed):
         """
         :rtype: Project
         """
-        return cls.query.get(_id=_id)
+        return cls.query_get(_id=_id)
+
+    @classmethod
+    def by_shortname(cls, shortname, _by_kind=None):
+        return cls.query_get(shortname=shortname, _by_kind=_by_kind)
+
+    @classmethod
+    def _polymorphic_query(cls, **kwargs):
+        kind = cls.__mongometa__.polymorphic_on
+        q = {kind: cls.__mongometa__.polymorphic_identity}
+        by_kind = kwargs.pop('_by_kind', False)
+        if by_kind is None:
+            by_kind = getattr(cls, '_polymorphic_queries', False)
+        query = q if by_kind else {}
+        query.update(kwargs)
+        return query
+
+    @classmethod
+    def query_find(cls, q=None, _by_kind=None):
+        query = cls._polymorphic_query(_by_kind=_by_kind)
+        query.update(q or {})
+        return cls.query.find(query)
+
+    @classmethod
+    def query_get(cls, _by_kind=None, **kwargs):
+        query = cls._polymorphic_query(_by_kind=_by_kind, **kwargs)
+        return cls.query.get(**query)
 
     @classmethod
     def active_count(cls, neighborhood_ids=None):
@@ -550,7 +588,7 @@ class Project(SOLRIndexed):
         roles = set()
         for p in self.parent_iter():
             for ace in p.acl:
-                if ace.permission == name and ace.access == ACE.allow:
+                if ace.permission == name and ace.access == ACE.ALLOW:
                     roles.add(ace.role_id)
         return list(roles)
 
@@ -1017,28 +1055,23 @@ class Project(SOLRIndexed):
         root_project_id = self.root_project._id
 
         # upsert project roles
-        role_admin = ProjectRole.upsert(
-            name='Admin', project_id=root_project_id)
-        role_developer = ProjectRole.upsert(
-            name='Developer', project_id=root_project_id)
-        role_member = ProjectRole.upsert(
-            name='Member', project_id=root_project_id)
+        roles = {x: ProjectRole.upsert(name=x, project_id=root_project_id)
+                 for x in self._default_project_roles}
         role_auth = ProjectRole.upsert(
             name='*authenticated', project_id=root_project_id)
         role_anon = ProjectRole.upsert(
             name='*anonymous', project_id=root_project_id)
 
         # Setup subroles
-        role_admin.roles = [role_developer._id]
-        role_developer.roles = [role_member._id]
+        for role, subrole in self._default_project_subroles.items():
+            roles[role].roles = [roles[subrole]._id]
 
         # Set acl
-        self.acl = [
-            ACE.allow(role_developer._id, 'read'),
-            ACE.allow(role_member._id, 'read')
-        ]
+        self.acl = [ACE.allow(roles[x]._id, 'read') for x in roles
+                    if x != 'Admin']
+        role_admin = roles['Admin']
+
         if not is_private_project:
-            # user projects have authenticated read only
             read_role = None
             if self.neighborhood.project_template:
                 project_template = json.loads(
@@ -1048,11 +1081,15 @@ class Project(SOLRIndexed):
                         name=project_template['default_read_role'],
                         project_id=root_project_id
                     )
+            # user projects have authenticated read only
             if read_role is None:
-                read_role = role_auth if is_user_project else role_anon
+                no_anonymous = not self.neighborhood.can_grant_anonymous
+                use_auth = is_user_project or no_anonymous
+                read_role = role_auth if use_auth else role_anon
             self.acl.append(ACE.allow(read_role._id, 'read'))
-        self.acl += [
-            ACE.allow(role_admin._id, perm) for perm in self.permissions]
+
+        ap = [ACE.allow(role_admin._id, perm) for perm in self.permissions]
+        self.acl += ap
 
         # Knight the admins
         for user in admins:
@@ -1185,6 +1222,35 @@ class Project(SOLRIndexed):
         return label_counts.keys()
 
 
+class VulcanProject(Project):
+
+    _polymorphic_queries = True
+
+    class __mongometa__:
+        polymorphic_identity = 'vfproject'
+
+    kind = FieldProperty(str, if_missing='vfproject')
+
+
+class UserProject(Project):
+
+    _polymorphic_queries = True
+
+    class __mongometa__:
+        polymorphic_identity = 'userproject'
+
+    kind = FieldProperty(str, if_missing='userproject')
+
+    @LazyProperty
+    def home_ac(self):
+        user_profile_cls = g.tool_manager.tools["profile"]["app"]
+        for ac in self.app_configs:
+            app_cls = ac.load()
+            if issubclass(app_cls, user_profile_cls):
+                return ac
+        return None
+
+
 class AppConfig(MappedClass):
     """
     Configuration information for an instantiated
@@ -1303,7 +1369,7 @@ class AppConfig(MappedClass):
                 },
             ]
             aggregate = coll.aggregate(pipeline)
-            for result in aggregate['result']:
+            for result in aggregate:
                 label = result['_id']
                 count = result['count']
                 try:
@@ -1540,7 +1606,7 @@ class ProjectRole(BaseMappedClass):
 
     @property
     def settings_href(self):
-        if self.name in ('Admin', 'Developer', 'Member'):
+        if self.name in self.project._default_project_roles:
             return None
         return self.project.url() + 'admin/groups/' + str(self._id) + '/'
 
@@ -1611,3 +1677,19 @@ class ProjectRole(BaseMappedClass):
             user_id={'$ne': None},
             roles={'$in': [self._id]})
         ).all()
+
+    def delete_role(self):
+        """fully delete role"""
+        if self.user_id:
+            raise ImproperRoleException('Cannot delete user roles.')
+        # remove user assignments of the role
+        for u in self.users_with_role():
+            u.roles = [x for x in u.roles if x != self._id]
+        # remove project permission grants to the role
+        p = self.project
+        p.acl = [x for x in p.acl if x.role_id != self._id]
+        # remove tool permission grants to the role
+        for ac in p.app_configs:
+            ac.acl = [x for x in ac.acl if x.role_id != self._id]
+        # finally, delete the role
+        self.delete()

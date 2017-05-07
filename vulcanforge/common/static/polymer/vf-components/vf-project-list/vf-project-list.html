@@ -1,0 +1,385 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-collapse/iron-collapse.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+
+<link rel="import" href="../../paper-button/paper-button.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
+
+<link rel="import" href="../vf-styles.html">
+<link rel="import" href="../vf-tool-stat/vf-tool-stat.html">
+
+
+<dom-module id="vf-project-item">
+    <style is="custom-style" include="vf-styles">
+        .content {
+            background-color: var(--diffuse);
+            padding: .75em;
+            padding-top: 1em;
+            margin-right: 12px;
+            margin-left: 40px;
+        }
+        a paper-icon-button,
+        a:active paper-icon-button,
+        a:visited paper-icon-button {
+          color: var(--subheadingtext);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        .project-icon {
+            margin-right: 8px;
+        }
+        .undersize-icon {
+            height: 35px;
+            width: 35px;
+        }
+        .oversize-icon {
+            height: 45px;
+            width: 45px;
+            margin-top: 3px;
+        }
+        paper-checkbox#pref {
+            margin-left: 4px;
+            margin-bottom: 4px;
+            --paper-checkbox-checked-color: var(--interactive);
+        }
+        paper-checkbox.hidden {
+            display: none;
+        }
+        span#pname.greyed {
+            color: var(--diffuse);
+        }
+        @media (max-width: 320px) {
+            .admin-control {
+                display: none;
+            }
+        }
+    </style>
+    <template>
+        <div class="layout horizontal center-center">
+            <paper-checkbox id="pref" class="hidden" checked$="{{project.pref}}" noink on-change="_prefChange"></paper-checkbox>
+            <paper-tooltip for="pref" position="right">Keep on Dashboard"</paper-tooltip>
+            <paper-button-link href="[[project.url]]" class="layout horizontal center flex">
+                <div class="layout horizontal center left-justify flex">
+                    <iron-icon src="[[project.icon_url]]" role="img" class="project-icon"></iron-icon>
+                    <span id="pname" class$="{{_nameClass(project.pref)}}">{{project.name}}</span>
+                </div>
+            </paper-button-link>
+            <div class="layout horizontal center">
+                <template is="dom-if" if="[[project.new]]">
+                    <a class="activity_link" href="/dashboard/activity_feed/select/[[project.project_id]]">
+                        <vf-badge id="badge" count="{{project.new}}"></vf-badge>
+                        <paper-tooltip for="badge" position="left">Team has [[project.new]] new [[_pluralize('item', project.new)]]</paper-tooltip>
+                    </a>
+                </template>
+                <template is="dom-if" if="[[project.can_admin]]">
+                    <a class="admin-control" href="[[project.url]]admin" tabindex="=1">
+                        <paper-icon-button icon="icons:build" class="undersize-icon"></paper-icon-button>
+                        <paper-tooltip position="left">Manage</paper-tooltip>
+                    </a>
+                    <a class="admin-control" href="[[project.url]]admin/members" tabindex="=1">
+                        <paper-icon-button icon="social:person-add"></paper-icon-button>
+                        <paper-tooltip position="left">Invite new members</paper-tooltip>
+                    </a>
+                </template>
+                <paper-icon-button id="expand-toggle" class="toggle" icon="[[_toggleIcon]]" on-tap="_toggleOpened"></paper-icon-button>
+                <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+            </div>
+        </div>
+        <iron-collapse id="collapse" opened="{{opened}}">
+            <div class="content">
+                <div class="layout horizontal center wrap">
+                    <template is="dom-if" if="[[project.tool_info.home]]">
+                        <vf-tool-stat label="members" icon="social:people"
+                                   count="[[ project.tool_info.home.all ]]"
+                                   unseen="[[ project.tool_info.home.new ]]"
+                                   href="[[ project.tool_info.home.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[project.tool_info.Downloads.new]]">
+                        <vf-tool-stat label="files" icon="icons:description"
+                                   count="[[ project.tool_info.Downloads.all ]]"
+                                   unseen="[[ project.tool_info.Downloads.new ]]"
+                                   href="[[ project.tool_info.Downloads.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[ project.tool_info.Discussion.new ]]">
+                        <vf-tool-stat label="posts" icon="communication:forum"
+                                   count="[[ project.tool_info.Discussion.all ]]"
+                                   unseen="[[ project.tool_info.Discussion.new ]]"
+                                   href="[[ project.tool_info.Discussion.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[ project.tool_info.Tickets.new ]]">
+                        <vf-tool-stat label="issues" icon="icons:turned-in"
+                                   count="[[ project.tool_info.Tickets.all ]]"
+                                   unseen="[[ project.tool_info.Tickets.new ]]"
+                                   href="[[ project.tool_info.Tickets.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[ project.tool_info.Wiki.new ]]">
+                        <vf-tool-stat label="pages" icon="communication:import-contacts"
+                                   count="[[ project.tool_info.Wiki.all ]]"
+                                   unseen="[[ project.tool_info.Wiki.new ]]"
+                                   href="[[ project.tool_info.Wiki.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[ project.tool_info.Git.new ]]">
+                        <vf-tool-stat label="Git commits" icon="vaadin-icons:folder-open"
+                                   count="[[ project.tool_info.Git.all ]]"
+                                   unseen="[[ project.tool_info.Git.new ]]"
+                                   href="[[ project.tool_info.Git.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                    <template is="dom-if" if="[[ project.tool_info.Svn.new ]]">
+                        <vf-tool-stat label="Svn commits" icon="vaadin-icons:folder-open-o"
+                                   count="[[ project.tool_info.Svn.all ]]"
+                                   unseen="[[ project.tool_info.Svn.new ]]"
+                                   href="[[ project.tool_info.Svn.url ]]"
+                                   tiptemplate="Team has %count% %label%">
+                        </vf-tool-stat>
+                    </template>
+                </div>
+            </div>
+        </iron-collapse>
+        <vf-project-create id="dialog" kind="Subteam" parent="{{project.shortname}}" nonce="{{nonce}}"></vf-project-create>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-item",
+                properties: {
+                    project: Object,
+                    opened: Boolean,
+                    nonce: String,
+                    _toggleIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(opened)'
+                    }
+                },
+                _toggleOpened: function(e) {
+                    this.opened = !this.opened;
+                },
+                _computeToggleIcon: function(opened) {
+                    return opened ? 'icons:expand-less' : 'icons:expand-more';
+                },
+                _newCount: function(count) {
+                    return (count < 100) ? count : "99+";
+                },
+                _pluralize: function(s, count) {
+                    return (count == 1) ? s : s + 's';
+                },
+                togglePref: function(flag) {
+                    this.querySelector("#pref").toggleClass('hidden', flag);
+                    this.updateStyles();
+                },
+                _prefChange: function(e) {
+                    this.project.pref = e.target.checked;
+                    this.toggleClass('greyed', !e.target.checked, this.$.pname);
+                    this.updateStyles();
+                },
+                _nameClass: function(pref) {
+                    return (pref) ? "" : "greyed";
+                },
+                _launchDialog: function() {
+                    this.$.dialog.showDialog("Subteam", this.project.shortname);
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-project-list">
+    <style is="custom-style" include="vf-styles">
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        #sort-by-left {
+            color: var(--pristine);
+            margin-right: 8px;
+        }
+        #sort-by-right {
+            color: var(--pristine);
+        }
+        .empty-message {
+            color: var(--toptext);
+            fill: var(--toptext);
+            text-align: center;
+            height: 318px;
+        }
+        paper-toggle-button {
+            --paper-toggle-button-checked-bar-color: var(--diffuse);
+            --paper-toggle-button-checked-button-color: var(--pristine);
+            --paper-toggle-button-checked-ink-color: var(--pristine);
+            --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+            --paper-toggle-button-unchecked-button-color: var(--pristine);
+            --paper-toggle-button-unchecked-ink-color: var(--pristine);
+            --paper-toggle-button-label-color: var(--pristine);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        paper-icon-button#prefs {
+            margin-right: 4px;
+        }
+        paper-icon-button#expand-toggle,
+        paper-icon-button#prefs.selected {
+            color: var(--interactive);
+        }
+        vf-project-item.hidden {
+            display: none;
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <iron-ajax id="prefsajax" url="" on-response="_prefsResponse"></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon  icon="social:people"></iron-icon>
+            <div class="heading-label flex">Teams ({{_getCount(data)}})</div>
+            <div class="sorter layout horizontal center-center">
+                <div id="sort-by-left">activity</div><paper-toggle-button on-iron-change="sort_order"></paper-toggle-button><div id="sort-by-right">name</div>
+                <paper-tooltip position="left">Sort options</paper-tooltip>
+            </div>
+            <paper-icon-button id="expand-toggle" class="toggle" icon="[[_toggleIcon]]" on-tap="_toggleExpanded"></paper-icon-button>
+            <paper-tooltip for="expand-toggle" position="left">Show/Hide Details</paper-tooltip>
+        </div>
+        <template is="dom-if" if="{{_hasProjects(data)}}">
+            <div id="plist" class="list-container">
+                <template id="repeater" is="dom-repeat" items="{{data.projects}}" as="project">
+                    <vf-project-item class$="{{_projectClass(project.pref)}}" project="{{project}}" nonce="{{nonce}}"></vf-project-item>
+                </template>
+            </div>
+        </template>
+        <template is="dom-if" if="{{!_hasProjects(data)}}">
+            <div class="layout vertical center">
+                <div class="empty-message">
+                    <p><iron-icon icon="warning"></iron-icon> You are not yet a member of any team.</p>
+                </div>
+            </div>
+        </template>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-list",
+                properties: {
+                    data: Object,
+                    url: String,
+                    nonce: String,
+                    expanded: {
+                        type: Boolean,
+                        value: false
+                    },
+                    _toggleIcon: {
+                        type: String,
+                        computed: '_computeToggleIcon(expanded)'
+                    },
+                    _sortedByName: {
+                        type: Boolean,
+                        value: false
+                    }
+                },
+                _toggleExpanded: function(e) {
+                    this.expanded = !this.expanded;
+                    this._projectsOpened(this.expanded);
+                },
+                _getItems: function() {
+                    return this.querySelectorAll("vf-project-item");
+                },
+                _getCount: function(data) {
+                    return (data.projects) ? data.projects.length : 0;
+                },
+                _hasProjects: function(data) {
+                    return (data.projects && data.projects.length > 0);
+                },
+                _projectsOpened: function(opened) {
+                    var children = this._getItems();
+                    for (var i=0; i<children.length; i++) {
+                        children[i].opened = opened;
+                    }
+                },
+                _closeExpansion: function() {
+                    if (this.expanded) {
+                        this._toggleExpanded();
+                    } else {
+                        this._projectsOpened(false);
+                    }
+                },
+                _computeToggleIcon: function(expanded) {
+                    return expanded ? 'icons:expand-less' : 'icons:expand-more';
+                },
+                prefsSettings: function(mode) {
+                    this._closeExpansion();
+                    var children = this._getItems();
+                    for (var i=0; i<children.length; i++) {
+                        var pitem = children[i];
+                        pitem.togglePref(mode);
+                        pitem.toggleClass("hidden", !pitem.project.pref && mode);
+                        pitem.updateStyles();
+                    }
+                    if (mode) {
+                        var requester = this.$.prefsajax;
+                        var params = {};
+                        for (i = 0; i < this.data.projects.length; i++) {
+                            var project = this.data.projects[i];
+                            params[project.shortname] = project.pref;
+                        }
+                        requester.url = "/dashboard/updatePreferences";
+                        requester.params = {prefs: JSON.stringify(params)};
+                        requester.generateRequest();
+                    }
+                },
+                _prefsResponse: function(request) {
+                    var toast = document.querySelector("paper-toast#toast-notification");
+                    toast.show({text: "Dashboard preferences updated", duration: 3000});
+                },
+                _projectClass: function(pref) {
+                    return (pref || this.prefsMode) ? "" : "hidden";
+                },
+                capitalize: function(s) {
+                    return s.charAt(0).toUpperCase() + s.slice(1);
+                },
+                sort_order: function(e) {
+                    var name_sort = e.target.checked;
+                    if (name_sort && !this.sortedByName) {
+                        this._closeExpansion();
+                        this.data.projects.sort(function(a, b) {
+                           return a.name.localeCompare(b.name);
+                        });
+                        this.$.repeater.render();
+                        this._sortedByName = true;
+                    } else if (!name_sort && this._sortedByName) {
+                        this._closeExpansion();
+                        this.data.projects.sort(function(a, b) {
+                            return (a.index < b.index) ? -1 : (a.index > b.index) ? 1 : 0;
+                        });
+                        this.$.repeater.render();
+                        this._sortedByName = false;
+                    }
+                }
+            });
+        })();
+    </script>
+</dom-module>

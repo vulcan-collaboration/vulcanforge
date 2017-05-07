@@ -17,10 +17,10 @@ def translate_exchange(mo):
 def translate_uris(results):
     url_base = g.resource_manager.url_base
     for doc in results.docs:
-        json_s = doc['json_s']
-        json_s = STATIC_RESOURCE_REGEX.sub(url_base, json_s)
-        json_s = EXCHANGE_RESOURCE_REGEX.sub(translate_exchange, json_s)
-        doc['json_s'] = json_s
+        json_ni = doc['json_ni']
+        json_ni = STATIC_RESOURCE_REGEX.sub(url_base, json_ni)
+        json_no = EXCHANGE_RESOURCE_REGEX.sub(translate_exchange, json_ni)
+        doc['json_ni'] = json_ni
     return results
 
 

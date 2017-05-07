@@ -367,7 +367,7 @@ class ForgeWikiApp(Application):
         db, history_coll = PageHistory.get_pymongo_db_and_collection()
 
         new_history_count = history_count = total_size = 0
-        history_objs = history_coll.aggregate([
+        history_objs = list(history_coll.aggregate([
             {'$match': {
                 'app_config_id': self.config._id,
             }},
@@ -378,12 +378,11 @@ class ForgeWikiApp(Application):
                 '_id': 1,
                 'count': { '$sum': 1}
             }}
-        ])
-
-        if history_objs['result']:
-            history_count = history_objs['result'][0]['count']
+        ]))
+        if history_objs:
+            history_count = history_objs[0]['count']
         if since is not None and isinstance(since, datetime.datetime) :
-            new_history_objs = history_coll.aggregate([
+            new_history_objs = list(history_coll.aggregate([
                 {'$match': {
                     'app_config_id': self.config._id,
                     "_id": {"$gt":ObjectId.from_datetime(since)}
@@ -395,12 +394,12 @@ class ForgeWikiApp(Application):
                     '_id': 1,
                     'count': { '$sum': 1}
                 }}
-            ])
-            if new_history_objs['result']:
-                new_history_count = new_history_objs['result'][0]['count']
+            ]))
+            if new_history_objs:
+                new_history_count = new_history_objs[0]['count']
 
         db, attachment_coll = WikiAttachment.get_pymongo_db_and_collection()
-        file_aggregate = attachment_coll.aggregate([
+        file_aggregate = list(attachment_coll.aggregate([
             {'$match': {
                 'app_config_id': self.config._id,
             }},
@@ -408,9 +407,9 @@ class ForgeWikiApp(Application):
                 '_id': 1,
                 'total_size': {'$sum': '$length'}
             }}
-        ])
-        if file_aggregate['result']:
-            total_size = file_aggregate['result'][0]['total_size']
+        ]))
+        if file_aggregate:
+            total_size = file_aggregate[0]['total_size']
 
         return dict(
             new=new_history_count,

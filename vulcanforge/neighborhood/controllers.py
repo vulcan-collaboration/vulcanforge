@@ -33,7 +33,6 @@ from vulcanforge.neighborhood.marketplace.controllers import (
     NeighborhoodMarketplaceController)
 from vulcanforge.project.validators import MOUNTPOINT_VALIDATOR
 from vulcanforge.project.model import (
-    Project,
     ProjectRole,
     ProjectFile
 )
@@ -216,7 +215,7 @@ class NeighborhoodController(BaseTGController):
                 pname = self.mountpoint_validator.validate_name(pname)
             except Invalid:
                 raise exc.HTTPNotFound, pname
-        project = Project.query.get(
+        project = self.neighborhood.project_cls.query_get(
             neighborhood_id=self.neighborhood._id,
             shortname=self.prefix + pname)
         if project is None:
@@ -370,14 +369,16 @@ class NeighborhoodController(BaseTGController):
     def existing_projects(self):
         q = {'deleted': False,
              'neighborhood_id': self.neighborhood._id}
-        return {x.name: x.shortname for x in Project.query.find(q)
+        project_cls = self.neighborhood.project_cls
+        return {x.name: x.shortname for x in project_cls.query_find(q)
                 if x.is_real() and g.security.has_access(x, 'read')}
 
     @expose('json')
     def team_exists(self, name):
         q = {'name': name,
              'neighborhood_id': self.neighborhood._id}
-        pc = Project.query.find(q)
+        project_cls = self.neighborhood.project_cls
+        pc = project_cls.query_find(q)
         return {"found": pc.count() > 0}
 
     @expose('json')
@@ -404,9 +405,10 @@ class NeighborhoodController(BaseTGController):
             name = name.encode('utf-8')
         # generate shortname and ensure uniqueness
         shortname = re.sub("[^A-Za-z0-9]", "", name).lower()
+        project_cls = self.neighborhood.project_cls
         i = 1
         while True:
-            if Project.query.get(shortname=shortname):
+            if project_cls.by_shortname(shortname):
                 i += 1
                 shortname = shortname + unicode(i)
             else:
@@ -559,7 +561,8 @@ class NeighborhoodModerateController(object):
     @expose()
     @require_post()
     def invite(self, pid, invite=None, uninvite=None):
-        p = Project.query.get(shortname=pid, deleted=False)
+        project_cls = self.neighborhood.project_cls
+        p = project_cls.query_get(shortname=pid, deleted=False)
         if p is None:
             flash("Can't find %s" % pid, 'error')
             redirect('.')
@@ -583,7 +586,8 @@ class NeighborhoodModerateController(object):
     @expose()
     @require_post()
     def evict(self, pid):
-        p = Project.query.get(
+        project_cls = self.neighborhood.project_cls
+        p = project_cls.query_get(
             shortname=pid,
             neighborhood_id=self.neighborhood._id,
             deleted=False)
@@ -611,7 +615,8 @@ class NeighborhoodRestController(object):
         if not re_path_portion.match(name):
             raise exc.HTTPNotFound, name
         name = self._neighborhood.shortname_prefix + name
-        project = Project.query.get(
+        project_cls = self._neighborhood.project_cls
+        project = project_cls.query_get(
             shortname=name,
             neighborhood_id=self._neighborhood._id
         )

@@ -308,14 +308,12 @@
                 if (this.isActive()){
                     if (this.resumableFile.isPaused()){
                         this.firstUpdateTime = null;
-                        //this.uploadSpeed = null;
                         this.timeRemaining = null;
                     } else {
                         if (this.firstUpdateTime){
                             var transferedBytes = (progress - this.firstProgressPoint) * this.resumableFile.size;
                             var bytesRemaining = (1 - (progress - this.firstProgressPoint)) * this.resumableFile.size;
                             var timeDeltaInSeconds = (Date.now() - this.firstUpdateTime) / 1000;
-                            //this.uploadSpeed = $vf.prettyPrintByteSpeed(transferedBytes, timeDeltaInSeconds);
                             this.timeRemaining = $vf.prettyPrintTimeRemaining(bytesRemaining, transferedBytes / timeDeltaInSeconds);
                         } else {
                             this.firstUpdateTime = Date.now();
@@ -330,7 +328,6 @@
                 var prettySize = this.extra.size;
                 var speedInfo = "";
                 if (this.timeRemaining != null && typeof this.timeRemaining != 'undefined'){
-                    //speedInfo = " " + this.uploadSpeed;
                     speedInfo = " - About " + this.timeRemaining;
                 }
                 this.loadingProgress.attr('value', progress);
@@ -367,7 +364,6 @@
                         }
                         if (that.resumableFile.isPaused()){
                             that.firstUpdateTime = null;
-                            //that.uploadSpeed = null;
                             that.timeRemaining = null;
                             that.updateProgress(that.resumableFile.progress());
                         }
@@ -508,8 +504,14 @@
                     "getUploadURLForFileAndPath method");
             },
 
+            // confirm export control compliance on uploading
+            exportControlCompliance: false,
+
             //
             canUpload: false,
+
+            //
+            updateOnFileExist: false,
 
             //
             canDelete: false,
@@ -821,7 +823,8 @@
                         this._resumable.assignBrowse(this.options.uploadButton);
                     }
                 }
-                this._resumable.on('fileAdded', that._upsertUploadEntry);
+                if (!that.options.exportControlCompliance)
+                    this._resumable.on('fileAdded', that._upsertUploadEntry);
                 this._resumable.on('filesAdded', function(files){
                     that.replaceFiles = null;
                     that.filesToReplace = [];
@@ -843,6 +846,8 @@
                         }
                         that.confirmingTooManyFiles = false;
                     }
+                    if (that.options.exportControlCompliance)
+                        that._confirmExportControl(files);
                 });
                 this._resumable.on('fileProgress', function(file){
                     var uploadEntry = that._getUploadDataForId(file.uniqueIdentifier);
@@ -965,6 +970,44 @@
             });
         },
 
+        _confirmExportControl: function (files) {
+            var that = $vf.fileBrowser;
+            var $modalContainer = $('<div/>',{
+                id: "exportControlDialog",
+                title: "Export Control"
+            });
+            this.$exportControlDialog = $('<span/>', {
+                text: "To continue uploading, confirm that all required Export Control documents have been filed."
+            }).appendTo($modalContainer);
+            $modalContainer.dialog({
+                dialogClass: 'no-close',
+                autoOpen: true,
+                modal: true,
+                width: 450,
+                height: 150,
+                closeOnEscape: false,
+                draggable: false,
+                resizable: false,
+                buttons: {
+                    'Yes': function(){
+                        $(this).dialog('close');
+                        for (var i = 0; i < files.length; i += 1) {
+                            that._upsertUploadEntry(files[i]);
+                        }
+                    },
+                    'No': function(){
+                        $(this).dialog('close');
+                        for (var i = 0; i < files.length; i += 1) {
+                            files[i].cancel();
+                        }
+                        window.setTimeout(function(){
+                            that.refreshActivePath();
+                        },1000);
+                    }
+                }
+            });
+        },
+
         moveContent: function(path){
             // We will move the already selected files here
             var that = this,
@@ -1071,6 +1114,11 @@
         },
 
         _computeMD5Signature: function(file){
+            var that = $vf.fileBrowser;
+            if (that.options.computeMD5Signature){
+                return that.options.computeMD5Signature(file);
+            }
+
             var fileName = file.fileName||file.name; // Some confusion in different versions of Firefox
             var relativePath = file.webkitRelativePath || file.relativePath || fileName;
             if (relativePath.indexOf("/") == 0){
@@ -1619,6 +1667,13 @@
                                 if (responseData.detail) {
                                     if (responseData.detail == "File already exists"){
                                         resumableFile.cancel();
+                                        if (that.options.updateOnFileExists){
+                                            if (uploadEntry.getParentPath() == that.getActivePath()){
+                                                that.refreshActivePath();
+                                            } else {
+                                                that._loadPathData(uploadEntry.getParentPath());
+                                            }
+                                        }
                                     }
                                     if (responseData.detail == "File with different content exists"){
                                         if (that.replaceFiles == null){
@@ -2558,10 +2613,23 @@
             }
 
             $.each(this.options.extraFields, function (k, v) {
+                var pathValue = "";
+                if (pathData.extra && pathData.extra[v]) {
+                    if (v == 'date') {
+                        var d = $vf.parseISO8601(pathData.extra.date);
+                        var mm = d.getMonth() + 1;
+                        var dd = d.getDate();
+                        pathValue = [d.getFullYear(),
+                                     (mm>9 ? '' : '0') + mm,
+                                     (dd>9 ? '' : '0') + dd].join("-");
+                    } else {
+                        pathValue = pathData.extra[v];
+                    }
+                }
                 $('<span/>').
                     addClass(that._class('listItem-cell')).
                     addClass(that._class('listItem-cell-' + v)).
-                    html((pathData.extra && pathData.extra[v]) || "").
+                    html(pathValue).
                     appendTo($listItem);
             });
 

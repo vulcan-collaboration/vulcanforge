@@ -10,6 +10,7 @@ root
 import logging
 
 from pylons import tmpl_context as c, app_globals as g
+from tg import redirect
 from tg.decorators import expose
 
 from vulcanforge.common.controllers import BaseController
@@ -43,10 +44,13 @@ class NeighborhoodHomeRootController(BaseController):
 
     @expose(TEMPLATE_DIR + 'master.html')
     def index(self, **kwargs):
-        return {
-            'hide_header': True,
-            'content': g.markdown.convert(self.neighborhood.homepage),
-        }
+        if not g.security.has_access(c.project, "admin"):
+            redirect('/dashboard/teams')
+        else:
+            return {
+                'hide_header': True,
+                'content': g.markdown.convert(self.neighborhood.homepage),
+            }
 
 
 class NeighborhoodHomeRestController(BaseController):

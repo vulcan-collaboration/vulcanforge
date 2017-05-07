@@ -8,6 +8,7 @@ from pylons import tmpl_context as c, app_globals as g, request
 from BeautifulSoup import BeautifulSoup
 from feedparser import _HTMLSanitizer
 
+import bleach
 import markdown
 from markdown.util import etree
 from mdx_oembed import OEmbedExtension
@@ -52,9 +53,8 @@ class ForgeExtension(OEmbedExtension):
         md.parser.blockprocessors.add('readmore',
                                       ReadMoreProcessor(md.parser),
                                       '<paragraph')
-
         # Sanitize HTML
-        md.postprocessors['sanitize_html'] = SanitizeHTMLProcessor()
+        md.postprocessors['sanitize_html'] = SanitizeHTMLWithBleachProcessor()
 
         # shortlinks, relative urls, etc
         self.forge_processor = ForgeProcessor(
@@ -239,7 +239,8 @@ class ForgeProcessor(object):
         ###
         parts = link.split(':')
         url_method = None
-        project = Project.query.get(shortname=parts[0])
+        project_cls = g.context_manager.get_project_cls()
+        project = project_cls.by_shortname(parts[0])
         if project:
             parts.pop(0)
         else:
@@ -364,12 +365,13 @@ class RelativeLinkRewriter(markdown.postprocessors.Postprocessor):
             val = val.replace(' ', '%20')
             tag[attr] = val
         if '://' in val:
-            if 'base_url' in config and config['base_url'] in val:
-                return
-            else:
-                tag[attr] = '/nf/redirect/?path=%s' % urlquote(val)
-                tag['rel'] = 'nofollow'
-                return
+            return
+            # if 'base_url' in config and config['base_url'] in val:
+            #     return
+            # else:
+            #     tag[attr] = '/nf/redirect/?path=%s' % urlquote(val)
+            #     tag['rel'] = 'nofollow'
+            #     return
         if val.startswith('/') or val.startswith('.') or val.startswith('#'):
             return
         tag[attr] = '../' + val
@@ -403,6 +405,38 @@ class SanitizeHTMLProcessor(markdown.postprocessors.Postprocessor):
         sanitizer = ForgeHTMLSanitizer('utf-8')
         sanitizer.feed(text.encode('utf-8'))
         return unicode(sanitizer.output(), 'utf-8')
+
+
+class SanitizeHTMLWithBleachProcessor(markdown.postprocessors.Postprocessor):
+    """ Sanitize the markdown output with bleach. """
+
+    def __init__(self):
+        vf_tags = bleach.ALLOWED_TAGS + [
+            'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'img', 'p', 'pre',
+            'div', 'span', 'table', 'th', 'td', 'tr', 'thead', 'tbody'
+        ]
+        vf_attr = {'a': ['href', 'title', 'class'],
+                   'img': ['src', 'title', 'alt', 'width'],
+                   'div': ['class'],
+                   'td': ['align'],
+                   'table': ['class']}
+        self.tags = vf_tags
+        self.attributes = vf_attr
+        self.protocols = bleach.ALLOWED_PROTOCOLS
+        self.styles = bleach.ALLOWED_STYLES
+        self.strip = True
+        self.strip_comments = True
+
+    def run(self, text):
+        """ Sanitize the markdown output. """
+        return bleach.clean(text,
+                            tags=self.tags,
+                            attributes=self.attributes,
+                            styles=self.styles,
+                            protocols=self.protocols,
+                            strip=self.strip,
+                            strip_comments=self.strip_comments
+        )
 
 
 class AutolinkPattern(markdown.inlinepatterns.LinkPattern):
@@ -462,20 +496,25 @@ class ReadMoreProcessor(markdown.blockprocessors.BlockProcessor):
 
 
 class CommentProcessor(markdown.preprocessors.Preprocessor):
-    RE = re.compile(r'/\*.*?\*/', re.DOTALL)
+    """
+    This preprocessor removes comments of the form /*...*/
+    If a line contains only a comment, it is removed.  Otherwise,
+    what remains on a line after removing all comments is preserved.
+    
+    It uses a greedy regular expression.  Otherwise a line
+    "/* comment1 */ Hello /* comment2 */" would be completely filtered.
+    
+    Limitations:
+    1. No nesting: "/* Blah /* nested */ Blah2 */" returns a line " Blah2 */"
+    """
+    RE = re.compile(r'/\*.*?\*/')
 
     def run(self, lines):
-        block = ''
         new_lines = []
         for line in lines:
-            if line.startswith('    '):
-                if block:
-                    new_lines.extend(self.RE.sub('', block).split('\n'))
-                    block = ''
+            revised, count = self.RE.subn('', line)
+            if count and revised:
+                new_lines.append(revised)
+            elif not count:
                 new_lines.append(line)
-            else:
-                block += line + '\n'
-        if block:
-            new_lines.extend(self.RE.sub('', block).split('\n'))
-
         return new_lines

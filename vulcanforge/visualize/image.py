@@ -9,6 +9,7 @@ class ImageContent(BaseContentWidget):
     def resources(self):
         for r in super(ImageContent, self).resources():
             yield r
+        yield JSLink('js/lib/underscore-min.js')
         yield JSLink('visualize/image.js')
         yield CSSLink('visualize/image.css')
 

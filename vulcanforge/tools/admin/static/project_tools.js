@@ -15,6 +15,7 @@
         var install_extra_options_container = $('#install_extra_options_container', install_form).empty();
         install_popup.append(install_form.show());
         $('a.install_trig').click(function () {
+            install_extra_options_container.empty();
             var datatool = $(this).attr('data-tool');
             if (datatool) {
                 var tool = defaults[datatool];

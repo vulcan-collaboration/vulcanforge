@@ -8,7 +8,6 @@ from tg.decorators import with_trailing_slash, without_trailing_slash
 from vulcanforge.common.controllers import BaseController
 from vulcanforge.common.helpers import really_unicode
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.model import Project
 from vulcanforge.tools.wiki.model import Page
 
 TEMPLATE_DIR = 'jinja:vulcanforge:common/templates/'
@@ -24,7 +23,8 @@ class NewForgeController(BaseController):
         if project is not None and project != 'None':
             if neighborhood is not None and neighborhood != 'None':
                 n = Neighborhood.query.get(name=neighborhood)
-                project = Project.query.get(
+                project_cls = n.project_cls
+                project = project_cls.query_get(
                     shortname=project, neighborhood_id=n._id
                 )
             g.set_project(project)

@@ -1,0 +1,240 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-image/iron-image.html">
+
+<link rel="import" href="../../paper-button/paper-button.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-dialog/paper-dialog.html">
+<link rel="import" href="../../paper-input/paper-textarea.html">
+<link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-project-user-item">
+    <style is="custom-style" include="vf-styles">
+        .item {
+            padding: 0.25em;
+        }
+        .info {
+            margin-left: 8px;
+        }
+        .user-icon {
+            --iron-image-height: 50px;
+            --iron-image-width: 50px;
+            padding: 4px;
+        }
+        .user-name {
+            text-decoration: none;
+            text-transform: uppercase;
+            color: var(--subheadingtext);
+        }
+        .user-info {
+            color: var(--diffuse);
+            margin-top: 6px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        #joined {
+            margin-left: 10px;
+        }
+    </style>
+    <template>
+        <div class="item layout horizontal center">
+            <a href="{{user.url}}"><iron-image class="user-icon" src="{{user.icon_url}}"></iron-image></a>
+            <div class="info layout vertical flex">
+                <a class="user-name" href="{{user.url}}"><div>{{user.name}}</div></a>
+                <div class="user-info layout horizontal flex wrap">
+                    <div class="flex">[[user.roles]]</div>
+                    <div>joined {{_getJoinDate(user.joined)}}</div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-user-item",
+                properties: {
+                    user: Object
+                },
+                _getJoinDate: function(date) {
+                    return vffuncs.formatDate(date);
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-project-user-list">
+    <style is="custom-style" include="vf-styles">
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        .sort-label {
+            color:var(--pristine);
+            margin-right: 8px;
+        }
+        paper-toggle-button {
+            --paper-toggle-button-checked-bar-color: var(--diffuse);
+            --paper-toggle-button-checked-button-color: var(--pristine);
+            --paper-toggle-button-checked-ink-color: var(--pristine);
+            --paper-toggle-button-unchecked-bar-color: var(--diffuse);
+            --paper-toggle-button-unchecked-button-color: var(--pristine);
+            --paper-toggle-button-unchecked-ink-color: var(--pristine);
+        }
+        .headbar iron-icon {
+            padding: 8px;
+            color: var(--interactive);
+        }
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .empty-message {
+            color: var(--toptext);
+            fill: var(--toptext);
+            text-align: center;
+        }
+        .admin-icon {
+            color: var(--interactive);
+        }
+        paper-tooltip {
+            --paper-tooltip: {
+                font-style: normal;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        }
+        paper-dialog .heading {
+            background-color: var(--headingbar);
+            color: var(--interactive);
+            margin-top: 0;
+            padding: 0 8px;
+        }
+        paper-dialog .heading #header-label {
+            color: var(--pristine);
+            font-size: 20px;
+            font-weight: bold;
+        }
+        paper-dialog .heading #close {
+            min-width: 3em;
+            padding-right: 0;
+        }
+        paper-dialog #send-control {
+            margin-top: 16px;
+        }
+        paper-dialog {
+            margin: 0;
+            padding: 0;
+            width: 300px;
+        }
+        paper-textarea {
+        --paper-input-container-underline-focus: {
+            background-color: var(--danger);
+        }
+        --paper-input-container-label-focus: {
+            color:  var(--interactive);
+        }
+    }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon icon="social:people"></iron-icon>
+            <div class="heading-label flex">Team ([[data.users.length]])</div>
+            <div class="sorter layout horizontal center-center">
+                <div id="sort-left" class="sort-label">role</div><paper-toggle-button on-iron-change="sort_order"></paper-toggle-button><div id="sort-right" class="sort-label">name</div>
+                <paper-tooltip position="left">Sort options</paper-tooltip>
+            </div>
+            <template is="dom-if" if="[[data.canRequest]]">
+                <paper-icon-button id="request" icon="icons:add-circle-outline" class="admin-icon" on-tap="_requestMembership"></paper-icon-button>
+                <paper-tooltip for="request" position="left">Request membership</paper-tooltip>
+            </template>
+            <template is="dom-if" if="[[data.canAdmin]]">
+                <a class="admin-control" href="[[data.projectURL]]admin/members" tabindex="-1">
+                    <paper-icon-button icon="icons:settings" class="admin-icon"></paper-icon-button>
+                    <paper-tooltip position="left">Manage</paper-tooltip>
+                </a>
+            </template>
+        </div>
+        <div id="alist" class="list-container">
+            <template id="repeater" is="dom-repeat" items="{{data.users}}" as="user">
+                <vf-project-user-item user="{{user}}"></vf-project-user-item>
+            </template>
+        </div>
+        <paper-dialog id="dialog" modal>
+            <div class="heading layout horizontal center-center">
+                <div id="headbar-label" class="flex">Request Membership</div>
+                <paper-button id="close" dialog-dismiss><iron-icon icon="close"></iron-icon></paper-button>
+            </div>
+            <div class="small-padding">
+                <paper-textarea id="message" label="message" value="Please add me to your project!"></paper-textarea>
+                <div id="send-control" class="layout horizontal center-center">
+                    <paper-button id="send" dialog-confirm raised tabindex="-1" on-tap="_processRequest">
+                        <div class="container layout horizontal center-center">
+                            <iron-icon icon="send"></iron-icon>
+                            <div class="label">Send</div>
+                        </div>
+                    </paper-button>
+                </div>
+            </div>
+        </paper-dialog>
+        <iron-ajax id="mrequest" method="POST" on-response="_requestResponse" url="request_membership"></iron-ajax>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-project-user-list",
+                properties: {
+                    url: String,
+                    nonce: String
+                },
+                _hasUsers: function(o) {
+                    return (o.users && o.users.length > 0);
+                },
+                sort_order: function(e) {
+                    var name_sort = e.target.checked;
+                    if (name_sort && !this.sortedByName) {
+                        this.data.users.sort(function(a, b) {
+                            return a.name.localeCompare(b.name);
+                        });
+                        this.$.repeater.render();
+                        this._sortedByName = true;
+                    } else if (!name_sort && this._sortedByName) {
+                        //Initial sort by name
+                        this.data.users.sort(function(a, b) {
+                            return a.name.localeCompare(b.name);
+                        });
+                        //Subsequent sort by role
+                        this.data.users.sort(function(a, b) {
+                            return a.roles.split(',')[0].localeCompare(b.roles.split(',')[0]);
+                        });
+                        this.$.repeater.render();
+                        this._sortedByName = false;
+                    }
+                },
+                _requestMembership: function() {
+                    this.$.dialog.toggle();
+                    this.$.dialog.notifyResize();
+                },
+                _processRequest: function() {
+                    var msg = this.$.dialog.querySelector("#message").value;
+                    var requester = this.$.mrequest;
+                    requester.params = {text: msg, _session_id: this.nonce};
+                    requester.generateRequest();
+                },
+                _requestResponse: function() {
+                    window.location.href = "/dashboard";
+                },
+                ready: function() {
+                    this.$.dialog.fitInto = document.querySelector("#organize");
+                }
+            });
+        })();
+    </script>
+</dom-module>

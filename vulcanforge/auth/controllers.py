@@ -665,13 +665,13 @@ class _ModeratedAuthController(_AuthController):
         user_fields = {k: v for k, v in kw.items()
                        if k not in self.SKIP_FIELDS}
         with g.context_manager.push(g.site_admin_project, 'admin'):
-            req = RegistrationRequest(
+            req = RegistrationRequest.upsert(
                 email=email,
                 name=name,
                 user_fields=user_fields,
                 project_id=c.project._id
             )
-            session(RegistrationRequest).flush(req)
+            req.flush_self()
             req.notify()
         redirect('moderate_thanks')
 
@@ -787,7 +787,8 @@ class PreferencesController(BaseController):
             project_ids.add(mailbox.project_id)
         project_ids.update([p._id for p in c.user.my_projects()
                             if not p.is_user_project()])
-        projects = Project.query.find({'_id': {'$in': list(project_ids)}})
+        project_cls = c.user.registration_neighborhood().project_cls
+        projects = project_cls.query_find({'_id': {'$in': list(project_ids)}})
 
         project_data_items = []
         for project in projects:
@@ -993,7 +994,7 @@ class PreferencesController(BaseController):
     def subscribe_project(self, project_id=None, return_to=None,
                           **kwargs):
         g.security.require_authenticated()
-        project = Project.query.get(_id=ObjectId(project_id))
+        project = Project.query_get(_id=ObjectId(project_id))
         if project is None:
             raise wexc.HTTPBadRequest("Project does not exist")
         for app_config in project.app_configs:
@@ -1006,7 +1007,7 @@ class PreferencesController(BaseController):
     def unsubscribe_project(self, project_id=None, return_to=None,
                             **kwargs):
         g.security.require_authenticated()
-        project = Project.query.get(_id=ObjectId(project_id))
+        project = Project.query_get(_id=ObjectId(project_id))
         if project is None:
             raise wexc.HTTPBadRequest("Project does not exist")
         Mailbox.query.remove({
@@ -1118,10 +1119,11 @@ class PreferencesController(BaseController):
                 del c.user.open_ids[i]
                 if obj:
                     obj.delete()
-        for k, v in preferences.iteritems():
-            if k == 'results_per_page':
-                v = int(v)
-            c.user.set_pref(k, v)
+        if preferences:
+            for k, v in preferences.iteritems():
+                if k == 'results_per_page':
+                    v = int(v)
+                c.user.set_pref(k, v)
         redirect('.')
 
     @expose()

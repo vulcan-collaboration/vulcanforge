@@ -114,7 +114,7 @@ class AutocompleteController(BaseController):
 
     @expose('json')
     def project_labels(self, project_id, q, limit=DEFAULT_LIMIT, **kw):
-        project = Project.query.get(_id=ObjectId(project_id))
+        project = Project.query_get(_id=ObjectId(project_id))
         labels = []
         for label, count in project.get_label_counts().items():
             if q not in label:

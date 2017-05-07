@@ -48,8 +48,16 @@
 {% do g.resource_manager.register_html('polymer/vf-components/vf-paper-input-options.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-components/vf-idle-timeout/vf-idle-timeout.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-components/vf-user-profile/vf-user-profile.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-tool-stat/vf-tool-stat.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-project-list/vf-project-list.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-user-activity-list/vf-user-activity-list.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-project-activity-list/vf-project-activity-list.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-components/vf-project-create/vf-project-create.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-project-user-list/vf-project-user-list.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-project-tool-list/vf-project-tool-list.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-components/vf-team-edit/vf-team-edit.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-team-list/vf-team-list.html', scope='forge') %}
+{% do g.resource_manager.register_html('polymer/vf-components/vf-team-profile/vf-team-profile.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-components/vf-helpers/vf-helpers.html', scope='forge') %}
 {% do g.resource_manager.register_html('polymer/vf-icons/vf-icons.html', scope='forge') %}
 
@@ -163,6 +171,12 @@
         .ui-widget {
             font-size: .75em;
         }
+        .markdown_content pre {
+            white-space: pre-wrap;
+        }
+        .markdown_content a {
+            color: blue;
+        }
         /* --- */
         @media (max-width: 480px), (max-width: 320px) {
             #logo-heading-container {
@@ -175,8 +189,8 @@
             #auth-login-controls {
                 display: none;
             }
-            #logo-heading-text-mai {
-                padding-top: 0;
+            #other-headings-container {
+                width: 100vw;
             }
             .big-margin {
                 margin: 1rem 0.25rem;
@@ -195,9 +209,6 @@
                 height: 80px;
                 margin-right: 10px;
                 margin-top: 12px;
-            }
-            #logo-heading-text-mai {
-                font-size: 3.0rem;
             }
             #logo-subheading {
                 font-size: 1.25rem;
@@ -431,6 +442,33 @@
              });
         </script>
     </dom-module>
+
+    <dom-module id="safe-html">
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <template>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: 'safe-html',
+                    properties: {
+                        html: {
+                            type: String,
+                            observer: '_htmlChanged'
+                        }
+                    },
+                    _htmlChanged: function (neo) {
+                    // WARNING: potential XSS vulnerability if `html` comes from an untrusted source
+                        this.innerHTML = neo;
+                    }
+                });
+            });
+        </script>
+    </dom-module>
     {% endraw %}
 
     {% set flash = tg.flash_obj.pop_payload() %}
@@ -483,10 +521,10 @@
         </div>
         {% if g.idle_logout_enabled %}
             <vf-idle-timeout timeout-url="/auth/logout"
-                              renew-url="/auth/renew_session"
-                              time-warn={{ g.idle_logout_countdown_seconds }}
-                              time-idle={{ g.idle_logout_minutes * 60 }}
-                              session-timeout={{ tg.config.get('beaker.session.timeout', 0) }}
+                             renew-url="/auth/renew_session"
+                             time-warn={{ g.idle_logout_countdown_seconds }}
+                             time-idle={{ g.idle_logout_minutes * 60 }}
+                             session-timeout={{ tg.config.get('beaker.session.timeout', 0) }}>
             </vf-idle-timeout>
         {% endif %}
     {% endif %}

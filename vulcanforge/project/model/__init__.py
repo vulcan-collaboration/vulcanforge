@@ -1,5 +1,7 @@
 from .project import (
     Project,
+    VulcanProject,
+    UserProject,
     AppConfig,
     ProjectRole,
     ProjectFile,

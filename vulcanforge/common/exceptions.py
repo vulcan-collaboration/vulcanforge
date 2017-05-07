@@ -59,9 +59,10 @@ class WSGIAJAXException(WSGIHTTPException):
                 explanation=self.explanation,
                 detail=self.detail)
             extra_kw = {}
+            self.content_type = 'application/json'
             resp = Response(json.dumps(body_dict),
                 status=self.status,
-                headerlist=[],
+                headerlist=self.headerlist,
                 content_type='application/json',
                 **extra_kw
             )
@@ -71,6 +72,10 @@ class WSGIAJAXException(WSGIHTTPException):
             return WSGIHTTPException.generate_response(self,
                 environ,
                 start_response)
+
+
+class AJAXOk(WSGIAJAXException, exc.HTTPOk):
+    pass
 
 
 class AJAXCreated(WSGIAJAXException, exc.HTTPCreated):

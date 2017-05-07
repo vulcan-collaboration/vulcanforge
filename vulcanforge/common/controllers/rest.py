@@ -493,8 +493,9 @@ class WebAPIController(TGController):
         # if authenticated, get projects using named roles
         has_user = c.user is not None
         if has_user:
-            project_cursor = [x for x in c.user.my_projects()
-                              if x.neighborhood_id in hood_id_map]
+            project_cursor = []
+            for hood in hood_id_map:
+                project_cursor += c.user.my_projects(nbhd_id=hood)
             project_cursor.sort(key=lambda x: x.sortable_name)
         else:
             project_query_params = {
@@ -502,7 +503,7 @@ class WebAPIController(TGController):
                     '$in': hood_id_map.keys()
                 }
             }
-            project_cursor = Project.query.find(project_query_params)
+            project_cursor = Project.query_find(project_query_params)
             project_cursor.sort('sortable_name', pymongo.ASCENDING)
         for project in project_cursor:
             # if authenticated, avoid superfluous access checking

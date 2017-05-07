@@ -775,7 +775,8 @@ class ContentRestController(RestController):
         file_path = urllib.unquote(kwargs.get('path', ''))
         fd_file = FDM.ForgeDownloadsFile.query.get(
             app_config_id=c.app.config._id,
-            item_key=file_path
+            item_key=file_path,
+            deleted=False
         )
         if fd_file is None:
             raise exc.AJAXNotFound('The requested file does not exist.')
@@ -803,7 +804,7 @@ class ContentRestController(RestController):
 
         # format the data
         data = []
-        for log_entry in aggregate['result']:
+        for log_entry in aggregate:
             row = [
                 log_entry['timestamp'].strftime('%m/%d/%Y %H:%M:%S UTC'),
                 Markup('<a href="/u/{}">{}</a>'.format(

@@ -20,7 +20,7 @@ messaging
 
 ## make an announcement as a project
 
->>> project = Project.query.get(shortname="myproject")
+>>> project = Project.by_shortname("myproject")
 >>> admin_role = ProjectRole.query.get(project_id=project._id, name='Admin')
 >>> member_role = ProjectRole.query.get(project_id=project._id, name='Member')
 >>> conversation = Conversation()

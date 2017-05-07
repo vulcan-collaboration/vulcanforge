@@ -7,7 +7,7 @@ from . import base
 from vulcanforge.auth.schema import ACE
 from vulcanforge.auth.model import User
 from vulcanforge.neighborhood.model import Neighborhood
-from vulcanforge.project.model import Project, ProjectRole, AppConfig
+from vulcanforge.project.model import ProjectRole, AppConfig
 
 log = logging.getLogger(__name__)
 
@@ -18,18 +18,22 @@ class EnsureProjectCreationCommand(base.Command):
     usage = '<ini file>'
     summary = 'Ensure that authenticated users can create projects'
     parser = base.Command.standard_parser(verbose=True)
+    parser.add_option('-n', '--neighborhood', dest='neighborhood',
+                      help="specify mount point of neighborhood")
 
     def command(self):
         self.basic_setup()
-        projects = Neighborhood.query.get(name="Projects")
-        nproject = projects.neighborhood_project
+        nprefix = self.options.neighborhood or 'Projects'
+        nbhd = Neighborhood.by_prefix(nprefix)
+        assert nbhd is not None, "Neighborhood not found."
+        nproject = nbhd.neighborhood_project
         root_project_id = nproject.root_project._id
         role_auth = ProjectRole.upsert(name='*authenticated',
-                                         project_id=root_project_id)
+                                       project_id=root_project_id)
         for perm in nproject.acl:
             if (perm['permission'] == 'register' and
-                perm['access'] == 'ALLOW' and
-                perm['role_id'] == role_auth._id):
+                    perm['access'] == 'ALLOW' and
+                    perm['role_id'] == role_auth._id):
                 break
         else:
             nproject.acl.append(ACE.allow(role_auth._id, 'register'))
@@ -62,7 +66,8 @@ class InstallTool(base.Command):
             'neighborhood_id': neighborhood._id,
             'shortname': project_shortname,
         }
-        project = Project.query.get(**project_kwargs)
+        project_cls = neighborhood.project_cls
+        project = project_cls.query_get(**project_kwargs)
         assert project is not None, \
             "Could not find project '{}' in neighborhood '{}'".format(
                 project_shortname, neighborhood_prefix)
@@ -86,11 +91,18 @@ class PurgeProject(base.Command):
     usage = '<ini_file> <project_shortname>'
     summary = "Purge a project, it's tools, and it's artifacts... use wisely."
     parser = base.Command.standard_parser(verbose=True)
+    parser.add_option('-n', '--neighborhood', dest='neighborhood',
+                      help="specify mount point of neighborhood")
 
     def command(self):
         self.basic_setup()
+        # parse args
         project_shortname = self.args[1]
-        project = Project.query.get(shortname=project_shortname)
+        nprefix = self.options.neighborhood or 'Projects'
+        nbhd = Neighborhood.by_prefix(nprefix)
+        assert nbhd is not None, "Neighborhood not found."
+        project_cls = nbhd.project_cls
+        project = project_cls.by_shortname(project_shortname)
         assert project is not None, "Project not found."
         assert project.deleted, "Project has not been deleted."
         map(self.purge_app_config, self.iter_app_configs(project._id))
@@ -130,11 +142,12 @@ class AddUserToProject(base.Command):
         shortname = self.args[1]
         username = self.args[2]
         proj_query = {"shortname": shortname}
-        if self.options.neighborhood:
-            nbhd = Neighborhood.by_prefix(self.options.neighborhood)
-            assert nbhd is not None, "Neighborhood not found."
-            proj_query["neighborhood_id"] = nbhd._id
-        c.project = Project.query.get(**proj_query)
+        nprefix = self.options.neighborhood or 'Projects'
+        nbhd = Neighborhood.by_prefix(nprefix)
+        assert nbhd is not None, "Neighborhood not found."
+        proj_query["neighborhood_id"] = nbhd._id
+        project_cls = nbhd.project_cls
+        c.project = project_cls.query_get(**proj_query)
         assert c.project is not None, "Project not found."
 
         c.user = User.by_username(username)

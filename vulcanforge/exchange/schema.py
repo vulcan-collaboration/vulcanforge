@@ -49,7 +49,7 @@ class ExchangeACE(ACE):
         matches = ACE.match(ace, role_id, permission)
         if matches:
             if getattr(ace, 'project_id', None):
-                project = Project.query.get(_id=ace.project_id)
+                project = Project.query_get(_id=ace.project_id)
                 if project:
                     for p_ace in project.acl:
                         if ACE.match(p_ace, role_id, ace.project_permission):

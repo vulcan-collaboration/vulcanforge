@@ -73,6 +73,11 @@ var vffuncs = {
     },
     ago: function(olderDate, newerDate) {
         if (typeof olderDate == "string") {
+            var regex = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}).\d{6}$/;
+            var mo = regex.exec(olderDate);
+            if (mo) {
+                olderDate = mo[1] + "+00:00";
+            }
             olderDate = new Date(olderDate);
         }
         if (typeof newerDate == "string") {

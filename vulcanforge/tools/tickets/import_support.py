@@ -216,24 +216,24 @@ class ImportSupport(object):
 
     def make_user_placeholders(self, usernames):
         for username in usernames:
-            allura_username = username
+            vulcan_username = username
             if self.option('create_users') != '_unprefixed':
-                allura_username = c.project.shortname + '-' + username
-            User.register(dict(username=allura_username,
+                vulcan_username = c.project.shortname + '-' + username
+            User.register(dict(username=vulcan_username,
                                  display_name=username), False)
-            self.options['user_map'][username] = allura_username
+            self.options['user_map'][username] = vulcan_username
         ThreadLocalODMSession.flush_all()
         LOG.info('Created %d user placeholders', len(usernames))
 
     def validate_user_mapping(self):
         if 'user_map' not in self.options:
             self.options['user_map'] = {}
-        for foreign_user, allura_user in self.options['user_map'].iteritems():
-            u = User.by_username(allura_user)
+        for foreign_user, vulcan_user in self.options['user_map'].iteritems():
+            u = User.by_username(vulcan_user)
             if not u:
                 raise ImportException(
                     'User mapping %s:%s - target user does not exist' % (
-                        foreign_user, allura_user)
+                        foreign_user, vulcan_user)
                 )
 
     #

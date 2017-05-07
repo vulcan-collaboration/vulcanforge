@@ -71,9 +71,15 @@ class BucketController(BaseRestController):
             # Try again with the
             raise exc.HTTPNotFound(keyname)
         headers = dict(resp.getheaders())
-        content_type = headers.get('content-type', Key.DefaultContentType)
-        if content_type == Key.DefaultContentType:
-            headers['content-type'] = guess_mime_type(keyname).encode('utf-8')
+
+        #content_type = headers.get('content-type', Key.DefaultContentType)
+        #if content_type == Key.DefaultContentType:
+        #    headers['content-type'] = guess_mime_type(keyname).encode('utf-8')
+
+        # guess_mime_type is more reliable than trusting that content_type
+        # is properly set for S3 keys, at the expense of processing time.
+        headers['content-type'] = guess_mime_type(keyname).encode('utf-8')
+
         for header, val in headers.iteritems():
             response.headers[header] = val
         return resp.read()

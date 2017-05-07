@@ -69,8 +69,8 @@ class NeighborhoodMarketplaceController(BaseController):
         project_result = self._search_ads(search_type='Project', limit=limit)
         if project_result and project_result.hits:
             for p_doc in project_result.docs:
-                p_doc['project'] = Project.query.get(
-                    _id=ObjectId(p_doc['project_id_s']))
+                id = ObjectId(p_doc['project_id_s'])
+                p_doc['project'] = Project.query_get(_id=id)
                 project_ads.append(p_doc)
 
         # find out if the user has an ad

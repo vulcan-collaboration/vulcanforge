@@ -62,7 +62,11 @@ class ToolManager(object):
             "app_path": TOOLS_DIR + 'chat.app:ForgeChatApp',
             "installable": False,
             "required": True
-        }
+        },
+        "catalogue": {
+            "app_path": TOOLS_DIR + 'catalogue.app:CatalogueApp',
+            "installable": False,
+        },
     })
 
     def __init__(self, config=None):

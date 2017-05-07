@@ -54,14 +54,14 @@ class TestController(ProjectController, RootController):
     def _setup_request(self):
         super(TestController, self)._setup_request()
         # This code fixes a race condition in our tests
-        c.project = Project.query.get(shortname='test')
+        c.project = Project.by_shortname('test')
         c.memoize_cache = {}
         count = 20
         while c.project is None:
             import time
             time.sleep(0.5)
             log.warning('Project "test" not found, retrying...')
-            c.project = Project.query.get(shortname='test')
+            c.project = Project.by_shortname('test')
             count -= 1
             assert count > 0, 'Timeout waiting for test project to appear'
         c.neighborhood = c.project.neighborhood
@@ -73,9 +73,8 @@ class TestController(ProjectController, RootController):
     def _lookup(self, name, *remainder):
         if not re_path_portion.match(name):
             raise exc.HTTPNotFound, name
-        subproject = Project.query.get(
-            shortname=c.project.shortname + '/' + name
-        )
+        shortname = c.project.shortname + '/' + name
+        subproject = Project.by_shortname(shortname)
         if subproject:
             c.project = subproject
             c.app = None

@@ -312,7 +312,7 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem,
 
         self.extra_info = extra_info
 
-    def _complete_hook(self):
+    def _complete_hook(self, notify=True):
         self.upload_completed = True
         if self.is_zip():
             self._populate_zip_manifest()
@@ -320,6 +320,8 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem,
         if (g.clamav_enabled):
             self.scan_for_virus.post(
                 taskd_priority=g.clamav_task_priority)
+        if notify:
+            self.notify_create()
 
     def add_file_part(self,
                          file_part,
@@ -351,10 +353,8 @@ class ForgeDownloadsFile(ForgeDownloadsAbstractItem,
             except:
                 pass
             self.mp_upload_id = None
-            self._complete_hook()
+            self._complete_hook(notify)
             ForgeDownloadsLogEntry.insert('completed upload', downloads_obj=self)
-            if notify:
-                self.notify_create()
 
     @property
     def upload_progress(self):

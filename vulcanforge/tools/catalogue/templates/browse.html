@@ -1,0 +1,59 @@
+{% extends 'vulcanforge.tools.catalogue:templates/master.html' %}
+
+{% do g.resource_manager.register_css('assets/datatable/css/vf_datasort_table.css') %}
+{% do g.resource_manager.register_js('assets/datatable/js/jquery.dataTables.js') %}
+{% do g.resource_manager.register_js('assets/datatable/js/tableWidget.js') %}
+
+{% block title %}Browse {{title}}{% endblock %}
+{% block header %}Browse {{title}}{% endblock %}
+
+{% block content %}
+<div class="padded">
+    <div id="browseDatatable"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $vf.afterInit(function() {
+            var browseTable;
+
+            browseTable = new TableWidget($("#browseDatatable"), {
+                sTitle: "{{title}}",
+                bServerSide: true,
+                sAjaxSource: "{{data_url}}",
+                bProcessing: true,
+                bFilter: false,
+                aLengthMenu: [50, 75, 100, 150],
+                iDisplayLength: 50,
+                aaSorting: {{ sorting | jsonify }},
+                aoColumns: {{ table_columns | jsonify }},
+            });
+
+            browseTable.oTable.on( 'draw.dt', function () {
+                $( '.put-link' )
+                .click( function ( evt ) {
+                    evt.preventDefault();
+                    $.ajax({
+                        type: "PUT",
+                        url: this.href,
+                        data: {
+                            _session_id: $.cookie( '_session_id' )
+                        },
+                        success: function ( val ) {
+                            if (val.error) {
+                                alert(val.error);
+                            } else {
+                                $vf.webflash();
+                                location.reload();
+                            }
+                        }
+                    });
+                    return false;
+                } );
+            });
+        }, []);
+    });
+</script>
+{% endblock %}

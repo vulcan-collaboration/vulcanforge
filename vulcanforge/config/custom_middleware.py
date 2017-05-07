@@ -148,12 +148,13 @@ class CSRFMiddleware(object):
 
     """
     def __init__(self, app, cookie_name, param_name=None, secure=False,
-                 blacklist_regex=None):
+                 blacklist_regex=None, cookie_domain=None):
         if param_name is None:
             param_name = cookie_name
         self._app = app
         self._param_name = param_name
         self._cookie_name = cookie_name
+        self._cookie_domain = cookie_domain
         self._secure = secure
         if blacklist_regex is not None:
             self._blacklist_regex = re.compile(blacklist_regex)
@@ -197,6 +198,8 @@ class CSRFMiddleware(object):
 
         def session_start_response(status, headers, exc_info=None):
             cookie_header = '%s=%s; Path=/' % (self._cookie_name, cookie)
+            if self._cookie_domain:
+                cookie_header += "; Domain ={}".format(self._cookie_domain)
             if self._secure:
                 cookie_header += '; Secure'
             headers.append(('Set-cookie', str(cookie_header)))

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
-
 import os
 from contextlib import contextmanager
 from cStringIO import StringIO
 from datetime import datetime
 
 from PIL import Image
-from pylons import app_globals as g
+
 from ming import schema as S
 from ming.odm import FieldProperty
 from ming.odm.declarative import MappedClass
 from ming.utils import LazyProperty
+from pylons import app_globals as g
 
 from vulcanforge.common.model.session import project_orm_session
 from vulcanforge.common.model.base import BaseMappedClass

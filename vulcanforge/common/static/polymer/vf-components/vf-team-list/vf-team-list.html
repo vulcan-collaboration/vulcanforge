@@ -1,0 +1,136 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<link rel="import" href="../../iron-ajax/iron-ajax.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-image/iron-image.html">
+
+<link rel="import" href="../vf-styles.html">
+
+<dom-module id="vf-team-item">
+    <style is="custom-style" include="vf-styles">
+        .content {
+            background-color: var(--diffuse);
+            padding: .75em;
+            padding-top: 1em;
+            margin-right: 12px;
+            margin-left: 40px;
+        }
+        .project-icon {
+            --iron-image-height: 50px;
+            --iron-image-width: 50px;
+            padding: 8px;
+        }
+        .undersize-icon {
+            height: 35px;
+            width: 35px;
+        }
+        .oversize-icon {
+            height: 45px;
+            width: 45px;
+            margin-top: 2px;
+        }
+        span#pname.greyed {
+            color: var(--diffuse);
+        }
+        .project-name {
+            text-decoration: none;
+            text-transform: uppercase;
+            color: var(--subheadingtext);
+        }
+        .user-info {
+            color: var(--diffuse);
+            margin-top: 6px;
+            margin-right: 12px;
+            font-style: italic;
+            font-size: 12px;
+        }
+        @media (max-width: 320px) {
+            .admin-control {
+                display: none;
+            }
+        }
+    </style>
+    <template>
+        <div class="item layout horizontal center">
+            <a href="{{project.url}}"><iron-image class="project-icon" src="{{project.icon_url}}"></iron-image></a>
+            <div class="info flex">
+                <a class="project-name" href="{{project.url}}"><div>{{project.name}}</div></a>
+                <div class="user-info layout horizontal flex wrap">
+                    <div class="flex">[[project.roles]]</div>
+                    <div>joined {{_getJoinDate(project.joined)}}</div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-team-item",
+                properties: {
+                    project: Object
+                },
+                _getJoinDate: function(date) {
+                    return vffuncs.formatDate(date);
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="vf-team-list">
+    <style is="custom-style" include="vf-styles">
+        .list-container {
+            height: 318px;
+            overflow: auto;
+        }
+        .sorter {
+            font-style: italic;
+            font-size: 11px;
+        }
+        #sort-by-activity {
+            margin-right: 8px;
+        }
+        vf-team-item.hidden {
+            display: none;
+        }
+    </style>
+    <template>
+        <iron-ajax url="[[url]]" last-response="{{data}}" auto></iron-ajax>
+        <div class="heading layout horizontal center-center">
+            <iron-icon icon="social:people"></iron-icon>
+            <div class="heading-label flex">Teams ({{_projectCount(data)}})</div>
+        </div>
+        <template is="dom-if" if="[[_hasProjects(data)]]">
+            <div id="plist" class="list-container">
+                <template id="repeater" is="dom-repeat" items="{{data.projects}}" as="project">
+                    <vf-team-item project="{{project}}"></vf-team-item>
+                </template>
+            </div>
+        </template>
+        <template is="dom-if" if="[[!_hasProjects(data)]]">
+            <div class="layout vertical center">
+                <div class="empty-message">
+                    <p><iron-icon icon="warning"></iron-icon> No projects</p>
+                </div>
+            </div>
+        </template>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: "vf-team-list",
+                properties: {
+                    data: Object,
+                    url: String
+                },
+                _hasProjects: function(o) {
+                    return (o.projects && o.projects.length > 0);
+                },
+                _projectCount: function(o) {
+                    return (o.projects) ? o.projects.length : 0;
+                }
+            });
+        })();
+    </script>
+</dom-module>

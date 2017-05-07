@@ -35,7 +35,6 @@ from vulcanforge.project.model.membership import (
     MembershipRemovalRequest
 )
 from vulcanforge.project.model import (
-    Project,
     AppConfig,
     MembershipRequest,
     MembershipInvitation,
@@ -50,15 +49,6 @@ LOG = logging.getLogger(__name__)
 TEMPLATE_HOME = 'home/'
 COMMON_TEMPLATE_HOME = 'jinja:vulcanforge:common/templates/'
 
-TOOL_ARTIFACTS = {
-    'downloads': 'file',
-    'wiki': 'page',
-    'tickets': 'ticket',
-    'discussion': 'post',
-    'archive': 'dataset',
-    'git': 'commit',
-    'svn': 'commit'
-}
 
 class ProjectHomeApp(Application):
     has_chat = False
@@ -169,19 +159,19 @@ class ProjectHomeApp(Application):
             'id': {'$first': '$_id'}
         }
 
-        role_aggregate = role_coll.aggregate([
+        role_aggregate = list(role_coll.aggregate([
             {'$match': query_dict},
             {'$group': group_dict}
-        ])
-        new_member_count = member_count = len(role_aggregate['result'])
+        ]))
+        new_member_count = member_count = len(role_aggregate)
 
         if since is not None and isinstance(since, datetime):
             query_dict['_id'] = {"$gt": ObjectId.from_datetime(since)}
-            role_aggregate = role_coll.aggregate([
+            role_aggregate = list(role_coll.aggregate([
                 {'$match': query_dict},
                 {'$group': group_dict}
-            ])
-            new_member_count = len(role_aggregate['result'])
+            ]))
+            new_member_count = len(role_aggregate)
 
         return dict(
             new=new_member_count,
@@ -209,6 +199,22 @@ class ProjectHomeController(BaseController):
             "mongo_field": "access_denied"
         }
     ]
+
+    # need a better way to handle this except othet than requiring
+    # applications for override both tool and controller
+
+    _tool_artifacts = {
+        'downloads': 'file',
+        'wiki': 'page',
+        'tickets': 'ticket',
+        'discussion': 'post',
+        'archive': 'dataset',
+        'git': 'commit',
+        'svn': 'commit',
+        'design_analyzer': 'update'
+    }
+
+    _tool_excludes = ('home', 'chat', 'calendar')
 
     def _check_security(self):
         g.security.require_access(c.project, 'read')
@@ -507,7 +513,7 @@ class ProjectHomeController(BaseController):
 
         # format the data
         data = []
-        for log_entry in aggregate['result']:
+        for log_entry in aggregate:
             row = [
                 log_entry['timestamp'].strftime('%m/%d/%Y %H:%M:%S UTC'),
                 Markup('<a href="/u/{}">{}</a>'.format(
@@ -545,9 +551,8 @@ class ProjectHomeController(BaseController):
                        '*authenticated' in read_roles)
         storage_used = 0
         counts = get_artifact_counts(c.user, c.project.shortname)
-        excludes = ('home', 'chat', 'calendar')
         tool_info = [x for x in counts['tools']
-                     if x['tool_name'] not in excludes]
+                     if x['tool_name'] not in self._tool_excludes]
         for t in tool_info:
             storage_used += t['artifact_counts'].get('total_size', 0)
 
@@ -605,9 +610,8 @@ class ProjectHomeController(BaseController):
         tools = []
         canAdmin = g.security.has_access(c.project, 'admin')
         counts = get_artifact_counts(c.user, c.project.shortname)
-        excludes = ('home', 'chat', 'calendar')
         tool_info = [x for x in counts['tools']
-                     if x['tool_name'] not in excludes]
+                     if x['tool_name'] not in self._tool_excludes]
 
         project_read_roles = c.project.get_expanded_read_roles()
         read_roles = [x.name for x in project_read_roles]
@@ -619,6 +623,7 @@ class ProjectHomeController(BaseController):
             p_dict['name'] = tool.options['mount_label']
             p_dict['project_id'] = tool.project_id
             p_dict['mount'] = tool.options['mount_point']
+            p_dict['ordinal'] = tool.options.get('ordinal', 0)
             p_dict['icon_url'] = tool.icon_url(48)
             p_dict['tool_url'] = tool.url()
             p_dict['new'] = t['artifact_counts']['new']
@@ -626,8 +631,8 @@ class ProjectHomeController(BaseController):
             if 'total_size' in t['artifact_counts']:
                 p_dict['total_size'] = t['artifact_counts']['total_size']
             tool_name = tool.tool_name.lower()
-            if tool_name in TOOL_ARTIFACTS:
-                p_dict['artifact'] = TOOL_ARTIFACTS[tool_name]
+            if tool_name in self._tool_artifacts:
+                p_dict['artifact'] = self._tool_artifacts[tool_name]
             if project_private:
                 p_dict['private'] = True
             else:
@@ -635,6 +640,7 @@ class ProjectHomeController(BaseController):
                 p_dict['private'] = not ('anonymous' in ac_read_roles or
                                          'authenticated' in ac_read_roles)
             tools.append(p_dict)
+        tools.sort(key=itemgetter('ordinal'))
         tools.sort(key=itemgetter('new'), reverse=True)
         return {'tools': tools,
                 'canAdmin': canAdmin,
@@ -651,7 +657,7 @@ class ProjectHomeController(BaseController):
         has_more = 'true' if results.hits > limit else 'false'
         json = '{{"notifications":[{notifications}],' \
                '"more":{more},"project_id":"{project_id}"}}'.format(
-            notifications=','.join(d['json_s'] for d in results.docs),
+            notifications=','.join(d['json_ni'] for d in results.docs),
             more=has_more, project_id=str(c.project._id)
         )
         return Markup(json)
@@ -661,12 +667,13 @@ class ProjectHomeController(BaseController):
     def do_edit_profile(self, name="", summary="", parent=None, private=False,
                         deleted=False, icon=None, **kw):
         g.security.require_access(c.project, 'admin')
+        project_cls = c.project.neighborhood.project_cls
         if name:
             name_regex = re.compile("^[A-Za-z]+[A-Za-z0-9 -]*$")
             mo = name_regex.match(name)
             if not mo:
                 return {"status": "error", "reason": "Invalid team name"}
-            elif c.project.name != name and Project.query.get(name=name):
+            elif c.project.name != name and project_cls.query_get(name=name):
                 return {"status": "error", "reason": "Name already used"}
             else:
                 c.project.name = name.encode('utf-8')
@@ -674,7 +681,7 @@ class ProjectHomeController(BaseController):
             c.project.short_description = summary
         # parent
         if parent:
-            parent_team = Project.query.get(shortname=parent)
+            parent_team = project_cls.by_shortname(parent)
             if not parent_team or parent_team.deleted:
                 return {"status": "error", "reason": "Invalid parent"}
             c.project.parent_id = parent_team._id

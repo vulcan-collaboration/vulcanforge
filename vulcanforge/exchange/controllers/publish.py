@@ -33,7 +33,7 @@ class ArtifactPublishController(BaseController):
             value['share_neighborhoods'] = node.get_share_neighborhood_ids()
         elif value['scope'] == 'project':
             pids = node.get_share_project_ids()
-            cur = Project.query.find({"_id": {"$in": pids}})
+            cur = Project.query_find({"_id": {"$in": pids}})
             value['share_projects'] = [p.shortname for p in cur]
         return value
 

@@ -21,20 +21,6 @@
 
 <dom-module id="vf-user-profile">
     <style is="custom-style" include="vf-styles">
-        .header {
-            background-color: var(--headingbar);
-            padding: .15em;
-            padding-left: .5em;
-        }
-        .header-label {
-            font-style: italic;
-            color: var(--pristine);
-        }
-        .header iron-icon {
-            padding-right: 6px;
-            height: 40px;
-            color: var(--interactive);
-        }
         a {
             color:var(--interactive);
             text-decoration: none;
@@ -148,9 +134,9 @@
     <template>
         <iron-ajax id="userajax" url="[[url]]" last-response="{{data}}"></iron-ajax>
         <iron-ajax id="modajax" url="" on-response="_toggleResponse"></iron-ajax>
-        <div class="header layout horizontal center-center">
+        <div class="heading layout horizontal center-center">
             <iron-icon icon="icons:info"></iron-icon>
-            <div class="header-label flex">User Profile</div>
+            <div class="heading-label flex">User Profile</div>
             <template is="dom-if" if="{{data.disabled}}">
                 <span class="picker-detail">(User Disabled)</span>
             </template>
@@ -729,6 +715,7 @@
             padding: 0;
             width: 400px;
             height: auto;
+            min-height: 50%;
             max-height: 75%;
         }
         paper-dialog #sections {

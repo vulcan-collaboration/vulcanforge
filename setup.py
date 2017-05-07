@@ -24,7 +24,7 @@ setup(
     author='Vanderbilt ISIS',
     author_email='',
     url='',
-    keywords='vehicleforge vulcanforge turbogears pylons jinja2 mongodb',
+    keywords='vulcanforge turbogears pylons jinja2 mongodb',
     license='Apache License, http://www.apache.org/licenses/LICENSE-2.0',
     platforms=['Linux', 'MacOS X'],
     classifiers=[
@@ -39,20 +39,21 @@ setup(
         'tg.devtools == 2.2.2',
         'simplejson >= 3.3.2',
         'FormEncode == 1.2.4',
-        'ipython',
+        'ipython  < 6.0.0',
         "docutils < 0.10",
         "Genshi < 0.7",
         "WebTest < 2",
         "WebOb == 1.1.1",
         "TurboGears2==2.2.2",
         "Pylons >= 1.0",
-        "Ming == 0.5.3",
-        "boto >= 2.6",
+        "Ming",
+        "boto < 2.25.0",
         "PasteScript",
         "Babel >= 0.9.4",
-        "pymongo >= 2.0",
+        "pymongo >= 3.0",
         "pysolr",
-        "Markdown <= 2.5.2",
+        "Markdown >= 2.6.7",
+        "bleach >= 1.5",
         "Pygments >= 1.1.1",
         "PyYAML >= 3.09",
         "python-openid >= 2.2.4",
@@ -67,7 +68,6 @@ setup(
         "cssmin",
         "pycrypto",
         "pyScss == 1.2.0.post3",
-        "python-dateutil < 2.0",
         "requests",
         "jinja2",
         "BeautifulSoup==3.2.1",
@@ -115,6 +115,7 @@ setup(
     reindex_globals = vulcanforge.command:ReindexGlobalsCommand
     reindex_notifications = vulcanforge.command:ReindexNotifications
     reindex_exchange = vulcanforge.command:ReindexExchangeCommand
+    register-project-template = vulcanforge.command:RegisterProjectTemplate
     ensure_index = vulcanforge.command:EnsureIndexCommand
     ensure-project-creation = vulcanforge.command:EnsureProjectCreationCommand
     script = vulcanforge.command:ScriptCommand
@@ -149,5 +150,8 @@ setup(
     [easy_widgets.engines]
     jinja = vulcanforge.config.render.jinja:JinjaEngine
     """,
-    dependency_links=["http://tg.gy/current/"]
+    dependency_links=[
+        "http://tg.gy/current/",
+        "git+https://git.code.sf.net/p/merciless/code@pymongo-30#egg=Ming"
+    ]
 )

@@ -27,7 +27,7 @@ def get_exchange_counts(user, xchng_name):
 
     # assemble the query
     query_l = []
-    project_id_s = ' OR '.join(map(str, [p._id for p in c.user.my_projects()]))
+    project_id_s = ' OR '.join(map(str, [p._id for p in user.my_projects()]))
 
     project_filter = "project_id_s:({})".format(project_id_s)
     query_l.extend([
@@ -46,13 +46,13 @@ def get_exchange_counts(user, xchng_name):
         "facet.field": "tool_name_s",
         "rows": 0
     }
-    result = g.search(**params)
     nodes_shared_by = {}
-
-    facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
-    for tool_name_s, count in zip(facet_iter, facet_iter):
-        if count:
-            nodes_shared_by[tool_name_s] = {'new': count, 'all': count}
+    result = g.search(**params)
+    if result is not None:
+        facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
+        for tool_name_s, count in zip(facet_iter, facet_iter):
+            if count:
+                nodes_shared_by[tool_name_s] = {'new': count, 'all': count}
 
     if exchange_visit is not None and \
             isinstance(exchange_visit.last_visit, datetime):
@@ -67,9 +67,9 @@ def get_exchange_counts(user, xchng_name):
             "rows": 0
         }
         result = g.search(**params)
-        facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
-        facet_dict = dict(zip(facet_iter, facet_iter))
         if result is not None:
+            facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
+            facet_dict = dict(zip(facet_iter, facet_iter))
             for tool_name in nodes_shared_by.keys():
                 nodes_shared_by[tool_name]['new'] = facet_dict.get(tool_name, 0)
 
@@ -94,12 +94,13 @@ def get_exchange_counts(user, xchng_name):
         "facet.field": "tool_name_s",
         "rows": 0
     }
-    result = g.search(**params)
-    facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
     nodes_shared_with = {}
-    for tool_name_s, count in zip(facet_iter, facet_iter):
-        if count:
-            nodes_shared_with[tool_name_s] = {'new': count, 'all': count}
+    result = g.search(**params)
+    if result is not None:
+        facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
+        for tool_name_s, count in zip(facet_iter, facet_iter):
+            if count:
+                nodes_shared_with[tool_name_s] = {'new': count, 'all': count}
 
     if exchange_visit is not None and \
             isinstance(exchange_visit.last_visit, datetime):
@@ -114,9 +115,9 @@ def get_exchange_counts(user, xchng_name):
             "rows": 0
         }
         result = g.search(**params)
-        facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
-        facet_dict = dict(zip(facet_iter, facet_iter))
         if result is not None:
+            facet_iter = iter(result.facets['facet_fields']['tool_name_s'])
+            facet_dict = dict(zip(facet_iter, facet_iter))
             for tool_name in nodes_shared_with.keys():
                 nodes_shared_with[tool_name]['new'] = facet_dict.get(tool_name, 0)
 
@@ -132,7 +133,7 @@ def get_artifact_counts(user, project_shortname=None, permission="read",
     tools = []
     av_query = {"user_id": user._id}
     if project_shortname:
-        project = Project.query.get(shortname=project_shortname)
+        project = Project.by_shortname(project_shortname)
         ac_query = {"project_id": project._id}
         av_query["project_id"] = project._id
     elif project_ids:

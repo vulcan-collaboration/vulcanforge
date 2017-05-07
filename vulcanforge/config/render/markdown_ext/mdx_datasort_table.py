@@ -34,12 +34,12 @@ class DataSortTableProcessor(TableProcessor):
         seperator = block[2].strip()
         rows = block[3:]
         # Get format type (bordered by pipes or not)
-        border = False
+        self.border = False
         if header.startswith('|'):
-            border = True
+            self.border = True
         # Get alignment of columns
         align = []
-        for c in self._split_row(seperator, border):
+        for c in self._split_row(seperator):
             if c.startswith(':') and c.endswith(':'):
                 align.append('center')
             elif c.startswith(':'):
@@ -52,10 +52,10 @@ class DataSortTableProcessor(TableProcessor):
         table = etree.SubElement(parent, 'table')
         table.set('class', 'datasort-table')
         thead = etree.SubElement(table, 'thead')
-        self._build_row(header, thead, align, border)
+        self._build_row(header, thead, align)
         tbody = etree.SubElement(table, 'tbody')
         for row in rows:
-            self._build_row(row.strip(), tbody, align, border)
+            self._build_row(row.strip(), tbody, align)
 
 
 class DataSortTableExtension(Extension):

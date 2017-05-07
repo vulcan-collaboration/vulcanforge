@@ -492,7 +492,7 @@ class UserProfileController(BaseController):
     @expose()
     @require_post()
     def invite_to_project(self, project, text='', **kw):
-        project = Project.query.get(_id=bson.ObjectId(project))
+        project = Project.query_get(_id=bson.ObjectId(project))
         if not project:
             raise exc.HTTPNotFound
         g.security.require_access(project, 'admin')
@@ -508,7 +508,7 @@ class UserProfileController(BaseController):
     @expose('json')
     @require_post()
     def accept_membership(self, project_shortname, **kw):
-        project = Project.query.get(shortname=project_shortname)
+        project = Project.by_shortname(project_shortname)
         app = project.app_instance(project.home_ac)
         with push_config(c, project=project, app=app):
             result = self.home_controller.accept_membership()
@@ -577,7 +577,7 @@ class UserProfileController(BaseController):
         has_more = 'true' if results.hits > limit else 'false'
         json = '{{"notifications":[{notifications}],' \
                '"more":{more},"project_id":"{project_id}"}}'.format(
-            notifications=','.join(d['json_s'] for d in results.docs),
+            notifications=','.join(d['json_ni'] for d in results.docs),
             more=has_more, project_id=str(c.project._id)
         )
         return Markup(json)

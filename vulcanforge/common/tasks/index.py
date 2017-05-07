@@ -108,7 +108,7 @@ def add_global_objs(ref_ids):
     from vulcanforge.common.model.index import GlobalObjectReference
     exceptions = []
 
-    allura_docs = []
+    global_docs = []
     for ref_id in ref_ids:
         try:
             ref = GlobalObjectReference.query.get(_id=ref_id)
@@ -120,15 +120,15 @@ def add_global_objs(ref_ids):
                 LOG.info('skipping ref_id %s: no object found', ref_id)
                 continue
             else:
-                s_allura = global_obj.index()
-            if s_allura is not None:
-                allura_docs.append(s_allura)
+                global_obj_index = global_obj.index()
+            if global_obj_index is not None:
+                global_docs.append(global_obj_index)
         except Exception:
             LOG.error('Error indexing object %s', ref_id)
             exceptions.append(sys.exc_info())
 
-    if allura_docs:
-        g.solr.add(allura_docs)
+    if global_docs:
+        g.solr.add(global_docs)
 
     if len(exceptions) == 1:
         raise exceptions[0][0], exceptions[0][1], exceptions[0][2]

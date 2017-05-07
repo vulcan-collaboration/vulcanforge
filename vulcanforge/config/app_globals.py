@@ -21,6 +21,7 @@ from pylons import tmpl_context as c, request
 from tg import config, session
 from boto.s3.key import Key
 
+from vulcanforge.auth.model import User
 from vulcanforge.common import helpers as h
 from vulcanforge.common.util import gravatar
 from vulcanforge.common.util.antispam import AntiSpam
@@ -193,6 +194,10 @@ class ForgeAppGlobals(object):
         setting = 'idle_logout.countdown_seconds'
         self.idle_logout_countdown_seconds = asint(config.get(setting, 30))
 
+        # visibility mode
+        visibility_mode = config.get('visibility_mode', 'default')
+        self.closed_platform = visibility_mode == 'closed'
+
         # is openid enabled
         self.openid_enabled = asbool(config.get('openid.enabled', False))
 
@@ -302,6 +307,14 @@ class ForgeAppGlobals(object):
         options.update(kwargs.iteritems())
         return gravatar.url(*args, **options)
 
+    def user_or_gravatar(self, *args, **kwargs):
+        email = args[0]
+        user = User.by_email_address(email)
+        if user:
+            return user.icon_url()
+        else:
+            return self.gravatar(*args, **kwargs)
+
     @property
     def header_logo(self):
         return self.resource_manager.absurl(
@@ -313,7 +326,7 @@ class ForgeAppGlobals(object):
         return app.icon_url(size, tool_entry_point)
 
     def get_site_admin_project(self):
-        return Project.query.get(shortname=self.site_admin_project)
+        return Project.by_shortname(self.site_admin_project)
 
     def trustforge_request(self, method, uri, data_dict=None):
         if self.trustforge_url and self.trustforge_token:
@@ -435,9 +448,9 @@ class ForgeAppGlobals(object):
 
     @property
     def antispam(self):
-        a = request.environ.get('allura.antispam')
+        a = request.environ.get('vulcan.antispam')
         if a is None:
-            a = request.environ['allura.antispam'] = AntiSpam()
+            a = request.environ['vulcan.antispam'] = AntiSpam()
         return a
 
     def handle_paging(self, limit, page, default=50):
@@ -506,7 +519,7 @@ class ForgeAppGlobals(object):
             extensions.append(ForgeWikiExtension())
         return markdown.Markdown(extensions=extensions,
                                  extension_configs=extension_configs,
-                                 output_format='html4')
+                                 output_format='html5')
 
     @property
     def markdown(self):
@@ -537,8 +550,8 @@ class ForgeAppGlobals(object):
         if isinstance(pid_or_project, Project):
             c.project = pid_or_project
         elif isinstance(pid_or_project, basestring):
-            c.project = Project.query.get(
-                shortname=pid_or_project, deleted=False)
+            cls = c.neighborhood.project_cls if c.neighborhood else Project
+            c.project = cls.query_get(shortname=pid_or_project, deleted=False)
         elif pid_or_project is None:
             c.project = None
         else:
