@@ -1,0 +1,3 @@
+recursive-include vulcanforge/templates *
+recursive-include vulcanforge/static *
+recursive-include vulcanforge/data *
