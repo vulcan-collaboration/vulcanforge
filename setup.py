@@ -80,7 +80,8 @@ setup(
         "pdfminer",
         'pyotp >= 2.1.1',
         'qrcode >= 5.2.2',
-        "pyclamd"
+        "pyclamd",
+	"sqlalchemy-migrate>=0.11.0"
     ],
     setup_requires=["PasteScript >= 1.7"],
     packages=find_packages(exclude=['ez_setup']),
