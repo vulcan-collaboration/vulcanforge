@@ -83,7 +83,7 @@ setup(
         "pyclamd",
 	"sqlalchemy-migrate>=0.11.0"
     ],
-    setup_requires=["PasteScript >= 1.7"],
+    setup_requires=["PasteScript >= 1.7", "setuptools_git >= 0.3"],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite='nose.collector',
@@ -92,10 +92,6 @@ setup(
         'poster',
         'nose'
     ],
-    package_data={
-        'vulcanforge': [
-            'i18n/*/LC_MESSAGES/*.mo', 'templates/*/*', 'public/*/*']
-    },
     message_extractors={
         'vulcanforge': [
             ('**.py', 'python', None),
