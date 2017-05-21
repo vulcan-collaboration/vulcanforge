@@ -81,9 +81,9 @@ setup(
         'pyotp >= 2.1.1',
         'qrcode >= 5.2.2',
         "pyclamd",
-	"sqlalchemy-migrate>=0.11.0"
+        "pydenticon >= 0.3"
     ],
-    setup_requires=["PasteScript >= 1.7", "setuptools_git >= 0.3"],
+    setup_requires=["PasteScript >= 1.7"],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite='nose.collector',
@@ -92,6 +92,10 @@ setup(
         'poster',
         'nose'
     ],
+    package_data={
+        'vulcanforge': [
+            'i18n/*/LC_MESSAGES/*.mo', 'templates/*/*', 'public/*/*']
+    },
     message_extractors={
         'vulcanforge': [
             ('**.py', 'python', None),

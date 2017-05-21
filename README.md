@@ -84,6 +84,12 @@ served using *paster serve*.
 
 # Release Notes
 
+## Version 2.0.1
+
+This is a minor feature release.
+
+ - Disable gravatar support by configuration setting
+
 ## Version 2.0.0
 
 This release is compatible with the Ubuntu Xenial LTS. It is highly recommended 

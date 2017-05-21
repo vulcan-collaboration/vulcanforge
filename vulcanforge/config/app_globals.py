@@ -246,6 +246,7 @@ class ForgeAppGlobals(object):
         # websocket
         self.websocket_enabled = asbool(config.get('websocket.enabled', True))
 
+        self.use_gravatars = asbool(config.get('use_gravatars', True))
         self.gravatar_default = config.get('gravatar.default', "retro")
 
         # Global site ticketing system

@@ -649,9 +649,18 @@ class User(SOLRIndexed):
         user_project = self.private_project()
         if user_project and user_project.icon:
             return '/u/' + self.username + '/user_icon'
+
+        # no avatar defined, generate based on email address
         email_address = (self.preferences.email_address or
                          "{}@vulcanforge.org".format(self.username))
-        return g.gravatar(email_address, **gravatar_kwargs)
+
+        if g.use_gravatars:
+            return g.gravatar(email_address, **gravatar_kwargs)
+        elif user_project:
+            user_project.create_avatar(email_address)
+            return '/u/' + self.username + '/user_icon'
+        else:
+            return g.resource_manager.absurl('images/person.png')
 
     def landing_url(self):
         """

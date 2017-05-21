@@ -4,7 +4,9 @@ from datetime import datetime
 from uuid import UUID
 import json
 import re
+from six import BytesIO
 
+import pydenticon
 import pymongo
 from pylons import tmpl_context as c, app_globals as g, request
 from tg import config
@@ -639,6 +641,18 @@ class Project(SOLRIndexed):
         for icon in ProjectFile.query.find(ico_query):
             result[icon.project_id] = icon.url()
         return result
+
+    def create_avatar(self, value):
+        avatar = pydenticon.Generator(rows=8, columns=8)
+        a = avatar.generate(value, 64, 64)
+        ProjectFile.save_image(
+            "avatar.png",
+            BytesIO(a),
+            content_type="image/png",
+            square=True,
+            thumbnail_size=(64, 64),
+            thumbnail_meta=dict(project_id=self._id, category='icon'))
+        session(ProjectFile).flush()
 
     def sitemap(self):
         sitemap = SitemapEntry('root')
