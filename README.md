@@ -84,6 +84,10 @@ served using *paster serve*.
 
 # Release Notes
 
+## Version 2.0.2
+
+Minor Python packaging changes.
+
 ## Version 2.0.1
 
 This is a minor feature release.

@@ -154,5 +154,6 @@ setup(
     dependency_links=[
         "http://tg.gy/current/",
         "git+https://git.code.sf.net/p/merciless/code@pymongo-30#egg=Ming"
-    ]
+    ],
+    zip_safe=False
 )
