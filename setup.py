@@ -61,7 +61,7 @@ setup(
         "EasyWidgets==0.2dev-20130716",
         "Pillow >= 1.1.7",
         "iso8601",
-        "chardet == 1.0.1",
+        "chardet >= 1.0.1",
         "feedparser >= 5.0.1",
         "oauth2 == 1.2.0",
         "jsmin == 2.0.3",

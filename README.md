@@ -84,6 +84,10 @@ served using *paster serve*.
 
 # Release Notes
 
+## Version 2.0.3
+
+Update chardet dependency.
+
 ## Version 2.0.2
 
 Minor Python packaging changes.

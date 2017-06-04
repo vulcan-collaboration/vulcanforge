@@ -5,7 +5,7 @@ Beaker==1.8.1
 BeautifulSoup==3.2.1
 bleach==2.0.0
 boto==2.24.0
-chardet==1.0.1
+chardet==3.0.3
 crank==0.8.1
 cssmin==0.2.0
 decorator==4.0.11
