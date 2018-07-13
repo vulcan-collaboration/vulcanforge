@@ -84,6 +84,10 @@ served using *paster serve*.
 
 # Release Notes
 
+## Version 2.0.4
+
+Remove unused pycrypto dependency.
+
 ## Version 2.0.3
 
 Update chardet dependency.

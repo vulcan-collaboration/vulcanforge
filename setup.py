@@ -66,7 +66,6 @@ setup(
         "oauth2 == 1.2.0",
         "jsmin == 2.0.3",
         "cssmin",
-        "pycrypto",
         "pyScss == 1.2.0.post3",
         "requests",
         "jinja2",
